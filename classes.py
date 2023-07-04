@@ -35,23 +35,14 @@ class Prices:
                 f"Failed getting prices, status code {response.status_code}"
             )
 
-    def remove_prefix(self, symbol):
-        if symbol == "zWBTC":
-            # weird exception
-            return "wBTC"
-        if symbol.startswith("z"):
-            return symbol[1:]
-        else:
-            return symbol
-
     def get_by_symbol(self, symbol):
-        symbol = self.remove_prefix(symbol)
+        symbol = constants.ztoken_to_token(symbol)
         if symbol in self.prices:
             return self.prices[symbol]
         raise Exception(f"Unknown symbol {symbol}")
 
     def to_dollars(self, n, symbol):
-        symbol = self.remove_prefix(symbol)
+        symbol = constants.ztoken_to_token(symbol)
         try:
             price = self.prices[symbol]
             decimals = constants.get_decimals(symbol)
@@ -103,11 +94,15 @@ class UserTokenState:
         self.deposit: decimal.Decimal = decimal.Decimal("0")
         self.collateral_enabled: bool = False
         self.borrowings: decimal.Decimal = decimal.Decimal("0")
+        self.balance: decimal.Decimal = decimal.Decimal("0")
 
     def update_deposit(self, raw_amount: decimal.Decimal):
         self.deposit += raw_amount
-        # if -self.MAX_ROUNDING_ERROR < self.deposit < self.MAX_ROUNDING_ERROR:
-        #     self.deposit = decimal.Decimal("0")
+        if -self.MAX_ROUNDING_ERROR < self.deposit < self.MAX_ROUNDING_ERROR:
+            self.deposit = decimal.Decimal("0")
+
+    def update_balance(self, amount: int):
+        self.balance += amount
 
 
 class UserState:
@@ -131,6 +126,9 @@ class UserState:
         # TODO: implement healt_factor
         # TODO: use decimal
         self.health_factor: float = 1.0  # TODO: is this a good default value??
+
+    def transfer(self, token: str, amount: decimal.Decimal):
+        self.token_states[token].update_balance(amount)
 
     def deposit(self, token: str, raw_amount: decimal.Decimal):
         self.token_states[token].update_deposit(raw_amount)
@@ -296,18 +294,14 @@ class State:
         # The order of the arguments is: `from_`, `to`, `value`.
         empty_address = "0x0"
         # token contract emitted this event
-        token = constants.get_symbol(event["from_address"])
+        ztoken = constants.get_symbol(event["from_address"])
+        token = constants.ztoken_to_token(ztoken)
         from_ = event["data"][0]
         to = event["data"][1]
-        value = int(event["data"][2], base=16)
+        value = decimal.Decimal(str(int(event["data"][2], base=16)))
+        raw_amount = value / self.accumulator_states[token].lending_accumulator
 
-        if from_ == empty_address:
-            # mint
-            self.user_states[to].deposit(token=token, raw_amount=value)
-        elif to == empty_address:
-            # burn
-            self.user_states[from_].withdrawal(token=token, raw_amount=value)
-        else:
-            # transfer from one user to the other
-            self.user_states[from_].withdrawal(token=token, raw_amount=value)
-            self.user_states[to].deposit(token=token, raw_amount=value)
+        if from_ != empty_address:
+            self.user_states[from_].transfer(token=ztoken, amount=-raw_amount)
+        if to != empty_address:
+            self.user_states[to].transfer(token=ztoken, amount=raw_amount)

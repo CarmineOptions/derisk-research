@@ -60,3 +60,13 @@ def get_decimals(symbol):
         return symbol_decimals_map[symbol]
     else:
         raise KeyError(f"Symbol '{symbol}' does not exist in the decimals map")
+
+
+def ztoken_to_token(symbol):
+    if symbol == "zWBTC":
+        # weird exception
+        return "wBTC"
+    if symbol.startswith("z"):
+        return symbol[1:]
+    else:
+        return symbol
