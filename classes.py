@@ -94,15 +94,11 @@ class UserTokenState:
         self.deposit: decimal.Decimal = decimal.Decimal("0")
         self.collateral_enabled: bool = False
         self.borrowings: decimal.Decimal = decimal.Decimal("0")
-        self.balance: decimal.Decimal = decimal.Decimal("0")
 
     def update_deposit(self, raw_amount: decimal.Decimal):
         self.deposit += raw_amount
         if -self.MAX_ROUNDING_ERROR < self.deposit < self.MAX_ROUNDING_ERROR:
             self.deposit = decimal.Decimal("0")
-
-    def update_balance(self, amount: int):
-        self.balance += amount
 
 
 class UserState:
@@ -126,9 +122,6 @@ class UserState:
         # TODO: implement healt_factor
         # TODO: use decimal
         self.health_factor: float = 1.0  # TODO: is this a good default value??
-
-    def transfer(self, token: str, amount: decimal.Decimal):
-        self.token_states[token].update_balance(amount)
 
     def deposit(self, token: str, raw_amount: decimal.Decimal):
         self.token_states[token].update_deposit(raw_amount)
@@ -295,6 +288,7 @@ class State:
         empty_address = "0x0"
         # token contract emitted this event
         ztoken = constants.get_symbol(event["from_address"])
+        # zTokens share accumulator value with token
         token = constants.ztoken_to_token(ztoken)
         from_ = event["data"][0]
         to = event["data"][1]
@@ -302,6 +296,6 @@ class State:
         raw_amount = value / self.accumulator_states[token].lending_accumulator
 
         if from_ != empty_address:
-            self.user_states[from_].transfer(token=ztoken, amount=-raw_amount)
+            self.user_states[from_].withdrawal(token=ztoken, raw_amount=raw_amount)
         if to != empty_address:
-            self.user_states[to].transfer(token=ztoken, amount=raw_amount)
+            self.user_states[to].deposit(token=ztoken, raw_amount=raw_amount)
