@@ -1,5 +1,6 @@
 from blockchain_call import balance_of
 from constants import get_address, get_decimals
+from decimal import Decimal
 
 
 class Token:
@@ -7,6 +8,8 @@ class Token:
         self.symbol = symbol
         self.address = get_address(self.symbol)
         self.decimals = get_decimals(self.symbol)
+        self.balance_base = None
+        self.balance_converted = None
 
 
 class Pair:
@@ -16,16 +19,57 @@ class Pair:
 
 
 class Pool(Pair):
-    def __init__(self, t1, t2, address):
-        self.id = self.tokens_to_id(t1, t2)
+    def __init__(self, symbol1, symbol2, address):
+        self.id = self.tokens_to_id(symbol1, symbol2)
         self.address = address
-        self.tokens = [Token(t1), Token(t2)]
+        t1 = Token(symbol1)
+        t2 = Token(symbol2)
+        setattr(self, symbol1, t1)
+        setattr(self, symbol2, t2)
+        self.tokens = [t1, t2]
+
+    async def get_balance(self):
+        for token in self.tokens:
+            balance = await balance_of(token.address, self.address)
+            token.balance_base = balance
+            token.balance_converted = Decimal(balance) / Decimal(10**token.decimals)
+
+    def update_converted_balance(self):
+        for token in self.tokens:
+            token.balance_converted = Decimal(token.balance_base) / Decimal(
+                10**token.decimals
+            )
+
+    def buy_tokens(self, symbol, amount):
+        # assuming constant product function
+        buy = None
+        sell = None
+        if self.tokens[0].symbol == symbol:
+            buy = self.tokens[0]
+            sell = self.tokens[1]
+        elif self.tokens[1].symbol == symbol:
+            buy = self.tokens[1]
+            sell = self.tokens[0]
+        else:
+            raise Exception(f"Could not buy {symbol}")
+        const = Decimal(buy.balance_base) * Decimal(sell.balance_base)
+        new_buy = buy.balance_base - amount
+        new_sell = const / Decimal(new_buy)
+        tokens_paid = round(new_sell - sell.balance_base)
+        buy.balance_base = new_buy
+        sell.balance_base = new_sell
+        self.update_converted_balance()
+        return tokens_paid
 
 
 class SwapAmm(Pair):
     def __init__(self, name):
         self.name = name
         self.pools = {}
+
+    async def get_balance(self):
+        for pool in self.pools.values():
+            await pool.get_balance()
 
     def add_pool(self, t1, t2, address):
         pool = Pool(t1, t2, address)
@@ -45,6 +89,5 @@ class SwapAmm(Pair):
         for pool in self.pools.values():
             for cur_token in pool.tokens:
                 if cur_token.symbol == token:
-                    t = cur_token
-                    balance += await balance_of(cur_token.address, pool.address)
-        return (t, balance)
+                    balance += token.balance_base
+        return balance
