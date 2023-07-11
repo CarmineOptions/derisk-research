@@ -67,18 +67,18 @@ print("Health", health_0)
 
 
 # Health AFTER Liquidation 
-health_1 = ((C - CL) * E * collateral_factor) / loan_input - CL * E * (1 - bonus)
+health_1 = ((C - CL) * E * collateral_factor) / (loan_input - CL * E * (1 + bonus))
 
 #Simulating 
 for collateral_liquidated in [0.3, 0.35, 0.4, 0.45, 0.5]:
-    health_2 = ((C - CL) * E * collateral_factor) / loan_input - E * (CL * (1-bonus))
+    health_2 = ((C - CL) * E * collateral_factor) / (loan_input - E * (CL * (1 + bonus)))
     gain = (collateral_amount * get_prices(collateral_input)) * collateral_liquidated * bonus
     print("liquidating", collateral_liquidated, "\nhealth:", health_2, "\ngain:", gain)
 
 
 
 #health_3 = ((colateral_0 - colateral_liquidated) * ASSET_PRICE_1 * borrow_factor) / (
-    #loan_0 - ASSET_PRICE_1 * (colateral_liquidated * (1 - bonus))
+    #loan_0 - ASSET_PRICE_1 * (colateral_liquidated * (1 + bonus))
 #)
 #gain = ASSET_PRICE_1 * colateral_liquidated * bonus
 
