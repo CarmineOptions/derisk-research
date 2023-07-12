@@ -1,34 +1,23 @@
-from classes import get_prices, __init__, to_dollars
+import dataclasses
+import classes 
 import decimal
 
+prices = classes.Prices()
 # Asset types and associated variables: 
-mapping = {
-    "ETH": {
-        "collateral_factor": decimal.Decimal(0.8),
-        "bonus": decimal.Decimal(0.1),
-        "borrow_factor": decimal.Decimal(1.0)
-    },
-    "USDC": {
-        "collateral_factor": decimal.Decimal(0.8),
-        "bonus": decimal.Decimal(0.1),
-        "borrow_factor": decimal.Decimal(1)
-    },
-    "wBTC": {
-        "collateral_factor": decimal.Decimal(0.7),
-        "bonus": decimal.Decimal(0.15), 
-        "borrow_factor": decimal.Decimal(0.91)
-    }, 
-    "USDT": {
-        "collateral_factor": decimal.Decimal(0.7),
-        "bonus": decimal.Decimal(0.1), 
-        "borrow_factor": decimal.Decimal(0.91)
-    }, 
-    "DAI": {
-        "collateral_factor": decimal.Decimal(0.7),
-        "bonus": decimal.Decimal(0.1), 
-        "borrow_factor": (0.91) 
-    }
+@dataclasses.dataclass 
+class Token:  
+    token: str 
+    collateral_factor: decimal
+    bonus: decimal
+    
+token_information: Dict[str, Token] = {
+        "ETH": Token('ETH', decimal.Decimal(str(0.8)), decimal.Decimal(str(0.1))),
+        "USDC": Token('USDC', decimal.Decimal(str(0.8)), decimal.Decimal(str(0.1))),
+        "wBTC": Token('wBTC', decimal.Decimal(str(0.7)), decimal.Decimal(str(0.15))),
+        "USDT": Token('USDT', decimal.Decimal(str(0.7)), decimal.Decimal(str(0.1))),
+        "DAI": Token('DAI', decimal.Decimal(str(0.7)), decimal.Decimal(str(0.1)))    
 }
+        
 
 # Input 1:  
 collateral_input = input("Enter Collateral Type {ETH, USDC, wBTC, USDT, or DAI}: ")
@@ -50,8 +39,8 @@ else:
 
 # ~Variables~ 
 
-# Collateral Amount in Asset Price 
-C = collateral_amount * get_prices(collateral_input)
+# Collateral Amount in Asset Price (in USD)
+C = collateral_amount * prices[collateral_input]
 
 # Collateral Liquidated 
 CL = (loan_input - C * to_dollars(collateral_input) * collateral_factor) / (
@@ -73,9 +62,9 @@ def health_after_liquidation():
     health_1 = ((C - CL) * E * collateral_factor) / (loan_input - CL * E * (1 + bonus))
 
 #Simulating 
-for collateral_liquidated in [0.3, 0.35, 0.4, 0.45, 0.5]:
+for ex_collateral_liquidated in [0.3, 0.35, 0.4, 0.45, 0.5]:
     health_2 = ((C - CL) * E * collateral_factor) / (loan_input - E * (CL * (1 + bonus)))
-    gain = (collateral_amount * get_prices(collateral_input)) * collateral_liquidated * bonus
-    print("liquidating", collateral_liquidated, "\nhealth:", health_2, "\ngain:", gain)
+    gain = (collateral_amount * get_prices(collateral_input)) * ex_collateral_liquidated * bonus
+    print("liquidating", ex_collateral_liquidated, "\nhealth:", health_2, "\ngain:", gain)
 
 
