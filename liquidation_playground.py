@@ -30,9 +30,9 @@ loan_input = input("Enter Loan Amount in USD: ")
 
 
 # Check to see if inputted value exists: 
-if collateral_input in mapping: 
-    collateral_factor = mapping[collateral_input]["collateral_factor"]
-    bonus = mapping[collateral_input]["bonus"]
+if collateral_input in token_information: 
+    collateral_factor = token_information[collateral_input]["collateral_factor"]
+    bonus = token_information[collateral_input]["bonus"]
 else:
     print("Entered value not found.")
     
@@ -43,11 +43,11 @@ else:
 C = collateral_amount * prices[collateral_input]
 
 # Collateral Liquidated 
-CL = (loan_input - C * to_dollars(collateral_input) * collateral_factor) / (
-    (to_dollars(collateral_input) * (1 - bonus)) - (to_dollars(collateral_input) * collateral_factor) 
+CL = (loan_input - C * prices.to_dollars(collateral_input) * collateral_factor) / (
+    (prices.to_dollars(collateral_input) * (1 - bonus)) - (prices.to_dollars(collateral_input) * collateral_factor) 
 )
 # Price of Asset in USD
-E = to_dollars(collateral_input) 
+E = prices.to_dollars(collateral_input) 
 
 
 
@@ -64,7 +64,7 @@ def health_after_liquidation():
 #Simulating 
 for ex_collateral_liquidated in [0.3, 0.35, 0.4, 0.45, 0.5]:
     health_2 = ((C - CL) * E * collateral_factor) / (loan_input - E * (CL * (1 + bonus)))
-    gain = (collateral_amount * get_prices(collateral_input)) * ex_collateral_liquidated * bonus
+    gain = (collateral_amount * prices.get_prices(collateral_input)) * ex_collateral_liquidated * bonus
     print("liquidating", ex_collateral_liquidated, "\nhealth:", health_2, "\ngain:", gain)
 
 
