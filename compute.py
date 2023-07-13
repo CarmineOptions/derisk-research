@@ -1,3 +1,4 @@
+import copy
 from typing import Dict
 import collections
 import decimal
@@ -137,14 +138,18 @@ def compute_max_liquidated_amount(
             > decimal.Decimal("0")
         }
         # TODO: choose the most optimal collateral_token to be liquidated .. or is the liquidator indifferent?
-        collateral_token = list(collateral_tokens)[0]
-        liquidated_borrowings_amount += compute_borrowings_to_be_liquidated(
-            risk_adjusted_collateral_usd=risk_adjusted_collateral_usd,
-            borrowings_usd=borrowings_usd,
-            borrowings_token_price=prices[borrowings_token],
-            collateral_token_collateral_factor=COLLATERAL_FACTORS[collateral_token],
-            collateral_token_liquidation_bonus=LIQUIDATION_BONUSES[collateral_token],
-        )
+        l = list(collateral_tokens)
+        if len(l) > 0:
+            collateral_token = list(collateral_tokens)[0]
+            liquidated_borrowings_amount += compute_borrowings_to_be_liquidated(
+                risk_adjusted_collateral_usd=risk_adjusted_collateral_usd,
+                borrowings_usd=borrowings_usd,
+                borrowings_token_price=prices[borrowings_token],
+                collateral_token_collateral_factor=COLLATERAL_FACTORS[collateral_token],
+                collateral_token_liquidation_bonus=LIQUIDATION_BONUSES[
+                    collateral_token
+                ],
+            )
     return liquidated_borrowings_amount
 
 
@@ -152,3 +157,17 @@ def decimal_range(start: decimal.Decimal, stop: decimal.Decimal, step: decimal.D
     while start < stop:
         yield start
         start += step
+
+
+def simulate_liquidations_under_price_change(
+    prices: classes.Prices,
+    collateral_token: str,
+    collateral_token_price_multiplier: decimal.Decimal,
+    state: classes.State,
+    borrowings_token: str,
+) -> decimal.Decimal:
+    changed_prices = copy.deepcopy(prices.prices)
+    changed_prices[collateral_token] *= collateral_token_price_multiplier
+    return compute_max_liquidated_amount(
+        state=state, prices=changed_prices, borrowings_token=borrowings_token
+    )

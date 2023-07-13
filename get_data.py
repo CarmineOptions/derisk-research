@@ -1,15 +1,13 @@
 import pandas
 import math
 
-import classes
 import constants
 import db
-
-latest_block = 0
+import streamlit as st
 
 
 def get_events() -> pandas.DataFrame:
-    global latest_block
+    latest_block = st.session_state.latest_block
     print("getting events from block", latest_block)
     # Establish the connection.
     connection = db.establish_connection()
@@ -37,5 +35,6 @@ def get_events() -> pandas.DataFrame:
     zklend_events.set_index("id", inplace=True)
     lb = zklend_events["block_number"].max()
     if not math.isnan(lb):
-        latest_block = lb
+        print("new latest block", lb)
+        st.session_state.latest_block = lb
     return zklend_events
