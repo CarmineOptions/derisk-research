@@ -3,6 +3,7 @@ from typing import Dict
 import collections
 import decimal
 import classes
+import streamlit as st
 
 # Source: Starkscan, e.g.
 # https://starkscan.co/token/0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7 for ETH.
@@ -170,4 +171,29 @@ def simulate_liquidations_under_price_change(
     changed_prices[collateral_token] *= collateral_token_price_multiplier
     return compute_max_liquidated_amount(
         state=state, prices=changed_prices, borrowings_token=borrowings_token
+    )
+
+
+def update_graph_data():
+    prices = classes.Prices()
+    params = st.session_state["parameters"]
+    print(
+        "PARAMS CHECK INSIDE GRAPH UPDATE\n",
+        params,
+        params["X_AXIS_DESC"],
+        params["Y_AXIS_DESC"],
+    )
+    st.session_state.data[params["X_AXIS_DESC"]] = st.session_state.data[
+        params["X_AXIS_DESC"]
+    ].map(decimal.Decimal)
+    st.session_state.data[params["Y_AXIS_DESC"]] = st.session_state.data[
+        params["X_AXIS_DESC"]
+    ].apply(
+        lambda x: simulate_liquidations_under_price_change(
+            prices=prices,
+            collateral_token=params["COLLATERAL_TOKEN"],
+            collateral_token_price_multiplier=x,
+            state=st.session_state.state,
+            borrowings_token=params["BORROWINGS_TOKEN"],
+        )
     )
