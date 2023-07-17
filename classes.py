@@ -36,11 +36,13 @@ class Prices:
             )
 
     def get_by_symbol(self, symbol):
+        symbol = constants.ztoken_to_token(symbol)
         if symbol in self.prices:
             return self.prices[symbol]
         raise Exception(f"Unknown symbol {symbol}")
 
     def to_dollars(self, n, symbol):
+        symbol = constants.ztoken_to_token(symbol)
         try:
             price = self.prices[symbol]
             decimals = constants.get_decimals(symbol)
@@ -111,6 +113,11 @@ class UserState:
             "USDC": UserTokenState("USDC"),
             "DAI": UserTokenState("DAI"),
             "USDT": UserTokenState("USDT"),
+            "zETH": UserTokenState("zETH"),
+            "zWBTC": UserTokenState("zWBTC"),
+            "zUSDC": UserTokenState("zUSDC"),
+            "zDAI": UserTokenState("zDAI"),
+            "zUSDT": UserTokenState("zUSDT"),
         }
         # TODO: implement healt_factor
         # TODO: use decimal
@@ -164,6 +171,7 @@ class State:
         "Repayment": "process_repayment_event",
         "Liquidation": "process_liquidation_event",
         "AccumulatorsSync": "process_accumulators_sync_event",
+        "Transfer": "process_transfer_event",
     }
 
     def __init__(self) -> None:
@@ -274,3 +282,20 @@ class State:
             lending_accumulator=lending_accumulator,
             debt_accumulator=debt_accumulator,
         )
+
+    def process_transfer_event(self, event: pandas.Series) -> None:
+        # The order of the arguments is: `from_`, `to`, `value`.
+        empty_address = "0x0"
+        # token contract emitted this event
+        ztoken = constants.get_symbol(event["from_address"])
+        # zTokens share accumulator value with token
+        token = constants.ztoken_to_token(ztoken)
+        from_ = event["data"][0]
+        to = event["data"][1]
+        value = decimal.Decimal(str(int(event["data"][2], base=16)))
+        raw_amount = value / self.accumulator_states[token].lending_accumulator
+
+        if from_ != empty_address:
+            self.user_states[from_].withdrawal(token=ztoken, raw_amount=raw_amount)
+        if to != empty_address:
+            self.user_states[to].deposit(token=ztoken, raw_amount=raw_amount)
