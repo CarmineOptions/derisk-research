@@ -18,10 +18,13 @@ if "parameters" not in st.session_state:
     st.session_state["parameters"] = {
         "COLLATERAL_TOKEN": "ETH",
         "BORROWINGS_TOKEN": "USDC",
-        "COLLATERAL_TOKEN_PRICE_MULTIPLIER": decimal.Decimal("0.99"),
+        "COLLATERAL_TOKEN_PRICE": decimal.Decimal("1500"),
         "X_AXIS_DESC": "collateral_token_price_multiplier",
         "Y_AXIS_DESC": "max_borrowings_to_be_liquidated",
     }
+
+if "prices" not in st.session_state:
+    st.session_state["prices"] = classes.Prices()
 
 if "data" not in st.session_state:
     st.session_state["data"] = pandas.DataFrame(
@@ -29,9 +32,11 @@ if "data" not in st.session_state:
             st.session_state.parameters["X_AXIS_DESC"]: [
                 x
                 for x in decimal_range(
-                    start=decimal.Decimal("0.5"),
-                    stop=decimal.Decimal("1.51"),
-                    step=decimal.Decimal("0.01"),
+                    # TODO: make it dependent on the collateral token .. use prices.prices[COLLATERAL_TOKEN]
+                    start=decimal.Decimal("1000"),
+                    stop=decimal.Decimal("3000"),
+                    # TODO: make it dependent on the collateral token
+                    step=decimal.Decimal("50"),
                 )
             ]
         },
@@ -78,11 +83,11 @@ def main():
         msg = st.success("Updated!")
         asyncio.run(hide_message(msg))
 
-    if st.session_state.parameters["Y_AXIS_DESC"] in st.session_state.data:
+    if "max_borrowings_to_be_liquidated_at_interval" in st.session_state.data:
         figure = plotly.express.bar(
             st.session_state.data,
-            x=st.session_state.parameters["X_AXIS_DESC"],
-            y=st.session_state.parameters["Y_AXIS_DESC"],
+            x="collateral_token_price_multiplier",
+            y="max_borrowings_to_be_liquidated_at_interval",
         )
         st.plotly_chart(figure)
 

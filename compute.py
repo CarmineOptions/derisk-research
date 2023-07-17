@@ -1,7 +1,8 @@
 import copy
 from typing import Dict
-import collections
 import decimal
+
+import pandas
 import classes
 import streamlit as st
 
@@ -51,6 +52,21 @@ def compute_risk_adjusted_collateral_usd(
     )
 
 
+def compute_risk_adjusted_collateral_usd(
+    user_state: classes.UserState,
+    prices: Dict[str, decimal.Decimal],
+) -> decimal.Decimal:
+    return sum(
+        token_state.collateral_enabled
+        * token_state.deposit
+        * COLLATERAL_FACTORS[token]
+        * prices[token]
+        # TODO: perform the conversion using TOKEN_DECIMAL_FACTORS sooner (in `UserTokenState`?)?
+        / TOKEN_DECIMAL_FACTORS[token]
+        for token, token_state in user_state.token_states.items()
+    )
+
+
 def compute_borrowings_usd(
     user_state: classes.UserState,
     prices: Dict[str, decimal.Decimal],
@@ -81,6 +97,7 @@ def compute_health_factor(
     return health_factor
 
 
+# TODO
 # TODO: compute_health_factor, etc. should be methods of class UserState
 def compute_borrowings_to_be_liquidated(
     risk_adjusted_collateral_usd: decimal.Decimal,
@@ -128,7 +145,11 @@ def compute_max_liquidated_amount(
             risk_adjusted_collateral_usd=risk_adjusted_collateral_usd,
             borrowings_usd=borrowings_usd,
         )
-        if health_factor >= decimal.Decimal("1"):
+        # TODO
+        if health_factor >= decimal.Decimal("1") or health_factor <= decimal.Decimal(
+            "0"
+        ):
+            #         if health_factor >= decimal.Decimal('1'):
             continue
 
         # TODO: find out how much of the borrowings_token will be liquidated
@@ -136,21 +157,18 @@ def compute_max_liquidated_amount(
             token_state.token
             for token_state in user_state.token_states.values()
             if token_state.deposit * token_state.collateral_enabled
-            > decimal.Decimal("0")
+            != decimal.Decimal("0")
         }
         # TODO: choose the most optimal collateral_token to be liquidated .. or is the liquidator indifferent?
-        l = list(collateral_tokens)
-        if len(l) > 0:
-            collateral_token = list(collateral_tokens)[0]
-            liquidated_borrowings_amount += compute_borrowings_to_be_liquidated(
-                risk_adjusted_collateral_usd=risk_adjusted_collateral_usd,
-                borrowings_usd=borrowings_usd,
-                borrowings_token_price=prices[borrowings_token],
-                collateral_token_collateral_factor=COLLATERAL_FACTORS[collateral_token],
-                collateral_token_liquidation_bonus=LIQUIDATION_BONUSES[
-                    collateral_token
-                ],
-            )
+        #         print(user, collateral_tokens, health_factor, borrowings_usd, risk_adjusted_collateral_usd)
+        collateral_token = list(collateral_tokens)[0]
+        liquidated_borrowings_amount += compute_borrowings_to_be_liquidated(
+            risk_adjusted_collateral_usd=risk_adjusted_collateral_usd,
+            borrowings_usd=borrowings_usd,
+            borrowings_token_price=prices[borrowings_token],
+            collateral_token_collateral_factor=COLLATERAL_FACTORS[collateral_token],
+            collateral_token_liquidation_bonus=LIQUIDATION_BONUSES[collateral_token],
+        )
     return liquidated_borrowings_amount
 
 
@@ -158,6 +176,20 @@ def decimal_range(start: decimal.Decimal, stop: decimal.Decimal, step: decimal.D
     while start < stop:
         yield start
         start += step
+
+
+def simulate_liquidations_under_absolute_price_change(
+    prices: classes.Prices,
+    collateral_token: str,
+    collateral_token_price: decimal.Decimal,
+    state: classes.State,
+    borrowings_token: str,
+) -> decimal.Decimal:
+    changed_prices = copy.deepcopy(prices.prices)
+    changed_prices[collateral_token] = collateral_token_price
+    return compute_max_liquidated_amount(
+        state=state, prices=changed_prices, borrowings_token=borrowings_token
+    )
 
 
 def simulate_liquidations_under_price_change(
@@ -175,25 +207,40 @@ def simulate_liquidations_under_price_change(
 
 
 def update_graph_data():
-    prices = classes.Prices()
     params = st.session_state["parameters"]
-    print(
-        "PARAMS CHECK INSIDE GRAPH UPDATE\n",
-        params,
-        params["X_AXIS_DESC"],
-        params["Y_AXIS_DESC"],
+
+    data = pandas.DataFrame(
+        {
+            "collateral_token_price_multiplier": [
+                x
+                for x in decimal_range(
+                    # TODO: make it dependent on the collateral token .. use prices.prices[COLLATERAL_TOKEN]
+                    start=decimal.Decimal("1000"),
+                    stop=decimal.Decimal("3000"),
+                    # TODO: make it dependent on the collateral token
+                    step=decimal.Decimal("50"),
+                )
+            ]
+        },
     )
-    st.session_state.data[params["X_AXIS_DESC"]] = st.session_state.data[
-        params["X_AXIS_DESC"]
-    ].map(decimal.Decimal)
-    st.session_state.data[params["Y_AXIS_DESC"]] = st.session_state.data[
-        params["X_AXIS_DESC"]
+    # TOOD: needed?
+    # data['collateral_token_price_multiplier'] = data['collateral_token_price_multiplier'].map(decimal.Decimal)
+    data["max_borrowings_to_be_liquidated"] = data[
+        "collateral_token_price_multiplier"
     ].apply(
-        lambda x: simulate_liquidations_under_price_change(
-            prices=prices,
+        lambda x: simulate_liquidations_under_absolute_price_change(
+            prices=st.session_state.prices,
             collateral_token=params["COLLATERAL_TOKEN"],
-            collateral_token_price_multiplier=x,
+            collateral_token_price=x,
             state=st.session_state.state,
             borrowings_token=params["BORROWINGS_TOKEN"],
         )
     )
+
+    # TODO
+    data["max_borrowings_to_be_liquidated_at_interval"] = (
+        data["max_borrowings_to_be_liquidated"].diff().abs()
+    )
+    # TODO: drops also other NaN, if there are any
+    data.dropna(inplace=True)
+    st.session_state["data"] = data
