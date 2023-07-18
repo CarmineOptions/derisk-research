@@ -20,27 +20,26 @@ class Prices:
         self.get_prices()
 
     def get_prices(self):
-        token_ids = ""
-        for token in self.tokens:
-            token_ids += f"{token[0]},"
+        token_ids = "".join(f"{token[0]}," for token in self.tokens)
         url = f"https://api.coingecko.com/api/v3/simple/price?ids={token_ids}&vs_currencies={self.vs_currency}"
         response = requests.get(url)
-        if response.status_code == 200:
-            data = response.json()
-            for token in self.tokens:
-                (id, symbol) = token
-                self.prices[symbol] = decimal.Decimal(data[id][self.vs_currency])
-        else:
+        if response.status_code != 200:
             raise Exception(
                 f"Failed getting prices, status code {response.status_code}"
             )
+        data = response.json()
+        for token in self.tokens:
+            (id, symbol) = token
+            self.prices[symbol] = decimal.Decimal(data[id][self.vs_currency])
 
     def get_by_symbol(self, symbol):
+        symbol = constants.ztoken_to_token(symbol)
         if symbol in self.prices:
             return self.prices[symbol]
         raise Exception(f"Unknown symbol {symbol}")
 
     def to_dollars(self, n, symbol):
+        symbol = constants.ztoken_to_token(symbol)
         try:
             price = self.prices[symbol]
             decimals = constants.get_decimals(symbol)
@@ -50,9 +49,7 @@ class Prices:
 
     def to_dollars_pretty(self, n, symbol):
         v = self.to_dollars(n, symbol)
-        if abs(v) < 0.00001:
-            return "$0"
-        return f"${v:.5f}"
+        return "$0" if abs(v) < 0.00001 else f"${v:.5f}"
 
 
 # TODO: convert numbers/amounts (divide by sth)
@@ -82,20 +79,40 @@ class UserTokenState:
     We are making a simplifying assumption that when collateral is enabled, all
     deposits of the given token are considered as collateral.
     """
-
-    # TODO: make it token-dependent (advanced solution: fetch token prices in $ -> round each token's
-    #   balance e.g. to the nearest cent)
-    MAX_ROUNDING_ERROR = decimal.Decimal("1")
-
+    prices = Prices()
+    prices.get_prices()
+    MAX_ROUNDING_ERRORS = { 
+        "ETH": decimal.Decimal('1') / (prices.get_by_symbol('ETH') * decimal.Decimal('100')) * decimal.Decimal('1e18'), 
+        "wBTC": decimal.Decimal('1') / (prices.get_by_symbol('wBTC') * decimal.Decimal('100')) * decimal.Decimal('1e8'),
+        "USDC": decimal.Decimal('1') / (prices.get_by_symbol('USDC') * decimal.Decimal('100')) * decimal.Decimal('1e6'), 
+        "DAI": decimal.Decimal('1') / (prices.get_by_symbol('DAI') * decimal.Decimal('100')) * decimal.Decimal('1e18'),
+        "USDT": decimal.Decimal('1') / (prices.get_by_symbol('USDT') * decimal.Decimal('100')) * decimal.Decimal('1e6'),
+    }
+    
+    
     def __init__(self, token: str) -> None:
         self.token: str = token
         self.deposit: decimal.Decimal = decimal.Decimal("0")
         self.collateral_enabled: bool = False
         self.borrowings: decimal.Decimal = decimal.Decimal("0")
+        self.z_token: bool = token[0] == "z"
+
+    def update_borrowings(self, raw_amount: decimal.Decimal):
+        self.borrowings += raw_amount
+        if (
+            -self.MAX_ROUNDING_ERRORS[self.token]
+            < self.borrowings
+            < self.MAX_ROUNDING_ERRORS[self.token]
+        ):
+            self.borrowings = decimal.Decimal("0")
 
     def update_deposit(self, raw_amount: decimal.Decimal):
         self.deposit += raw_amount
-        if -self.MAX_ROUNDING_ERROR < self.deposit < self.MAX_ROUNDING_ERROR:
+        if (
+            -self.MAX_ROUNDING_ERRORS[self.token]
+            < self.deposit
+            < self.MAX_ROUNDING_ERRORS[self.token]
+        ):
             self.deposit = decimal.Decimal("0")
 
 
@@ -111,6 +128,11 @@ class UserState:
             "USDC": UserTokenState("USDC"),
             "DAI": UserTokenState("DAI"),
             "USDT": UserTokenState("USDT"),
+            "zETH": UserTokenState("zETH"),
+            "zWBTC": UserTokenState("zWBTC"),
+            "zUSDC": UserTokenState("zUSDC"),
+            "zDAI": UserTokenState("zDAI"),
+            "zUSDT": UserTokenState("zUSDT"),
         }
         # TODO: implement healt_factor
         # TODO: use decimal
@@ -131,12 +153,12 @@ class UserState:
     def borrowing(
         self, token: str, raw_amount: decimal.Decimal, face_amount: decimal.Decimal
     ):
-        self.token_states[token].borrowings += raw_amount
+        self.token_states[token].update_borrowings(raw_amount)
 
     def repayment(
         self, token: str, raw_amount: decimal.Decimal, face_amount: decimal.Decimal
     ):
-        self.token_states[token].borrowings -= raw_amount
+        self.token_states[token].update_borrowings(-raw_amount)
 
     def liquidation(
         self,
@@ -146,7 +168,7 @@ class UserState:
         collateral_token: decimal.Decimal,
         collateral_raw_amount: decimal.Decimal,
     ):
-        self.token_states[debt_token].borrowings -= debt_raw_amount
+        self.token_states[debt_token].update_borrowings(-debt_raw_amount)
         self.token_states[collateral_token].update_deposit(-collateral_raw_amount)
 
 
@@ -164,7 +186,9 @@ class State:
         "Repayment": "process_repayment_event",
         "Liquidation": "process_liquidation_event",
         "AccumulatorsSync": "process_accumulators_sync_event",
+        "Transfer": "process_transfer_event",
     }
+    USER = '0x204c44e83f63803bcae77406aa749636d23d3c914e4aa9c84f89f45bad0f844'
 
     def __init__(self) -> None:
         self.user_states: collections.defaultdict = collections.defaultdict(UserState)
@@ -190,6 +214,9 @@ class State:
         # TODO: sanity checks/asserts?
         raw_amount = face_amount / self.accumulator_states[token].lending_accumulator
         self.user_states[user].deposit(token=token, raw_amount=raw_amount)
+        # TODO
+        if user == self.USER:
+            print('dep', token, raw_amount)
 
     def process_withdrawal_event(self, event: pandas.Series) -> None:
         # The order of the arguments is: `user`, `token`, `face_amount`.
@@ -198,18 +225,27 @@ class State:
         face_amount = decimal.Decimal(str(int(event["data"][2], base=16)))
         raw_amount = face_amount / self.accumulator_states[token].lending_accumulator
         self.user_states[user].withdrawal(token=token, raw_amount=raw_amount)
+        # TODO
+        if user == self.USER:
+            print('wit', token, raw_amount)
 
     def process_collateral_enabled_event(self, event: pandas.Series) -> None:
         # The order of the arguments is: `user`, `token`.
         user = event["data"][0]
         token = constants.get_symbol(event["data"][1])
         self.user_states[user].collateral_enabled(token=token)
+        # TODO
+        if user == self.USER:
+            print('colena', token)
 
     def process_collateral_disabled_event(self, event: pandas.Series) -> None:
         # The order of the arguments is: `user`, `token`.
         user = event["data"][0]
         token = constants.get_symbol(event["data"][1])
         self.user_states[user].collateral_disabled(token=token)
+        # TODO
+        if user == self.USER:
+            print('coldis', token)
 
     def process_borrowing_event(self, event: pandas.Series) -> None:
         # The order of the arguments is: `user`, `token`, `raw_amount`, `face_amount`.
@@ -224,6 +260,9 @@ class State:
             raw_amount=raw_amount,
             face_amount=face_amount,
         )
+        # TODO
+        if user == self.USER:
+            print('bor', token, raw_amount)
 
     def process_repayment_event(self, event: pandas.Series) -> None:
         # The order of the arguments is: `repayer`, `beneficiary`, `token`, `raw_amount`,
@@ -240,6 +279,9 @@ class State:
             raw_amount=raw_amount,
             face_amount=face_amount,
         )
+        # TODO
+        if beneficiary == self.USER:
+            print('rep', token, raw_amount)
 
     def process_liquidation_event(self, event: pandas.Series) -> None:
         # The order of the arguments is: `liquidator`, `user`, `debt_token`, `debt_raw_amount`,
@@ -264,6 +306,9 @@ class State:
             collateral_token=collateral_token,
             collateral_raw_amount=collateral_raw_amount,
         )
+        # TODO
+        if user == self.USER:
+            print('liq', debt_token, debt_raw_amount, collateral_token, collateral_raw_amount)
 
     def process_accumulators_sync_event(self, event: pandas.Series) -> None:
         # The order of the arguments is: `token`, `lending_accumulator`, `debt_accumulator`.
@@ -274,3 +319,24 @@ class State:
             lending_accumulator=lending_accumulator,
             debt_accumulator=debt_accumulator,
         )
+
+    def process_transfer_event(self, event: pandas.Series) -> None:
+        # The order of the arguments is: `from_`, `to`, `value`.
+        empty_address = "0x0"
+        # token contract emitted this event
+        ztoken = constants.get_symbol(event["from_address"])
+        # zTokens share accumulator value with token
+        token = constants.ztoken_to_token(ztoken)
+        from_ = event["data"][0]
+        to = event["data"][1]
+        value = decimal.Decimal(str(int(event["data"][2], base=16)))
+        raw_amount = value / self.accumulator_states[token].lending_accumulator
+
+        # TODO
+        if from_ == self.USER or to == self.USER:
+            print('tra', token, ztoken, debt_raw_amount, raw_amount)
+
+        if from_ != empty_address:
+            self.user_states[from_].withdrawal(token=ztoken, raw_amount=raw_amount)
+        if to != empty_address:
+            self.user_states[to].deposit(token=ztoken, raw_amount=raw_amount)
