@@ -88,11 +88,11 @@ class UserTokenState:
     # TODO: make it token-dependent (advanced solution: fetch token prices in $ -> round each token's
     #   balance e.g. to the nearest cent)
     MAX_ROUNDING_ERRORS = {
-        "ETH": decimal.Decimal("1e13"),
-        "wBTC": decimal.Decimal("1e2"),
-        "USDC": decimal.Decimal("1e4"),
-        "DAI": decimal.Decimal("1e16"),
-        "USDT": decimal.Decimal("1e4"),
+        "ETH": decimal.Decimal('0.5') * decimal.Decimal('1e13'),
+        "wBTC": decimal.Decimal('1e2'),
+        "USDC": decimal.Decimal('1e4'),
+        "DAI": decimal.Decimal('1e16'),
+        "USDT": decimal.Decimal('1e4'),
     }
 
     def __init__(self, token: str) -> None:
@@ -193,6 +193,7 @@ class State:
         "AccumulatorsSync": "process_accumulators_sync_event",
         "Transfer": "process_transfer_event",
     }
+    USER = '0x204c44e83f63803bcae77406aa749636d23d3c914e4aa9c84f89f45bad0f844'
 
     def __init__(self) -> None:
         self.user_states: collections.defaultdict = collections.defaultdict(UserState)
@@ -219,8 +220,8 @@ class State:
         raw_amount = face_amount / self.accumulator_states[token].lending_accumulator
         self.user_states[user].deposit(token=token, raw_amount=raw_amount)
         # TODO
-        if user == "0x4a587e33647247ed71d178b25155a27463765f7c113f05904126692d348cab1":
-            print("dep", token, raw_amount)
+        if user == self.USER:
+            print('dep', token, raw_amount)
 
     def process_withdrawal_event(self, event: pandas.Series) -> None:
         # The order of the arguments is: `user`, `token`, `face_amount`.
@@ -230,8 +231,8 @@ class State:
         raw_amount = face_amount / self.accumulator_states[token].lending_accumulator
         self.user_states[user].withdrawal(token=token, raw_amount=raw_amount)
         # TODO
-        if user == "0x4a587e33647247ed71d178b25155a27463765f7c113f05904126692d348cab1":
-            print("wit", token, raw_amount)
+        if user == self.USER:
+            print('wit', token, raw_amount)
 
     def process_collateral_enabled_event(self, event: pandas.Series) -> None:
         # The order of the arguments is: `user`, `token`.
@@ -239,8 +240,8 @@ class State:
         token = constants.get_symbol(event["data"][1])
         self.user_states[user].collateral_enabled(token=token)
         # TODO
-        if user == "0x4a587e33647247ed71d178b25155a27463765f7c113f05904126692d348cab1":
-            print("colena", token)
+        if user == self.USER:
+            print('colena', token)
 
     def process_collateral_disabled_event(self, event: pandas.Series) -> None:
         # The order of the arguments is: `user`, `token`.
@@ -248,8 +249,8 @@ class State:
         token = constants.get_symbol(event["data"][1])
         self.user_states[user].collateral_disabled(token=token)
         # TODO
-        if user == "0x4a587e33647247ed71d178b25155a27463765f7c113f05904126692d348cab1":
-            print("coldis", token)
+        if user == self.USER:
+            print('coldis', token)
 
     def process_borrowing_event(self, event: pandas.Series) -> None:
         # The order of the arguments is: `user`, `token`, `raw_amount`, `face_amount`.
@@ -265,8 +266,8 @@ class State:
             face_amount=face_amount,
         )
         # TODO
-        if user == "0x4a587e33647247ed71d178b25155a27463765f7c113f05904126692d348cab1":
-            print("bor", token, raw_amount)
+        if user == self.USER:
+            print('bor', token, raw_amount)
 
     def process_repayment_event(self, event: pandas.Series) -> None:
         # The order of the arguments is: `repayer`, `beneficiary`, `token`, `raw_amount`,
@@ -284,11 +285,8 @@ class State:
             face_amount=face_amount,
         )
         # TODO
-        if (
-            beneficiary
-            == "0x4a587e33647247ed71d178b25155a27463765f7c113f05904126692d348cab1"
-        ):
-            print("rep", token, raw_amount)
+        if beneficiary == self.USER:
+            print('rep', token, raw_amount)
 
     def process_liquidation_event(self, event: pandas.Series) -> None:
         # The order of the arguments is: `liquidator`, `user`, `debt_token`, `debt_raw_amount`,
@@ -314,14 +312,8 @@ class State:
             collateral_raw_amount=collateral_raw_amount,
         )
         # TODO
-        if user == "0x4a587e33647247ed71d178b25155a27463765f7c113f05904126692d348cab1":
-            print(
-                "liq",
-                debt_token,
-                debt_raw_amount,
-                collateral_token,
-                collateral_raw_amount,
-            )
+        if user == self.USER:
+            print('liq', debt_token, debt_raw_amount, collateral_token, collateral_raw_amount)
 
     def process_accumulators_sync_event(self, event: pandas.Series) -> None:
         # The order of the arguments is: `token`, `lending_accumulator`, `debt_accumulator`.
@@ -344,6 +336,10 @@ class State:
         to = event["data"][1]
         value = decimal.Decimal(str(int(event["data"][2], base=16)))
         raw_amount = value / self.accumulator_states[token].lending_accumulator
+
+        # TODO
+        if from_ == self.USER or to == self.USER:
+            print('tra', token, ztoken, debt_raw_amount, raw_amount)
 
         if from_ != empty_address:
             self.user_states[from_].withdrawal(token=ztoken, raw_amount=raw_amount)
