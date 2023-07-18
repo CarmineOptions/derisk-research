@@ -1,5 +1,6 @@
-import copy
 from typing import Dict
+import asyncio
+import copy
 import decimal
 
 import pandas
@@ -210,7 +211,7 @@ def update_graph_data():
 
     data = pandas.DataFrame(
         {
-            "collateral_token_price_multiplier": [
+            "collateral_token_price": [
                 x
                 for x in decimal_range(
                     # TODO: make it dependent on the collateral token .. use prices.prices[COLLATERAL_TOKEN]
@@ -225,7 +226,7 @@ def update_graph_data():
     # TOOD: needed?
     # data['collateral_token_price_multiplier'] = data['collateral_token_price_multiplier'].map(decimal.Decimal)
     data["max_borrowings_to_be_liquidated"] = data[
-        "collateral_token_price_multiplier"
+        "collateral_token_price"
     ].apply(
         lambda x: simulate_liquidations_under_absolute_price_change(
             prices=st.session_state.prices,
@@ -246,7 +247,7 @@ def update_graph_data():
     # Setup the AMM.
     jediswap = swap_liquidity.SwapAmm('JediSwap')
     jediswap.add_pool('ETH', 'USDC', '0x04d0390b777b424e43839cd1e744799f3de6c176c7e32c1812a41dbd9c19db6a')
-    await jediswap.get_balance()
+    asyncio.run(jediswap.get_balance())
 
     data['amm_borrowings_token_supply'] = \
         data['collateral_token_price'].apply(
