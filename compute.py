@@ -202,8 +202,9 @@ def get_amm_supply_at_price(
         collateral_token: str,
         collateral_token_price: decimal.Decimal,
         borrowings_token: str,
+        amm: swap_liquidity.SwapAmm,
     ) -> decimal.Decimal:
-        return jediswap.get_pool(collateral_token, borrowings_token).supply_at_price(borrowings_token, collateral_token_price)
+        return amm.get_pool(collateral_token, borrowings_token).supply_at_price(borrowings_token, collateral_token_price)
 
 
 def update_graph_data():
@@ -255,6 +256,7 @@ def update_graph_data():
                 collateral_token = st.session_state["parameters"]["COLLATERAL_TOKEN"],
                 collateral_token_price = x,
                 borrowings_token = st.session_state["parameters"]["BORROWINGS_TOKEN"],
+                amm = jediswap,
             )
         )
 
