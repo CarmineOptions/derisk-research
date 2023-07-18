@@ -3,4 +3,4 @@ __pycache__
 .vscode
 
 # do not store persistent state
-persistent-state-*.pckl
+persistent-state.pckl

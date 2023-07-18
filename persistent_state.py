@@ -1,5 +1,6 @@
 import os
 import pickle
+import subprocess
 import sys
 import pandas
 
@@ -30,6 +31,23 @@ def load_persistent_state():
             print("No matching file found.")
 
 
+def check_gsutil_exists():
+    try:
+        subprocess.check_output(["gsutil", "--version"])
+        return True
+    except subprocess.CalledProcessError:
+        return False
+
+
+def upload_file_to_bucket():
+    file_path = "persistent-state.pckl"
+    bucket_name = "derisk-persistent-state"
+    destination_path = "persistent-state.pckl"
+    command = ["gsutil", "-m", "cp", "-c"]
+    command.extend([file_path, f"gs://{bucket_name}/{destination_path}"])
+    subprocess.call(command)
+
+
 def main():
     # Check if the number argument is provided
     if len(sys.argv) < 2:
@@ -44,6 +62,12 @@ def main():
         persistent_block_number = int(sys.argv[1])
     except ValueError:
         print("Invalid persistent block number:", number_str)
+        sys.exit(1)
+
+    if check_gsutil_exists():
+        print("gsutil found")
+    else:
+        print("did not find gsutil, aborting")
         sys.exit(1)
 
     connection = db.establish_connection()
@@ -72,23 +96,25 @@ def main():
 
     zklend_events.set_index("id", inplace=True)
 
-    # store all persistent_state files that existed before creating new one
-    old_persistent_states = glob.glob("persistent-state-*.pckl")
+    file_name = "persistent-state.pckl"
 
     state = classes.State()
     for _, event in zklend_events.iterrows():
         state.process_event(event=event)
 
-    file_name = f"persistent-state-{persistent_block_number}.pckl"
+    if os.path.isfile(file_name):
+        os.remove(file_name)
+
+    print("Deleted old persistent state")
 
     with open(file_name, "wb") as out_file:
         pickle.dump(state, out_file)
 
-    # after creating new delete old ones
-    for file_name in old_persistent_states:
-        os.remove(file_name)
+    print("Created new persistent_state with latest block", persistent_block_number)
 
-    print("Updated persistent_state to", persistent_block_number)
+    upload_file_to_bucket()
+
+    print("Uploaded new state to GCP")
 
 
 if __name__ == "__main__":
