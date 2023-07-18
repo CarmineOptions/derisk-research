@@ -40,30 +40,30 @@ else:
 # ~Variables~ 
 
 # Collateral Amount in Asset Price (in USD)
-C = collateral_amount * prices[collateral_input]
+collateral = collateral_amount * prices[collateral_input]
 
 # Collateral Liquidated 
-CL = (loan_input - C * prices.to_dollars(collateral_input) * collateral_factor) / (
+collateral_liquid = (loan_input - collateral * prices.to_dollars(collateral_input) * collateral_factor) / (
     (prices.to_dollars(collateral_input) * (1 - bonus)) - (prices.to_dollars(collateral_input) * collateral_factor) 
 )
 # Price of Asset in USD
-E = prices.to_dollars(collateral_input) 
+asset_price = prices.to_dollars(collateral_input) 
 
 
 
 # Health: Calculated as collateral value divided by loan value 
 def health():
-    health_0 = (C * E * collateral_factor) / loan_input 
+    health_0 = (collateral * asset_price * collateral_factor) / loan_input 
     print("Health", health_0)
 
 
 # Health AFTER Liquidation 
 def health_after_liquidation():
-    health_1 = ((C - CL) * E * collateral_factor) / (loan_input - CL * E * (1 + bonus))
+    health_1 = ((collateral - collateral_liquid) * asset_price * collateral_factor) / (loan_input - collateral_liquid * asset_price * (1 + bonus))
 
 #Simulating 
 for ex_collateral_liquidated in [0.3, 0.35, 0.4, 0.45, 0.5]:
-    health_2 = ((C - CL) * E * collateral_factor) / (loan_input - E * (CL * (1 + bonus)))
+    health_2 = ((collateral - collateral_liquid) * asset_price * collateral_factor) / (loan_input - asset_price * (collateral_liquid * (1 + bonus)))
     gain = (collateral_amount * prices.get_prices(collateral_input)) * ex_collateral_liquidated * bonus
     print("liquidating", ex_collateral_liquidated, "\nhealth:", health_2, "\ngain:", gain)
 
