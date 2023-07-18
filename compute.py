@@ -252,9 +252,9 @@ def update_graph_data():
     data['amm_borrowings_token_supply'] = \
         data['collateral_token_price'].apply(
             lambda x: get_amm_supply_at_price(
-                collateral_token = COLLATERAL_TOKEN,
+                collateral_token = st.session_state["parameters"]["COLLATERAL_TOKEN"],
                 collateral_token_price = x,
-                borrowings_token = BORROWINGS_TOKEN,
+                borrowings_token = st.session_state["parameters"]["BORROWINGS_TOKEN"],
             )
         )
 
