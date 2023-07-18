@@ -3,8 +3,11 @@ from typing import Dict
 import decimal
 
 import pandas
-import classes
 import streamlit as st
+
+import classes
+import swap_liquidity
+
 
 # Source: Starkscan, e.g.
 # https://starkscan.co/token/0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7 for ETH.
@@ -41,36 +44,30 @@ def compute_risk_adjusted_collateral_usd(
     user_state: classes.UserState,
     prices: Dict[str, decimal.Decimal],
 ) -> decimal.Decimal:
-    sum = 0
-    for token, token_state in user_state.token_states.items():
-        if token_state.z_token:
-            continue
-        sum += (
-            token_state.collateral_enabled
-            * token_state.deposit
-            * COLLATERAL_FACTORS[token]
-            * prices[token]
-            # TODO: perform the conversion using TOKEN_DECIMAL_FACTORS sooner (in `UserTokenState`?)?
-            / TOKEN_DECIMAL_FACTORS[token]
-        )
-    return sum
+    return sum(
+        token_state.collateral_enabled
+        * token_state.deposit
+        * COLLATERAL_FACTORS[token]
+        * prices[token]
+        # TODO: perform the conversion using TOKEN_DECIMAL_FACTORS sooner (in `UserTokenState`?)?
+        / TOKEN_DECIMAL_FACTORS[token]
+        for token, token_state in user_state.token_states.items()
+        if not token_state.z_token
+    )
 
 
 def compute_borrowings_usd(
     user_state: classes.UserState,
     prices: Dict[str, decimal.Decimal],
 ) -> decimal.Decimal:
-    sum = 0
-    for token, token_state in user_state.token_states.items():
-        if token_state.z_token:
-            continue
-        sum += (
-            token_state.borrowings
-            * prices[token]
-            # TODO: perform the conversion using TOKEN_DECIMAL_FACTORS sooner (in `UserTokenState`?)?
-            / TOKEN_DECIMAL_FACTORS[token]
-        )
-    return sum
+    return sum(
+        token_state.borrowings
+        * prices[token]
+        # TODO: perform the conversion using TOKEN_DECIMAL_FACTORS sooner (in `UserTokenState`?)?
+        / TOKEN_DECIMAL_FACTORS[token]
+        for token, token_state in user_state.token_states.items()
+        if not token_state.z_token
+    )
 
 
 def compute_health_factor(
@@ -200,6 +197,14 @@ def simulate_liquidations_under_price_change(
     )
 
 
+def get_amm_supply_at_price(
+        collateral_token: str,
+        collateral_token_price: decimal.Decimal,
+        borrowings_token: str,
+    ) -> decimal.Decimal:
+        return jediswap.get_pool(collateral_token, borrowings_token).supply_at_price(borrowings_token, collateral_token_price)
+
+
 def update_graph_data():
     params = st.session_state["parameters"]
 
@@ -237,4 +242,19 @@ def update_graph_data():
     )
     # TODO: drops also other NaN, if there are any
     data.dropna(inplace=True)
+
+    # Setup the AMM.
+    jediswap = swap_liquidity.SwapAmm('JediSwap')
+    jediswap.add_pool('ETH', 'USDC', '0x04d0390b777b424e43839cd1e744799f3de6c176c7e32c1812a41dbd9c19db6a')
+    await jediswap.get_balance()
+
+    data['amm_borrowings_token_supply'] = \
+        data['collateral_token_price'].apply(
+            lambda x: get_amm_supply_at_price(
+                collateral_token = COLLATERAL_TOKEN,
+                collateral_token_price = x,
+                borrowings_token = BORROWINGS_TOKEN,
+            )
+        )
+
     st.session_state["data"] = data
