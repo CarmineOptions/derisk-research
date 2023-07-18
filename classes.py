@@ -20,20 +20,17 @@ class Prices:
         self.get_prices()
 
     def get_prices(self):
-        token_ids = ""
-        for token in self.tokens:
-            token_ids += f"{token[0]},"
+        token_ids = "".join(f"{token[0]}," for token in self.tokens)
         url = f"https://api.coingecko.com/api/v3/simple/price?ids={token_ids}&vs_currencies={self.vs_currency}"
         response = requests.get(url)
-        if response.status_code == 200:
-            data = response.json()
-            for token in self.tokens:
-                (id, symbol) = token
-                self.prices[symbol] = decimal.Decimal(data[id][self.vs_currency])
-        else:
+        if response.status_code != 200:
             raise Exception(
                 f"Failed getting prices, status code {response.status_code}"
             )
+        data = response.json()
+        for token in self.tokens:
+            (id, symbol) = token
+            self.prices[symbol] = decimal.Decimal(data[id][self.vs_currency])
 
     def get_by_symbol(self, symbol):
         symbol = constants.ztoken_to_token(symbol)
@@ -52,9 +49,7 @@ class Prices:
 
     def to_dollars_pretty(self, n, symbol):
         v = self.to_dollars(n, symbol)
-        if abs(v) < 0.00001:
-            return "$0"
-        return f"${v:.5f}"
+        return "$0" if abs(v) < 0.00001 else f"${v:.5f}"
 
 
 # TODO: convert numbers/amounts (divide by sth)
@@ -84,17 +79,17 @@ class UserTokenState:
     We are making a simplifying assumption that when collateral is enabled, all
     deposits of the given token are considered as collateral.
     """
-
-    # TODO: make it token-dependent (advanced solution: fetch token prices in $ -> round each token's
-    #   balance e.g. to the nearest cent)
-    MAX_ROUNDING_ERRORS = {
-        "ETH": decimal.Decimal('0.5') * decimal.Decimal('1e13'),
-        "wBTC": decimal.Decimal('1e2'),
-        "USDC": decimal.Decimal('1e4'),
-        "DAI": decimal.Decimal('1e16'),
-        "USDT": decimal.Decimal('1e4'),
+    prices = Prices()
+    prices.get_prices()
+    MAX_ROUNDING_ERRORS = { 
+        "ETH": decimal.Decimal('1') / (prices.get_by_symbol('ETH') * decimal.Decimal('100')) * decimal.Decimal('1e18'), 
+        "wBTC": decimal.Decimal('1') / (prices.get_by_symbol('wBTC') * decimal.Decimal('100')) * decimal.Decimal('1e8'),
+        "USDC": decimal.Decimal('1') / (prices.get_by_symbol('USDC') * decimal.Decimal('100')) * decimal.Decimal('1e6'), 
+        "DAI": decimal.Decimal('1') / (prices.get_by_symbol('DAI') * decimal.Decimal('100')) * decimal.Decimal('1e18'),
+        "USDT": decimal.Decimal('1') / (prices.get_by_symbol('USDT') * decimal.Decimal('100')) * decimal.Decimal('1e6'),
     }
-
+    
+    
     def __init__(self, token: str) -> None:
         self.token: str = token
         self.deposit: decimal.Decimal = decimal.Decimal("0")
