@@ -61,6 +61,15 @@ class Pool(Pair):
         self.update_converted_balance()
         return tokens_paid
 
+    def supply_at_price(self, symbol: str, initial_price: Decimal):
+        # assuming constant product function
+        constant = (
+            Decimal(self.tokens[0].balance_base) / (Decimal('10') ** Decimal(f'{self.tokens[0].decimals}'))
+        ) * (
+            Decimal(self.tokens[1].balance_base) / (Decimal('10') ** Decimal(f'{self.tokens[1].decimals}'))
+        )
+        return (initial_price * constant) ** Decimal('0.5') * (Decimal('1') - Decimal('0.95') ** Decimal('0.5'))
+
 
 class SwapAmm(Pair):
     def __init__(self, name):
