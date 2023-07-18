@@ -41,42 +41,36 @@ def compute_risk_adjusted_collateral_usd(
     user_state: classes.UserState,
     prices: Dict[str, decimal.Decimal],
 ) -> decimal.Decimal:
-    return sum(
-        token_state.collateral_enabled
-        * token_state.deposit
-        * COLLATERAL_FACTORS[token]
-        * prices[token]
-        # TODO: perform the conversion using TOKEN_DECIMAL_FACTORS sooner (in `UserTokenState`?)?
-        / TOKEN_DECIMAL_FACTORS[token]
-        for token, token_state in user_state.token_states.items()
-    )
-
-
-def compute_risk_adjusted_collateral_usd(
-    user_state: classes.UserState,
-    prices: Dict[str, decimal.Decimal],
-) -> decimal.Decimal:
-    return sum(
-        token_state.collateral_enabled
-        * token_state.deposit
-        * COLLATERAL_FACTORS[token]
-        * prices[token]
-        # TODO: perform the conversion using TOKEN_DECIMAL_FACTORS sooner (in `UserTokenState`?)?
-        / TOKEN_DECIMAL_FACTORS[token]
-        for token, token_state in user_state.token_states.items()
-    )
+    sum = 0
+    for token, token_state in user_state.token_states.items():
+        if token_state.z_token:
+            continue
+        sum += (
+            token_state.collateral_enabled
+            * token_state.deposit
+            * COLLATERAL_FACTORS[token]
+            * prices[token]
+            # TODO: perform the conversion using TOKEN_DECIMAL_FACTORS sooner (in `UserTokenState`?)?
+            / TOKEN_DECIMAL_FACTORS[token]
+        )
+    return sum
 
 
 def compute_borrowings_usd(
     user_state: classes.UserState,
     prices: Dict[str, decimal.Decimal],
 ) -> decimal.Decimal:
-    return sum(
-        token_state.borrowings * prices[token]
-        # TODO: perform the conversion using TOKEN_DECIMAL_FACTORS sooner (in `UserTokenState`?)?
-        / TOKEN_DECIMAL_FACTORS[token]
-        for token, token_state in user_state.token_states.items()
-    )
+    sum = 0
+    for token, token_state in user_state.token_states.items():
+        if token_state.z_token:
+            continue
+        sum += (
+            token_state.borrowings
+            * prices[token]
+            # TODO: perform the conversion using TOKEN_DECIMAL_FACTORS sooner (in `UserTokenState`?)?
+            / TOKEN_DECIMAL_FACTORS[token]
+        )
+    return sum
 
 
 def compute_health_factor(
