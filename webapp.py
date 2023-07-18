@@ -85,9 +85,12 @@ def main():
 
     if "max_borrowings_to_be_liquidated_at_interval" in st.session_state.data:
         figure = plotly.express.bar(
-            st.session_state.data,
-            x="collateral_token_price_multiplier",
-            y="max_borrowings_to_be_liquidated_at_interval",
+            st.session_state.data.astype(float),
+            x = 'collateral_token_price',
+            y = ['max_borrowings_to_be_liquidated_at_interval', 'amm_borrowings_token_supply'],
+            title = f'Potentially liquidatable amounts of {st.session_state["parameters"]["BORROWINGS_TOKEN"]} and the corresponding supply',
+            barmode = 'overlay',
+            opacity = 0.65,
         )
         st.plotly_chart(figure)
 
