@@ -55,7 +55,4 @@ def ztoken_to_token(symbol):
     if symbol == "zWBTC":
         # weird exception
         return "wBTC"
-    if symbol.startswith("z"):
-        return symbol[1:]
-    else:
-        return symbol
+    return symbol[1:] if symbol.startswith("z") else symbol
