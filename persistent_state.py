@@ -1,34 +1,37 @@
-import os
 import pickle
 import subprocess
 import sys
+import time
 import pandas
 
 import constants
 import db
 import classes
-import glob
 import streamlit as st
+
+
+LATEST_BLOCK_FILENAME = "persistent-state-keeper.txt"
+
+
+def get_persistent_filename(block_number):
+    return f"persistent-state-{block_number}.pckl"
 
 
 def load_persistent_state():
     if "initial_state" not in st.session_state:
+        t0 = time.time()
         st.session_state["initial_state"] = True
-        matching_files = glob.glob("persistent-state-*.pckl")
-        if matching_files:
-            file_name = matching_files[0]
-            latest_block = int(file_name[len("persistent-state-") : -len(".pckl")])
-            file = open(file_name, "rb")
-            state = pickle.load(file)
-            file.close()
-            if "latest_block" not in st.session_state:
-                st.session_state["latest_block"] = latest_block
-                print("Updated latest block from persistent state to", latest_block)
-            if "state" not in st.session_state:
-                st.session_state["state"] = state
-                print("Updated state from persistent state")
-        else:
-            print("No matching file found.")
+        latest_block = int(open(LATEST_BLOCK_FILENAME, "r").read())
+        file = open(get_persistent_filename(latest_block), "rb")
+        state = pickle.load(file)
+        file.close()
+        if "latest_block" not in st.session_state:
+            st.session_state["latest_block"] = latest_block
+            print("Updated latest block from persistent state to", latest_block)
+        if "state" not in st.session_state:
+            st.session_state["state"] = state
+            print("Updated state from persistent state")
+        print("Updated from persistent state in", time.time() - t0)
 
 
 def check_gsutil_exists():
@@ -39,13 +42,16 @@ def check_gsutil_exists():
         return False
 
 
-def upload_file_to_bucket():
-    file_path = "persistent-state.pckl"
+def upload_file_to_bucket(filename):
     bucket_name = "derisk-persistent-state"
-    destination_path = "persistent-state.pckl"
     command = ["gsutil", "-m", "cp", "-c"]
-    command.extend([file_path, f"gs://{bucket_name}/{destination_path}"])
-    subprocess.call(command)
+    command.extend([filename, f"gs://{bucket_name}/{filename}"])
+    try:
+        subprocess.check_call(command)
+        return True
+    except subprocess.SubprocessError as error:
+        print(error)
+        return False
 
 
 def main():
@@ -96,25 +102,23 @@ def main():
 
     zklend_events.set_index("id", inplace=True)
 
-    file_name = "persistent-state.pckl"
-
     state = classes.State()
     for _, event in zklend_events.iterrows():
         state.process_event(event=event)
 
-    if os.path.isfile(file_name):
-        os.remove(file_name)
-
-    print("Deleted old persistent state")
-
-    with open(file_name, "wb") as out_file:
+    persistent_state_filename = get_persistent_filename(persistent_block_number)
+    with open(persistent_state_filename, "wb") as out_file:
         pickle.dump(state, out_file)
+
+    with open(LATEST_BLOCK_FILENAME, "w") as f:
+        f.write(str(persistent_block_number))
 
     print("Created new persistent_state with latest block", persistent_block_number)
 
-    upload_file_to_bucket()
-
-    print("Uploaded new state to GCP")
+    if upload_file_to_bucket(persistent_state_filename):
+        print("Uploaded new state to GCP")
+    else:
+        print("Failed uploading new state to GCP")
 
 
 if __name__ == "__main__":

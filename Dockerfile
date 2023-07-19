@@ -9,7 +9,9 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
-# persistent state is downloaded from GCP bucket
-RUN wget https://storage.cloud.google.com/derisk-persistent-state/persistent-state.pckl
+# download correct persistent-state
+RUN export LATEST_BLOCK=$(cat /app/persistent-state-keeper.txt) \
+    && export DOWNLOAD_URL="https://storage.cloud.google.com/derisk-persistent-state/persistent-state-$LATEST_BLOCK.pckl" \
+    && wget $DOWNLOAD_URL
 
 CMD ["streamlit", "run", "./webapp.py"]
