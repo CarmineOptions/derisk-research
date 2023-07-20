@@ -1,7 +1,6 @@
 import pickle
 import subprocess
 import sys
-import time
 import pandas
 
 import constants
@@ -18,20 +17,16 @@ def get_persistent_filename(block_number):
 
 
 def load_persistent_state():
-    if "initial_state" not in st.session_state:
-        t0 = time.time()
-        st.session_state["initial_state"] = True
-        latest_block = int(open(LATEST_BLOCK_FILENAME, "r").read())
-        file = open(get_persistent_filename(latest_block), "rb")
-        state = pickle.load(file)
-        file.close()
-        if "latest_block" not in st.session_state:
-            st.session_state["latest_block"] = latest_block
-            print("Updated latest block from persistent state to", latest_block)
-        if "state" not in st.session_state:
-            st.session_state["state"] = state
-            print("Updated state from persistent state")
-        print("Updated from persistent state in", time.time() - t0)
+    latest_block = int(open(LATEST_BLOCK_FILENAME, "r").read())
+    file = open(get_persistent_filename(latest_block), "rb")
+    state = pickle.load(file)
+    file.close()
+    if "latest_block" not in st.session_state:
+        st.session_state["latest_block"] = latest_block
+        print("Updated latest block from persistent state to", latest_block)
+    if "state" not in st.session_state:
+        st.session_state["state"] = state
+        print("Updated state from persistent state")
 
 
 def check_gsutil_exists():
