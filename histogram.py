@@ -5,6 +5,9 @@ import plotly.express as px
 
 
 def visualization():
+    values = st.slider('Select a range of borrowing values:', 0.0, 16000.0, (1.0, 100.0))
+    st.write('Borrowings Range:', values)
+    
     state = st.session_state["state"]
     prices = st.session_state["prices"]
 
@@ -20,9 +23,11 @@ def visualization():
         if token[0] != "z"
     ]
 
+    
     token_data = pandas.DataFrame(tmp)
     token_data["borrowings"] = token_data["borrowings"].astype(float)
-    token_data = token_data[token_data["borrowings"] > 500]
+    token_data = token_data[token_data["borrowings"] > values[0]]
+    token_data = token_data[token_data["borrowings"] < values[1]]
     st.plotly_chart(
         px.histogram(
             token_data,
@@ -35,12 +40,12 @@ def visualization():
                 "USDC": "green",
                 "wBTC": "orange",
             },
-            title="Distribution of all Token Borrowings (Greater than 500)",
+            title="Distribution of all Token Borrowings",
             nbins=100,
         ),
         True,
     )
-
+    """"
     # Comparative Token Distribution (greater than 100)
     token_data2 = pandas.DataFrame(tmp)
     token_data2["borrowings"] = token_data2["borrowings"].astype(float)
@@ -127,13 +132,13 @@ def visualization():
             nbins=100,
         )
     )
-
+    """
     # Comparative Token Distribution (between 0 and 1)
     token_data6 = pandas.DataFrame(tmp)
     token_data6["borrowings"] = token_data6["borrowings"].astype(float)
     token_data6 = token_data6[token_data6["borrowings"] < 1]
     token_data6 = token_data6[token_data6["borrowings"] > 0]
-    st.write(
+    st.plotly_chart(
         px.histogram(
             token_data6,
             x="borrowings",
@@ -147,5 +152,7 @@ def visualization():
             },
             title="Distribution of all Token Borrowings (Between 0 and 1)",
             nbins=100,
-        )
+        ),
+        True,
     )
+    
