@@ -3,3 +3,6 @@ notebook:
 
 app:
 	streamlit run webapp.py
+
+vis_app:
+	streamlit run visualisation_app.py
