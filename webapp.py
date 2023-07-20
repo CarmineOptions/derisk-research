@@ -21,7 +21,26 @@ if "prices" not in st.session_state:
 
 def main():
     st.title("DeRisk")
-    load_state()
+
+    col1, col2, _ = st.columns([1, 1, 3])
+
+    tokens = ("ETH", "wBTC", "USDC", "DAI", "USDT")
+
+    with col1:
+        collateral_token = st.selectbox(
+            label="Select collateral:",
+            options=tokens,
+            index=0,
+        )
+    with col2:
+        borrowings_token = st.selectbox(
+            label="Select loan currency:",
+            options=tokens,
+            index=2,
+        )
+
+    load_state(collateral_token, borrowings_token)
+
     figure = plotly.express.bar(
         st.session_state.data.astype(float),
         x="collateral_token_price",
