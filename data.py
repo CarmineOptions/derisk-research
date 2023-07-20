@@ -17,7 +17,7 @@ from swap_liquidity import SwapAmm
 
 
 def get_events() -> pandas.DataFrame:
-    latest_block = st.session_state.latest_block
+    latest_block = st.session_state["latest_block"]
     print("getting events from block", latest_block)
     # Establish the connection.
     connection = db.establish_connection()
@@ -75,6 +75,7 @@ token_range_mapping = {
 }
 
 
+@st.cache()
 def load_graph_data(collateral_token, borrowings_token):
     data = pandas.DataFrame(
         {"collateral_token_price": token_range_mapping[collateral_token]},
@@ -168,8 +169,7 @@ def bench(msg, start):
     print(f"{msg} --- {round(time.time() - start, 2)}s")
 
 
-def load_state(collateral_token, borrowings_token):
-    print("Loading state for", collateral_token, borrowings_token)
+def load_state():
     t0 = time.time()
     if "state" not in st.session_state and "latest_block" not in st.session_state:
         load_persistent_state()
@@ -181,7 +181,4 @@ def load_state(collateral_token, borrowings_token):
     for _, event in new_events.iterrows():
         st.session_state["state"].process_event(event=event)
     bench("processed new events", t2)
-    t3 = time.time()
-    load_graph_data(collateral_token, borrowings_token)
-    bench("processed graph data", t3)
     bench("full state update", t0)
