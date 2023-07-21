@@ -74,9 +74,11 @@ def main():
 
     small_loans_sample = pd.read_csv("small_loans_sample.csv")
     large_loans_sample = pd.read_csv("large_loans_sample.csv")
+    st.header("Loans with low health factor")
     st.table(small_loans_sample)
+    st.header("Sizeable loans with low health factor")
     st.table(large_loans_sample)
-
+    st.header("Loan size distribution")
     visualization(histogram_data)
 
 
