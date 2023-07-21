@@ -3,3 +3,6 @@ notebook:
 
 app:
 	streamlit run webapp.py
+
+mock_app:
+	streamlit run mock_app.py

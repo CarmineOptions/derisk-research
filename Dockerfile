@@ -7,11 +7,6 @@ COPY requirements.txt .
 
 RUN pip install -r requirements.txt
 
-COPY . .
+COPY mock_app.py ETH-USDC.csv ETH-USDT.csv ETH-DAI.csv wBTC-USDC.csv wBTC-USDT.csv wBTC-DAI.csv ./
 
-# download correct persistent-state
-RUN export LATEST_BLOCK=$(cat /app/persistent-state-keeper.txt) \
-    && export DOWNLOAD_URL="https://storage.googleapis.com/derisk-persistent-state/persistent-state-$LATEST_BLOCK.pckl" \
-    && wget $DOWNLOAD_URL
-
-CMD ["streamlit", "run", "./webapp.py"]
+CMD ["streamlit", "run", "./mock_app.py"]
