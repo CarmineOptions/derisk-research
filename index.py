@@ -29,13 +29,13 @@ def get_range(start, stop, step):
 # TODO: move this somewhere
 def get_pair_range(c, b):
     if c == "ETH" and b == "wBTC":
-        return get_range("0.02", "0.2", "0.0015")
+        return get_range("0", "0.2", "0.0015")
     if c == "wBTC" and b == "ETH":
-        return get_range("5", "25", "0.375")
+        return get_range("0", "25", "0.375")
     if c == "ETH":
-        return get_range("1000", "3000", "50")
+        return get_range("50", "2500", "50")
     if c == "wBTC":
-        return get_range("20000", "35000", "250")
+        return get_range("250", "32000", "250")
     raise ValueError(f"Wrong pair {c}-{b}")
 
 
@@ -158,8 +158,8 @@ prices = Prices()
 
 
 pairs = [
-    ("wBTC", "ETH"),
-    ("ETH", "wBTC"),
+    # ("wBTC", "ETH"),
+    # ("ETH", "wBTC"),
     ("ETH", "USDC"),
     ("ETH", "USDT"),
     ("ETH", "DAI"),
@@ -168,12 +168,26 @@ pairs = [
     ("wBTC", "DAI"),
 ]
 
-for pair in pairs:
-    print(pair[0], pair[1])
-    c = pair[0]
-    b = pair[1]
-    data = load_graph_data(
-        state=state, prices=prices, collateral_token=c, borrowings_token=b
-    )
-    filename = f"{c}-{b}.csv"
-    data.to_csv(filename, index=False)
+# for pair in pairs:
+#     print(pair[0], pair[1])
+#     c = pair[0]
+#     b = pair[1]
+#     data = load_graph_data(
+#         state=state, prices=prices, collateral_token=c, borrowings_token=b
+#     )
+#     filename = f"{c}-{b}.csv"
+#     data.to_csv(filename, index=False)
+
+histogram_data = [
+    {
+        "token": token,
+        "borrowings": user_state.token_states[token].borrowings
+        * prices.prices[token]
+        / 10 ** constants.get_decimals(token),
+    }
+    for user_state in state.user_states.values()
+    for token in constants.symbol_decimals_map.keys()
+    if token[0] != "z"
+]
+
+pandas.DataFrame(histogram_data).to_csv("histogram.csv", index=False)

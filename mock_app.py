@@ -2,6 +2,8 @@ import streamlit as st
 import plotly.express as px
 import pandas as pd
 
+from histogram import visualization
+
 PAIRS = [
     "ETH-USDC",
     "ETH-USDT",
@@ -19,13 +21,15 @@ def load_data():
     data = {}
     for pair in PAIRS:
         data[pair] = pd.read_csv(f"{pair}.csv")
-    return data
+
+    histogram_data = pd.read_csv("histogram.csv")
+    return (data, histogram_data)
 
 
 def main():
     st.title("DeRisk")
 
-    data = load_data()
+    (data, histogram_data) = load_data()
 
     col1, _ = st.columns([1, 4])
 
@@ -72,6 +76,8 @@ def main():
     large_loans_sample = pd.read_csv("large_loans_sample.csv")
     st.table(small_loans_sample)
     st.table(large_loans_sample)
+
+    visualization(histogram_data)
 
 
 if __name__ == "__main__":
