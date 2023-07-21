@@ -68,6 +68,11 @@ def main():
 
     st.plotly_chart(figure, True)
 
+    small_loans_sample = pd.read_csv("100_small_loans_sample.csv")
+    large_loans_sample = pd.read_csv("100_large_loans_sample.csv")
+    st.table(small_loans_sample)
+    st.table(large_loans_sample)
+
 
 if __name__ == "__main__":
     st.set_page_config(
