@@ -272,12 +272,12 @@ class BadUser:
         for token, size in self.collateral.items():
             if self.formatted_collateral != "":
                 self.formatted_collateral += ", "
-            formatted_size = format(size, ".2f")
+            formatted_size = format(size, ".4f")
             self.formatted_collateral += f"{token}: {formatted_size}"
         for token, size in self.borrowings.items():
             if self.formatted_borrowings != "":
                 self.formatted_borrowings += ", "
-            formatted_size = format(size, ".2f")
+            formatted_size = format(size, ".4f")
             self.formatted_borrowings += f"{token}: {formatted_size}"
 
 
