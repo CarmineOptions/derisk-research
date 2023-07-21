@@ -2,6 +2,9 @@ import asyncio
 import decimal
 import pandas
 from compute import (
+    compute_borrowings_usd,
+    compute_health_factor,
+    compute_risk_adjusted_collateral_usd,
     decimal_range,
     get_amm_supply_at_price,
     simulate_liquidations_under_absolute_price_change,
@@ -168,15 +171,15 @@ pairs = [
     ("wBTC", "DAI"),
 ]
 
-# for pair in pairs:
-#     print(pair[0], pair[1])
-#     c = pair[0]
-#     b = pair[1]
-#     data = load_graph_data(
-#         state=state, prices=prices, collateral_token=c, borrowings_token=b
-#     )
-#     filename = f"{c}-{b}.csv"
-#     data.to_csv(filename, index=False)
+for pair in pairs:
+    c = pair[0]
+    b = pair[1]
+    data = load_graph_data(
+        state=state, prices=prices, collateral_token=c, borrowings_token=b
+    )
+    filename = f"{c}-{b}.csv"
+    data.to_csv(filename, index=False)
+    print(pair, "done")
 
 histogram_data = [
     {
@@ -191,3 +194,133 @@ histogram_data = [
 ]
 
 pandas.DataFrame(histogram_data).to_csv("histogram.csv", index=False)
+
+
+# Source: Starkscan, e.g.
+# https://starkscan.co/token/0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7 for ETH.
+TOKEN_DECIMAL_FACTORS = {
+    "ETH": decimal.Decimal("1e18"),
+    "wBTC": decimal.Decimal("1e8"),
+    "USDC": decimal.Decimal("1e6"),
+    "DAI": decimal.Decimal("1e18"),
+    "USDT": decimal.Decimal("1e6"),
+}
+
+
+# Source: https://zklend.gitbook.io/documentation/using-zklend/technical/asset-parameters.
+COLLATERAL_FACTORS = {
+    "ETH": decimal.Decimal("0.80"),
+    "wBTC": decimal.Decimal("0.70"),
+    "USDC": decimal.Decimal("0.80"),
+    "DAI": decimal.Decimal("0.70"),
+    "USDT": decimal.Decimal("0.70"),
+}
+
+
+for user, user_state in state.user_states.items():
+    risk_adjusted_collateral_usd = compute_risk_adjusted_collateral_usd(
+        user_state=user_state,
+        prices=prices.prices,
+    )
+    borrowings_usd = compute_borrowings_usd(
+        user_state=user_state,
+        prices=prices.prices,
+    )
+    health_factor = compute_health_factor(
+        risk_adjusted_collateral_usd=risk_adjusted_collateral_usd,
+        borrowings_usd=borrowings_usd,
+    )
+    user_state.health_factor = health_factor
+
+
+class BadUser:
+    def __init__(self, address, user_state):
+        self.health_factor = user_state.health_factor
+        self.address = address[:7] + "..." + address[-5:]
+        self.loan_size = decimal.Decimal("0")
+        self.collateral_size = decimal.Decimal("0")
+        self.collateral = {}
+        self.borrowings = {}
+        self.formatted_collateral = ""
+        self.formatted_borrowings = ""
+        self.calculate(user_state)
+        self.format()
+
+    def calculate(self, user_state):
+        for token, token_state in user_state.token_states.items():
+            if token_state.z_token:
+                continue
+            if token_state.borrowings > decimal.Decimal("0"):
+                tokens = token_state.borrowings / TOKEN_DECIMAL_FACTORS[token]
+                self.borrowings[token] = (
+                    self.borrowings.get(token, decimal.Decimal("0")) + tokens
+                )
+                self.loan_size += tokens * prices.prices[token]
+            if (
+                token_state.collateral_enabled
+                and token_state.deposit > decimal.Decimal("0")
+            ):
+                tokens = token_state.deposit / TOKEN_DECIMAL_FACTORS[token]
+                self.collateral[token] = (
+                    self.collateral.get(token, decimal.Decimal("0")) + tokens
+                )
+                self.collateral_size += (
+                    tokens * prices.prices[token] * COLLATERAL_FACTORS[token]
+                )
+
+    def format(self):
+        for token, size in self.collateral.items():
+            if self.formatted_collateral != "":
+                self.formatted_collateral += ", "
+            formatted_size = format(size, ".2f")
+            self.formatted_collateral += f"{token}: {formatted_size}"
+        for token, size in self.borrowings.items():
+            if self.formatted_borrowings != "":
+                self.formatted_borrowings += ", "
+            formatted_size = format(size, ".2f")
+            self.formatted_borrowings += f"{token}: {formatted_size}"
+
+
+small_bad_users = []
+big_bad_users = []
+
+for user, user_state in state.user_states.items():
+    if user_state.health_factor < 1 and user_state.health_factor > 0.7:
+        bad_user = BadUser(address=user, user_state=user_state)
+        if bad_user.loan_size > 100:
+            big_bad_users.append(bad_user)
+        else:
+            small_bad_users.append(bad_user)
+
+big_bad_users = sorted(big_bad_users, key=lambda x: x.health_factor, reverse=False)
+small_bad_users = sorted(small_bad_users, key=lambda x: x.health_factor, reverse=False)
+
+n = 20
+print("big bad users")
+
+bbu_data = {
+    "User": [user.address for user in big_bad_users[:n]],
+    "Health factor": [user.health_factor for user in big_bad_users[:n]],
+    "Borrowing in USD": [user.loan_size for user in big_bad_users[:n]],
+    "Risk adjusted collateral in USD": [
+        user.collateral_size for user in big_bad_users[:n]
+    ],
+    "Collateral": [user.formatted_collateral for user in big_bad_users[:n]],
+    "Borrowings": [user.formatted_borrowings for user in big_bad_users[:n]],
+}
+
+sbu_data = {
+    "User": [user.address for user in small_bad_users[:n]],
+    "Health factor": [user.health_factor for user in small_bad_users[:n]],
+    "Borrowing in USD": [user.loan_size for user in small_bad_users[:n]],
+    "Risk adjusted collateral in USD": [
+        user.collateral_size for user in small_bad_users[:n]
+    ],
+    "Collateral": [user.formatted_collateral for user in small_bad_users[:n]],
+    "Borrowings": [user.formatted_borrowings for user in small_bad_users[:n]],
+}
+
+pandas.DataFrame(bbu_data).to_csv("large_loans_sample.csv", index=False)
+pandas.DataFrame(sbu_data).to_csv("small_loans_sample.csv", index=False)
+
+print("DONE")
