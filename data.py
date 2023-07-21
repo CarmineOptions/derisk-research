@@ -56,7 +56,7 @@ token_range_mapping = {
         x
         for x in decimal_range(
             # TODO: make it dependent on the collateral token .. use prices.prices[COLLATERAL_TOKEN]
-            start=decimal.Decimal("1000"),
+            start=decimal.Decimal("0"),
             stop=decimal.Decimal("3000"),
             # TODO: make it dependent on the collateral token
             step=decimal.Decimal("50"),
@@ -66,7 +66,7 @@ token_range_mapping = {
         x
         for x in decimal_range(
             # TODO: make it dependent on the collateral token .. use prices.prices[COLLATERAL_TOKEN]
-            start=decimal.Decimal("20000"),
+            start=decimal.Decimal("0"),
             stop=decimal.Decimal("40000"),
             # TODO: make it dependent on the collateral token
             step=decimal.Decimal("1000"),
