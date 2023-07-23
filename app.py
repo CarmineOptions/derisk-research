@@ -21,8 +21,7 @@ PAIRS = [
 ]
 
 
-# re-read the files every 5 mins
-@st.cache_data(ttl=120)
+@st.cache_data(ttl=300)
 def load_data():
     data = {}
     for pair in PAIRS:
@@ -115,9 +114,9 @@ if __name__ == "__main__":
         page_icon="https://carmine.finance/assets/logo.svg",
     )
     # make sure update is executed only once
-    if os.environ.get("UPDATE_RUNNING") is None:
-        print("Spawning updating thread")
-        thread = threading.Thread(target=update_data_recursively)
-        thread.start()
-        os.environ["UPDATE_RUNNING"] = "True"
+    # if os.environ.get("UPDATE_RUNNING") is None:
+    #     print("Spawning updating thread")
+    #     thread = threading.Thread(target=update_data_recursively)
+    #     thread.start()
+    #     os.environ["UPDATE_RUNNING"] = "True"
     main()

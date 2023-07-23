@@ -324,7 +324,7 @@ def update_data():
 
 def update_data_recursively():
     update_data()
-    time.sleep(600)
+    time.sleep(120)
     update_data_recursively()
 
 
