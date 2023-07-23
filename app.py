@@ -1,7 +1,7 @@
 from datetime import datetime
 import json
+import multiprocessing
 import os
-import threading
 import streamlit as st
 import plotly.express as px
 import pandas as pd
@@ -113,10 +113,9 @@ if __name__ == "__main__":
         page_title="DeRisk by Carmine Finance",
         page_icon="https://carmine.finance/assets/logo.svg",
     )
-    # make sure update is executed only once
-    # if os.environ.get("UPDATE_RUNNING") is None:
-    #     print("Spawning updating thread")
-    #     thread = threading.Thread(target=update_data_recursively)
-    #     thread.start()
-    #     os.environ["UPDATE_RUNNING"] = "True"
+
+    if os.environ.get("UPDATE_RUNNING") is None:
+        print("Spawning updating thread")
+        update_data_process = multiprocessing.Process(target=update_data_recursively)
+        update_data_process.start()
     main()
