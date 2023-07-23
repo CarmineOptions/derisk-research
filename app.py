@@ -1,8 +1,13 @@
+from datetime import datetime
+import json
+import os
+import threading
 import streamlit as st
 import plotly.express as px
 import pandas as pd
 
 from src.histogram import visualization
+from update_data import update_data_recursively
 
 PAIRS = [
     "ETH-USDC",
@@ -17,7 +22,7 @@ PAIRS = [
 
 
 # re-read the files every 5 mins
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=120)
 def load_data():
     data = {}
     for pair in PAIRS:
@@ -25,13 +30,31 @@ def load_data():
     histogram_data = pd.read_csv("data/histogram.csv")
     small_loans_sample = pd.read_csv("data/small_loans_sample.csv")
     large_loans_sample = pd.read_csv("data/large_loans_sample.csv")
-    return (data, histogram_data, small_loans_sample, large_loans_sample)
+    with open("data/last_update.json", "r") as f:
+        last_update = json.load(f)
+    last_updated = last_update["timestamp"]
+    last_block_number = last_update["block_number"]
+    return (
+        data,
+        histogram_data,
+        small_loans_sample,
+        large_loans_sample,
+        last_updated,
+        last_block_number,
+    )
 
 
 def main():
     st.title("DeRisk")
 
-    (data, histogram_data, small_loans_sample, large_loans_sample) = load_data()
+    (
+        data,
+        histogram_data,
+        small_loans_sample,
+        large_loans_sample,
+        last_updated,
+        last_block_number,
+    ) = load_data()
 
     col1, _ = st.columns([1, 4])
 
@@ -81,6 +104,9 @@ def main():
     st.header("Loan size distribution")
     visualization(histogram_data)
 
+    date_str = datetime.utcfromtimestamp(int(last_updated))
+    st.write(f"Last updated {date_str} UTC, last block: {last_block_number}")
+
 
 if __name__ == "__main__":
     st.set_page_config(
@@ -88,5 +114,10 @@ if __name__ == "__main__":
         page_title="DeRisk by Carmine Finance",
         page_icon="https://carmine.finance/assets/logo.svg",
     )
-
+    # make sure update is executed only once
+    if os.environ.get("UPDATE_RUNNING") is None:
+        print("Spawning updating thread")
+        thread = threading.Thread(target=update_data_recursively)
+        thread.start()
+        os.environ["UPDATE_RUNNING"] = "True"
     main()

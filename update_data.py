@@ -1,5 +1,7 @@
 import asyncio
 import decimal
+import json
+import time
 import pandas
 from src.compute import (
     compute_borrowings_usd,
@@ -152,10 +154,13 @@ def get_events() -> pandas.DataFrame:
     return zklend_events
 
 
-def main():
+def update_data():
+    print("Updating CSV data...")
     state = State()
 
-    for _, event in get_events().iterrows():
+    zklend_events = get_events()
+
+    for _, event in zklend_events.iterrows():
         state.process_event(event)
 
     prices = Prices()
@@ -280,7 +285,6 @@ def main():
     )
 
     n = 20
-    print("big bad users")
 
     bbu_data = {
         "User": [user.address for user in big_bad_users[:n]],
@@ -307,8 +311,22 @@ def main():
     pandas.DataFrame(bbu_data).to_csv("data/large_loans_sample.csv", index=False)
     pandas.DataFrame(sbu_data).to_csv("data/small_loans_sample.csv", index=False)
 
-    print("DONE")
+    max_block_number = zklend_events["block_number"].max()
+    max_timestamp = zklend_events["timestamp"].max()
+
+    dict = {"timestamp": str(max_timestamp), "block_number": str(max_block_number)}
+
+    with open("data/last_update.json", "w") as outfile:
+        outfile.write(json.dumps(dict))
+
+    print("Updated CSV data")
+
+
+def update_data_recursively():
+    update_data()
+    time.sleep(600)
+    update_data_recursively()
 
 
 if __name__ == "__main__":
-    main()
+    update_data()
