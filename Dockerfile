@@ -9,6 +9,7 @@ RUN pip install -r requirements.txt
 
 COPY ./data ./data
 COPY ./src ./src
-COPY app.py update_data.py ./
+COPY app.py .
+COPY update_data.py .
 
-CMD ["streamlit", "run", "./app.py"]
+CMD ["streamlit", "run", "app.py"]

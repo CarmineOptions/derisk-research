@@ -83,7 +83,8 @@ def main():
         opacity=0.65,
         color_discrete_map=color_map,
     )
-    figure.update_traces(hovertemplate=("<b>Price:</b> %{x}<br>" "<b>Volume:</b> %{y}"))
+    figure.update_traces(hovertemplate=(
+        "<b>Price:</b> %{x}<br>" "<b>Volume:</b> %{y}"))
     figure.update_traces(
         selector=dict(name="max_borrowings_to_be_liquidated_at_interval"),
         name="Liquidable",
@@ -116,6 +117,8 @@ if __name__ == "__main__":
 
     if os.environ.get("UPDATE_RUNNING") is None:
         print("Spawning updating thread")
-        update_data_process = multiprocessing.Process(target=update_data_recursively)
+        update_data_process = multiprocessing.Process(
+            target=update_data_recursively)
         update_data_process.start()
+        os.environ["UPDATE_RUNNING"] = "True"
     main()

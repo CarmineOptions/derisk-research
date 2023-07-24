@@ -1,4 +1,5 @@
 from decimal import Decimal
+import time
 
 from src.blockchain_call import balance_of
 from src.constants import get_address, get_decimals
@@ -32,8 +33,10 @@ class Pool(Pair):
     async def get_balance(self):
         for token in self.tokens:
             balance = await balance_of(token.address, self.address)
+            time.sleep(5)
             token.balance_base = balance
-            token.balance_converted = Decimal(balance) / Decimal(10**token.decimals)
+            token.balance_converted = Decimal(
+                balance) / Decimal(10**token.decimals)
 
     def update_converted_balance(self):
         for token in self.tokens:
