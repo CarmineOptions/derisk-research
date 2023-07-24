@@ -15,7 +15,10 @@ import src.db as db
 import src.constants as constants
 from src.classes import Prices, State
 from src.data import get_events
-from src.swap_liquidity import SwapAmm
+from src.swap_liquidity import get_jediswap
+
+
+JEDI_SWAP = asyncio.run(get_jediswap())
 
 
 def get_range(start, stop, step):
@@ -46,7 +49,8 @@ def get_pair_range(c, b):
 
 def load_graph_data(state, prices, collateral_token, borrowings_token):
     data = pandas.DataFrame(
-        {"collateral_token_price": get_pair_range(collateral_token, borrowings_token)},
+        {"collateral_token_price": get_pair_range(
+            collateral_token, borrowings_token)},
     )
     # TOOD: needed?
     # data['collateral_token_price_multiplier'] = data['collateral_token_price_multiplier'].map(decimal.Decimal)
@@ -67,66 +71,12 @@ def load_graph_data(state, prices, collateral_token, borrowings_token):
     # TODO: drops also other NaN, if there are any
     data.dropna(inplace=True)
 
-    # Setup the AMM.
-    jediswap = SwapAmm("JediSwap")
-    jediswap.add_pool(
-        "ETH",
-        "USDC",
-        "0x04d0390b777b424e43839cd1e744799f3de6c176c7e32c1812a41dbd9c19db6a",
-    )
-    jediswap.add_pool(
-        "DAI",
-        "ETH",
-        "0x07e2a13b40fc1119ec55e0bcf9428eedaa581ab3c924561ad4e955f95da63138",
-    )
-    jediswap.add_pool(
-        "ETH",
-        "USDT",
-        "0x045e7131d776dddc137e30bdd490b431c7144677e97bf9369f629ed8d3fb7dd6",
-    )
-    jediswap.add_pool(
-        "wBTC",
-        "ETH",
-        "0x0260e98362e0949fefff8b4de85367c035e44f734c9f8069b6ce2075ae86b45c",
-    )
-    jediswap.add_pool(
-        "wBTC",
-        "USDC",
-        "0x005a8054e5ca0b277b295a830e53bd71a6a6943b42d0dbb22329437522bc80c8",
-    )
-    jediswap.add_pool(
-        "wBTC",
-        "USDT",
-        "0x044d13ad98a46fd2322ef2637e5e4c292ce8822f47b7cb9a1d581176a801c1a0",
-    )
-    jediswap.add_pool(
-        "DAI",
-        "wBTC",
-        "0x039c183c8e5a2df130eefa6fbaa3b8aad89b29891f6272cb0c90deaa93ec6315",
-    )
-    jediswap.add_pool(
-        "DAI",
-        "USDC",
-        "0x00cfd39f5244f7b617418c018204a8a9f9a7f72e71f0ef38f968eeb2a9ca302b",
-    )
-    jediswap.add_pool(
-        "DAI",
-        "USDT",
-        "0x00f0f5b3eed258344152e1f17baf84a2e1b621cd754b625bec169e8595aea767",
-    )
-    jediswap.add_pool(
-        "USDC",
-        "USDT",
-        "0x05801bdad32f343035fb242e98d1e9371ae85bc1543962fedea16c59b35bd19b",
-    )
-    asyncio.run(jediswap.get_balance())
-
     data["amm_borrowings_token_supply"] = data["collateral_token_price"].apply(
         lambda x: get_amm_supply_at_price(
             collateral_token=collateral_token,
             collateral_token_price=x,
             borrowings_token=borrowings_token,
-            amm=jediswap,
+            amm=JEDI_SWAP,
         )
     )
     return data
@@ -234,10 +184,12 @@ def update_data():
                     continue
                 if token_state.borrowings > decimal.Decimal("0"):
                     tokens = (
-                        token_state.borrowings / constants.TOKEN_DECIMAL_FACTORS[token]
+                        token_state.borrowings /
+                        constants.TOKEN_DECIMAL_FACTORS[token]
                     )
                     self.borrowings[token] = (
-                        self.borrowings.get(token, decimal.Decimal("0")) + tokens
+                        self.borrowings.get(
+                            token, decimal.Decimal("0")) + tokens
                     )
                     self.loan_size += tokens * prices.prices[token]
                 if (
@@ -245,10 +197,12 @@ def update_data():
                     and token_state.deposit > decimal.Decimal("0")
                 ):
                     tokens = (
-                        token_state.deposit / constants.TOKEN_DECIMAL_FACTORS[token]
+                        token_state.deposit /
+                        constants.TOKEN_DECIMAL_FACTORS[token]
                     )
                     self.collateral[token] = (
-                        self.collateral.get(token, decimal.Decimal("0")) + tokens
+                        self.collateral.get(
+                            token, decimal.Decimal("0")) + tokens
                     )
                     self.collateral_size += (
                         tokens
@@ -279,7 +233,8 @@ def update_data():
             else:
                 small_bad_users.append(bad_user)
 
-    big_bad_users = sorted(big_bad_users, key=lambda x: x.health_factor, reverse=False)
+    big_bad_users = sorted(
+        big_bad_users, key=lambda x: x.health_factor, reverse=False)
     small_bad_users = sorted(
         small_bad_users, key=lambda x: x.health_factor, reverse=False
     )
@@ -308,13 +263,16 @@ def update_data():
         "Borrowings": [user.formatted_borrowings for user in small_bad_users[:n]],
     }
 
-    pandas.DataFrame(bbu_data).to_csv("data/large_loans_sample.csv", index=False)
-    pandas.DataFrame(sbu_data).to_csv("data/small_loans_sample.csv", index=False)
+    pandas.DataFrame(bbu_data).to_csv(
+        "data/large_loans_sample.csv", index=False)
+    pandas.DataFrame(sbu_data).to_csv(
+        "data/small_loans_sample.csv", index=False)
 
     max_block_number = zklend_events["block_number"].max()
     max_timestamp = zklend_events["timestamp"].max()
 
-    dict = {"timestamp": str(max_timestamp), "block_number": str(max_block_number)}
+    dict = {"timestamp": str(max_timestamp),
+            "block_number": str(max_block_number)}
 
     with open("data/last_update.json", "w") as outfile:
         outfile.write(json.dumps(dict))

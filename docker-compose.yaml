@@ -5,3 +5,5 @@ services:
     build: .
     ports:
       - 8501:8501
+    environment:
+      - PG_CONNECTION_STRING=postgresql://lending-protocols-user:8;,eH5D<p+Q]Q^CT@34.159.91.62:5432/carmine-mainnet
