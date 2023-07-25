@@ -19,7 +19,7 @@ from src.swap_liquidity import get_jediswap
 
 
 JEDI_SWAP = asyncio.run(get_jediswap())
-
+pandas.set_option('display.max_colwidth', None)
 
 def get_range(start, stop, step):
     return [
