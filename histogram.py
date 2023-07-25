@@ -23,7 +23,6 @@ def visualization():
         if token[0] != "z"
     ]
 
-    
     token_data = pandas.DataFrame(tmp)
     token_data["borrowings"] = token_data["borrowings"].astype(float)
     token_data = token_data[token_data["borrowings"] > values[0]]
