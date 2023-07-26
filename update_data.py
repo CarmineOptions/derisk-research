@@ -307,7 +307,9 @@ def update_data_continuously():
     state = download_and_load_state_from_pickle()
     while True:
         state = update_data(state)
-        upload_state_as_pickle(state)
+        # TODO: gsutil is not accessible in the cloud run
+        # get it to work and then uncomment
+        # upload_state_as_pickle(state)
         print("DATA UPDATED", flush=True)
         time.sleep(120)
 
