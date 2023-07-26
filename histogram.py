@@ -2,8 +2,13 @@ import pandas
 import constants
 import streamlit as st
 import plotly.express as px
+import classes
+import compute 
 
 
+
+
+    
 def visualization():
     values = st.slider('Select a range of borrowing values:', 0.0, 16000.0, (1.0, 100.0))
     st.write('Borrowings Range:', values)
@@ -44,6 +49,7 @@ def visualization():
         ),
         True,
     )
+    
     """"
     # Comparative Token Distribution (greater than 100)
     token_data2 = pandas.DataFrame(tmp)
@@ -156,17 +162,3 @@ def visualization():
         True,
     )
 
-    
-    
-def visualization2():
-    tmp = [
-        {
-            "token": token,
-            "borrowings": user_state.token_states[token].borrowings
-            * prices.prices[token]
-            / 10 ** constants.get_decimals(token),
-        }
-        for user_state in state.user_states.values()
-        for token in constants.symbol_decimals_map.keys()
-        if token[0] != "z" 
-    ]
