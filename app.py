@@ -8,6 +8,7 @@ import pandas as pd
 
 from src.histogram import visualization
 from update_data import update_data_continuously
+import src.hashstack
 
 PAIRS = [
     "ETH-USDC",
@@ -59,9 +60,14 @@ def main():
 #         hashstack_histogram_data,
         hashstack_small_loans_sample,
         hashstack_large_loans_sample,
-    ) = hashstack.load_data()
+    ) = src.hashstack.load_data()
 
     col1, _ = st.columns([1, 4])
+
+    protocols = st.multiselect(
+        label = 'Select protocols',
+        options = ['zkLend', 'Hashstack'],
+    )
 
     with col1:
         current_pair = st.selectbox(
