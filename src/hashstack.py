@@ -448,7 +448,7 @@ def compute_max_liquidated_amount(
 
 
 def simulate_liquidations_under_absolute_price_change(
-    prices: classes.Prices,
+    prices: src.classes.Prices,
     collateral_token: str,
     collateral_token_price: decimal.Decimal,
     state: State,
