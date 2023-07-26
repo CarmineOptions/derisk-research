@@ -3,8 +3,10 @@ import decimal
 import json
 import time
 import pandas
-import numpy as np
-from persistent_state import download_and_load_state_from_pickle, upload_state_as_pickle
+from src.persistent_state import (
+    download_and_load_state_from_pickle,
+    upload_state_as_pickle,
+)
 from src.compute import (
     compute_borrowings_usd,
     compute_health_factor,
@@ -15,7 +17,7 @@ from src.compute import (
 )
 import src.db as db
 import src.constants as constants
-from src.classes import Prices, State
+from src.classes import Prices
 from src.data import get_events
 from src.swap_liquidity import get_jediswap
 
@@ -48,8 +50,7 @@ def get_pair_range(c, b):
 
 def generate_graph_data(state, prices, swap_amm, collateral_token, borrowings_token):
     data = pandas.DataFrame(
-        {"collateral_token_price": get_pair_range(
-            collateral_token, borrowings_token)},
+        {"collateral_token_price": get_pair_range(collateral_token, borrowings_token)},
     )
     # TOOD: needed?
     # data['collateral_token_price_multiplier'] = data['collateral_token_price_multiplier'].map(decimal.Decimal)
@@ -161,8 +162,7 @@ def update_data(state):
 
     t2 = time.time()
 
-    [generate_and_store_graph_data(
-        state, prices, jediswap, pair) for pair in pairs]
+    [generate_and_store_graph_data(state, prices, jediswap, pair) for pair in pairs]
 
     print(f"updated graphs in {time.time() - t2}s", flush=True)
 
@@ -214,12 +214,10 @@ def update_data(state):
                     continue
                 if token_state.borrowings > decimal.Decimal("0"):
                     tokens = (
-                        token_state.borrowings /
-                        constants.TOKEN_DECIMAL_FACTORS[token]
+                        token_state.borrowings / constants.TOKEN_DECIMAL_FACTORS[token]
                     )
                     self.borrowings[token] = (
-                        self.borrowings.get(
-                            token, decimal.Decimal("0")) + tokens
+                        self.borrowings.get(token, decimal.Decimal("0")) + tokens
                     )
                     self.loan_size += tokens * prices.prices[token]
                 if (
@@ -227,12 +225,10 @@ def update_data(state):
                     and token_state.deposit > decimal.Decimal("0")
                 ):
                     tokens = (
-                        token_state.deposit /
-                        constants.TOKEN_DECIMAL_FACTORS[token]
+                        token_state.deposit / constants.TOKEN_DECIMAL_FACTORS[token]
                     )
                     self.collateral[token] = (
-                        self.collateral.get(
-                            token, decimal.Decimal("0")) + tokens
+                        self.collateral.get(token, decimal.Decimal("0")) + tokens
                     )
                     self.collateral_size += (
                         tokens
@@ -263,8 +259,7 @@ def update_data(state):
             else:
                 small_bad_users.append(bad_user)
 
-    big_bad_users = sorted(
-        big_bad_users, key=lambda x: x.health_factor, reverse=False)
+    big_bad_users = sorted(big_bad_users, key=lambda x: x.health_factor, reverse=False)
     small_bad_users = sorted(
         small_bad_users, key=lambda x: x.health_factor, reverse=False
     )
@@ -293,16 +288,13 @@ def update_data(state):
         "Borrowings": [user.formatted_borrowings for user in small_bad_users[:n]],
     }
 
-    pandas.DataFrame(bbu_data).to_csv(
-        "data/large_loans_sample.csv", index=False)
-    pandas.DataFrame(sbu_data).to_csv(
-        "data/small_loans_sample.csv", index=False)
+    pandas.DataFrame(bbu_data).to_csv("data/large_loans_sample.csv", index=False)
+    pandas.DataFrame(sbu_data).to_csv("data/small_loans_sample.csv", index=False)
 
     max_block_number = zklend_events["block_number"].max()
     max_timestamp = zklend_events["timestamp"].max()
 
-    dict = {"timestamp": str(max_timestamp),
-            "block_number": str(max_block_number)}
+    dict = {"timestamp": str(max_timestamp), "block_number": str(max_block_number)}
 
     with open("data/last_update.json", "w") as outfile:
         outfile.write(json.dumps(dict))
