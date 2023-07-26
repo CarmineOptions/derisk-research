@@ -20,7 +20,7 @@ import src.constants as constants
 from src.classes import Prices
 from src.data import get_events
 from src.swap_liquidity import get_jediswap
-import hashstack
+import src.hashstack
 
 
 def get_range(start, stop, step):
@@ -127,7 +127,7 @@ def update_data(state):
     t0 = time.time()
     print(f"Updating CSV data from {state.last_block_number}...", flush=True)
     zklend_events = get_events(state.last_block_number)
-    hashstack_events = hashstack.get_hashstack_events()
+    hashstack_events = src.hashstack.get_hashstack_events()
     print(f"got events in {time.time() - t0}s", flush=True)
 
     new_latest_block = zklend_events["block_number"].max()
@@ -139,7 +139,7 @@ def update_data(state):
         state.process_event(event)
 
     # Iterate over ordered events to obtain the final state of each user.
-    hashstack_state = hashstack.State()
+    hashstack_state = src.hashstack.State()
     for _, hashstack_event in hashstack_events.iterrows():
         hashstack_state.process_event(event = hashstack_event)
 
