@@ -54,6 +54,12 @@ def main():
         last_updated,
         last_block_number,
     ) = load_data()
+    (
+        hashstack_data,
+#         hashstack_histogram_data,
+        hashstack_small_loans_sample,
+        hashstack_large_loans_sample,
+    ) = hashstack.load_data()
 
     col1, _ = st.columns([1, 4])
 
