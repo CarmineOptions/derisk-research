@@ -334,12 +334,14 @@ def update_data(state):
     hashstack_loan_stats['Collateral'] = hashstack_loan_stats.apply(
         lambda x: (
             str(hashstack_state.user_states[x['User']].loans[x['Loan ID']].collateral.market)
-            + str(format(hashstack_state.user_states[x['User']].loans[x['Loan ID']].collateral.amount, ".4f")),
+            + str(format(hashstack_state.user_states[x['User']].loans[x['Loan ID']].collateral.amount, ".4f"))
+        ),
     )
     hashstack_loan_stats['Borrowings'] = hashstack_loan_stats.apply(
         lambda x: (
             str(hashstack_state.user_states[x['User']].loans[x['Loan ID']].borrowings.market)
-            + str(format(hashstack_state.user_states[x['User']].loans[x['Loan ID']].borrowings.amount, ".4f")),
+            + str(format(hashstack_state.user_states[x['User']].loans[x['Loan ID']].borrowings.amount, ".4f"))
+        ),
     )
     hashstack_loan_stats.loc[
         hashstack_loan_stats['Borrowing in USD'] >= decimal.Decimal('100')
