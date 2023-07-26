@@ -7,9 +7,27 @@ import streamlit as st
 import src.constants as constants
 import src.db as db
 import src.classes as classes
+import requests
 
 
 LATEST_BLOCK_FILENAME = "persistent-state-keeper.txt"
+PERSISTENT_STATE_FILENAME = "persistent-state.pckl"
+
+
+def download_and_load_state_from_pickle():
+    response = requests.get(
+        "https://storage.googleapis.com/derisk-persistent-state/persistent-state.pckl"
+    )
+    if response.status_code == 200:
+        try:
+            state = pickle.loads(response.content)
+            return state
+        except pickle.UnpicklingError as e:
+            print("Failed to unpickle the data:", e)
+            return classes.State()
+    else:
+        print(f"Failed to download file. Status code: {response.status_code}")
+        return classes.State()
 
 
 def get_persistent_filename(block_number):
@@ -35,6 +53,17 @@ def check_gsutil_exists():
         return True
     except subprocess.CalledProcessError:
         return False
+
+
+def upload_state_as_pickle(state):
+    with open(PERSISTENT_STATE_FILENAME, "wb") as out_file:
+        pickle.dump(state, out_file)
+    if upload_file_to_bucket(PERSISTENT_STATE_FILENAME):
+        msg = "Successfully uploaded state to GCP"
+    else:
+        msg = "Failed uploading state to GCP"
+
+    print(msg, flush=True)
 
 
 def upload_file_to_bucket(filename):
@@ -101,16 +130,14 @@ def main():
     for _, event in zklend_events.iterrows():
         state.process_event(event=event)
 
-    persistent_state_filename = get_persistent_filename(persistent_block_number)
-    with open(persistent_state_filename, "wb") as out_file:
-        pickle.dump(state, out_file)
+    state.update_block_number(persistent_block_number)
 
-    with open(LATEST_BLOCK_FILENAME, "w") as f:
-        f.write(str(persistent_block_number))
+    with open(PERSISTENT_STATE_FILENAME, "wb") as out_file:
+        pickle.dump(state, out_file)
 
     print("Created new persistent_state with latest block", persistent_block_number)
 
-    if upload_file_to_bucket(persistent_state_filename):
+    if upload_file_to_bucket(PERSISTENT_STATE_FILENAME):
         print("Uploaded new state to GCP")
     else:
         print("Failed uploading new state to GCP")

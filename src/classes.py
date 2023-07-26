@@ -3,7 +3,7 @@ import collections
 import decimal
 import pandas
 import requests
-
+import numpy as np
 import src.constants as constants
 
 
@@ -30,7 +30,8 @@ class Prices:
             data = response.json()
             for token in self.tokens:
                 (id, symbol) = token
-                self.prices[symbol] = decimal.Decimal(data[id][self.vs_currency])
+                self.prices[symbol] = decimal.Decimal(
+                    data[id][self.vs_currency])
         else:
             raise Exception(
                 f"Failed getting prices, status code {response.status_code}"
@@ -74,7 +75,8 @@ class AccumulatorState:
     def accumulators_sync(
         self, lending_accumulator: decimal.Decimal, debt_accumulator: decimal.Decimal
     ):
-        self.lending_accumulator = lending_accumulator / decimal.Decimal("1e27")
+        self.lending_accumulator = lending_accumulator / \
+            decimal.Decimal("1e27")
         self.debt_accumulator = debt_accumulator / decimal.Decimal("1e27")
 
 
@@ -175,7 +177,8 @@ class UserState:
         collateral_raw_amount: decimal.Decimal,
     ):
         self.token_states[debt_token].update_borrowings(-debt_raw_amount)
-        self.token_states[collateral_token].update_deposit(-collateral_raw_amount)
+        self.token_states[collateral_token].update_deposit(
+            -collateral_raw_amount)
 
 
 class State:
@@ -197,7 +200,8 @@ class State:
     USER = "0x204c44e83f63803bcae77406aa749636d23d3c914e4aa9c84f89f45bad0f844"
 
     def __init__(self) -> None:
-        self.user_states: collections.defaultdict = collections.defaultdict(UserState)
+        self.user_states: collections.defaultdict = collections.defaultdict(
+            UserState)
         self.accumulator_states: Dict[str, AccumulatorState] = {
             "ETH": AccumulatorState(),
             "wBTC": AccumulatorState(),
@@ -205,6 +209,11 @@ class State:
             "DAI": AccumulatorState(),
             "USDT": AccumulatorState(),
         }
+        self.last_block_number = 0
+
+    def update_block_number(self, block_number):
+        if isinstance(block_number, (int, np.integer)):
+            self.last_block_number = block_number
 
     def process_event(self, event: pandas.Series) -> None:
         name = event["key_name"]
@@ -218,7 +227,8 @@ class State:
         # TODO: any better conversion to decimals?
         face_amount = decimal.Decimal(str(int(event["data"][2], base=16)))
         # TODO: sanity checks/asserts?
-        raw_amount = face_amount / self.accumulator_states[token].lending_accumulator
+        raw_amount = face_amount / \
+            self.accumulator_states[token].lending_accumulator
         self.user_states[user].deposit(token=token, raw_amount=raw_amount)
         # TODO
         if user == self.USER:
@@ -229,7 +239,8 @@ class State:
         user = event["data"][0]
         token = constants.get_symbol(event["data"][1])
         face_amount = decimal.Decimal(str(int(event["data"][2], base=16)))
-        raw_amount = face_amount / self.accumulator_states[token].lending_accumulator
+        raw_amount = face_amount / \
+            self.accumulator_states[token].lending_accumulator
         self.user_states[user].withdrawal(token=token, raw_amount=raw_amount)
         # TODO
         if user == self.USER:
@@ -300,7 +311,8 @@ class State:
             str(int(event["data"][4], base=16))
         )  # TODO: relevant?
         collateral_token = constants.get_symbol(event["data"][5])
-        collateral_amount = decimal.Decimal(str(int(event["data"][6], base=16)))
+        collateral_amount = decimal.Decimal(
+            str(int(event["data"][6], base=16)))
         collateral_raw_amount = (
             collateral_amount
             / self.accumulator_states[collateral_token].lending_accumulator
@@ -325,7 +337,8 @@ class State:
     def process_accumulators_sync_event(self, event: pandas.Series) -> None:
         # The order of the arguments is: `token`, `lending_accumulator`, `debt_accumulator`.
         token = constants.get_symbol(event["data"][0])
-        lending_accumulator = decimal.Decimal(str(int(event["data"][1], base=16)))
+        lending_accumulator = decimal.Decimal(
+            str(int(event["data"][1], base=16)))
         debt_accumulator = decimal.Decimal(str(int(event["data"][2], base=16)))
         self.accumulator_states[token].accumulators_sync(
             lending_accumulator=lending_accumulator,
@@ -349,6 +362,7 @@ class State:
             print("tra", token, ztoken, debt_raw_amount, raw_amount)
 
         if from_ != empty_address:
-            self.user_states[from_].withdrawal(token=ztoken, raw_amount=raw_amount)
+            self.user_states[from_].withdrawal(
+                token=ztoken, raw_amount=raw_amount)
         if to != empty_address:
             self.user_states[to].deposit(token=ztoken, raw_amount=raw_amount)

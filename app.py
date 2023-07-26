@@ -116,9 +116,9 @@ if __name__ == "__main__":
     )
 
     if os.environ.get("UPDATE_RUNNING") is None:
-        print("Spawning updating thread")
+        os.environ["UPDATE_RUNNING"] = "True"
+        print("Spawning updating process", flush=True)
         update_data_process = multiprocessing.Process(
             target=update_data_continuously)
         update_data_process.start()
-        os.environ["UPDATE_RUNNING"] = "True"
     main()
