@@ -28,7 +28,6 @@ def load_data():
         data[pair] = pd.read_csv(f"data/{pair}.csv")
     histogram_data = pd.read_csv("data/histogram.csv")
     small_loans_sample = pd.read_csv("data/small_loans_sample.csv")
-    pd.set_option('display.max_colwidth', None)
     large_loans_sample = pd.read_csv("data/large_loans_sample.csv")
     with open("data/last_update.json", "r") as f:
         last_update = json.load(f)
