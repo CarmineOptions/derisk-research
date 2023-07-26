@@ -168,5 +168,5 @@ def visualization2():
         }
         for user_state in state.user_states.values()
         for token in constants.symbol_decimals_map.keys()
-        if token[0] != "z"
+        if token[0] != "z" 
     ]
