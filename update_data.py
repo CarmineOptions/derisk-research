@@ -197,7 +197,7 @@ def update_data(state):
             * prices.prices[token]
             / 10 ** constants.get_decimals(token),
         }
-        for user_state in state.user_states.values()
+        for user_state in hashstack_state.user_states.values()
         for loan in user_state.loans.values()
         for token in constants.symbol_decimals_map.keys()
         if token[0] != "z"
@@ -317,45 +317,75 @@ def update_data(state):
     pandas.DataFrame(sbu_data).to_csv("data/small_loans_sample.csv", index=False)
 
     hashstack_loan_stats = pandas.DataFrame()
-    hashstack_loan_stats['User'] = [user for user, user_state in state.user_states.items() for _ in user_state.loans.keys()]
-    hashstack_loan_stats['Loan ID'] = [loan_id for user_state in state.user_states.values() for loan_id in user_state.loans.keys()]
-    hashstack_loan_stats['Borrowing in USD'] = hashstack_loan_stats.apply(
-        lambda x: compute_borrowings_amount_usd(borrowings = state.user_states[x['User']].loans[x['Loan ID']].borrowings, prices = prices.prices),
-        axis = 1,
+    hashstack_loan_stats["User"] = [
+        user
+        for user, user_state in state.user_states.items()
+        for _ in user_state.loans.keys()
+    ]
+    hashstack_loan_stats["Loan ID"] = [
+        loan_id
+        for user_state in state.user_states.values()
+        for loan_id in user_state.loans.keys()
+    ]
+    hashstack_loan_stats["Borrowing in USD"] = hashstack_loan_stats.apply(
+        lambda x: compute_borrowings_amount_usd(
+            borrowings=state.user_states[x["User"]].loans[x["Loan ID"]].borrowings,
+            prices=prices.prices,
+        ),
+        axis=1,
     )
-    hashstack_loan_stats['Risk adjusted collateral in USD'] = hashstack_loan_stats.apply(
-        lambda x: compute_collateral_current_amount_usd(collateral = state.user_states[x['User']].loans[x['Loan ID']].collateral, prices = prices.prices),
-        axis = 1,
+    hashstack_loan_stats[
+        "Risk adjusted collateral in USD"
+    ] = hashstack_loan_stats.apply(
+        lambda x: compute_collateral_current_amount_usd(
+            collateral=state.user_states[x["User"]].loans[x["Loan ID"]].collateral,
+            prices=prices.prices,
+        ),
+        axis=1,
     )
-    hashstack_loan_stats['Health factor'] = hashstack_loan_stats.apply(
+    hashstack_loan_stats["Health factor"] = hashstack_loan_stats.apply(
         lambda x: compute_health_factor(
-            borrowings = state.user_states[x['User']].loans[x['Loan ID']].borrowings,
-            collateral = state.user_states[x['User']].loans[x['Loan ID']].collateral,
-            prices = prices.prices,
-            user = x['User'],
+            borrowings=state.user_states[x["User"]].loans[x["Loan ID"]].borrowings,
+            collateral=state.user_states[x["User"]].loans[x["Loan ID"]].collateral,
+            prices=prices.prices,
+            user=x["User"],
         ),
-        axis = 1,
+        axis=1,
     )
-    hashstack_loan_stats['Collateral'] = hashstack_loan_stats.apply(
+    hashstack_loan_stats["Collateral"] = hashstack_loan_stats.apply(
         lambda x: (
-            str(state.user_states[x['User']].loans[x['Loan ID']].collateral.market)
-            + str(format(state.user_states[x['User']].loans[x['Loan ID']].collateral.amount, ".4f"))
+            str(state.user_states[x["User"]].loans[x["Loan ID"]].collateral.market)
+            + str(
+                format(
+                    state.user_states[x["User"]].loans[x["Loan ID"]].collateral.amount,
+                    ".4f",
+                )
+            )
         ),
-        axis = 1,
+        axis=1,
     )
-    hashstack_loan_stats['Borrowings'] = hashstack_loan_stats.apply(
+    hashstack_loan_stats["Borrowings"] = hashstack_loan_stats.apply(
         lambda x: (
-            str(state.user_states[x['User']].loans[x['Loan ID']].borrowings.market)
-            + str(format(state.user_states[x['User']].loans[x['Loan ID']].borrowings.amount, ".4f"))
+            str(state.user_states[x["User"]].loans[x["Loan ID"]].borrowings.market)
+            + str(
+                format(
+                    state.user_states[x["User"]].loans[x["Loan ID"]].borrowings.amount,
+                    ".4f",
+                )
+            )
         ),
-        axis = 1,
+        axis=1,
     )
     hashstack_loan_stats.loc[
-        hashstack_loan_stats['Borrowing in USD'] >= decimal.Decimal('100')
-    ].sort_values('Health factor').iloc[:20].to_csv("hashstack_data/large_loans_sample.csv", index=False)
+        hashstack_loan_stats["Borrowing in USD"] >= decimal.Decimal("100")
+    ].sort_values("Health factor").iloc[:20].to_csv(
+        "hashstack_data/large_loans_sample.csv", index=False
+    )
     hashstack_loan_stats.loc[
-        hashstack_loan_stats['Borrowing in USD'] < decimal.Decimal('100')
-    ].sort_values('Health factor').iloc[:20].to_csv("hashstack_data/small_loans_sample.csv", index=False)
+        hashstack_loan_stats["Borrowing in USD"] < decimal.Decimal("100")
+    ].sort_values("Health factor").iloc[:20].to_csv(
+        "hashstack_data/small_loans_sample.csv", index=False
+    )
 
     max_block_number = zklend_events["block_number"].max()
     max_timestamp = zklend_events["timestamp"].max()

@@ -57,7 +57,7 @@ def main():
     ) = load_data()
     (
         hashstack_data,
-#         hashstack_histogram_data,
+        #         hashstack_histogram_data,
         hashstack_small_loans_sample,
         hashstack_large_loans_sample,
     ) = src.hashstack.load_data()
@@ -66,8 +66,8 @@ def main():
 
     with col1:
         protocols = st.multiselect(
-            label = 'Select protocols',
-            options = ['zkLend', 'Hashstack'],
+            label="Select protocols",
+            options=["zkLend", "Hashstack"],
         )
         current_pair = st.selectbox(
             label="Select collateral-loan pair:",
@@ -75,19 +75,31 @@ def main():
             index=0,
         )
 
-    if protocols == ['zkLend']:
+    if protocols == ["zkLend"]:
         data[current_pair] = data[current_pair]
         small_loans_sample = small_loans_sample
         large_loans_sample = large_loans_sample
-    elif protocols == ['Hashstack']:
+    elif protocols == ["Hashstack"]:
         data[current_pair] = hashstack_data[current_pair]
         small_loans_sample = hashstack_small_loans_sample
         large_loans_sample = hashstack_large_loans_sample
-    elif set(protocols) == {'zkLend', 'Hashstack'}:
-        data[current_pair]['max_borrowings_to_be_liquidated'] += hashstack_data[current_pair]['max_borrowings_to_be_liquidated']
-        data[current_pair]['max_borrowings_to_be_liquidated_at_interval'] += hashstack_data[current_pair]['max_borrowings_to_be_liquidated_at_interval']
-        small_loans_sample = pandas.concat([small_loans_sample, hashstack_small_loans_sample]).sort_values('Health Factor').iloc[:20]
-        large_loans_sample = pandas.concat([large_loans_sample, hashstack_large_loans_sample]).sort_values('Health Factor').iloc[:20]
+    elif set(protocols) == {"zkLend", "Hashstack"}:
+        data[current_pair]["max_borrowings_to_be_liquidated"] += hashstack_data[
+            current_pair
+        ]["max_borrowings_to_be_liquidated"]
+        data[current_pair][
+            "max_borrowings_to_be_liquidated_at_interval"
+        ] += hashstack_data[current_pair]["max_borrowings_to_be_liquidated_at_interval"]
+        small_loans_sample = (
+            pandas.concat([small_loans_sample, hashstack_small_loans_sample])
+            .sort_values("Health Factor")
+            .iloc[:20]
+        )
+        large_loans_sample = (
+            pandas.concat([large_loans_sample, hashstack_large_loans_sample])
+            .sort_values("Health Factor")
+            .iloc[:20]
+        )
 
     [col, bor] = current_pair.split("-")
 
@@ -108,8 +120,7 @@ def main():
         opacity=0.65,
         color_discrete_map=color_map,
     )
-    figure.update_traces(hovertemplate=(
-        "<b>Price:</b> %{x}<br>" "<b>Volume:</b> %{y}"))
+    figure.update_traces(hovertemplate=("<b>Price:</b> %{x}<br>" "<b>Volume:</b> %{y}"))
     figure.update_traces(
         selector=dict(name="max_borrowings_to_be_liquidated_at_interval"),
         name="Liquidable",
@@ -144,6 +155,7 @@ if __name__ == "__main__":
         os.environ["UPDATE_RUNNING"] = "True"
         print("Spawning updating process", flush=True)
         update_data_process = multiprocessing.Process(
-            target=update_data_continuously)
+            target=update_data_continuously, daemon=True
+        )
         update_data_process.start()
     main()
