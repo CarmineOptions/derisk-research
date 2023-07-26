@@ -15,7 +15,9 @@ PERSISTENT_STATE_FILENAME = "persistent-state.pckl"
 
 
 def download_and_load_state_from_pickle():
-    response = requests.get("url")
+    response = requests.get(
+        "https://storage.googleapis.com/derisk-persistent-state/persistent-state.pckl"
+    )
     if response.status_code == 200:
         try:
             state = pickle.loads(response.content)
