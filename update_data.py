@@ -171,7 +171,7 @@ def update_data(state):
 
     [generate_and_store_graph_data(state, prices, jediswap, pair) for pair in pairs]
     [
-        hashstack.generate_and_store_graph_data(state, prices, jediswap, pair)
+        hashstack.generate_and_store_graph_data(hashstack_state, prices, jediswap, pair)
         for pair in pairs
     ]
 

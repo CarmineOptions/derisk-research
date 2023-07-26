@@ -450,9 +450,9 @@ def compute_health_factor(
     ) / borrowings_amount_usd
     health_factor_liquidation_threshold = (
         decimal.Decimal("1.06")
-        if loan.borrowings.debt_category == 1
+        if borrowings.debt_category == 1
         else decimal.Decimal("1.05")
-        if loan.borrowings.debt_category == 2
+        if borrowings.debt_category == 2
         else decimal.Decimal("1.04")
     )
     return health_factor
@@ -570,7 +570,9 @@ PAIRS = [
 def load_data():
     data = {}
     for pair in PAIRS:
-        data[pair] = pandas.read_csv(f"hashstack_data/{pair}.csv")
+        c = pair[0]
+        b = pair[1]
+        data[pair] = pandas.read_csv(f"hashstack_data/{c}-{b}.csv")
     #     histogram_data = pd.read_csv("data/histogram.csv")
     small_loans_sample = pandas.read_csv("hashstack_data/small_loans_sample.csv")
     large_loans_sample = pandas.read_csv("hashstack_data/large_loans_sample.csv")
