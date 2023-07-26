@@ -64,17 +64,24 @@ def main():
 
     col1, _ = st.columns([1, 4])
 
-    protocols = st.multiselect(
-        label = 'Select protocols',
-        options = ['zkLend', 'Hashstack'],
-    )
-
     with col1:
+        protocols = st.multiselect(
+            label = 'Select protocols',
+            options = ['zkLend', 'Hashstack'],
+        )
         current_pair = st.selectbox(
             label="Select collateral-loan pair:",
             options=PAIRS,
             index=0,
         )
+
+    if protocols == ['zkLend']:
+        data[current_pair] = data[current_pair]
+    elif protocols == ['Hashstack']:
+        data[current_pair] = hashstack_data[current_pair]
+    elif set(protocols) == {'zkLend', 'Hashstack'}:
+        data[current_pair]['max_borrowings_to_be_liquidated'] += hashstack_data[current_pair]['max_borrowings_to_be_liquidated']
+        data[current_pair]['max_borrowings_to_be_liquidated_at_interval'] += hashstack_data[current_pair]['max_borrowings_to_be_liquidated_at_interval']
 
     [col, bor] = current_pair.split("-")
 
