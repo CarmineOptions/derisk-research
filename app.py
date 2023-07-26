@@ -7,7 +7,7 @@ import plotly.express as px
 import pandas as pd
 
 from src.histogram import visualization
-from update_data import update_data_recursively
+from update_data import update_data_continuously
 
 PAIRS = [
     "ETH-USDC",
@@ -21,7 +21,7 @@ PAIRS = [
 ]
 
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=120)
 def load_data():
     data = {}
     for pair in PAIRS:
@@ -118,7 +118,7 @@ if __name__ == "__main__":
     if os.environ.get("UPDATE_RUNNING") is None:
         print("Spawning updating thread")
         update_data_process = multiprocessing.Process(
-            target=update_data_recursively)
+            target=update_data_continuously)
         update_data_process.start()
         os.environ["UPDATE_RUNNING"] = "True"
     main()

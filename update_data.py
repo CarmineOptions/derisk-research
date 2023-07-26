@@ -1,8 +1,10 @@
 import asyncio
 import decimal
 import json
+import multiprocessing
 import time
 import pandas
+import numpy as np
 from src.compute import (
     compute_borrowings_usd,
     compute_health_factor,
@@ -16,9 +18,6 @@ import src.constants as constants
 from src.classes import Prices, State
 from src.data import get_events
 from src.swap_liquidity import get_jediswap
-
-
-JEDI_SWAP = asyncio.run(get_jediswap())
 
 
 def get_range(start, stop, step):
@@ -47,7 +46,7 @@ def get_pair_range(c, b):
     raise ValueError(f"Wrong pair {c}-{b}")
 
 
-def load_graph_data(state, prices, collateral_token, borrowings_token):
+def generate_graph_data(state, prices, swap_amm, collateral_token, borrowings_token):
     data = pandas.DataFrame(
         {"collateral_token_price": get_pair_range(
             collateral_token, borrowings_token)},
@@ -76,13 +75,24 @@ def load_graph_data(state, prices, collateral_token, borrowings_token):
             collateral_token=collateral_token,
             collateral_token_price=x,
             borrowings_token=borrowings_token,
-            amm=JEDI_SWAP,
+            amm=swap_amm,
         )
     )
     return data
 
 
-def get_events() -> pandas.DataFrame:
+def generate_and_store_graph_data(state, prices, swap_amm, pair):
+    t0 = time.time()
+    print("generating graph for", pair, flush=True)
+    c = pair[0]
+    b = pair[1]
+    data = generate_graph_data(state, prices, swap_amm, c, b)
+    filename = f"data/{c}-{b}.csv"
+    data.to_csv(filename, index=False)
+    print(filename, "done in", time.time() - t0, flush=True)
+
+
+def get_events(block_number) -> pandas.DataFrame:
     connection = db.establish_connection()
     zklend_events = pandas.read_sql(
         sql=f"""
@@ -94,6 +104,8 @@ def get_events() -> pandas.DataFrame:
           from_address='{constants.Protocol.ZKLEND.value}'
       AND
           key_name IN ('Deposit', 'Withdrawal', 'CollateralEnabled', 'CollateralDisabled', 'Borrowing', 'Repayment', 'Liquidation', 'AccumulatorsSync')
+      AND
+          block_number > {block_number}
       ORDER BY
           block_number, id ASC;
       """,
@@ -104,16 +116,47 @@ def get_events() -> pandas.DataFrame:
     return zklend_events
 
 
-def update_data():
-    print("Updating CSV data...")
-    state = State()
+def my_process(msg):
+    print(f"Hello, this is process {msg}", flush=True)
+    return msg
 
-    zklend_events = get_events()
+
+def update_data(state, latest_block):
+    t0 = time.time()
+    print("Updating CSV data...", flush=True)
+    print("state and latest block", state, latest_block, flush=True)
+    zklend_events = get_events(latest_block)
+    print(f"got events in {time.time() - t0}s", flush=True)
+
+    new_latest_block = zklend_events["block_number"].max()
+
+    print("new latest block", new_latest_block,
+          "type", type(new_latest_block),  flush=True)
+
+    if isinstance(new_latest_block, (int, np.integer)):
+        print("assigning latest block", flush=True)
+        latest_block = new_latest_block
+
+    print("latest", latest_block, "new latest block",
+          new_latest_block, flush=True)
+
+    t1 = time.time()
 
     for _, event in zklend_events.iterrows():
         state.process_event(event)
 
+    print(f"updated state in {time.time() - t1}s", flush=True)
+
+    t_prices = time.time()
     prices = Prices()
+
+    print(f"prices in {time.time() - t_prices}s", flush=True)
+
+    t_swap = time.time()
+
+    jediswap = asyncio.run(get_jediswap())
+
+    print(f"swap in {time.time() - t_swap}s", flush=True)
 
     pairs = [
         # ("wBTC", "ETH"),
@@ -126,15 +169,17 @@ def update_data():
         ("wBTC", "DAI"),
     ]
 
-    for pair in pairs:
-        c = pair[0]
-        b = pair[1]
-        data = load_graph_data(
-            state=state, prices=prices, collateral_token=c, borrowings_token=b
-        )
-        filename = f"data/{c}-{b}.csv"
-        data.to_csv(filename, index=False)
-        print(pair, "done")
+    t2 = time.time()
+
+    def process(pair):
+        generate_and_store_graph_data(state, prices, jediswap, pair)
+        return pair
+
+    with multiprocessing.Pool(processes=2) as pool:
+        for res in pool.imap(process, pairs):
+            print(res, flush=True)
+
+    print(f"updated graphs in {time.time() - t2}s", flush=True)
 
     histogram_data = [
         {
@@ -277,13 +322,17 @@ def update_data():
     with open("data/last_update.json", "w") as outfile:
         outfile.write(json.dumps(dict))
 
-    print("Updated CSV data")
+    print(f"Updated CSV data in {time.time() - t0}s", flush=True)
+    return (state, latest_block)
 
 
-def update_data_recursively():
-    update_data()
-    time.sleep(120)
-    update_data_recursively()
+def update_data_continuously():
+    state = State()
+    latest_block = 0
+    while True:
+        (state, latest_block) = update_data(state, latest_block)
+        print("DATA UPDATED", flush=True)
+        time.sleep(30)
 
 
 if __name__ == "__main__":
