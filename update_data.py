@@ -138,6 +138,11 @@ def update_data(state):
     for _, event in zklend_events.iterrows():
         state.process_event(event)
 
+    # Iterate over ordered events to obtain the final state of each user.
+    hashstack_state = hashstack.State()
+    for _, hashstack_event in hashstack_events.iterrows():
+        hashstack_state.process_event(event = hashstack_event)
+
     print(f"updated state in {time.time() - t1}s", flush=True)
 
     t_prices = time.time()
