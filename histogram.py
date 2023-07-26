@@ -6,8 +6,6 @@ import classes
 import compute 
 
 
-
-
     
 def visualization():
     values = st.slider('Select a range of borrowing values:', 0.0, 16000.0, (1.0, 100.0))
