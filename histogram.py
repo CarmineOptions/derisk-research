@@ -131,6 +131,7 @@ def visualization():
             nbins=100,
         )
     )
+    
     """
     # Comparative Token Distribution (between 0 and 1)
     token_data6 = pandas.DataFrame(tmp)
@@ -154,4 +155,18 @@ def visualization():
         ),
         True,
     )
+
     
+    
+def visualization2():
+    tmp = [
+        {
+            "token": token,
+            "borrowings": user_state.token_states[token].borrowings
+            * prices.prices[token]
+            / 10 ** constants.get_decimals(token),
+        }
+        for user_state in state.user_states.values()
+        for token in constants.symbol_decimals_map.keys()
+        if token[0] != "z"
+    ]
