@@ -1,7 +1,6 @@
 import asyncio
 import decimal
 import json
-import multiprocessing
 import time
 import pandas
 import numpy as np
@@ -171,13 +170,8 @@ def update_data(state, latest_block):
 
     t2 = time.time()
 
-    def process(pair):
-        generate_and_store_graph_data(state, prices, jediswap, pair)
-        return pair
-
-    with multiprocessing.Pool(processes=2) as pool:
-        for res in pool.imap(process, pairs):
-            print(res, flush=True)
+    [generate_and_store_graph_data(
+        state, prices, jediswap, pair) for pair in pairs]
 
     print(f"updated graphs in {time.time() - t2}s", flush=True)
 
