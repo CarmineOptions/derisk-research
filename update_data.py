@@ -170,7 +170,7 @@ def update_data(state):
     t2 = time.time()
 
     [generate_and_store_graph_data(state, prices, jediswap, pair) for pair in pairs]
-    # TODO
+    [hashstack.generate_and_store_graph_data(state, prices, jediswap, pair) for pair in pairs]
 
     print(f"updated graphs in {time.time() - t2}s", flush=True)
 
