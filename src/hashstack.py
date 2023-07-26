@@ -1,9 +1,11 @@
 from typing import Dict
 import collections
+import copy
 import decimal
 
 import pandas
 
+import src.classes
 import src.compute
 import src.db
 
@@ -345,12 +347,124 @@ def get_pair_range(c, b):
     raise ValueError(f"Wrong pair {c}-{b}")
 
 
+# Source: Starkscan, e.g. 
+# https://starkscan.co/token/0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7 for ETH.
+TOKEN_DECIMAL_FACTORS = {
+    "ETH": decimal.Decimal('1e18'),
+    "wBTC": decimal.Decimal('1e8'),
+    "USDC": decimal.Decimal('1e6'),
+    "DAI": decimal.Decimal('1e18'),
+    "USDT": decimal.Decimal('1e6'),
+}
+
+
+def compute_collateral_current_amount_usd(
+    collateral: HashStackCollateral,
+    prices: Dict[str, decimal.Decimal],
+) -> decimal.Decimal:
+    return (
+        collateral.current_amount
+        * prices[collateral.market]
+        # TODO: perform the conversion using TOKEN_DECIMAL_FACTORS sooner (in `UserTokenState`?)?
+        / TOKEN_DECIMAL_FACTORS[collateral.market]
+    )
+
+
+def compute_borrowings_current_amount_usd(
+    borrowings: HashStackBorrowings,
+    prices: Dict[str, decimal.Decimal],
+) -> decimal.Decimal:
+    return (
+        borrowings.current_amount
+        * prices[borrowings.current_market]
+        # TODO: perform the conversion using TOKEN_DECIMAL_FACTORS sooner (in `UserTokenState`?)?
+        / TOKEN_DECIMAL_FACTORS[borrowings.current_market]
+    )
+
+
+def compute_borrowings_amount_usd(
+    borrowings: HashStackBorrowings,
+    prices: Dict[str, decimal.Decimal],
+) -> decimal.Decimal:
+    return (
+        borrowings.amount
+        * prices[borrowings.market]
+        # TODO: perform the conversion using TOKEN_DECIMAL_FACTORS sooner (in `UserTokenState`?)?
+        / TOKEN_DECIMAL_FACTORS[borrowings.market]
+    )
+
+
+def compute_health_factor(
+    collateral: HashStackCollateral,
+    borrowings: HashStackBorrowings,
+    prices: Dict[str, decimal.Decimal],
+    user: str,
+) -> decimal.Decimal:
+    collateral_current_amount_usd = compute_collateral_current_amount_usd(collateral = collateral, prices = prices)
+    borrowings_current_amount_usd = compute_borrowings_current_amount_usd(borrowings = borrowings, prices = prices)
+    borrowings_amount_usd = compute_borrowings_amount_usd(borrowings = borrowings, prices = prices)
+    if borrowings_current_amount_usd == decimal.Decimal('0'):
+        # TODO: assumes collateral is positive
+        return decimal.Decimal('Inf')
+
+    # TODO: how can this happen?
+    if borrowings_amount_usd == decimal.Decimal('0'):
+        # TODO: assumes collateral is positive
+        return decimal.Decimal('Inf')
+
+    health_factor = (collateral_current_amount_usd + borrowings_current_amount_usd) / borrowings_amount_usd
+    health_factor_liquidation_threshold = decimal.Decimal('1.06') if loan.borrowings.debt_category == 1 \
+        else decimal.Decimal('1.05') if loan.borrowings.debt_category == 2 \
+        else decimal.Decimal('1.04')
+    return health_factor
+
+
+def compute_max_liquidated_amount(
+    state: State,
+    prices: Dict[str, decimal.Decimal],
+    borrowings_token: str,
+) -> decimal.Decimal:
+    liquidated_borrowings_amount = decimal.Decimal('0')
+    for user, user_state in state.user_states.items():
+        for loan_id, loan in user_state.loans.items():
+            # TODO: do this?
+            # Filter out users who borrowed the token of interest.
+            if borrowings_token != loan.borrowings.market:
+                continue
+
+            # Filter out users with health below 1.
+            borrowings_amount_usd = compute_borrowings_amount_usd(borrowings = loan.borrowings, prices = prices)
+            health_factor = compute_health_factor(borrowings = loan.borrowings, collateral = loan.collateral, prices = prices, user = user)
+            # TODO: this should be a method of the borrowings class
+            health_factor_liquidation_threshold = decimal.Decimal('1.06') if loan.borrowings.debt_category == 1 \
+                else decimal.Decimal('1.05') if loan.borrowings.debt_category == 2 \
+                else decimal.Decimal('1.04')
+            if health_factor >= health_factor_liquidation_threshold:
+                continue
+
+            # TODO: find out how much of the borrowings_token will be liquidated
+            liquidated_borrowings_amount += borrowings_amount_usd
+    return liquidated_borrowings_amount
+
+
+def simulate_liquidations_under_absolute_price_change(
+    prices: classes.Prices,
+    collateral_token: str,
+    collateral_token_price: decimal.Decimal,
+    state: State,
+    borrowings_token: str,
+) -> decimal.Decimal:
+    changed_prices = copy.deepcopy(prices.prices)
+    changed_prices[collateral_token] = collateral_token_price
+    return compute_max_liquidated_amount(state = state, prices = changed_prices, borrowings_token = borrowings_token)
+
+
 def generate_graph_data(state, prices, swap_amm, collateral_token, borrowings_token):
     data = pandas.DataFrame(
         {"collateral_token_price": get_pair_range(collateral_token, borrowings_token)},
     )
     data["max_borrowings_to_be_liquidated"] = data["collateral_token_price"].apply(
-        lambda x: src.compute.simulate_liquidations_under_absolute_price_change(
+        lambda x: simulate_liquidations_under_absolute_price_change(
             prices=prices,
             collateral_token=collateral_token,
             collateral_token_price=x,
