@@ -185,6 +185,19 @@ def update_data(state):
         for token in constants.symbol_decimals_map.keys()
         if token[0] != "z"
     ]
+    hashstack_histogram_data = [
+        {
+            "token": token,
+            "borrowings": loan.borrowings.current_amount if loan.borrowings.current_market == token else decimal.Decimal('0')
+            * prices.prices[token]
+            / 10 ** constants.get_decimals(token),
+        }
+        for user_state in state.user_states.values()
+        for loan in user_state.loans.values()
+        for token in constants.symbol_decimals_map.keys()
+        if token[0] != "z"
+    ]
+    histogram_data = histogram_data + hashstack_histogram_data
 
     pandas.DataFrame(histogram_data).to_csv("data/histogram.csv", index=False)
 
