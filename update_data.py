@@ -4,6 +4,7 @@ import json
 import time
 import pandas
 import numpy as np
+from persistent_state import download_and_load_state_from_pickle, upload_state_as_pickle
 from src.compute import (
     compute_borrowings_usd,
     compute_health_factor,
@@ -120,24 +121,14 @@ def my_process(msg):
     return msg
 
 
-def update_data(state, latest_block):
+def update_data(state):
     t0 = time.time()
-    print("Updating CSV data...", flush=True)
-    print("state and latest block", state, latest_block, flush=True)
-    zklend_events = get_events(latest_block)
+    print(f"Updating CSV data from {state.last_block_number}...", flush=True)
+    zklend_events = get_events(state.last_block_number)
     print(f"got events in {time.time() - t0}s", flush=True)
 
     new_latest_block = zklend_events["block_number"].max()
-
-    print("new latest block", new_latest_block,
-          "type", type(new_latest_block),  flush=True)
-
-    if isinstance(new_latest_block, (int, np.integer)):
-        print("assigning latest block", flush=True)
-        latest_block = new_latest_block
-
-    print("latest", latest_block, "new latest block",
-          new_latest_block, flush=True)
+    state.update_block_number(new_latest_block)
 
     t1 = time.time()
 
@@ -317,16 +308,16 @@ def update_data(state, latest_block):
         outfile.write(json.dumps(dict))
 
     print(f"Updated CSV data in {time.time() - t0}s", flush=True)
-    return (state, latest_block)
+    return state
 
 
 def update_data_continuously():
-    state = State()
-    latest_block = 0
+    state = download_and_load_state_from_pickle()
     while True:
-        (state, latest_block) = update_data(state, latest_block)
+        state = update_data(state)
+        upload_state_as_pickle(state)
         print("DATA UPDATED", flush=True)
-        time.sleep(30)
+        time.sleep(120)
 
 
 if __name__ == "__main__":
