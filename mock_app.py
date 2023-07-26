@@ -72,6 +72,8 @@ def main():
     large_loans_sample = pd.read_csv("large_loans_sample.csv")
     st.table(small_loans_sample)
     st.table(large_loans_sample)
+    
+    
 
 
 if __name__ == "__main__":
