@@ -77,11 +77,17 @@ def main():
 
     if protocols == ['zkLend']:
         data[current_pair] = data[current_pair]
+        small_loans_sample = small_loans_sample
+        large_loans_sample = large_loans_sample
     elif protocols == ['Hashstack']:
         data[current_pair] = hashstack_data[current_pair]
+        small_loans_sample = hashstack_small_loans_sample
+        large_loans_sample = hashstack_large_loans_sample
     elif set(protocols) == {'zkLend', 'Hashstack'}:
         data[current_pair]['max_borrowings_to_be_liquidated'] += hashstack_data[current_pair]['max_borrowings_to_be_liquidated']
         data[current_pair]['max_borrowings_to_be_liquidated_at_interval'] += hashstack_data[current_pair]['max_borrowings_to_be_liquidated_at_interval']
+        small_loans_sample = pandas.concat([small_loans_sample, hashstack_small_loans_sample]).sort_values('Health Factor').iloc[:20]
+        large_loans_sample = pandas.concat([large_loans_sample, hashstack_large_loans_sample]).sort_values('Health Factor').iloc[:20]
 
     [col, bor] = current_pair.split("-")
 
