@@ -1,8 +1,10 @@
+from typing import Dict
 import collections
 import decimal
 
 import pandas
 
+import src.compute
 import src.db
 
 
@@ -317,7 +319,73 @@ class State:
         )
 
 
+def get_range(start, stop, step):
+    return [
+        x
+        for x in decimal_range(
+            # TODO: make it dependent on the collateral token .. use prices.prices[COLLATERAL_TOKEN]
+            start=decimal.Decimal(start),
+            stop=decimal.Decimal(stop),
+            # TODO: make it dependent on the collateral token
+            step=decimal.Decimal(step),
+        )
+    ]
 
+
+# TODO: move this somewhere
+def get_pair_range(c, b):
+    if c == "ETH" and b == "wBTC":
+        return get_range("0", "0.2", "0.0015")
+    if c == "wBTC" and b == "ETH":
+        return get_range("0", "25", "0.375")
+    if c == "ETH":
+        return get_range("50", "2500", "50")
+    if c == "wBTC":
+        return get_range("250", "32000", "250")
+    raise ValueError(f"Wrong pair {c}-{b}")
+
+
+def generate_graph_data(state, prices, swap_amm, collateral_token, borrowings_token):
+    data = pandas.DataFrame(
+        {"collateral_token_price": get_pair_range(collateral_token, borrowings_token)},
+    )
+    data["max_borrowings_to_be_liquidated"] = data["collateral_token_price"].apply(
+        lambda x: src.compute.simulate_liquidations_under_absolute_price_change(
+            prices=prices,
+            collateral_token=collateral_token,
+            collateral_token_price=x,
+            state=state,
+            borrowings_token=borrowings_token,
+        )
+    )
+
+    # TODO
+    data["max_borrowings_to_be_liquidated_at_interval"] = (
+        data["max_borrowings_to_be_liquidated"].diff().abs()
+    )
+    # TODO: drops also other NaN, if there are any
+    data.dropna(inplace=True)
+
+    data["amm_borrowings_token_supply"] = data["collateral_token_price"].apply(
+        lambda x: src.compute.get_amm_supply_at_price(
+            collateral_token=collateral_token,
+            collateral_token_price=x,
+            borrowings_token=borrowings_token,
+            amm=swap_amm,
+        )
+    )
+    return data
+
+
+def generate_and_store_graph_data(state, prices, swap_amm, pair):
+    t0 = time.time()
+    print("hashstack: generating graph for", pair, flush=True)
+    c = pair[0]
+    b = pair[1]
+    data = generate_graph_data(state, prices, swap_amm, c, b)
+    filename = f"hashstack_data/{c}-{b}.csv"
+    data.to_csv(filename, index=False)
+    print("hashstack: ", filename, "done in", time.time() - t0, flush=True)
 
 
 
