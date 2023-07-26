@@ -507,10 +507,10 @@ def generate_and_store_graph_data(state, prices, swap_amm, pair):
 def load_data():
     data = {}
     for pair in PAIRS:
-        data[pair] = pd.read_csv(f"hashstack_data/{pair}.csv")
+        data[pair] = pandas.read_csv(f"hashstack_data/{pair}.csv")
 #     histogram_data = pd.read_csv("data/histogram.csv")
-    small_loans_sample = pd.read_csv("hashstack_data/small_loans_sample.csv")
-    large_loans_sample = pd.read_csv("hashstack_data/large_loans_sample.csv")
+    small_loans_sample = pandas.read_csv("hashstack_data/small_loans_sample.csv")
+    large_loans_sample = pandas.read_csv("hashstack_data/large_loans_sample.csv")
     return (
         data,
 #         histogram_data,
