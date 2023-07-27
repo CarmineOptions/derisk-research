@@ -27,7 +27,6 @@ def load_data():
     data = {}
     for pair in PAIRS:
         data[pair] = pd.read_csv(f"data/{pair}.csv")
-    histogram_data = pd.read_csv("data/histogram.csv")
     small_loans_sample = pd.read_csv("data/small_loans_sample.csv")
     large_loans_sample = pd.read_csv("data/large_loans_sample.csv")
     with open("data/last_update.json", "r") as f:
@@ -36,7 +35,6 @@ def load_data():
     last_block_number = last_update["block_number"]
     return (
         data,
-        histogram_data,
         small_loans_sample,
         large_loans_sample,
         last_updated,
@@ -49,7 +47,6 @@ def main():
 
     (
         data,
-        histogram_data,
         small_loans_sample,
         large_loans_sample,
         last_updated,
@@ -68,6 +65,7 @@ def main():
         protocols = st.multiselect(
             label="Select protocols",
             options=["zkLend", "Hashstack"],
+            default=["zkLend", "Hashstack"],
         )
         current_pair = st.selectbox(
             label="Select collateral-loan pair:",
@@ -138,7 +136,7 @@ def main():
     st.header("Sizeable loans with low health factor")
     st.table(large_loans_sample)
     st.header("Loan size distribution")
-    visualization(histogram_data)
+    visualization(protocols)
 
     date_str = datetime.utcfromtimestamp(int(last_updated))
     st.write(f"Last updated {date_str} UTC, last block: {last_block_number}")

@@ -1,17 +1,38 @@
 import streamlit as st
 import plotly.express as px
+import pandas as pd
 
 
-def visualization(data):
+def load_histogram_data():
+    zklend = pd.read_csv("data/histogram.csv")
+    hashstack = pd.read_csv("hashstack_data/histogram.csv")
+    return (zklend, hashstack)
+
+
+def visualization(protocols):
+    (zklend, hashstack) = load_histogram_data()
     values = st.slider(
-        "Select a range of borrowing values:", 0.0, 16000.0, (1.0, 100.0)
+        "Select a range of borrowing values:", 0.0, 16000.0, (0.0, 100.0)
     )
     st.write("Borrowings Range:", values)
+
+    # TODO: Hashstack does not show any data, probably values so small they get rounded to 0
+    # if "zkLend" in protocols and "Hashstack" in protocols:
+    #     data = pd.concat([zklend, hashstack])
+    # elif "zkLend" in protocols:
+    #     data = zklend
+    # elif "Hashstack" in protocols:
+    #     data = hashstack
+    # else:
+    #     data = pd.concat([zklend, hashstack])
+
+    data = pd.concat([zklend, hashstack])
 
     token_data = data
     token_data["borrowings"] = token_data["borrowings"].astype(float)
     token_data = token_data[token_data["borrowings"] > values[0]]
     token_data = token_data[token_data["borrowings"] < values[1]]
+
     st.plotly_chart(
         px.histogram(
             token_data,
@@ -122,6 +143,7 @@ def visualization(data):
     token_data6["borrowings"] = token_data6["borrowings"].astype(float)
     token_data6 = token_data6[token_data6["borrowings"] < 1]
     token_data6 = token_data6[token_data6["borrowings"] > 0]
+
     st.plotly_chart(
         px.histogram(
             token_data6,
