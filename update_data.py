@@ -358,7 +358,7 @@ def update_data(state):
             + ": "
             + str(
                 format(
-                    state.user_states[x["User"]].loans[x["Loan ID"]].collateral.amount,
+                    state.user_states[x["User"]].loans[x["Loan ID"]].collateral.amount / constants.TOKEN_DECIMAL_FACTORS[token],
                     ".4f",
                 )
             )
@@ -371,7 +371,7 @@ def update_data(state):
             + ": "
             + str(
                 format(
-                    state.user_states[x["User"]].loans[x["Loan ID"]].borrowings.amount,
+                    state.user_states[x["User"]].loans[x["Loan ID"]].borrowings.amount / constants.TOKEN_DECIMAL_FACTORS[token],
                     ".4f",
                 )
             )
@@ -388,6 +388,7 @@ def update_data(state):
     ].sort_values("Health factor").iloc[:20].to_csv(
         "hashstack_data/small_loans_sample.csv", index=False
     )
+    hashstack_loan_stats.drop(columns = ["Loan ID"], inplace = True)
 
     max_block_number = zklend_events["block_number"].max()
     max_timestamp = zklend_events["timestamp"].max()
