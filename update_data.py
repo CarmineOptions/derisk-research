@@ -319,17 +319,17 @@ def update_data(state):
     hashstack_loan_stats = pandas.DataFrame()
     hashstack_loan_stats["User"] = [
         user
-        for user, user_state in state.user_states.items()
+        for user, user_state in hashstack_state.user_states.items()
         for _ in user_state.loans.keys()
     ]
     hashstack_loan_stats["Loan ID"] = [
         loan_id
-        for user_state in state.user_states.values()
+        for user_state in hashstack_state.user_states.values()
         for loan_id in user_state.loans.keys()
     ]
     hashstack_loan_stats["Borrowing in USD"] = hashstack_loan_stats.apply(
         lambda x: compute_borrowings_amount_usd(
-            borrowings=state.user_states[x["User"]].loans[x["Loan ID"]].borrowings,
+            borrowings=hashstack_state.user_states[x["User"]].loans[x["Loan ID"]].borrowings,
             prices=prices.prices,
         ),
         axis=1,
@@ -338,15 +338,15 @@ def update_data(state):
         "Risk adjusted collateral in USD"
     ] = hashstack_loan_stats.apply(
         lambda x: compute_collateral_current_amount_usd(
-            collateral=state.user_states[x["User"]].loans[x["Loan ID"]].collateral,
+            collateral=hashstack_state.user_states[x["User"]].loans[x["Loan ID"]].collateral,
             prices=prices.prices,
         ),
         axis=1,
     )
     hashstack_loan_stats["Health factor"] = hashstack_loan_stats.apply(
         lambda x: compute_health_factor(
-            borrowings=state.user_states[x["User"]].loans[x["Loan ID"]].borrowings,
-            collateral=state.user_states[x["User"]].loans[x["Loan ID"]].collateral,
+            borrowings=hashstack_state.user_states[x["User"]].loans[x["Loan ID"]].borrowings,
+            collateral=hashstack_state.user_states[x["User"]].loans[x["Loan ID"]].collateral,
             prices=prices.prices,
             user=x["User"],
         ),
@@ -354,12 +354,12 @@ def update_data(state):
     )
     hashstack_loan_stats["Collateral"] = hashstack_loan_stats.apply(
         lambda x: (
-            str(state.user_states[x["User"]].loans[x["Loan ID"]].collateral.market)
+            str(hashstack_state.user_states[x["User"]].loans[x["Loan ID"]].collateral.market)
             + ": "
             + str(
                 format(
-                    state.user_states[x["User"]].loans[x["Loan ID"]].collateral.amount / (
-                        constants.TOKEN_DECIMAL_FACTORS[state.user_states[x['User']].loans[x['Loan ID']].collateral.market]
+                    hashstack_state.user_states[x["User"]].loans[x["Loan ID"]].collateral.amount / (
+                        constants.TOKEN_DECIMAL_FACTORS[hashstack_state.user_states[x['User']].loans[x['Loan ID']].collateral.market]
                     ),
                     ".4f",
                 )
@@ -369,12 +369,12 @@ def update_data(state):
     )
     hashstack_loan_stats["Borrowings"] = hashstack_loan_stats.apply(
         lambda x: (
-            str(state.user_states[x["User"]].loans[x["Loan ID"]].borrowings.market)
+            str(hashstack_state.user_states[x["User"]].loans[x["Loan ID"]].borrowings.market)
             + ": "
             + str(
                 format(
-                    state.user_states[x["User"]].loans[x["Loan ID"]].borrowings.amount / (
-                        constants.TOKEN_DECIMAL_FACTORS[state.user_states[x['User']].loans[x['Loan ID']].borrowings.market]
+                    hashstack_state.user_states[x["User"]].loans[x["Loan ID"]].borrowings.amount / (
+                        constants.TOKEN_DECIMAL_FACTORS[hashstack_state.user_states[x['User']].loans[x['Loan ID']].borrowings.market]
                     ),
                     ".4f",
                 )
