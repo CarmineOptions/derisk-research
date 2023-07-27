@@ -555,23 +555,21 @@ def generate_and_store_graph_data(state, prices, swap_amm, pair):
 
 
 PAIRS = [
-    # ("wBTC", "ETH"),
-    # ("ETH", "wBTC"),
-    ("ETH", "USDC"),
-    ("ETH", "USDT"),
-    ("ETH", "DAI"),
-    ("wBTC", "USDC"),
-    ("wBTC", "USDT"),
-    ("wBTC", "DAI"),
+    "ETH-USDC",
+    "ETH-USDT",
+    "ETH-DAI",
+    "wBTC-USDC",
+    "wBTC-USDT",
+    "wBTC-DAI",
+    # "ETH-wBTC",
+    # "wBTC-ETH",
 ]
 
 
 def load_data():
     data = {}
     for pair in PAIRS:
-        c = pair[0]
-        b = pair[1]
-        data[pair] = pandas.read_csv(f"hashstack_data/{c}-{b}.csv")
+        data[pair] = pandas.read_csv(f"hashstack_data/{pair}.csv")
     #     histogram_data = pd.read_csv("data/histogram.csv")
     small_loans_sample = pandas.read_csv("hashstack_data/small_loans_sample.csv")
     large_loans_sample = pandas.read_csv("hashstack_data/large_loans_sample.csv")
