@@ -355,6 +355,7 @@ def update_data(state):
     hashstack_loan_stats["Collateral"] = hashstack_loan_stats.apply(
         lambda x: (
             str(state.user_states[x["User"]].loans[x["Loan ID"]].collateral.market)
+            + ": "
             + str(
                 format(
                     state.user_states[x["User"]].loans[x["Loan ID"]].collateral.amount,
@@ -367,6 +368,7 @@ def update_data(state):
     hashstack_loan_stats["Borrowings"] = hashstack_loan_stats.apply(
         lambda x: (
             str(state.user_states[x["User"]].loans[x["Loan ID"]].borrowings.market)
+            + ": "
             + str(
                 format(
                     state.user_states[x["User"]].loans[x["Loan ID"]].borrowings.amount,
