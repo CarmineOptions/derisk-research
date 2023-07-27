@@ -566,7 +566,6 @@ PAIRS = [
 ]
 
 
-@streamlit.cache_data(ttl=120)
 def load_data():
     data = {}
     for pair in PAIRS:
