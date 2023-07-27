@@ -358,7 +358,9 @@ def update_data(state):
             + ": "
             + str(
                 format(
-                    state.user_states[x["User"]].loans[x["Loan ID"]].collateral.amount / constants.TOKEN_DECIMAL_FACTORS[token],
+                    state.user_states[x["User"]].loans[x["Loan ID"]].collateral.amount / (
+                        constants.TOKEN_DECIMAL_FACTORS[state.user_states[x['User']].loans[x['Loan ID']].collateral.market]
+                    ),
                     ".4f",
                 )
             )
@@ -371,7 +373,9 @@ def update_data(state):
             + ": "
             + str(
                 format(
-                    state.user_states[x["User"]].loans[x["Loan ID"]].borrowings.amount / constants.TOKEN_DECIMAL_FACTORS[token],
+                    state.user_states[x["User"]].loans[x["Loan ID"]].borrowings.amount / (
+                        constants.TOKEN_DECIMAL_FACTORS[state.user_states[x['User']].loans[x['Loan ID']].borrowings.market]
+                    ),
                     ".4f",
                 )
             )
