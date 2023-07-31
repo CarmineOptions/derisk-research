@@ -218,7 +218,7 @@ def update_data():
     class BadUser:
         def __init__(self, address, user_state):
             self.health_factor = user_state.health_factor
-            self.address = address[:7] + "..." + address[-5:]
+            self.address = address
             self.loan_size = decimal.Decimal("0")
             self.collateral_size = decimal.Decimal("0")
             self.collateral = {}
