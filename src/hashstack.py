@@ -570,7 +570,7 @@ def load_data():
     data = {}
     for pair in PAIRS:
         data[pair] = pandas.read_csv(f"hashstack_data/{pair}.csv")
-    histogram_data = pd.read_csv("hashstack_data/histogram.csv")
+    histogram_data = pandas.read_csv("hashstack_data/histogram.csv")
     small_loans_sample = pandas.read_csv("hashstack_data/small_loans_sample.csv")
     large_loans_sample = pandas.read_csv("hashstack_data/large_loans_sample.csv")
     return (
