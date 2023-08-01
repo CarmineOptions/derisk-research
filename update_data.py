@@ -295,8 +295,8 @@ def update_data(state):
     n = 20
 
     bbu_data = {
-        "Protocol": ["zkLend" for user in big_bad_users[:n]],
         "User": [user.address for user in big_bad_users[:n]],
+        "Protocol": ["zkLend" for user in big_bad_users[:n]],
         "Health factor": [user.health_factor for user in big_bad_users[:n]],
         "Borrowing in USD": [user.loan_size for user in big_bad_users[:n]],
         "Risk adjusted collateral in USD": [
@@ -307,8 +307,8 @@ def update_data(state):
     }
 
     sbu_data = {
-        "Protocol": ["zkLend" for user in small_bad_users[:n]],
         "User": [user.address for user in small_bad_users[:n]],
+        "Protocol": ["zkLend" for user in small_bad_users[:n]],
         "Health factor": [user.health_factor for user in small_bad_users[:n]],
         "Borrowing in USD": [user.loan_size for user in small_bad_users[:n]],
         "Risk adjusted collateral in USD": [
