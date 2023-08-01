@@ -54,7 +54,7 @@ def main():
     ) = load_data()
     (
         hashstack_data,
-        #         hashstack_histogram_data,
+        hashstack_histogram_data,
         hashstack_small_loans_sample,
         hashstack_large_loans_sample,
     ) = src.hashstack.load_data()
