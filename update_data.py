@@ -191,9 +191,11 @@ def update_data(state):
     hashstack_histogram_data = [
         {
             "token": token,
-            "borrowings": loan.borrowings.amount
-            if loan.borrowings.market == token
-            else decimal.Decimal("0")
+            "borrowings": (
+                loan.borrowings.amount
+                if loan.borrowings.market == token
+                else decimal.Decimal("0")
+            )
             * prices.prices[token]
             / 10 ** constants.get_decimals(token),
         }
