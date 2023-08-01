@@ -1,6 +1,7 @@
 __pycache__
 .ipynb_checkpoints
 .vscode
+.env
 
 # do not store persistent state
 persistent-state*.pckl
