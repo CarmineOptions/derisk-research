@@ -295,6 +295,7 @@ def update_data(state):
     n = 20
 
     bbu_data = {
+        "Protocol": ["zkLend" for user in big_bad_users[:n]],
         "User": [user.address for user in big_bad_users[:n]],
         "Health factor": [user.health_factor for user in big_bad_users[:n]],
         "Borrowing in USD": [user.loan_size for user in big_bad_users[:n]],
@@ -306,6 +307,7 @@ def update_data(state):
     }
 
     sbu_data = {
+        "Protocol": ["zkLend" for user in small_bad_users[:n]],
         "User": [user.address for user in small_bad_users[:n]],
         "Health factor": [user.health_factor for user in small_bad_users[:n]],
         "Borrowing in USD": [user.loan_size for user in small_bad_users[:n]],
@@ -324,6 +326,7 @@ def update_data(state):
         for user, user_state in hashstack_state.user_states.items()
         for _ in user_state.loans.keys()
     ]
+    hashstack_loan_stats["Protocol"] = "Hashstack"
     hashstack_loan_stats["Loan ID"] = [
         loan_id
         for user_state in hashstack_state.user_states.values()
