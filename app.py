@@ -29,7 +29,6 @@ def load_data():
         data[pair] = pd.read_csv(f"data/{pair}.csv")
     small_loans_sample = pd.read_csv("data/small_loans_sample.csv")
     large_loans_sample = pd.read_csv("data/large_loans_sample.csv")
-    st.write(f'{small_loans_sample.columns}')
     with open("data/last_update.json", "r") as f:
         last_update = json.load(f)
     last_updated = last_update["timestamp"]

@@ -11,6 +11,8 @@ def load_histogram_data():
 
 def visualization(protocols):
     (zklend, hashstack) = load_histogram_data()
+    st.write(f'1, {zklend.describe()}')
+    st.write(f'2, {hashstack.describe()}')
     values = st.slider(
         "Select a range of borrowing values:", 0.0, 16000.0, (1.0, 100.0)
     )
@@ -18,12 +20,16 @@ def visualization(protocols):
 
     if "zkLend" in protocols and "Hashstack" in protocols:
         data = pd.concat([zklend, hashstack])
+        st.write(f'3, {data.describe()}')
     elif "zkLend" in protocols:
         data = zklend
+        st.write(f'4, {data.describe()}')
     elif "Hashstack" in protocols:
         data = hashstack
+        st.write(f'5, {data.describe()}')
     else:
         data = pd.concat([zklend, hashstack])
+        st.write(f'6, {data.describe()}')
 
     token_data = data
     token_data["borrowings"] = token_data["borrowings"].astype(float)
