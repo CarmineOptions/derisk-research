@@ -5,19 +5,18 @@ import time
 
 import pandas
 
-import src.classes
-import src.compute
 import src.constants
 import src.db
 import src.hashstack
 import src.persistent_state
 import src.swap_liquidity
+import src.zklend
 
 
 def get_range(start, stop, step):
     return [
         x
-        for x in src.compute.decimal_range(
+        for x in src.zklend.decimal_range(
             # TODO: make it dependent on the collateral token .. use prices.prices[COLLATERAL_TOKEN]
             start=decimal.Decimal(start),
             stop=decimal.Decimal(stop),
@@ -47,7 +46,7 @@ def generate_graph_data(state, prices, swap_amm, collateral_token, borrowings_to
     # TOOD: needed?
     # data['collateral_token_price_multiplier'] = data['collateral_token_price_multiplier'].map(decimal.Decimal)
     data["max_borrowings_to_be_liquidated"] = data["collateral_token_price"].apply(
-        lambda x: src.compute.simulate_liquidations_under_absolute_price_change(
+        lambda x: src.zklend.simulate_liquidations_under_absolute_price_change(
             prices=prices,
             collateral_token=collateral_token,
             collateral_token_price=x,
@@ -64,7 +63,7 @@ def generate_graph_data(state, prices, swap_amm, collateral_token, borrowings_to
     data.dropna(inplace=True)
 
     data["amm_borrowings_token_supply"] = data["collateral_token_price"].apply(
-        lambda x: src.compute.get_amm_supply_at_price(
+        lambda x: src.zklend.get_amm_supply_at_price(
             collateral_token=collateral_token,
             collateral_token_price=x,
             borrowings_token=borrowings_token,
@@ -137,7 +136,7 @@ def update_data(state):
     print(f"updated state in {time.time() - t1}s", flush=True)
 
     t_prices = time.time()
-    prices = src.classes.Prices()
+    prices = src.swap_liquidity.Prices()
 
     print(f"prices in {time.time() - t_prices}s", flush=True)
 
@@ -202,15 +201,15 @@ def update_data(state):
     pandas.DataFrame(histogram_data).to_csv("data/histogram.csv", index=False)
 
     for user, user_state in state.user_states.items():
-        risk_adjusted_collateral_usd = src.compute.compute_risk_adjusted_collateral_usd(
+        risk_adjusted_collateral_usd = src.zklend.compute_risk_adjusted_collateral_usd(
             user_state=user_state,
             prices=prices.prices,
         )
-        borrowings_usd = src.compute.compute_borrowings_usd(
+        borrowings_usd = src.zklend.compute_borrowings_usd(
             user_state=user_state,
             prices=prices.prices,
         )
-        health_factor = src.compute.compute_health_factor(
+        health_factor = src.zklend.compute_health_factor(
             risk_adjusted_collateral_usd=risk_adjusted_collateral_usd,
             borrowings_usd=borrowings_usd,
         )
@@ -446,4 +445,4 @@ def update_data_continuously():
 
 
 if __name__ == "__main__":
-    update_data(src.classes.State())
+    update_data(src.zklend.State())

@@ -6,7 +6,6 @@ import math
 import pandas
 import streamlit
 
-import src.compute
 import src.constants
 import src.db
 import src.persistent_state
@@ -51,7 +50,7 @@ def get_events() -> pandas.DataFrame:
 token_range_mapping = {
     "ETH": [
         x
-        for x in src.compute.decimal_range(
+        for x in src.zklend.decimal_range(
             # TODO: make it dependent on the collateral token .. use prices.prices[COLLATERAL_TOKEN]
             start=decimal.Decimal("0"),
             stop=decimal.Decimal("3000"),
@@ -61,7 +60,7 @@ token_range_mapping = {
     ],
     "wBTC": [
         x
-        for x in src.compute.decimal_range(
+        for x in src.zklend.decimal_range(
             # TODO: make it dependent on the collateral token .. use prices.prices[COLLATERAL_TOKEN]
             start=decimal.Decimal("0"),
             stop=decimal.Decimal("40000"),
@@ -80,7 +79,7 @@ def load_graph_data(collateral_token, borrowings_token):
     # TOOD: needed?
     # data['collateral_token_price_multiplier'] = data['collateral_token_price_multiplier'].map(decimal.Decimal)
     data["max_borrowings_to_be_liquidated"] = data["collateral_token_price"].apply(
-        lambda x: src.compute.simulate_liquidations_under_absolute_price_change(
+        lambda x: src.zklend.simulate_liquidations_under_absolute_price_change(
             prices=streamlit.session_state.prices,
             collateral_token=collateral_token,
             collateral_token_price=x,
@@ -151,7 +150,7 @@ def load_graph_data(collateral_token, borrowings_token):
     asyncio.run(jediswap.get_balance())
 
     data["amm_borrowings_token_supply"] = data["collateral_token_price"].apply(
-        lambda x: src.compute.get_amm_supply_at_price(
+        lambda x: src.zklend.get_amm_supply_at_price(
             collateral_token=collateral_token,
             collateral_token_price=x,
             borrowings_token=borrowings_token,

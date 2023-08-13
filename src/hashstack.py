@@ -7,10 +7,9 @@ import time
 import pandas
 import streamlit
 
-import src.classes
-import src.compute
 import src.constants
 import src.db
+import src.swap_liquidity
 
 
 def get_hashstack_events() -> pandas.DataFrame:
@@ -351,7 +350,7 @@ class State:
 def get_range(start, stop, step):
     return [
         x
-        for x in src.compute.decimal_range(
+        for x in src.zklend.decimal_range(
             # TODO: make it dependent on the collateral token .. use prices.prices[COLLATERAL_TOKEN]
             start=decimal.Decimal(start),
             stop=decimal.Decimal(stop),
@@ -498,7 +497,7 @@ def compute_max_liquidated_amount(
 
 
 def simulate_liquidations_under_absolute_price_change(
-    prices: src.classes.Prices,
+    prices: src.swap_liquidity.Prices,
     collateral_token: str,
     collateral_token_price: decimal.Decimal,
     state: State,
@@ -533,7 +532,7 @@ def generate_graph_data(state, prices, swap_amm, collateral_token, borrowings_to
     data.dropna(inplace=True)
 
     data["amm_borrowings_token_supply"] = data["collateral_token_price"].apply(
-        lambda x: src.compute.get_amm_supply_at_price(
+        lambda x: src.zklend.get_amm_supply_at_price(
             collateral_token=collateral_token,
             collateral_token_price=x,
             borrowings_token=borrowings_token,
