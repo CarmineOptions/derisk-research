@@ -1,13 +1,14 @@
 import pickle
 import subprocess
 import sys
-import pandas
-import streamlit as st
 
-import src.constants as constants
-import src.db as db
-import src.classes as classes
+import pandas
 import requests
+import streamlit
+
+import src.classes
+import src.constants
+import src.db
 
 
 LATEST_BLOCK_FILENAME = "persistent-state-keeper.txt"
@@ -24,10 +25,10 @@ def download_and_load_state_from_pickle():
             return state
         except pickle.UnpicklingError as e:
             print("Failed to unpickle the data:", e)
-            return classes.State()
+            return src.classes.State()
     else:
         print(f"Failed to download file. Status code: {response.status_code}")
-        return classes.State()
+        return src.classes.State()
 
 
 def get_persistent_filename(block_number):
@@ -39,11 +40,11 @@ def load_persistent_state():
     file = open(get_persistent_filename(latest_block), "rb")
     state = pickle.load(file)
     file.close()
-    if "latest_block" not in st.session_state:
-        st.session_state["latest_block"] = latest_block
+    if "latest_block" not in streamlit.session_state:
+        streamlit.session_state["latest_block"] = latest_block
         print("Updated latest block from persistent state to", latest_block)
-    if "state" not in st.session_state:
-        st.session_state["state"] = state
+    if "state" not in streamlit.session_state:
+        streamlit.session_state["state"] = state
         print("Updated state from persistent state")
 
 
@@ -100,7 +101,7 @@ def main():
         print("did not find gsutil, aborting")
         sys.exit(1)
 
-    connection = db.establish_connection()
+    connection = src.db.establish_connection()
 
     # Load all Zklend events.
     zklend_events = pandas.read_sql(
@@ -110,7 +111,7 @@ def main():
     FROM
         starkscan_events
     WHERE
-        from_address='{constants.Protocol.ZKLEND.value}'
+        from_address='{src.constants.Protocol.ZKLEND.value}'
     AND
         key_name IN ('Deposit', 'Withdrawal', 'CollateralEnabled', 'CollateralDisabled', 'Borrowing', 'Repayment', 'Liquidation', 'AccumulatorsSync')
     AND
@@ -126,7 +127,7 @@ def main():
 
     zklend_events.set_index("id", inplace=True)
 
-    state = classes.State()
+    state = src.classes.State()
     for _, event in zklend_events.iterrows():
         state.process_event(event=event)
 

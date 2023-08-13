@@ -1,5 +1,5 @@
 import decimal
-from enum import Enum
+import enum
 
 
 # Source: Starkscan, e.g.
@@ -33,12 +33,12 @@ LIQUIDATION_BONUSES = {
 }
 
 
-class Protocol(Enum):
+class Protocol(enum.Enum):
     HASHSTACK = "0x03dcf5c72ba60eb7b2fe151032769d49dd3df6b04fa3141dffd6e2aa162b7a6e"
     ZKLEND = "0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05"
 
 
-class Table(Enum):
+class Table(enum.Enum):
     EVENTS = "starkscan_events"
     BLOCKS = "blocks"
     PRICES = "oracle_prices"

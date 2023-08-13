@@ -1,14 +1,14 @@
-from decimal import Decimal
+import decimal
 
-from src.blockchain_call import balance_of
-from src.constants import get_address, get_decimals
+import src.blockchain_call
+frimportom src.constants
 
 
 class Token:
     def __init__(self, symbol) -> None:
         self.symbol = symbol
-        self.address = get_address(self.symbol)
-        self.decimals = get_decimals(self.symbol)
+        self.address = src.constants.get_address(self.symbol)
+        self.decimals = src.constants.get_decimals(self.symbol)
         self.balance_base = None
         self.balance_converted = None
 
@@ -31,14 +31,14 @@ class Pool(Pair):
 
     async def get_balance(self):
         for token in self.tokens:
-            balance = await balance_of(token.address, self.address)
+            balance = await src.blockchain_call.balance_of(token.address, self.address)
             token.balance_base = balance
-            token.balance_converted = Decimal(
-                balance) / Decimal(10**token.decimals)
+            token.balance_converted = decimal.Decimal(
+                balance) / decimal.Decimal(10**token.decimals)
 
     def update_converted_balance(self):
         for token in self.tokens:
-            token.balance_converted = Decimal(token.balance_base) / Decimal(
+            token.balance_converted = decimal.Decimal(token.balance_base) / decimal.Decimal(
                 10**token.decimals
             )
 
@@ -54,26 +54,26 @@ class Pool(Pair):
             sell = self.tokens[0]
         else:
             raise Exception(f"Could not buy {symbol}")
-        const = Decimal(buy.balance_base) * Decimal(sell.balance_base)
+        const = decimal.Decimal(buy.balance_base) * decimal.Decimal(sell.balance_base)
         new_buy = buy.balance_base - amount
-        new_sell = const / Decimal(new_buy)
+        new_sell = const / decimal.Decimal(new_buy)
         tokens_paid = round(new_sell - sell.balance_base)
         buy.balance_base = new_buy
         sell.balance_base = new_sell
         self.update_converted_balance()
         return tokens_paid
 
-    def supply_at_price(self, symbol: str, initial_price: Decimal):
+    def supply_at_price(self, symbol: str, initial_price: decimal.Decimal):
         # assuming constant product function
         constant = (
-            Decimal(self.tokens[0].balance_base)
-            / (Decimal("10") ** Decimal(f"{self.tokens[0].decimals}"))
+            decimal.Decimal(self.tokens[0].balance_base)
+            / (decimal.Decimal("10") ** decimal.Decimal(f"{self.tokens[0].decimals}"))
         ) * (
-            Decimal(self.tokens[1].balance_base)
-            / (Decimal("10") ** Decimal(f"{self.tokens[1].decimals}"))
+            decimal.Decimal(self.tokens[1].balance_base)
+            / (decimal.Decimal("10") ** decimal.Decimal(f"{self.tokens[1].decimals}"))
         )
-        return (initial_price * constant) ** Decimal("0.5") * (
-            Decimal("1") - Decimal("0.95") ** Decimal("0.5")
+        return (initial_price * constant) ** decimal.Decimal("0.5") * (
+            decimal.Decimal("1") - decimal.Decimal("0.95") ** decimal.Decimal("0.5")
         )
 
 

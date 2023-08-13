@@ -1,10 +1,12 @@
 from typing import Dict
 import collections
 import decimal
+
 import pandas
 import requests
-import numpy as np
-import src.constants as constants
+import numpy
+
+import src.constants
 
 
 class Prices:
@@ -38,16 +40,16 @@ class Prices:
             )
 
     def get_by_symbol(self, symbol):
-        symbol = constants.ztoken_to_token(symbol)
+        symbol = src.constants.ztoken_to_token(symbol)
         if symbol in self.prices:
             return self.prices[symbol]
         raise Exception(f"Unknown symbol {symbol}")
 
     def to_dollars(self, n, symbol):
-        symbol = constants.ztoken_to_token(symbol)
+        symbol = src.constants.ztoken_to_token(symbol)
         try:
             price = self.prices[symbol]
-            decimals = constants.get_decimals(symbol)
+            decimals = src.constants.get_decimals(symbol)
         except:
             raise Exception(f"Unknown symbol {symbol}")
         return n / 10**decimals * price
@@ -212,7 +214,7 @@ class State:
         self.last_block_number = 0
 
     def update_block_number(self, block_number):
-        if isinstance(block_number, (int, np.integer)):
+        if isinstance(block_number, (int, numpy.integer)):
             self.last_block_number = block_number
 
     def process_event(self, event: pandas.Series) -> None:
@@ -222,7 +224,7 @@ class State:
     def process_deposit_event(self, event: pandas.Series) -> None:
         # The order of the arguments is: `user`, `token`, `face_amount`.
         user = event["data"][0]
-        token = constants.get_symbol(event["data"][1])
+        token = src.constants.get_symbol(event["data"][1])
         # TODO: divide by something or store like this?
         # TODO: any better conversion to decimals?
         face_amount = decimal.Decimal(str(int(event["data"][2], base=16)))
@@ -237,7 +239,7 @@ class State:
     def process_withdrawal_event(self, event: pandas.Series) -> None:
         # The order of the arguments is: `user`, `token`, `face_amount`.
         user = event["data"][0]
-        token = constants.get_symbol(event["data"][1])
+        token = src.constants.get_symbol(event["data"][1])
         face_amount = decimal.Decimal(str(int(event["data"][2], base=16)))
         raw_amount = face_amount / \
             self.accumulator_states[token].lending_accumulator
@@ -249,7 +251,7 @@ class State:
     def process_collateral_enabled_event(self, event: pandas.Series) -> None:
         # The order of the arguments is: `user`, `token`.
         user = event["data"][0]
-        token = constants.get_symbol(event["data"][1])
+        token = src.constants.get_symbol(event["data"][1])
         self.user_states[user].collateral_enabled(token=token)
         # TODO
         if user == self.USER:
@@ -258,7 +260,7 @@ class State:
     def process_collateral_disabled_event(self, event: pandas.Series) -> None:
         # The order of the arguments is: `user`, `token`.
         user = event["data"][0]
-        token = constants.get_symbol(event["data"][1])
+        token = src.constants.get_symbol(event["data"][1])
         self.user_states[user].collateral_disabled(token=token)
         # TODO
         if user == self.USER:
@@ -267,7 +269,7 @@ class State:
     def process_borrowing_event(self, event: pandas.Series) -> None:
         # The order of the arguments is: `user`, `token`, `raw_amount`, `face_amount`.
         user = event["data"][0]
-        token = constants.get_symbol(event["data"][1])
+        token = src.constants.get_symbol(event["data"][1])
         raw_amount = decimal.Decimal(str(int(event["data"][2], base=16)))
         face_amount = decimal.Decimal(
             str(int(event["data"][3], base=16))
@@ -286,7 +288,7 @@ class State:
         # `face_amount`.
         repayer = event["data"][0]  # TODO: relevant?
         beneficiary = event["data"][1]
-        token = constants.get_symbol(event["data"][2])
+        token = src.constants.get_symbol(event["data"][2])
         raw_amount = decimal.Decimal(str(int(event["data"][3], base=16)))
         face_amount = decimal.Decimal(
             str(int(event["data"][4], base=16))
@@ -305,12 +307,12 @@ class State:
         # `debt_face_amount`, `collateral_token`, `collateral_amount`.
         liquidator = event["data"][0]  # TODO: relevant?
         user = event["data"][1]
-        debt_token = constants.get_symbol(event["data"][2])
+        debt_token = src.constants.get_symbol(event["data"][2])
         debt_raw_amount = decimal.Decimal(str(int(event["data"][3], base=16)))
         debt_face_amount = decimal.Decimal(
             str(int(event["data"][4], base=16))
         )  # TODO: relevant?
-        collateral_token = constants.get_symbol(event["data"][5])
+        collateral_token = src.constants.get_symbol(event["data"][5])
         collateral_amount = decimal.Decimal(
             str(int(event["data"][6], base=16)))
         collateral_raw_amount = (
@@ -336,7 +338,7 @@ class State:
 
     def process_accumulators_sync_event(self, event: pandas.Series) -> None:
         # The order of the arguments is: `token`, `lending_accumulator`, `debt_accumulator`.
-        token = constants.get_symbol(event["data"][0])
+        token = src.constants.get_symbol(event["data"][0])
         lending_accumulator = decimal.Decimal(
             str(int(event["data"][1], base=16)))
         debt_accumulator = decimal.Decimal(str(int(event["data"][2], base=16)))
@@ -349,9 +351,9 @@ class State:
         # The order of the arguments is: `from_`, `to`, `value`.
         empty_address = "0x0"
         # token contract emitted this event
-        ztoken = constants.get_symbol(event["from_address"])
+        ztoken = src.constants.get_symbol(event["from_address"])
         # zTokens share accumulator value with token
-        token = constants.ztoken_to_token(ztoken)
+        token = src.constants.ztoken_to_token(ztoken)
         from_ = event["data"][0]
         to = event["data"][1]
         value = decimal.Decimal(str(int(event["data"][2], base=16)))

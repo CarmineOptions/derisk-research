@@ -1,9 +1,11 @@
+import os
+
 import psycopg2
-from os import environ
 
-from src.constants import Protocol, Table
+import src.constants
 
-PG_CONNECTION_STRING = environ.get("PG_CONNECTION_STRING")
+
+PG_CONNECTION_STRING = os.environ.get("PG_CONNECTION_STRING")
 
 if PG_CONNECTION_STRING is None:
     print("No PG connection string, aborting")
@@ -35,7 +37,7 @@ def format_starkscan_event(event):
     }
 
 
-def get_events(protocol: Protocol, conn: psycopg2.extensions.connection):
+def get_events(protocol: src.constants.Protocol, conn: psycopg2.extensions.connection):
     return list(
         map(
             format_starkscan_event,
@@ -44,7 +46,7 @@ def get_events(protocol: Protocol, conn: psycopg2.extensions.connection):
         SELECT
             block_hash, block_number, transaction_hash, event_index, from_address, keys, data, timestamp, key_name
         FROM
-            {Table.EVENTS.value}
+            {src.constants.Table.EVENTS.value}
         WHERE
             from_address='{protocol.value}';
         """,
@@ -55,7 +57,7 @@ def get_events(protocol: Protocol, conn: psycopg2.extensions.connection):
 
 
 def get_events_by_key_name(
-    protocol: Protocol, key_name: str, conn: psycopg2.extensions.connection
+    protocol: src.constants.Protocol, key_name: str, conn: psycopg2.extensions.connection
 ):
     return list(
         map(
@@ -65,7 +67,7 @@ def get_events_by_key_name(
         SELECT
             block_hash, block_number, transaction_hash, event_index, from_address, keys, data, timestamp, key_name
         FROM
-            {Table.EVENTS.value}
+            {src.constants.Table.EVENTS.value}
         WHERE
             from_address='{protocol.value}' and key_name='{key_name}';
         """,

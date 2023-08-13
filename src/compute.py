@@ -2,38 +2,39 @@ from typing import Dict
 import asyncio
 import copy
 import decimal
-import pandas
-import streamlit as st
 
-import src.classes as classes
-from src.constants import COLLATERAL_FACTORS, LIQUIDATION_BONUSES, TOKEN_DECIMAL_FACTORS
-import src.swap_liquidity as swap_liquidity
+import pandas
+import streamlit
+
+import src.classes
+import src.constants
+import src.swap_liquidity
 
 
 def compute_risk_adjusted_collateral_usd(
-    user_state: classes.UserState,
+    user_state: src.classes.UserState,
     prices: Dict[str, decimal.Decimal],
 ) -> decimal.Decimal:
     return sum(
         token_state.collateral_enabled
         * token_state.deposit
-        * COLLATERAL_FACTORS[token]
+        * src.constants.COLLATERAL_FACTORS[token]
         * prices[token]
         # TODO: perform the conversion using TOKEN_DECIMAL_FACTORS sooner (in `UserTokenState`?)?
-        / TOKEN_DECIMAL_FACTORS[token]
+        / src.constants.TOKEN_DECIMAL_FACTORS[token]
         for token, token_state in user_state.token_states.items()
         if not token_state.z_token
     )
 
 
 def compute_borrowings_usd(
-    user_state: classes.UserState,
+    user_state: src.classes.UserState,
     prices: Dict[str, decimal.Decimal],
 ) -> decimal.Decimal:
     return sum(
         token_state.borrowings * prices[token]
         # TODO: perform the conversion using TOKEN_DECIMAL_FACTORS sooner (in `UserTokenState`?)?
-        / TOKEN_DECIMAL_FACTORS[token]
+        / src.constants.TOKEN_DECIMAL_FACTORS[token]
         for token, token_state in user_state.token_states.items()
         if not token_state.z_token
     )
@@ -76,7 +77,7 @@ def compute_borrowings_to_be_liquidated(
 
 
 def compute_max_liquidated_amount(
-    state: classes.State,
+    state: src.classes.State,
     prices: Dict[str, decimal.Decimal],
     borrowings_token: str,
 ) -> decimal.Decimal:
@@ -126,8 +127,8 @@ def compute_max_liquidated_amount(
             risk_adjusted_collateral_usd=risk_adjusted_collateral_usd,
             borrowings_usd=borrowings_usd,
             borrowings_token_price=prices[borrowings_token],
-            collateral_token_collateral_factor=COLLATERAL_FACTORS[collateral_token],
-            collateral_token_liquidation_bonus=LIQUIDATION_BONUSES[collateral_token],
+            collateral_token_collateral_factor=src.constants.COLLATERAL_FACTORS[collateral_token],
+            collateral_token_liquidation_bonus=src.constants.LIQUIDATION_BONUSES[collateral_token],
         )
     return liquidated_borrowings_amount
 
@@ -139,10 +140,10 @@ def decimal_range(start: decimal.Decimal, stop: decimal.Decimal, step: decimal.D
 
 
 def simulate_liquidations_under_absolute_price_change(
-    prices: classes.Prices,
+    prices: src.classes.Prices,
     collateral_token: str,
     collateral_token_price: decimal.Decimal,
-    state: classes.State,
+    state: src.classes.State,
     borrowings_token: str,
 ) -> decimal.Decimal:
     changed_prices = copy.deepcopy(prices.prices)
@@ -153,10 +154,10 @@ def simulate_liquidations_under_absolute_price_change(
 
 
 def simulate_liquidations_under_price_change(
-    prices: classes.Prices,
+    prices: src.classes.Prices,
     collateral_token: str,
     collateral_token_price_multiplier: decimal.Decimal,
-    state: classes.State,
+    state: src.classes.State,
     borrowings_token: str,
 ) -> decimal.Decimal:
     changed_prices = copy.deepcopy(prices.prices)
@@ -170,7 +171,7 @@ def get_amm_supply_at_price(
     collateral_token: str,
     collateral_token_price: decimal.Decimal,
     borrowings_token: str,
-    amm: swap_liquidity.SwapAmm,
+    amm: src.swap_liquidity.SwapAmm,
 ) -> decimal.Decimal:
     return amm.get_pool(collateral_token, borrowings_token).supply_at_price(
         borrowings_token, collateral_token_price
@@ -178,7 +179,7 @@ def get_amm_supply_at_price(
 
 
 def update_graph_data():
-    params = st.session_state["parameters"]
+    params = streamlit.session_state["parameters"]
 
     data = pandas.DataFrame(
         {
@@ -198,10 +199,10 @@ def update_graph_data():
     # data['collateral_token_price_multiplier'] = data['collateral_token_price_multiplier'].map(decimal.Decimal)
     data["max_borrowings_to_be_liquidated"] = data["collateral_token_price"].apply(
         lambda x: simulate_liquidations_under_absolute_price_change(
-            prices=st.session_state.prices,
+            prices=streamlit.session_state.prices,
             collateral_token=params["COLLATERAL_TOKEN"],
             collateral_token_price=x,
-            state=st.session_state.state,
+            state=streamlit.session_state.state,
             borrowings_token=params["BORROWINGS_TOKEN"],
         )
     )
@@ -214,7 +215,7 @@ def update_graph_data():
     data.dropna(inplace=True)
 
     # Setup the AMM.
-    jediswap = swap_liquidity.SwapAmm("JediSwap")
+    jediswap = src.swap_liquidity.SwapAmm("JediSwap")
     jediswap.add_pool(
         "ETH",
         "USDC",
@@ -224,11 +225,11 @@ def update_graph_data():
 
     data["amm_borrowings_token_supply"] = data["collateral_token_price"].apply(
         lambda x: get_amm_supply_at_price(
-            collateral_token=st.session_state["parameters"]["COLLATERAL_TOKEN"],
+            collateral_token=streamlit.session_state["parameters"]["COLLATERAL_TOKEN"],
             collateral_token_price=x,
-            borrowings_token=st.session_state["parameters"]["BORROWINGS_TOKEN"],
+            borrowings_token=streamlit.session_state["parameters"]["BORROWINGS_TOKEN"],
             amm=jediswap,
         )
     )
 
-    st.session_state["data"] = data
+    streamlit.session_state["data"] = data
