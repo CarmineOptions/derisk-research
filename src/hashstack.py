@@ -1,20 +1,20 @@
-import time
 from typing import Dict
 import collections
 import copy
 import decimal
+import time
 
 import pandas
 import streamlit
 
-import src.constants as constants
-import src.classes as classes
-import src.compute as compute
-import src.db as db
+import src.classes
+import src.compute
+import src.constants
+import src.db
 
 
 def get_hashstack_events() -> pandas.DataFrame:
-    connection = db.establish_connection()
+    connection = src.db.establish_connection()
     hashstack_events = pandas.read_sql(
         sql=f"""
         SELECT
@@ -22,7 +22,7 @@ def get_hashstack_events() -> pandas.DataFrame:
         FROM
             starkscan_events
         WHERE
-            from_address='{constants.Protocol.HASHSTACK.value}'
+            from_address='{src.constants.Protocol.HASHSTACK.value}'
         AND
             key_name IN ('new_loan', 'loan_withdrawal', 'loan_repaid', 'loan_swap', 'collateral_added', 'collateral_withdrawal', 'loan_interest_deducted', 'liquidated')
         ORDER BY
@@ -152,20 +152,20 @@ class State:
         user = event["data"][1]
         self.user_loan_ids_mapping[user].append(loan_id)
         # TODO: universal naming: use deposit, collateral and debt (instead of loan/borrowings)?
-        borrowings_token = constants.get_symbol(event["data"][2])
+        borrowings_token = src.constants.get_symbol(event["data"][2])
         borrowings_amount = decimal.Decimal(str(int(event["data"][4], base=16)))
-        borrowings_current_token = constants.get_symbol(event["data"][6])
+        borrowings_current_token = src.constants.get_symbol(event["data"][6])
         borrowings_current_amount = decimal.Decimal(str(int(event["data"][7], base=16)))
         debt_category = int(event["data"][10], base=16)
         # TODO: first ~3 loans seem to have different structure of 'data'
         try:
-            collateral_token = constants.get_symbol(event["data"][14])
+            collateral_token = src.constants.get_symbol(event["data"][14])
             collateral_amount = decimal.Decimal(str(int(event["data"][15], base=16)))
             collateral_current_amount = decimal.Decimal(
                 str(int(event["data"][17], base=16))
             )
         except KeyError:
-            collateral_token = constants.get_symbol(event["data"][13])
+            collateral_token = src.constants.get_symbol(event["data"][13])
             collateral_amount = decimal.Decimal(str(int(event["data"][14], base=16)))
             collateral_current_amount = decimal.Decimal(
                 str(int(event["data"][16], base=16))
@@ -192,9 +192,9 @@ class State:
         # `timestamp`.
         loan_id = int(event["data"][0], base=16)
         user = event["data"][1]
-        token = constants.get_symbol(event["data"][2])
+        token = src.constants.get_symbol(event["data"][2])
         amount = decimal.Decimal(str(int(event["data"][4], base=16)))
-        current_token = constants.get_symbol(event["data"][6])
+        current_token = src.constants.get_symbol(event["data"][6])
         current_amount = decimal.Decimal(str(int(event["data"][7], base=16)))
         # TODO: from the docs it seems that it's only possible to repay the whole amount
         assert current_amount == decimal.Decimal("0")
@@ -222,7 +222,7 @@ class State:
         # TODO: this doesn't always have to hold, right?
         assert old_user == new_user
         # TODO: universal naming: use deposit, collateral and debt (instead of loan/borrowings)?
-        new_token = constants.get_symbol(event["data"][16])
+        new_token = src.constants.get_symbol(event["data"][16])
         new_amount = decimal.Decimal(str(int(event["data"][18], base=16)))
         assert (
             self.user_states[old_user].loans[old_loan_id].borrowings.market == new_token
@@ -231,7 +231,7 @@ class State:
             self.user_states[old_user].loans[old_loan_id].borrowings.amount
             == new_amount
         )
-        new_current_token = constants.get_symbol(event["data"][20])
+        new_current_token = src.constants.get_symbol(event["data"][20])
         new_current_amount = decimal.Decimal(str(int(event["data"][21], base=16)))
         old_debt_category = int(event["data"][10], base=16)
         new_debt_category = int(event["data"][24], base=16)
@@ -261,7 +261,7 @@ class State:
         assert len(users) == 1
         user = users[0]
         # TODO: universal naming: use deposit, collateral and debt (instead of loan/borrowings)?
-        token = constants.get_symbol(event["data"][0])
+        token = src.constants.get_symbol(event["data"][0])
         amount = decimal.Decimal(str(int(event["data"][1], base=16)))  # TODO: needed?
         current_amount = decimal.Decimal(str(int(event["data"][3], base=16)))
         # TODO: utilize `amount_added`?
@@ -285,7 +285,7 @@ class State:
         assert len(users) == 1
         user = users[0]
         # TODO: universal naming: use deposit, collateral and debt (instead of loan/borrowings)?
-        token = constants.get_symbol(event["data"][0])
+        token = src.constants.get_symbol(event["data"][0])
         amount = decimal.Decimal(str(int(event["data"][1], base=16)))  # TODO: needed?
         current_amount = decimal.Decimal(str(int(event["data"][3], base=16)))
         # TODO: utilize `amount_withdrawn`?
@@ -309,7 +309,7 @@ class State:
         assert len(users) == 1
         user = users[0]
         # TODO: universal naming: use deposit, collateral and debt (instead of loan/borrowings)?
-        token = constants.get_symbol(event["data"][0])
+        token = src.constants.get_symbol(event["data"][0])
         amount = decimal.Decimal(str(int(event["data"][1], base=16)))  # TODO: needed?
         current_amount = decimal.Decimal(str(int(event["data"][3], base=16)))
         # TODO: utilize `amount_withdrawn`?
@@ -325,9 +325,9 @@ class State:
         # `liquidator`, `timestamp`.
         loan_id = int(event["data"][0], base=16)
         user = event["data"][1]
-        token = constants.get_symbol(event["data"][2])
+        token = src.constants.get_symbol(event["data"][2])
         amount = decimal.Decimal(str(int(event["data"][4], base=16)))
-        current_token = constants.get_symbol(event["data"][6])
+        current_token = src.constants.get_symbol(event["data"][6])
         current_amount = decimal.Decimal(str(int(event["data"][7], base=16)))
         # TODO: from the docs it seems that it's only possible to liquidate the whole amount
         assert current_amount == decimal.Decimal("0")
@@ -351,7 +351,7 @@ class State:
 def get_range(start, stop, step):
     return [
         x
-        for x in compute.decimal_range(
+        for x in src.compute.decimal_range(
             # TODO: make it dependent on the collateral token .. use prices.prices[COLLATERAL_TOKEN]
             start=decimal.Decimal(start),
             stop=decimal.Decimal(stop),
@@ -498,7 +498,7 @@ def compute_max_liquidated_amount(
 
 
 def simulate_liquidations_under_absolute_price_change(
-    prices: classes.Prices,
+    prices: src.classes.Prices,
     collateral_token: str,
     collateral_token_price: decimal.Decimal,
     state: State,
@@ -533,7 +533,7 @@ def generate_graph_data(state, prices, swap_amm, collateral_token, borrowings_to
     data.dropna(inplace=True)
 
     data["amm_borrowings_token_supply"] = data["collateral_token_price"].apply(
-        lambda x: compute.get_amm_supply_at_price(
+        lambda x: src.compute.get_amm_supply_at_price(
             collateral_token=collateral_token,
             collateral_token_price=x,
             borrowings_token=borrowings_token,

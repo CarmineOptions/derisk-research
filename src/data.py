@@ -1,26 +1,23 @@
 import asyncio
 import decimal
 import time
-import streamlit as st
-import pandas
-import math
 
-from src.compute import (
-    decimal_range,
-    get_amm_supply_at_price,
-    simulate_liquidations_under_absolute_price_change,
-)
-import src.constants as constants
-import src.db as db
-from src.persistent_state import load_persistent_state
-from src.swap_liquidity import SwapAmm
+import math
+import pandas
+import streamlit
+
+import src.compute
+import src.constants
+import src.db
+import src.persistent_state
+import src.swap_liquidity
 
 
 def get_events() -> pandas.DataFrame:
-    latest_block = st.session_state["latest_block"]
+    latest_block = streamlit.session_state["latest_block"]
     print("getting events from block", latest_block)
     # Establish the connection.
-    connection = db.establish_connection()
+    connection = src.db.establish_connection()
 
     # Load all Zklend events.
     zklend_events = pandas.read_sql(
@@ -30,7 +27,7 @@ def get_events() -> pandas.DataFrame:
       FROM
           starkscan_events
       WHERE
-          from_address='{constants.Protocol.ZKLEND.value}'
+          from_address='{src.constants.Protocol.ZKLEND.value}'
       AND
           key_name IN ('Deposit', 'Withdrawal', 'CollateralEnabled', 'CollateralDisabled', 'Borrowing', 'Repayment', 'Liquidation', 'AccumulatorsSync')
       AND
@@ -46,7 +43,7 @@ def get_events() -> pandas.DataFrame:
     lb = zklend_events["block_number"].max()
     if not math.isnan(lb):
         print("new latest block", lb)
-        st.session_state.latest_block = lb
+        streamlit.session_state.latest_block = lb
     return zklend_events
 
 
@@ -54,7 +51,7 @@ def get_events() -> pandas.DataFrame:
 token_range_mapping = {
     "ETH": [
         x
-        for x in decimal_range(
+        for x in src.compute.decimal_range(
             # TODO: make it dependent on the collateral token .. use prices.prices[COLLATERAL_TOKEN]
             start=decimal.Decimal("0"),
             stop=decimal.Decimal("3000"),
@@ -64,7 +61,7 @@ token_range_mapping = {
     ],
     "wBTC": [
         x
-        for x in decimal_range(
+        for x in src.compute.decimal_range(
             # TODO: make it dependent on the collateral token .. use prices.prices[COLLATERAL_TOKEN]
             start=decimal.Decimal("0"),
             stop=decimal.Decimal("40000"),
@@ -75,7 +72,7 @@ token_range_mapping = {
 }
 
 
-@st.cache()
+@streamlit.cache()
 def load_graph_data(collateral_token, borrowings_token):
     data = pandas.DataFrame(
         {"collateral_token_price": token_range_mapping[collateral_token]},
@@ -83,11 +80,11 @@ def load_graph_data(collateral_token, borrowings_token):
     # TOOD: needed?
     # data['collateral_token_price_multiplier'] = data['collateral_token_price_multiplier'].map(decimal.Decimal)
     data["max_borrowings_to_be_liquidated"] = data["collateral_token_price"].apply(
-        lambda x: simulate_liquidations_under_absolute_price_change(
-            prices=st.session_state.prices,
+        lambda x: src.compute.simulate_liquidations_under_absolute_price_change(
+            prices=streamlit.session_state.prices,
             collateral_token=collateral_token,
             collateral_token_price=x,
-            state=st.session_state.state,
+            state=streamlit.session_state.state,
             borrowings_token=borrowings_token,
         )
     )
@@ -100,7 +97,7 @@ def load_graph_data(collateral_token, borrowings_token):
     data.dropna(inplace=True)
 
     # Setup the AMM.
-    jediswap = SwapAmm("JediSwap")
+    jediswap = src.swap_liquidity.SwapAmm("JediSwap")
     jediswap.add_pool(
         "ETH",
         "USDC",
@@ -154,7 +151,7 @@ def load_graph_data(collateral_token, borrowings_token):
     asyncio.run(jediswap.get_balance())
 
     data["amm_borrowings_token_supply"] = data["collateral_token_price"].apply(
-        lambda x: get_amm_supply_at_price(
+        lambda x: src.compute.get_amm_supply_at_price(
             collateral_token=collateral_token,
             collateral_token_price=x,
             borrowings_token=borrowings_token,
@@ -162,7 +159,7 @@ def load_graph_data(collateral_token, borrowings_token):
         )
     )
 
-    st.session_state["data"] = data
+    streamlit.session_state["data"] = data
 
 
 def bench(msg, start):
@@ -171,14 +168,14 @@ def bench(msg, start):
 
 def load_state():
     t0 = time.time()
-    if "state" not in st.session_state and "latest_block" not in st.session_state:
-        load_persistent_state()
+    if "state" not in streamlit.session_state and "latest_block" not in streamlit.session_state:
+        src.persistent_state.load_persistent_state()
         bench("loaded persistent state", t0)
     t1 = time.time()
     new_events = get_events()
     bench("got new events", t1)
     t2 = time.time()
     for _, event in new_events.iterrows():
-        st.session_state["state"].process_event(event=event)
+        streamlit.session_state["state"].process_event(event=event)
     bench("processed new events", t2)
     bench("full state update", t0)

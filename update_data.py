@@ -2,31 +2,22 @@ import asyncio
 import decimal
 import json
 import time
+
 import pandas
-from src.persistent_state import (
-    download_and_load_state_from_pickle,
-    upload_state_as_pickle,
-)
-from src.compute import (
-    compute_borrowings_usd,
-    compute_health_factor,
-    compute_risk_adjusted_collateral_usd,
-    decimal_range,
-    get_amm_supply_at_price,
-    simulate_liquidations_under_absolute_price_change,
-)
-import src.db as db
-import src.constants as constants
-from src.classes import Prices, State
-from src.data import get_events
-from src.swap_liquidity import get_jediswap
-import src.hashstack as hashstack
+
+import src.classes
+import src.compute
+import src.constants
+import src.db
+import src.hashstack
+import src.persistent_state
+import src.swap_liquidity
 
 
 def get_range(start, stop, step):
     return [
         x
-        for x in decimal_range(
+        for x in src.compute.decimal_range(
             # TODO: make it dependent on the collateral token .. use prices.prices[COLLATERAL_TOKEN]
             start=decimal.Decimal(start),
             stop=decimal.Decimal(stop),
@@ -56,7 +47,7 @@ def generate_graph_data(state, prices, swap_amm, collateral_token, borrowings_to
     # TOOD: needed?
     # data['collateral_token_price_multiplier'] = data['collateral_token_price_multiplier'].map(decimal.Decimal)
     data["max_borrowings_to_be_liquidated"] = data["collateral_token_price"].apply(
-        lambda x: simulate_liquidations_under_absolute_price_change(
+        lambda x: src.compute.simulate_liquidations_under_absolute_price_change(
             prices=prices,
             collateral_token=collateral_token,
             collateral_token_price=x,
@@ -73,7 +64,7 @@ def generate_graph_data(state, prices, swap_amm, collateral_token, borrowings_to
     data.dropna(inplace=True)
 
     data["amm_borrowings_token_supply"] = data["collateral_token_price"].apply(
-        lambda x: get_amm_supply_at_price(
+        lambda x: src.compute.get_amm_supply_at_price(
             collateral_token=collateral_token,
             collateral_token_price=x,
             borrowings_token=borrowings_token,
@@ -95,7 +86,7 @@ def generate_and_store_graph_data(state, prices, swap_amm, pair):
 
 
 def get_events(block_number) -> pandas.DataFrame:
-    connection = db.establish_connection()
+    connection = src.db.establish_connection()
     zklend_events = pandas.read_sql(
         sql=f"""
       SELECT
@@ -103,7 +94,7 @@ def get_events(block_number) -> pandas.DataFrame:
       FROM
           starkscan_events
       WHERE
-          from_address='{constants.Protocol.ZKLEND.value}'
+          from_address='{src.constants.Protocol.ZKLEND.value}'
       AND
           key_name IN ('Deposit', 'Withdrawal', 'CollateralEnabled', 'CollateralDisabled', 'Borrowing', 'Repayment', 'Liquidation', 'AccumulatorsSync')
       AND
@@ -127,7 +118,7 @@ def update_data(state):
     t0 = time.time()
     print(f"Updating CSV data from {state.last_block_number}...", flush=True)
     zklend_events = get_events(state.last_block_number)
-    hashstack_events = hashstack.get_hashstack_events()
+    hashstack_events = src.hashstack.get_hashstack_events()
     print(f"got events in {time.time() - t0}s", flush=True)
 
     new_latest_block = zklend_events["block_number"].max()
@@ -139,20 +130,20 @@ def update_data(state):
         state.process_event(event)
 
     # Iterate over ordered events to obtain the final state of each user.
-    hashstack_state = hashstack.State()
+    hashstack_state = src.hashstack.State()
     for _, hashstack_event in hashstack_events.iterrows():
         hashstack_state.process_event(event=hashstack_event)
 
     print(f"updated state in {time.time() - t1}s", flush=True)
 
     t_prices = time.time()
-    prices = Prices()
+    prices = src.classes.Prices()
 
     print(f"prices in {time.time() - t_prices}s", flush=True)
 
     t_swap = time.time()
 
-    jediswap = asyncio.run(get_jediswap())
+    jediswap = asyncio.run(src.swap_liquidity.get_jediswap())
 
     print(f"swap in {time.time() - t_swap}s", flush=True)
 
@@ -171,7 +162,7 @@ def update_data(state):
 
     [generate_and_store_graph_data(state, prices, jediswap, pair) for pair in pairs]
     [
-        hashstack.generate_and_store_graph_data(hashstack_state, prices, jediswap, pair)
+        src.hashstack.generate_and_store_graph_data(hashstack_state, prices, jediswap, pair)
         for pair in pairs
     ]
 
@@ -182,10 +173,10 @@ def update_data(state):
             "token": token,
             "borrowings": user_state.token_states[token].borrowings
             * prices.prices[token]
-            / 10 ** constants.get_decimals(token),
+            / 10 ** src.constants.get_decimals(token),
         }
         for user_state in state.user_states.values()
-        for token in constants.symbol_decimals_map.keys()
+        for token in src.constants.symbol_decimals_map.keys()
         if token[0] != "z"
     ]
     hashstack_histogram_data = [
@@ -197,11 +188,11 @@ def update_data(state):
                 else decimal.Decimal("0")
             )
             * prices.prices[token]
-            / 10 ** constants.get_decimals(token),
+            / 10 ** src.constants.get_decimals(token),
         }
         for user_state in hashstack_state.user_states.values()
         for loan in user_state.loans.values()
-        for token in constants.symbol_decimals_map.keys()
+        for token in src.constants.symbol_decimals_map.keys()
         if token[0] != "z"
     ]
 
@@ -211,15 +202,15 @@ def update_data(state):
     pandas.DataFrame(histogram_data).to_csv("data/histogram.csv", index=False)
 
     for user, user_state in state.user_states.items():
-        risk_adjusted_collateral_usd = compute_risk_adjusted_collateral_usd(
+        risk_adjusted_collateral_usd = src.compute.compute_risk_adjusted_collateral_usd(
             user_state=user_state,
             prices=prices.prices,
         )
-        borrowings_usd = compute_borrowings_usd(
+        borrowings_usd = src.compute.compute_borrowings_usd(
             user_state=user_state,
             prices=prices.prices,
         )
-        health_factor = compute_health_factor(
+        health_factor = src.compute.compute_health_factor(
             risk_adjusted_collateral_usd=risk_adjusted_collateral_usd,
             borrowings_usd=borrowings_usd,
         )
@@ -244,7 +235,7 @@ def update_data(state):
                     continue
                 if token_state.borrowings > decimal.Decimal("0"):
                     tokens = (
-                        token_state.borrowings / constants.TOKEN_DECIMAL_FACTORS[token]
+                        token_state.borrowings / src.constants.TOKEN_DECIMAL_FACTORS[token]
                     )
                     self.borrowings[token] = (
                         self.borrowings.get(token, decimal.Decimal("0")) + tokens
@@ -255,7 +246,7 @@ def update_data(state):
                     and token_state.deposit > decimal.Decimal("0")
                 ):
                     tokens = (
-                        token_state.deposit / constants.TOKEN_DECIMAL_FACTORS[token]
+                        token_state.deposit / src.constants.TOKEN_DECIMAL_FACTORS[token]
                     )
                     self.collateral[token] = (
                         self.collateral.get(token, decimal.Decimal("0")) + tokens
@@ -263,7 +254,7 @@ def update_data(state):
                     self.collateral_size += (
                         tokens
                         * prices.prices[token]
-                        * constants.COLLATERAL_FACTORS[token]
+                        * src.constants.COLLATERAL_FACTORS[token]
                     )
 
         def format(self):
@@ -335,7 +326,7 @@ def update_data(state):
         for loan_id in user_state.loans.keys()
     ]
     hashstack_loan_stats["Borrowing in USD"] = hashstack_loan_stats.apply(
-        lambda x: hashstack.compute_borrowings_amount_usd(
+        lambda x: src.hashstack.compute_borrowings_amount_usd(
             borrowings=hashstack_state.user_states[x["User"]]
             .loans[x["Loan ID"]]
             .borrowings,
@@ -346,7 +337,7 @@ def update_data(state):
     hashstack_loan_stats[
         "Risk adjusted collateral in USD"
     ] = hashstack_loan_stats.apply(
-        lambda x: hashstack.compute_collateral_current_amount_usd(
+        lambda x: src.hashstack.compute_collateral_current_amount_usd(
             collateral=hashstack_state.user_states[x["User"]]
             .loans[x["Loan ID"]]
             .collateral,
@@ -355,7 +346,7 @@ def update_data(state):
         axis=1,
     )
     hashstack_loan_stats["Health factor"] = hashstack_loan_stats.apply(
-        lambda x: hashstack.compute_health_factor(
+        lambda x: src.hashstack.compute_health_factor(
             borrowings=hashstack_state.user_states[x["User"]]
             .loans[x["Loan ID"]]
             .borrowings,
@@ -381,7 +372,7 @@ def update_data(state):
                     .loans[x["Loan ID"]]
                     .collateral.amount
                     / (
-                        constants.TOKEN_DECIMAL_FACTORS[
+                        src.constants.TOKEN_DECIMAL_FACTORS[
                             hashstack_state.user_states[x["User"]]
                             .loans[x["Loan ID"]]
                             .collateral.market
@@ -407,7 +398,7 @@ def update_data(state):
                     .loans[x["Loan ID"]]
                     .borrowings.amount
                     / (
-                        constants.TOKEN_DECIMAL_FACTORS[
+                        src.constants.TOKEN_DECIMAL_FACTORS[
                             hashstack_state.user_states[x["User"]]
                             .loans[x["Loan ID"]]
                             .borrowings.market
@@ -444,15 +435,15 @@ def update_data(state):
 
 
 def update_data_continuously():
-    state = download_and_load_state_from_pickle()
+    state = src.persistent_state.download_and_load_state_from_pickle()
     while True:
         state = update_data(state)
         # TODO: gsutil is not accessible in the cloud run
         # get it to work and then uncomment
-        # upload_state_as_pickle(state)
+        # src.persistent_state.upload_state_as_pickle(state)
         print("DATA UPDATED", flush=True)
         time.sleep(120)
 
 
 if __name__ == "__main__":
-    update_data(State())
+    update_data(src.classes.State())

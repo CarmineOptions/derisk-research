@@ -1,15 +1,18 @@
-from datetime import datetime
+import datetime
 import json
 import multiprocessing
 import os
-import streamlit as st
-import plotly.express as px
-import pandas as pd
 
-from src.histogram import visualization
-from update_data import update_data_continuously
+import pandas
+import plotly.express
+import streamlit
+
 import src.hashstack
+import src.histogram
+import update_data
 
+
+# TODO: Introduce other pairs.
 PAIRS = [
     "ETH-USDC",
     "ETH-USDT",
@@ -22,13 +25,12 @@ PAIRS = [
 ]
 
 
-# @st.cache_data(ttl=120)
 def load_data():
     data = {}
     for pair in PAIRS:
-        data[pair] = pd.read_csv(f"data/{pair}.csv")
-    small_loans_sample = pd.read_csv("data/small_loans_sample.csv")
-    large_loans_sample = pd.read_csv("data/large_loans_sample.csv")
+        data[pair] = pandas.read_csv(f"data/{pair}.csv")
+    small_loans_sample = pandas.read_csv("data/small_loans_sample.csv")
+    large_loans_sample = pandas.read_csv("data/large_loans_sample.csv")
     with open("data/last_update.json", "r") as f:
         last_update = json.load(f)
     last_updated = last_update["timestamp"]
@@ -43,7 +45,7 @@ def load_data():
 
 
 def main():
-    st.title("DeRisk")
+    streamlit.title("DeRisk")
 
     (
         data,
@@ -59,15 +61,15 @@ def main():
         hashstack_large_loans_sample,
     ) = src.hashstack.load_data()
 
-    col1, _ = st.columns([1, 4])
+    col1, _ = streamlit.columns([1, 4])
 
     with col1:
-        protocols = st.multiselect(
+        protocols = streamlit.multiselect(
             label="Select protocols",
             options=["zkLend", "Hashstack"],
             default=["zkLend", "Hashstack"],
         )
-        current_pair = st.selectbox(
+        current_pair = streamlit.selectbox(
             label="Select collateral-loan pair:",
             options=PAIRS,
             index=0,
@@ -89,12 +91,12 @@ def main():
             "max_borrowings_to_be_liquidated_at_interval"
         ] += hashstack_data[current_pair]["max_borrowings_to_be_liquidated_at_interval"]
         small_loans_sample = (
-            pd.concat([small_loans_sample, hashstack_small_loans_sample])
+            pandas.concat([small_loans_sample, hashstack_small_loans_sample])
             .sort_values("Health factor")
             .iloc[:20]
         )
         large_loans_sample = (
-            pd.concat([large_loans_sample, hashstack_large_loans_sample])
+            pandas.concat([large_loans_sample, hashstack_large_loans_sample])
             .sort_values("Health factor")
             .iloc[:20]
         )
@@ -106,7 +108,7 @@ def main():
         "amm_borrowings_token_supply": "#4CA7D0",
     }
 
-    figure = px.bar(
+    figure = plotly.express.bar(
         data[current_pair].astype(float),
         x="collateral_token_price",
         y=[
@@ -129,21 +131,21 @@ def main():
     figure.update_xaxes(title_text=f"{col} price")
     figure.update_yaxes(title_text="Volume")
 
-    st.plotly_chart(figure, True)
+    streamlit.plotly_chart(figure, True)
 
-    st.header("Loans with low health factor")
-    st.table(small_loans_sample)
-    st.header("Sizeable loans with low health factor")
-    st.table(large_loans_sample)
-    st.header("Loan size distribution")
-    visualization(protocols)
+    streamlit.header("Loans with low health factor")
+    streamlit.table(small_loans_sample)
+    streamlit.header("Sizeable loans with low health factor")
+    streamlit.table(large_loans_sample)
+    streamlit.header("Loan size distribution")
+    src.histogram.visualization(protocols)
 
-    date_str = datetime.utcfromtimestamp(int(last_updated))
-    st.write(f"Last updated {date_str} UTC, last block: {last_block_number}")
+    date_str = datetime.datetime.utcfromtimestamp(int(last_updated))
+    streamlit.write(f"Last updated {date_str} UTC, last block: {last_block_number}")
 
 
 if __name__ == "__main__":
-    st.set_page_config(
+    streamlit.set_page_config(
         layout="wide",
         page_title="DeRisk by Carmine Finance",
         page_icon="https://carmine.finance/assets/logo.svg",
@@ -151,9 +153,10 @@ if __name__ == "__main__":
 
     if os.environ.get("UPDATE_RUNNING") is None:
         os.environ["UPDATE_RUNNING"] = "True"
-        print("Spawning updating process", flush=True)
+        # TODO: Switch to logging.
+        print("Spawning the updating process.", flush=True)
         update_data_process = multiprocessing.Process(
-            target=update_data_continuously, daemon=True
+            target=update_data.update_data_continuously, daemon=True
         )
         update_data_process.start()
     main()
