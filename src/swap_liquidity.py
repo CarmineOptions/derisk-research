@@ -1,7 +1,7 @@
 import decimal
 
 import src.blockchain_call
-frimportom src.constants
+import src.constants
 
 
 class Token:
