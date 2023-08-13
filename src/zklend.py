@@ -1,64 +1,15 @@
 from typing import Dict
+import asyncio
 import collections
+import copy
 import decimal
 
 import pandas
-import requests
 import numpy
+import streamlit
 
 import src.constants
-
-
-class Prices:
-    def __init__(self):
-        self.tokens = [
-            ("ethereum", "ETH"),
-            ("bitcoin", "wBTC"),
-            ("usd-coin", "USDC"),
-            ("dai", "DAI"),
-            ("tether", "USDT"),
-        ]
-        self.vs_currency = "usd"
-        self.prices = {}
-        self.get_prices()
-
-    def get_prices(self):
-        token_ids = ""
-        for token in self.tokens:
-            token_ids += f"{token[0]},"
-        url = f"https://api.coingecko.com/api/v3/simple/price?ids={token_ids}&vs_currencies={self.vs_currency}"
-        response = requests.get(url)
-        if response.status_code == 200:
-            data = response.json()
-            for token in self.tokens:
-                (id, symbol) = token
-                self.prices[symbol] = decimal.Decimal(
-                    data[id][self.vs_currency])
-        else:
-            raise Exception(
-                f"Failed getting prices, status code {response.status_code}"
-            )
-
-    def get_by_symbol(self, symbol):
-        symbol = src.constants.ztoken_to_token(symbol)
-        if symbol in self.prices:
-            return self.prices[symbol]
-        raise Exception(f"Unknown symbol {symbol}")
-
-    def to_dollars(self, n, symbol):
-        symbol = src.constants.ztoken_to_token(symbol)
-        try:
-            price = self.prices[symbol]
-            decimals = src.constants.get_decimals(symbol)
-        except:
-            raise Exception(f"Unknown symbol {symbol}")
-        return n / 10**decimals * price
-
-    def to_dollars_pretty(self, n, symbol):
-        v = self.to_dollars(n, symbol)
-        if abs(v) < 0.00001:
-            return "$0"
-        return f"${v:.5f}"
+import src.swap_liquidity
 
 
 # TODO: convert numbers/amounts (divide by sth)
@@ -368,3 +319,229 @@ class State:
                 token=ztoken, raw_amount=raw_amount)
         if to != empty_address:
             self.user_states[to].deposit(token=ztoken, raw_amount=raw_amount)
+
+
+def compute_risk_adjusted_collateral_usd(
+    user_state: UserState,
+    prices: Dict[str, decimal.Decimal],
+) -> decimal.Decimal:
+    return sum(
+        token_state.collateral_enabled
+        * token_state.deposit
+        * src.constants.COLLATERAL_FACTORS[token]
+        * prices[token]
+        # TODO: perform the conversion using TOKEN_DECIMAL_FACTORS sooner (in `UserTokenState`?)?
+        / src.constants.TOKEN_DECIMAL_FACTORS[token]
+        for token, token_state in user_state.token_states.items()
+        if not token_state.z_token
+    )
+
+
+def compute_borrowings_usd(
+    user_state: UserState,
+    prices: Dict[str, decimal.Decimal],
+) -> decimal.Decimal:
+    return sum(
+        token_state.borrowings * prices[token]
+        # TODO: perform the conversion using TOKEN_DECIMAL_FACTORS sooner (in `UserTokenState`?)?
+        / src.constants.TOKEN_DECIMAL_FACTORS[token]
+        for token, token_state in user_state.token_states.items()
+        if not token_state.z_token
+    )
+
+
+def compute_health_factor(
+    risk_adjusted_collateral_usd: decimal.Decimal,
+    borrowings_usd: decimal.Decimal,
+) -> decimal.Decimal:
+    if borrowings_usd == decimal.Decimal("0"):
+        # TODO: assumes collateral is positive
+        return decimal.Decimal("Inf")
+
+    health_factor = risk_adjusted_collateral_usd / borrowings_usd
+    # TODO: enable?
+    #     if health_factor < decimal.Decimal('0.9'):
+    #         print(f'Suspiciously low health factor = {health_factor} of user = {user}, investigate.')
+    # TODO: too many loans eligible for liquidation?
+    #     elif health_factor < decimal.Decimal('1'):
+    #         print(f'Health factor = {health_factor} of user = {user} eligible for liquidation.')
+    return health_factor
+
+
+# TODO
+# TODO: compute_health_factor, etc. should be methods of class UserState
+def compute_borrowings_to_be_liquidated(
+    risk_adjusted_collateral_usd: decimal.Decimal,
+    borrowings_usd: decimal.Decimal,
+    borrowings_token_price: decimal.Decimal,
+    collateral_token_collateral_factor: decimal.Decimal,
+    collateral_token_liquidation_bonus: decimal.Decimal,
+) -> decimal.Decimal:
+    # TODO: commit the derivation of the formula in a document?
+    numerator = borrowings_usd - risk_adjusted_collateral_usd
+    denominator = borrowings_token_price * (
+        1
+        - collateral_token_collateral_factor * (1 + collateral_token_liquidation_bonus)
+    )
+    return numerator / denominator
+
+
+def compute_max_liquidated_amount(
+    state: State,
+    prices: Dict[str, decimal.Decimal],
+    borrowings_token: str,
+) -> decimal.Decimal:
+    liquidated_borrowings_amount = decimal.Decimal("0")
+    for user, user_state in state.user_states.items():
+        # TODO: do this?
+        # Filter out users who borrowed the token of interest.
+        borrowings_tokens = {
+            token_state.token
+            for token_state in user_state.token_states.values()
+            if token_state.borrowings > decimal.Decimal("0")
+        }
+        if not borrowings_token in borrowings_tokens:
+            continue
+
+        # Filter out users with health below 1.
+        risk_adjusted_collateral_usd = compute_risk_adjusted_collateral_usd(
+            user_state=user_state,
+            prices=prices,
+        )
+        borrowings_usd = compute_borrowings_usd(
+            user_state=user_state,
+            prices=prices,
+        )
+        health_factor = compute_health_factor(
+            risk_adjusted_collateral_usd=risk_adjusted_collateral_usd,
+            borrowings_usd=borrowings_usd,
+        )
+        # TODO
+        if health_factor >= decimal.Decimal("1") or health_factor <= decimal.Decimal(
+            "0"
+        ):
+            #         if health_factor >= decimal.Decimal('1'):
+            continue
+
+        # TODO: find out how much of the borrowings_token will be liquidated
+        collateral_tokens = {
+            token_state.token
+            for token_state in user_state.token_states.values()
+            if token_state.deposit * token_state.collateral_enabled
+            != decimal.Decimal("0")
+        }
+        # TODO: choose the most optimal collateral_token to be liquidated .. or is the liquidator indifferent?
+        #         print(user, collateral_tokens, health_factor, borrowings_usd, risk_adjusted_collateral_usd)
+        collateral_token = list(collateral_tokens)[0]
+        liquidated_borrowings_amount += compute_borrowings_to_be_liquidated(
+            risk_adjusted_collateral_usd=risk_adjusted_collateral_usd,
+            borrowings_usd=borrowings_usd,
+            borrowings_token_price=prices[borrowings_token],
+            collateral_token_collateral_factor=src.constants.COLLATERAL_FACTORS[collateral_token],
+            collateral_token_liquidation_bonus=src.constants.LIQUIDATION_BONUSES[collateral_token],
+        )
+    return liquidated_borrowings_amount
+
+
+# TODO: this function is general for all protocols
+def decimal_range(start: decimal.Decimal, stop: decimal.Decimal, step: decimal.Decimal):
+    while start < stop:
+        yield start
+        start += step
+
+
+def simulate_liquidations_under_absolute_price_change(
+    prices: src.swap_liquidity.Prices,
+    collateral_token: str,
+    collateral_token_price: decimal.Decimal,
+    state: State,
+    borrowings_token: str,
+) -> decimal.Decimal:
+    changed_prices = copy.deepcopy(prices.prices)
+    changed_prices[collateral_token] = collateral_token_price
+    return compute_max_liquidated_amount(
+        state=state, prices=changed_prices, borrowings_token=borrowings_token
+    )
+
+
+def simulate_liquidations_under_price_change(
+    prices: src.swap_liquidity.Prices,
+    collateral_token: str,
+    collateral_token_price_multiplier: decimal.Decimal,
+    state: State,
+    borrowings_token: str,
+) -> decimal.Decimal:
+    changed_prices = copy.deepcopy(prices.prices)
+    changed_prices[collateral_token] *= collateral_token_price_multiplier
+    return compute_max_liquidated_amount(
+        state=state, prices=changed_prices, borrowings_token=borrowings_token
+    )
+
+
+# TODO: this function is general for all protocols
+def get_amm_supply_at_price(
+    collateral_token: str,
+    collateral_token_price: decimal.Decimal,
+    borrowings_token: str,
+    amm: src.swap_liquidity.SwapAmm,
+) -> decimal.Decimal:
+    return amm.get_pool(collateral_token, borrowings_token).supply_at_price(
+        borrowings_token, collateral_token_price
+    )
+
+
+def update_graph_data():
+    params = streamlit.session_state["parameters"]
+
+    data = pandas.DataFrame(
+        {
+            "collateral_token_price": [
+                x
+                for x in decimal_range(
+                    # TODO: make it dependent on the collateral token .. use prices.prices[COLLATERAL_TOKEN]
+                    start=decimal.Decimal("1000"),
+                    stop=decimal.Decimal("3000"),
+                    # TODO: make it dependent on the collateral token
+                    step=decimal.Decimal("50"),
+                )
+            ]
+        },
+    )
+    # TOOD: needed?
+    # data['collateral_token_price_multiplier'] = data['collateral_token_price_multiplier'].map(decimal.Decimal)
+    data["max_borrowings_to_be_liquidated"] = data["collateral_token_price"].apply(
+        lambda x: simulate_liquidations_under_absolute_price_change(
+            prices=streamlit.session_state.prices,
+            collateral_token=params["COLLATERAL_TOKEN"],
+            collateral_token_price=x,
+            state=streamlit.session_state.state,
+            borrowings_token=params["BORROWINGS_TOKEN"],
+        )
+    )
+
+    # TODO
+    data["max_borrowings_to_be_liquidated_at_interval"] = (
+        data["max_borrowings_to_be_liquidated"].diff().abs()
+    )
+    # TODO: drops also other NaN, if there are any
+    data.dropna(inplace=True)
+
+    # Setup the AMM.
+    jediswap = src.swap_liquidity.SwapAmm("JediSwap")
+    jediswap.add_pool(
+        "ETH",
+        "USDC",
+        "0x04d0390b777b424e43839cd1e744799f3de6c176c7e32c1812a41dbd9c19db6a",
+    )
+    asyncio.run(jediswap.get_balance())
+
+    data["amm_borrowings_token_supply"] = data["collateral_token_price"].apply(
+        lambda x: get_amm_supply_at_price(
+            collateral_token=streamlit.session_state["parameters"]["COLLATERAL_TOKEN"],
+            collateral_token_price=x,
+            borrowings_token=streamlit.session_state["parameters"]["BORROWINGS_TOKEN"],
+            amm=jediswap,
+        )
+    )
+
+    streamlit.session_state["data"] = data

@@ -6,9 +6,9 @@ import pandas
 import requests
 import streamlit
 
-import src.classes
 import src.constants
 import src.db
+import src.zklend
 
 
 LATEST_BLOCK_FILENAME = "persistent-state-keeper.txt"
@@ -25,10 +25,10 @@ def download_and_load_state_from_pickle():
             return state
         except pickle.UnpicklingError as e:
             print("Failed to unpickle the data:", e)
-            return src.classes.State()
+            return src.zklend.State()
     else:
         print(f"Failed to download file. Status code: {response.status_code}")
-        return src.classes.State()
+        return src.zklend.State()
 
 
 def get_persistent_filename(block_number):
@@ -127,7 +127,7 @@ def main():
 
     zklend_events.set_index("id", inplace=True)
 
-    state = src.classes.State()
+    state = src.zklend.State()
     for _, event in zklend_events.iterrows():
         state.process_event(event=event)
 

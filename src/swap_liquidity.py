@@ -1,7 +1,61 @@
 import decimal
 
+import requests
+
 import src.blockchain_call
 import src.constants
+
+
+class Prices:
+    def __init__(self):
+        self.tokens = [
+            ("ethereum", "ETH"),
+            ("bitcoin", "wBTC"),
+            ("usd-coin", "USDC"),
+            ("dai", "DAI"),
+            ("tether", "USDT"),
+        ]
+        self.vs_currency = "usd"
+        self.prices = {}
+        self.get_prices()
+
+    def get_prices(self):
+        token_ids = ""
+        for token in self.tokens:
+            token_ids += f"{token[0]},"
+        url = f"https://api.coingecko.com/api/v3/simple/price?ids={token_ids}&vs_currencies={self.vs_currency}"
+        response = requests.get(url)
+        if response.status_code == 200:
+            data = response.json()
+            for token in self.tokens:
+                (id, symbol) = token
+                self.prices[symbol] = decimal.Decimal(
+                    data[id][self.vs_currency])
+        else:
+            raise Exception(
+                f"Failed getting prices, status code {response.status_code}"
+            )
+
+    def get_by_symbol(self, symbol):
+        symbol = src.constants.ztoken_to_token(symbol)
+        if symbol in self.prices:
+            return self.prices[symbol]
+        raise Exception(f"Unknown symbol {symbol}")
+
+    def to_dollars(self, n, symbol):
+        symbol = src.constants.ztoken_to_token(symbol)
+        try:
+            price = self.prices[symbol]
+            decimals = src.constants.get_decimals(symbol)
+        except:
+            raise Exception(f"Unknown symbol {symbol}")
+        return n / 10**decimals * price
+
+    def to_dollars_pretty(self, n, symbol):
+        v = self.to_dollars(n, symbol)
+        if abs(v) < 0.00001:
+            return "$0"
+        return f"${v:.5f}"
 
 
 class Token:
