@@ -51,8 +51,8 @@ def visualization(protocols):
     # Comparative Token Distribution (between 0 and 1)
     token_data_small = data.copy()
     token_data_small["borrowings"] = token_data_small["borrowings"].astype(float)
-    token_token_data_smalldata6 = token_data_small[token_datoken_data_smallta6["borrowings"] < 1]
-    token_data_small = token_data_small[toketoken_data_smalln_data6["borrowings"] > 0]
+    token_data_small = token_data_small[token_data_small["borrowings"] < 1]
+    token_data_small = token_data_small[token_data_small["borrowings"] > 0]
 
     streamlit.plotly_chart(
         plotly.express.histogram(
