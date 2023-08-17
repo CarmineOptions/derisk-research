@@ -21,10 +21,11 @@ def download_and_load_state_from_pickle():
             state = pickle.loads(response.content)
             return state
         except pickle.UnpicklingError as e:
-            print("Failed to unpickle the data:", e)
+            print("Failed to unpickle the data:", e, flush=True)
             return src.zklend.State()
     else:
-        print(f"Failed to download file. Status code: {response.status_code}")
+        print(
+            f"Failed to download file. Status code: {response.status_code}", flush=True)
         return src.zklend.State()
 
 
@@ -52,22 +53,7 @@ def upload_file_to_bucket(source, target):
         f"File {source} uploaded to gs://{bucket_name}/{target}")
 
 
-def main():
-    # Check if the number argument is provided
-    if len(sys.argv) < 2:
-        print("Specify persistent block number")
-        sys.exit(1)
-
-    # Get the number argument from the command-line
-    number_str = sys.argv[1]
-
-    try:
-        # Try to convert the number argument to an integer
-        persistent_block_number = int(sys.argv[1])
-    except ValueError:
-        print("Invalid persistent block number:", number_str)
-        sys.exit(1)
-
+def update_state_manually(persistent_block_number):
     connection = src.db.establish_connection()
 
     # Load all Zklend events.
@@ -106,7 +92,3 @@ def main():
     print("Created new persistent_state with latest block", persistent_block_number)
 
     upload_file_to_bucket(PERSISTENT_STATE_FILENAME, PERSISTENT_STATE_FILENAME)
-
-
-if __name__ == "__main__":
-    main()
