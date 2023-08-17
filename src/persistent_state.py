@@ -1,17 +1,14 @@
 import pickle
-import subprocess
 import sys
-
+from google.cloud import storage
 import pandas
 import requests
-import streamlit
 
 import src.constants
 import src.db
 import src.zklend
 
 
-LATEST_BLOCK_FILENAME = "persistent-state-keeper.txt"
 PERSISTENT_STATE_FILENAME = "persistent-state.pckl"
 
 
@@ -31,52 +28,28 @@ def download_and_load_state_from_pickle():
         return src.zklend.State()
 
 
-def get_persistent_filename(block_number):
-    return f"persistent-state-{block_number}.pckl"
-
-
-def load_persistent_state():
-    latest_block = int(open(LATEST_BLOCK_FILENAME, "r").read())
-    file = open(get_persistent_filename(latest_block), "rb")
-    state = pickle.load(file)
-    file.close()
-    if "latest_block" not in streamlit.session_state:
-        streamlit.session_state["latest_block"] = latest_block
-        print("Updated latest block from persistent state to", latest_block)
-    if "state" not in streamlit.session_state:
-        streamlit.session_state["state"] = state
-        print("Updated state from persistent state")
-
-
-def check_gsutil_exists():
-    try:
-        subprocess.check_output(["gsutil", "--version"])
-        return True
-    except subprocess.CalledProcessError:
-        return False
-
-
 def upload_state_as_pickle(state):
     with open(PERSISTENT_STATE_FILENAME, "wb") as out_file:
         pickle.dump(state, out_file)
-    if upload_file_to_bucket(PERSISTENT_STATE_FILENAME):
-        msg = "Successfully uploaded state to GCP"
-    else:
-        msg = "Failed uploading state to GCP"
-
-    print(msg, flush=True)
+    upload_file_to_bucket(PERSISTENT_STATE_FILENAME, PERSISTENT_STATE_FILENAME)
 
 
-def upload_file_to_bucket(filename):
+def upload_file_to_bucket(source, target):
     bucket_name = "derisk-persistent-state"
-    command = ["gsutil", "-m", "cp", "-c"]
-    command.extend([filename, f"gs://{bucket_name}/{filename}"])
-    try:
-        subprocess.check_call(command)
-        return True
-    except subprocess.SubprocessError as error:
-        print(error)
-        return False
+
+    # Initialize the Google Cloud Storage client with the credentials
+    storage_client = storage.Client.from_service_account_json(
+        "storage_credentials.json")
+
+    # Get the target bucket
+    bucket = storage_client.bucket(bucket_name)
+
+    # Upload the file to the bucket
+    blob = bucket.blob(target)
+    blob.upload_from_filename(source)
+
+    print(
+        f"File {source} uploaded to gs://{bucket_name}/{target}")
 
 
 def main():
@@ -93,12 +66,6 @@ def main():
         persistent_block_number = int(sys.argv[1])
     except ValueError:
         print("Invalid persistent block number:", number_str)
-        sys.exit(1)
-
-    if check_gsutil_exists():
-        print("gsutil found")
-    else:
-        print("did not find gsutil, aborting")
         sys.exit(1)
 
     connection = src.db.establish_connection()
@@ -138,10 +105,7 @@ def main():
 
     print("Created new persistent_state with latest block", persistent_block_number)
 
-    if upload_file_to_bucket(PERSISTENT_STATE_FILENAME):
-        print("Uploaded new state to GCP")
-    else:
-        print("Failed uploading new state to GCP")
+    upload_file_to_bucket(PERSISTENT_STATE_FILENAME, PERSISTENT_STATE_FILENAME)
 
 
 if __name__ == "__main__":
