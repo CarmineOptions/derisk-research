@@ -100,65 +100,14 @@ def load_graph_data(collateral_token, borrowings_token):
     data.dropna(inplace=True)
 
     # Setup the AMM.
-    jediswap = SwapAmm("JediSwap")
-    jediswap.add_pool(
-        "ETH",
-        "USDC",
-        "0x04d0390b777b424e43839cd1e744799f3de6c176c7e32c1812a41dbd9c19db6a",
-    )
-    jediswap.add_pool(
-        "DAI",
-        "ETH",
-        "0x07e2a13b40fc1119ec55e0bcf9428eedaa581ab3c924561ad4e955f95da63138",
-    )
-    jediswap.add_pool(
-        "ETH",
-        "USDT",
-        "0x045e7131d776dddc137e30bdd490b431c7144677e97bf9369f629ed8d3fb7dd6",
-    )
-    jediswap.add_pool(
-        "wBTC",
-        "ETH",
-        "0x0260e98362e0949fefff8b4de85367c035e44f734c9f8069b6ce2075ae86b45c",
-    )
-    jediswap.add_pool(
-        "wBTC",
-        "USDC",
-        "0x005a8054e5ca0b277b295a830e53bd71a6a6943b42d0dbb22329437522bc80c8",
-    )
-    jediswap.add_pool(
-        "wBTC",
-        "USDT",
-        "0x044d13ad98a46fd2322ef2637e5e4c292ce8822f47b7cb9a1d581176a801c1a0",
-    )
-    jediswap.add_pool(
-        "DAI",
-        "wBTC",
-        "0x039c183c8e5a2df130eefa6fbaa3b8aad89b29891f6272cb0c90deaa93ec6315",
-    )
-    jediswap.add_pool(
-        "DAI",
-        "USDC",
-        "0x00cfd39f5244f7b617418c018204a8a9f9a7f72e71f0ef38f968eeb2a9ca302b",
-    )
-    jediswap.add_pool(
-        "DAI",
-        "USDT",
-        "0x00f0f5b3eed258344152e1f17baf84a2e1b621cd754b625bec169e8595aea767",
-    )
-    jediswap.add_pool(
-        "USDC",
-        "USDT",
-        "0x05801bdad32f343035fb242e98d1e9371ae85bc1543962fedea16c59b35bd19b",
-    )
-    asyncio.run(jediswap.get_balance())
+    swap_amm = asyncio.run(SwapAmm().init())
 
     data["amm_borrowings_token_supply"] = data["collateral_token_price"].apply(
         lambda x: get_amm_supply_at_price(
             collateral_token=collateral_token,
             collateral_token_price=x,
             borrowings_token=borrowings_token,
-            amm=jediswap,
+            amm=swap_amm,
         )
     )
 

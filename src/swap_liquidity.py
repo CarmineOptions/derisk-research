@@ -85,7 +85,7 @@ class Pool(Pair):
 
 
 class SwapAmm(Pair):
-    def __init__(self):
+    async def init(self):
         self.pools = {}
         self.add_pool(
             "ETH",
@@ -170,6 +170,8 @@ class SwapAmm(Pair):
             ],
             5
         )
+        await self.get_balance()
+        return self
 
     async def get_balance(self):
         for pool in self.pools.values():
