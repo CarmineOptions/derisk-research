@@ -147,7 +147,6 @@ def main():
 
 
 if __name__ == "__main__":
-    print("STARING STREAMLIT", flush=True)
     streamlit.set_page_config(
         layout="wide",
         page_title="DeRisk by Carmine Finance",
