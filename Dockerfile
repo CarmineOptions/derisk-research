@@ -12,4 +12,4 @@ COPY ./src ./src
 COPY app.py .
 COPY update_data.py .
 
-CMD ["echo", "hello world"]
+CMD ["streamlit", "run", "app.py"]
