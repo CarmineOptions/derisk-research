@@ -1,3 +1,4 @@
+import os
 import pickle
 import sys
 from google.cloud import storage
@@ -40,7 +41,7 @@ def upload_file_to_bucket(source, target):
 
     # Initialize the Google Cloud Storage client with the credentials
     storage_client = storage.Client.from_service_account_json(
-        "storage_credentials.json")
+        os.getenv("CREDENTIALS_PATH"))
 
     # Get the target bucket
     bucket = storage_client.bucket(bucket_name)
