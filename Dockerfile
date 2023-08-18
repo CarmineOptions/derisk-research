@@ -1,5 +1,4 @@
-# Build project
-FROM python:3.10
+FROM python:3.9
 
 WORKDIR /app
 
@@ -13,4 +12,4 @@ COPY ./src ./src
 COPY app.py .
 COPY update_data.py .
 
-CMD ["streamlit", "run", "app.py"]
+CMD ["echo", "hello world"]
