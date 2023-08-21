@@ -381,7 +381,8 @@ def compute_borrowings_to_be_liquidated(
     numerator = borrowings_usd - risk_adjusted_collateral_usd
     denominator = borrowings_token_price * (
         1
-        - collateral_token_collateral_factor * (1 + collateral_token_liquidation_bonus)
+        - collateral_token_collateral_factor *
+        (1 + collateral_token_liquidation_bonus)
     )
     return numerator / denominator
 
@@ -437,8 +438,10 @@ def compute_max_liquidated_amount(
             risk_adjusted_collateral_usd=risk_adjusted_collateral_usd,
             borrowings_usd=borrowings_usd,
             borrowings_token_price=prices[borrowings_token],
-            collateral_token_collateral_factor=src.constants.COLLATERAL_FACTORS[collateral_token],
-            collateral_token_liquidation_bonus=src.constants.LIQUIDATION_BONUSES[collateral_token],
+            collateral_token_collateral_factor=src.constants.COLLATERAL_FACTORS[
+                collateral_token],
+            collateral_token_liquidation_bonus=src.constants.LIQUIDATION_BONUSES[
+                collateral_token],
         )
     return liquidated_borrowings_amount
 
@@ -527,20 +530,14 @@ def update_graph_data():
     data.dropna(inplace=True)
 
     # Setup the AMM.
-    jediswap = src.swap_liquidity.SwapAmm("JediSwap")
-    jediswap.add_pool(
-        "ETH",
-        "USDC",
-        "0x04d0390b777b424e43839cd1e744799f3de6c176c7e32c1812a41dbd9c19db6a",
-    )
-    asyncio.run(jediswap.get_balance())
+    swap_amms = asyncio.run(src.swap_liquidity.SwapAmm().init())
 
     data["amm_borrowings_token_supply"] = data["collateral_token_price"].apply(
         lambda x: get_amm_supply_at_price(
             collateral_token=streamlit.session_state["parameters"]["COLLATERAL_TOKEN"],
             collateral_token_price=x,
             borrowings_token=streamlit.session_state["parameters"]["BORROWINGS_TOKEN"],
-            amm=jediswap,
+            amm=swap_amms,
         )
     )
 

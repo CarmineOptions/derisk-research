@@ -143,7 +143,7 @@ def update_data(state):
 
     t_swap = time.time()
 
-    jediswap = asyncio.run(src.swap_liquidity.get_jediswap())
+    swap_amms = asyncio.run(src.swap_liquidity.SwapAmm().init())
 
     print(f"swap in {time.time() - t_swap}s", flush=True)
 
@@ -161,10 +161,10 @@ def update_data(state):
     t2 = time.time()
 
     [generate_and_store_graph_data(
-        state, prices, jediswap, pair) for pair in pairs]
+        state, prices, swap_amms, pair) for pair in pairs]
     [
         src.hashstack.generate_and_store_graph_data(
-            hashstack_state, prices, jediswap, pair)
+            hashstack_state, prices, swap_amms, pair)
         for pair in pairs
     ]
 
