@@ -41,7 +41,8 @@ def get_pair_range(c, b):
 
 def generate_graph_data(state, prices, swap_amm, collateral_token, borrowings_token):
     data = pandas.DataFrame(
-        {"collateral_token_price": get_pair_range(collateral_token, borrowings_token)},
+        {"collateral_token_price": get_pair_range(
+            collateral_token, borrowings_token)},
     )
     # TOOD: needed?
     # data['collateral_token_price_multiplier'] = data['collateral_token_price_multiplier'].map(decimal.Decimal)
@@ -142,7 +143,7 @@ def update_data(state):
 
     t_swap = time.time()
 
-    jediswap = asyncio.run(src.swap_liquidity.get_jediswap())
+    swap_amms = asyncio.run(src.swap_liquidity.SwapAmm().init())
 
     print(f"swap in {time.time() - t_swap}s", flush=True)
 
@@ -159,9 +160,11 @@ def update_data(state):
 
     t2 = time.time()
 
-    [generate_and_store_graph_data(state, prices, jediswap, pair) for pair in pairs]
+    [generate_and_store_graph_data(
+        state, prices, swap_amms, pair) for pair in pairs]
     [
-        src.hashstack.generate_and_store_graph_data(hashstack_state, prices, jediswap, pair)
+        src.hashstack.generate_and_store_graph_data(
+            hashstack_state, prices, swap_amms, pair)
         for pair in pairs
     ]
 
@@ -234,10 +237,12 @@ def update_data(state):
                     continue
                 if token_state.borrowings > decimal.Decimal("0"):
                     tokens = (
-                        token_state.borrowings / src.constants.TOKEN_DECIMAL_FACTORS[token]
+                        token_state.borrowings /
+                        src.constants.TOKEN_DECIMAL_FACTORS[token]
                     )
                     self.borrowings[token] = (
-                        self.borrowings.get(token, decimal.Decimal("0")) + tokens
+                        self.borrowings.get(
+                            token, decimal.Decimal("0")) + tokens
                     )
                     self.loan_size += tokens * prices.prices[token]
                 if (
@@ -245,10 +250,12 @@ def update_data(state):
                     and token_state.deposit > decimal.Decimal("0")
                 ):
                     tokens = (
-                        token_state.deposit / src.constants.TOKEN_DECIMAL_FACTORS[token]
+                        token_state.deposit /
+                        src.constants.TOKEN_DECIMAL_FACTORS[token]
                     )
                     self.collateral[token] = (
-                        self.collateral.get(token, decimal.Decimal("0")) + tokens
+                        self.collateral.get(
+                            token, decimal.Decimal("0")) + tokens
                     )
                     self.collateral_size += (
                         tokens
@@ -279,7 +286,8 @@ def update_data(state):
             else:
                 small_bad_users.append(bad_user)
 
-    big_bad_users = sorted(big_bad_users, key=lambda x: x.health_factor, reverse=False)
+    big_bad_users = sorted(
+        big_bad_users, key=lambda x: x.health_factor, reverse=False)
     small_bad_users = sorted(
         small_bad_users, key=lambda x: x.health_factor, reverse=False
     )
@@ -309,8 +317,10 @@ def update_data(state):
         "Collateral": [user.formatted_collateral for user in small_bad_users[:n]],
         "Borrowings": [user.formatted_borrowings for user in small_bad_users[:n]],
     }
-    pandas.DataFrame(bbu_data).to_csv("data/large_loans_sample.csv", index=False)
-    pandas.DataFrame(sbu_data).to_csv("data/small_loans_sample.csv", index=False)
+    pandas.DataFrame(bbu_data).to_csv(
+        "data/large_loans_sample.csv", index=False)
+    pandas.DataFrame(sbu_data).to_csv(
+        "data/small_loans_sample.csv", index=False)
 
     hashstack_loan_stats = pandas.DataFrame()
     hashstack_loan_stats["User"] = [
@@ -424,7 +434,8 @@ def update_data(state):
     max_block_number = zklend_events["block_number"].max()
     max_timestamp = zklend_events["timestamp"].max()
 
-    dict = {"timestamp": str(max_timestamp), "block_number": str(max_block_number)}
+    dict = {"timestamp": str(max_timestamp),
+            "block_number": str(max_block_number)}
 
     with open("data/last_update.json", "w") as outfile:
         outfile.write(json.dumps(dict))
@@ -437,9 +448,7 @@ def update_data_continuously():
     state = src.persistent_state.download_and_load_state_from_pickle()
     while True:
         state = update_data(state)
-        # TODO: gsutil is not accessible in the cloud run
-        # get it to work and then uncomment
-        # src.persistent_state.upload_state_as_pickle(state)
+        src.persistent_state.upload_state_as_pickle(state)
         print("DATA UPDATED", flush=True)
         time.sleep(120)
 

@@ -120,7 +120,8 @@ def main():
         opacity=0.65,
         color_discrete_map=color_map,
     )
-    figure.update_traces(hovertemplate=("<b>Price:</b> %{x}<br>" "<b>Volume:</b> %{y}"))
+    figure.update_traces(hovertemplate=(
+        "<b>Price:</b> %{x}<br>" "<b>Volume:</b> %{y}"))
     figure.update_traces(
         selector=dict(name="max_borrowings_to_be_liquidated_at_interval"),
         name="Liquidable",
@@ -141,7 +142,8 @@ def main():
     src.histogram.visualization(protocols)
 
     date_str = datetime.datetime.utcfromtimestamp(int(last_updated))
-    streamlit.write(f"Last updated {date_str} UTC, last block: {last_block_number}")
+    streamlit.write(
+        f"Last updated {date_str} UTC, last block: {last_block_number}")
 
 
 if __name__ == "__main__":

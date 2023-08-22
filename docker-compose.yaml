@@ -7,3 +7,5 @@ services:
       - 8501:8501
     env_file:
       - .env
+    volumes:
+      - ./storage_credentials.json:/app/storage_credentials.json
