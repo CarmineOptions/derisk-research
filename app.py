@@ -60,14 +60,20 @@ def main():
         hashstack_small_loans_sample,
         hashstack_large_loans_sample,
     ) = src.hashstack.load_data()
+    (
+        nostra_data,
+        nostra_histogram_data,
+        nostra_small_loans_sample,
+        nostra_large_loans_sample,
+    ) = src.nostra.load_data()
 
     col1, _ = streamlit.columns([1, 4])
 
     with col1:
         protocols = streamlit.multiselect(
             label="Select protocols",
-            options=["zkLend", "Hashstack"],
-            default=["zkLend", "Hashstack"],
+            options=["zkLend", "Hashstack", "Nostra"],
+            default=["zkLend", "Hashstack", "Nostra"],
         )
         current_pair = streamlit.selectbox(
             label="Select collateral-loan pair:",
@@ -75,6 +81,7 @@ def main():
             index=0,
         )
 
+    # TODO: refactor this mess
     if protocols == ["zkLend"]:
         data[current_pair] = data[current_pair]
         small_loans_sample = small_loans_sample
@@ -83,6 +90,10 @@ def main():
         data[current_pair] = hashstack_data[current_pair]
         small_loans_sample = hashstack_small_loans_sample
         large_loans_sample = hashstack_large_loans_sample
+    elif protocols == ["Nostra"]:
+        data[current_pair] = nostra_data[current_pair]
+        small_loans_sample = nostra_small_loans_sample
+        large_loans_sample = nostra_large_loans_sample
     elif set(protocols) == {"zkLend", "Hashstack"}:
         data[current_pair]["max_borrowings_to_be_liquidated"] += hashstack_data[
             current_pair
@@ -97,6 +108,61 @@ def main():
         )
         large_loans_sample = (
             pandas.concat([large_loans_sample, hashstack_large_loans_sample])
+            .sort_values("Health factor")
+            .iloc[:20]
+        )
+    elif set(protocols) == {"zkLend", "Nostra"}:
+        data[current_pair]["max_borrowings_to_be_liquidated"] += nostra_data[
+            current_pair
+        ]["max_borrowings_to_be_liquidated"]
+        data[current_pair][
+            "max_borrowings_to_be_liquidated_at_interval"
+        ] += nostra_data[current_pair]["max_borrowings_to_be_liquidated_at_interval"]
+        small_loans_sample = (
+            pandas.concat([small_loans_sample, nostra_small_loans_sample])
+            .sort_values("Health factor")
+            .iloc[:20]
+        )
+        large_loans_sample = (
+            pandas.concat([large_loans_sample, nostra_large_loans_sample])
+            .sort_values("Health factor")
+            .iloc[:20]
+        )
+    elif set(protocols) == {"Hashstack", "Nostra"}:
+        data[current_pair]["max_borrowings_to_be_liquidated"] = (
+            hashstack_data[current_pair]["max_borrowings_to_be_liquidated"]
+            + nostra_data[current_pair]["max_borrowings_to_be_liquidated"]
+        )
+        data[current_pair]["max_borrowings_to_be_liquidated_at_interval"] = (
+            hashstack_data[current_pair]["max_borrowings_to_be_liquidated_at_interval"]
+            + nostra_data[current_pair]["max_borrowings_to_be_liquidated_at_interval"]
+        )
+        small_loans_sample = (
+            pandas.concat([hashstack_small_loans_sample, nostra_small_loans_sample])
+            .sort_values("Health factor")
+            .iloc[:20]
+        )
+        large_loans_sample = (
+            pandas.concat([hashstack_large_loans_sample, nostra_large_loans_sample])
+            .sort_values("Health factor")
+            .iloc[:20]
+        )
+    elif set(protocols) == {"zkLend", "Hashstack", "Nostra"}:
+        data[current_pair]["max_borrowings_to_be_liquidated"] += (
+            hashstack_data[current_pair]["max_borrowings_to_be_liquidated"]
+            + nostra_data[current_pair]["max_borrowings_to_be_liquidated"]
+        )
+        data[current_pair]["max_borrowings_to_be_liquidated_at_interval"] += (
+            hashstack_data[current_pair]["max_borrowings_to_be_liquidated_at_interval"]
+            + nostra_data[current_pair]["max_borrowings_to_be_liquidated_at_interval"]
+        )
+        small_loans_sample = (
+            pandas.concat([small_loans_sample, hashstack_small_loans_sample, nostra_small_loans_sample])
+            .sort_values("Health factor")
+            .iloc[:20]
+        )
+        large_loans_sample = (
+            pandas.concat([large_loans_sample, hashstack_large_loans_sample, nostra_large_loans_sample])
             .sort_values("Health factor")
             .iloc[:20]
         )
@@ -120,8 +186,7 @@ def main():
         opacity=0.65,
         color_discrete_map=color_map,
     )
-    figure.update_traces(hovertemplate=(
-        "<b>Price:</b> %{x}<br>" "<b>Volume:</b> %{y}"))
+    figure.update_traces(hovertemplate=("<b>Price:</b> %{x}<br>" "<b>Volume:</b> %{y}"))
     figure.update_traces(
         selector=dict(name="max_borrowings_to_be_liquidated_at_interval"),
         name="Liquidable",
@@ -142,8 +207,7 @@ def main():
     src.histogram.visualization(protocols)
 
     date_str = datetime.datetime.utcfromtimestamp(int(last_updated))
-    streamlit.write(
-        f"Last updated {date_str} UTC, last block: {last_block_number}")
+    streamlit.write(f"Last updated {date_str} UTC, last block: {last_block_number}")
 
 
 if __name__ == "__main__":

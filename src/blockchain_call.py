@@ -1,3 +1,5 @@
+import time
+
 import starknet_py.net.gateway_client
 import starknet_py.hash.selector
 import starknet_py.net.client_models
@@ -13,7 +15,11 @@ async def func_call(addr, selector, calldata):
     call = starknet_py.net.client_models.Call(
         to_addr=addr, selector=starknet_py.hash.selector.get_selector_from_name(selector), calldata=calldata
     )
-    res = await NET.call_contract(call)
+    try:
+        res = await NET.call_contract(call)
+    except:
+        time.sleep(10)
+        res = await NET.call_contract(call)
     return res
 
 

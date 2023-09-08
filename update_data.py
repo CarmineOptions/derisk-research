@@ -8,6 +8,7 @@ import pandas
 import src.constants
 import src.db
 import src.hashstack
+import src.nostra
 import src.persistent_state
 import src.swap_liquidity
 import src.zklend
@@ -117,8 +118,9 @@ def my_process(msg):
 def update_data(state):
     t0 = time.time()
     print(f"Updating CSV data from {state.last_block_number}...", flush=True)
-    zklend_events = get_events(state.last_block_number)
+    zklend_events = get_events(180_000)
     hashstack_events = src.hashstack.get_hashstack_events()
+    nostra_events = src.nostra.get_nostra_events()
     print(f"got events in {time.time() - t0}s", flush=True)
 
     new_latest_block = zklend_events["block_number"].max()
@@ -126,13 +128,17 @@ def update_data(state):
 
     t1 = time.time()
 
+    # Iterate over ordered events to obtain the final state of each user.
     for _, event in zklend_events.iterrows():
         state.process_event(event)
 
-    # Iterate over ordered events to obtain the final state of each user.
     hashstack_state = src.hashstack.State()
     for _, hashstack_event in hashstack_events.iterrows():
         hashstack_state.process_event(event=hashstack_event)
+
+    nostra_state = src.nostra.State()
+    for _, nostra_event in nostra_events.iterrows():
+        nostra_state.process_event(event=nostra_event)
 
     print(f"updated state in {time.time() - t1}s", flush=True)
 
@@ -167,6 +173,11 @@ def update_data(state):
             hashstack_state, prices, swap_amms, pair)
         for pair in pairs
     ]
+    [
+        src.nostra.generate_and_store_graph_data(
+            nostra_state, prices, swap_amms, pair)
+        for pair in pairs
+    ]
 
     print(f"updated graphs in {time.time() - t2}s", flush=True)
 
@@ -197,11 +208,25 @@ def update_data(state):
         for token in src.constants.symbol_decimals_map.keys()
         if token[0] != "z"
     ]
+    nostra_histogram_data = [
+        {
+            "token": token,
+            "borrowings": user_state.token_states[token].debt
+            * prices.prices[token]
+            / 10 ** src.constants.get_decimals(token),
+        }
+        for user_state in nostra_state.user_states.values()
+        for token in src.constants.symbol_decimals_map.keys()
+        if token[0] != "z"
+    ]
 
+    pandas.DataFrame(histogram_data).to_csv("data/histogram.csv", index=False)
     pandas.DataFrame(hashstack_histogram_data).to_csv(
         "hashstack_data/histogram.csv", index=False
     )
-    pandas.DataFrame(histogram_data).to_csv("data/histogram.csv", index=False)
+    pandas.DataFrame(nostra_histogram_data).to_csv(
+        "nostra_data/histogram.csv", index=False
+    )
 
     for user, user_state in state.user_states.items():
         risk_adjusted_collateral_usd = src.zklend.compute_risk_adjusted_collateral_usd(
@@ -429,6 +454,67 @@ def update_data(state):
         hashstack_loan_stats["Borrowing in USD"] < decimal.Decimal("100")
     ].sort_values("Health factor").iloc[:20].to_csv(
         "hashstack_data/small_loans_sample.csv", index=False
+    )
+
+    nostra_loan_stats = pandas.DataFrame()
+    nostra_loan_stats["User"] = [
+        user
+        for user in nostra_state.user_states.keys()
+    ]
+    nostra_loan_stats["Protocol"] = "Nostra"
+    nostra_loan_stats["Borrowing in USD"] = nostra_loan_stats.apply(
+        lambda x: src.nostra.compute_borrowings_amount_usd(
+            user_state=nostra_state.user_states[x["User"]],
+            prices=prices.prices,
+        ),
+        axis=1,
+    )
+    nostra_loan_stats[
+        "Risk adjusted collateral in USD"
+    ] = nostra_loan_stats.apply(
+        lambda x: src.nostra.compute_risk_adjusted_collateral_usd(
+            user_state=nostra_state.user_states[x["User"]],
+            prices=prices.prices,
+        ),
+        axis=1,
+    )
+    nostra_loan_stats["Health factor"] = nostra_loan_stats.apply(
+        lambda x: src.nostra.compute_health_factor(
+            risk_adjusted_collateral_usd=x["Risk adjusted collateral in USD"],
+            risk_adjusted_debt_usd=x["Borrowing in USD"],
+        ),
+        axis=1,
+    )
+    nostra_loan_stats["Collateral"] = nostra_loan_stats.apply(
+        lambda x: ''.join(
+            f"{token}: {round((token_state.collateral + token_state.interest_bearing_collateral) / src.constants.TOKEN_DECIMAL_FACTORS[token], 4)}, "
+            for token, token_state
+            in nostra_state.user_states[x["User"]].token_states.items()
+            if (
+                token_state.collateral > 0
+                or token_state.interest_bearing_collateral > 0
+            )
+        ),
+        axis=1,
+    )
+    nostra_loan_stats["Borrowings"] = nostra_loan_stats.apply(
+        lambda x: ''.join(
+            f"{token}: {round(token_state.debt / src.constants.TOKEN_DECIMAL_FACTORS[token], 4)}, "
+            for token, token_state
+            in nostra_state.user_states[x["User"]].token_states.items()
+            if token_state.debt > 0
+        ),
+        axis=1,
+    )
+    nostra_loan_stats.loc[
+        nostra_loan_stats["Borrowing in USD"] >= decimal.Decimal("100")
+    ].sort_values("Health factor").iloc[:20].to_csv(
+        "nostra_data/large_loans_sample.csv", index=False
+    )
+    nostra_loan_stats.loc[
+        nostra_loan_stats["Borrowing in USD"] < decimal.Decimal("100")
+    ].sort_values("Health factor").iloc[:20].to_csv(
+        "nostra_data/small_loans_sample.csv", index=False
     )
 
     max_block_number = zklend_events["block_number"].max()
