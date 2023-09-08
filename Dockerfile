@@ -8,6 +8,7 @@ RUN pip install -r requirements.txt
 
 COPY ./data ./data
 COPY ./hashstack_data ./hashstack_data
+COPY ./nostra_data ./nostra_data
 COPY ./src ./src
 COPY app.py .
 COPY update_data.py .
