@@ -118,7 +118,7 @@ def my_process(msg):
 def update_data(state):
     t0 = time.time()
     print(f"Updating CSV data from {state.last_block_number}...", flush=True)
-    zklend_events = get_events(180_000)
+    zklend_events = get_events(state.last_block_number)
     hashstack_events = src.hashstack.get_hashstack_events()
     nostra_events = src.nostra.get_nostra_events()
     print(f"got events in {time.time() - t0}s", flush=True)
