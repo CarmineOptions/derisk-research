@@ -368,6 +368,7 @@ def update_data(state):
         ),
         axis=1,
     )
+    hashstack_loan_stats = hashstack_loan_stats[hashstack_loan_stats['Borrowing in USD'] > decimal.Decimal("0")]
     hashstack_loan_stats[
         "Risk adjusted collateral in USD"
     ] = hashstack_loan_stats.apply(
