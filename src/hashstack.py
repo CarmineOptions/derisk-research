@@ -435,11 +435,6 @@ def compute_health_factor(
     borrowings_amount_usd = compute_borrowings_amount_usd(
         borrowings=borrowings, prices=prices
     )
-    if borrowings_current_amount_usd == decimal.Decimal("0"):
-        # TODO: assumes collateral is positive
-        return decimal.Decimal("Inf")
-
-    # TODO: how can this happen?
     if borrowings_amount_usd == decimal.Decimal("0"):
         # TODO: assumes collateral is positive
         return decimal.Decimal("Inf")
@@ -551,6 +546,48 @@ def generate_and_store_graph_data(state, prices, swap_amm, pair):
     filename = f"hashstack_data/{c}-{b}.csv"
     data.to_csv(filename, index=False)
     print("hashstack: ", filename, "done in", time.time() - t0, flush=True)
+
+
+def get_collateral_str(loan: HashStackLoan) -> str:
+    if loan.collateral.market == loan.borrowings.current_market:
+        return (
+            str(loan.collateral.market)
+            + ": "
+            + str(
+                format(
+                    (
+                        loan.collateral.amount
+                        + loan.borrowings.current_amount
+                    ) / (
+                        10 ** src.constants.symbol_decimals_map[loan.collateral.market]
+                    ),
+                    ".4f",
+                )
+            )
+        )
+    return (
+        str(loan.collateral.market)
+        + ": "
+        + str(
+            format(
+                loan.collateral.amount / (
+                    10 ** src.constants.symbol_decimals_map[loan.collateral.market]
+                ),
+                ".4f",
+            )
+        )
+        + ", "
+        + str(loan.borrowings.current_market)
+        + ": "
+        + str(
+            format(
+                loan.borrowings.current_amount / (
+                    10 ** src.constants.symbol_decimals_map[loan.borrowings.current_market]
+                ),
+                ".4f",
+            )
+        )
+    )
 
 
 PAIRS = [
