@@ -392,31 +392,9 @@ def update_data(state):
         ),
         axis=1,
     )
-    hashstack_loan_stats["Collateral"] = hashstack_loan_stats.apply(
-        lambda x: (
-            str(
-                hashstack_state.user_states[x["User"]]
-                .loans[x["Loan ID"]]
-                .collateral.market
-            )
-            + ": "
-            + str(
-                format(
-                    hashstack_state.user_states[x["User"]]
-                    .loans[x["Loan ID"]]
-                    .collateral.amount
-                    / (
-                        src.constants.TOKEN_DECIMAL_FACTORS[
-                            hashstack_state.user_states[x["User"]]
-                            .loans[x["Loan ID"]]
-                            .collateral.market
-                        ]
-                    ),
-                    ".4f",
-                )
-            )
-        ),
-        axis=1,
+    hashstack_loan_stats['Collateral'] = hashstack_loan_stats.apply(
+        lambda x: src.hashstack.get_collateral_str(loan = hashstack_state.user_states[x['User']].loans[x['Loan ID']]),
+        axis = 1,
     )
     hashstack_loan_stats["Borrowings"] = hashstack_loan_stats.apply(
         lambda x: (
