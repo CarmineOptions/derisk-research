@@ -119,8 +119,7 @@ class State:
     # TODO: f'process_{name.lower()}_event'?
     EVENTS_FUNCTIONS_MAPPING: Dict[str, str] = {
         "new_loan": "process_new_loan_event",
-        # TODO: this event shows what the user does with the loan, but it shouldn't change the amount borrowed, so let's ignore it for now
-        #         "loan_withdrawal": "process_loan_withdrawal_event",
+        "loan_withdrawal": "process_loan_withdrawal_event",
         "loan_repaid": "process_loan_repaid_event",
         "loan_swap": "process_loan_swap_event",
         "collateral_added": "process_collateral_added_event",
@@ -185,6 +184,26 @@ class State:
             ),
         )
 
+    def process_loan_withdrawal_event(self, event: pandas.Series) -> None:
+        # The order of the arguments is: `id`, `owner`, `market`, `commitment`, `amount`, `current_market`, 
+        # `current_amount`, `is_loan_withdrawn`, `debt_category`, `state`, `l3_integration`, `created_at`,
+        # `amount_withdrawn`, `timestamp`.
+        loan_id = int(event["data"][0], base = 16)
+        user = event["data"][1]
+        token = src.constants.get_symbol(event["data"][2])
+        amount = decimal.Decimal(str(int(event["data"][4], base=16)))
+        current_token = src.constants.get_symbol(event["data"][6])
+        current_amount = decimal.Decimal(str(int(event["data"][7], base=16)))
+        debt_category = int(event["data"][10], base=16)
+        self.user_states[user].loans[loan_id].borrowings = HashStackBorrowings(
+            borrowings_id = loan_id,
+            market = token,
+            amount = amount,
+            current_market = current_token,
+            current_amount = current_amount,
+            debt_category = debt_category,
+        )
+
     def process_loan_repaid_event(self, event: pandas.Series) -> None:
         # The order of the arguments is: `id`, `owner`, `market`, `commitment`, `amount`, `current_market`,
         # `current_amount`, `is_loan_withdrawn`, `debt_category`, `state`, `l3_integration`, `created_at`,
@@ -201,7 +220,7 @@ class State:
         self.user_states[user].loans[loan_id].borrowings = HashStackBorrowings(
             borrowings_id=loan_id,
             market=token,
-            amount=amount,
+            amount=decimal.Decimal("0"),  # TODO: this prevent repaid loans to appear as alive
             current_market=current_token,
             current_amount=current_amount,
             debt_category=debt_category,
