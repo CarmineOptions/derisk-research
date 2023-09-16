@@ -203,6 +203,11 @@ def main():
     streamlit.table(small_loans_sample)
     streamlit.header("Sizeable loans with low health factor")
     streamlit.table(large_loans_sample)
+
+    streamlit.header("Comparison of lending protocols")
+    comparison_stats = pandas.read_csv("comparison_stats.csv")
+    streamlit.table(comparison_stats)
+
     streamlit.header("Loan size distribution")
     src.histogram.visualization(protocols)
 
