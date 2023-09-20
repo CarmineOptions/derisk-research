@@ -552,91 +552,121 @@ def update_data(state):
     )
     general_stats.to_csv("general_stats.csv", index=False)
 
-    zklend_eth_supply = await src.blockchain_call.func_call(
-        addr = int('0x01b5bd713e72fdc5d63ffd83762f81297f6175a5e0a4771cdadbc1dd5fe72cb1', base=16),
-        selector = 'felt_total_supply',
-        calldata = [],
+    zklend_eth_supply = asyncio.run(
+        src.blockchain_call.func_call(
+            addr = int('0x01b5bd713e72fdc5d63ffd83762f81297f6175a5e0a4771cdadbc1dd5fe72cb1', base=16),
+            selector = 'felt_total_supply',
+            calldata = [],
+        )
     )
     zklend_eth_supply = decimal.Decimal(str(zklend_eth_supply[0])) / src.constants.TOKEN_DECIMAL_FACTORS['ETH']
-    zklend_wbtc_supply = await src.blockchain_call.func_call(
-        addr = int('0x02b9ea3acdb23da566cee8e8beae3125a1458e720dea68c4a9a7a2d8eb5bbb4a', base=16),
-        selector = 'felt_total_supply',
-        calldata = [],
+    zklend_wbtc_supply = asyncio.run(
+        src.blockchain_call.func_call(
+            addr = int('0x02b9ea3acdb23da566cee8e8beae3125a1458e720dea68c4a9a7a2d8eb5bbb4a', base=16),
+            selector = 'felt_total_supply',
+            calldata = [],
+        )
     )
     zklend_wbtc_supply = decimal.Decimal(str(zklend_wbtc_supply[0])) / src.constants.TOKEN_DECIMAL_FACTORS['wBTC']
-    zklend_usdc_supply = await src.blockchain_call.func_call(
-        addr = int('0x047ad51726d891f972e74e4ad858a261b43869f7126ce7436ee0b2529a98f486', base=16),
-        selector = 'felt_total_supply',
-        calldata = [],
+    zklend_usdc_supply = asyncio.run(
+        src.blockchain_call.func_call(
+            addr = int('0x047ad51726d891f972e74e4ad858a261b43869f7126ce7436ee0b2529a98f486', base=16),
+            selector = 'felt_total_supply',
+            calldata = [],
+        )
     )
     zklend_usdc_supply = decimal.Decimal(str(zklend_usdc_supply[0])) / src.constants.TOKEN_DECIMAL_FACTORS['USDC']
-    zklend_dai_supply = await src.blockchain_call.func_call(
-        addr = int('0x062fa7afe1ca2992f8d8015385a279f49fad36299754fb1e9866f4f052289376', base=16),
-        selector = 'felt_total_supply',
-        calldata = [],
+    zklend_dai_supply = asyncio.run(
+        src.blockchain_call.func_call(
+            addr = int('0x062fa7afe1ca2992f8d8015385a279f49fad36299754fb1e9866f4f052289376', base=16),
+            selector = 'felt_total_supply',
+            calldata = [],
+        )
     )
     zklend_dai_supply = decimal.Decimal(str(zklend_dai_supply[0])) / src.constants.TOKEN_DECIMAL_FACTORS['DAI']
-    zklend_usdt_supply = await src.blockchain_call.func_call(
-        addr = int('0x00811d8da5dc8a2206ea7fd0b28627c2d77280a515126e62baa4d78e22714c4a', base=16),
-        selector = 'felt_total_supply',
-        calldata = [],
+    zklend_usdt_supply = asyncio.run(
+        src.blockchain_call.func_call(
+            addr = int('0x00811d8da5dc8a2206ea7fd0b28627c2d77280a515126e62baa4d78e22714c4a', base=16),
+            selector = 'felt_total_supply',
+            calldata = [],
+        )
     )
     zklend_usdt_supply = decimal.Decimal(str(zklend_usdt_supply[0])) / src.constants.TOKEN_DECIMAL_FACTORS['USDT']
 
-    hashstack_eth_supply = await src.blockchain_call.balance_of(
-        token_addr = '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
-        holder_addr = '0x03dcf5c72ba60eb7b2fe151032769d49dd3df6b04fa3141dffd6e2aa162b7a6e',
+    hashstack_eth_supply = asyncio.run(
+        src.blockchain_call.balance_of(
+            token_addr = '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
+            holder_addr = '0x03dcf5c72ba60eb7b2fe151032769d49dd3df6b04fa3141dffd6e2aa162b7a6e',
+        )
     )
     hashstack_eth_supply = decimal.Decimal(str(hashstack_eth_supply)) / src.constants.TOKEN_DECIMAL_FACTORS['ETH']
-    hashstack_wbtc_supply = await src.blockchain_call.balance_of(
-        token_addr = '0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac',
-        holder_addr = '0x03dcf5c72ba60eb7b2fe151032769d49dd3df6b04fa3141dffd6e2aa162b7a6e',
+    hashstack_wbtc_supply = asyncio.run(
+        src.blockchain_call.balance_of(
+            token_addr = '0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac',
+            holder_addr = '0x03dcf5c72ba60eb7b2fe151032769d49dd3df6b04fa3141dffd6e2aa162b7a6e',
+        )
     )
     hashstack_wbtc_supply = decimal.Decimal(str(hashstack_wbtc_supply)) / src.constants.TOKEN_DECIMAL_FACTORS['wBTC']
-    hashstack_usdc_supply = await src.blockchain_call.balance_of(
-        token_addr = '0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8',
-        holder_addr = '0x03dcf5c72ba60eb7b2fe151032769d49dd3df6b04fa3141dffd6e2aa162b7a6e',
+    hashstack_usdc_supply = asyncio.run(
+        src.blockchain_call.balance_of(
+            token_addr = '0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8',
+            holder_addr = '0x03dcf5c72ba60eb7b2fe151032769d49dd3df6b04fa3141dffd6e2aa162b7a6e',
+        )
     )
     hashstack_usdc_supply = decimal.Decimal(str(hashstack_usdc_supply)) / src.constants.TOKEN_DECIMAL_FACTORS['USDC']
-    hashstack_dai_supply = await src.blockchain_call.balance_of(
-        token_addr = '0x00da114221cb83fa859dbdb4c44beeaa0bb37c7537ad5ae66fe5e0efd20e6eb3',
-        holder_addr = '0x03dcf5c72ba60eb7b2fe151032769d49dd3df6b04fa3141dffd6e2aa162b7a6e',
+    hashstack_dai_supply = asyncio.run(
+        src.blockchain_call.balance_of(
+            token_addr = '0x00da114221cb83fa859dbdb4c44beeaa0bb37c7537ad5ae66fe5e0efd20e6eb3',
+            holder_addr = '0x03dcf5c72ba60eb7b2fe151032769d49dd3df6b04fa3141dffd6e2aa162b7a6e',
+        )
     )
     hashstack_dai_supply = decimal.Decimal(str(hashstack_dai_supply)) / src.constants.TOKEN_DECIMAL_FACTORS['DAI']
-    hashstack_usdt_supply = await src.blockchain_call.balance_of(
-        token_addr = '0x068f5c6a61780768455de69077e07e89787839bf8166decfbf92b645209c0fb8',
-        holder_addr = '0x03dcf5c72ba60eb7b2fe151032769d49dd3df6b04fa3141dffd6e2aa162b7a6e',
+    hashstack_usdt_supply = asyncio.run(
+        src.blockchain_call.balance_of(
+            token_addr = '0x068f5c6a61780768455de69077e07e89787839bf8166decfbf92b645209c0fb8',
+            holder_addr = '0x03dcf5c72ba60eb7b2fe151032769d49dd3df6b04fa3141dffd6e2aa162b7a6e',
+        )
     )
     hashstack_usdt_supply = decimal.Decimal(str(hashstack_usdt_supply)) / src.constants.TOKEN_DECIMAL_FACTORS['USDT']
 
-    nostra_eth_supply = await src.blockchain_call.func_call(
-        addr = int('0x04f89253e37ca0ab7190b2e9565808f105585c9cacca6b2fa6145553fa061a41', base=16),
-        selector = 'totalSupply',
-        calldata = [],
+    nostra_eth_supply = asyncio.run(
+        src.blockchain_call.func_call(
+            addr = int('0x04f89253e37ca0ab7190b2e9565808f105585c9cacca6b2fa6145553fa061a41', base=16),
+            selector = 'totalSupply',
+            calldata = [],
+        )
     )
     nostra_eth_supply = decimal.Decimal(str(nostra_eth_supply[0])) / src.constants.TOKEN_DECIMAL_FACTORS['ETH']
-    nostra_wbtc_supply = await src.blockchain_call.func_call(
-        addr = int('0x07788bc687f203b6451f2a82e842b27f39c7cae697dace12edfb86c9b1c12f3d', base=16),
-        selector = 'totalSupply',
-        calldata = [],
+    nostra_wbtc_supply = asyncio.run(
+        src.blockchain_call.func_call(
+            addr = int('0x07788bc687f203b6451f2a82e842b27f39c7cae697dace12edfb86c9b1c12f3d', base=16),
+            selector = 'totalSupply',
+            calldata = [],
+        )
     )
     nostra_wbtc_supply = decimal.Decimal(str(nostra_wbtc_supply[0])) / src.constants.TOKEN_DECIMAL_FACTORS['wBTC']
-    nostra_usdc_supply = await src.blockchain_call.func_call(
-        addr = int('0x05327df4c669cb9be5c1e2cf79e121edef43c1416fac884559cd94fcb7e6e232', base=16),
-        selector = 'totalSupply',
-        calldata = [],
+    nostra_usdc_supply = asyncio.run(
+        src.blockchain_call.func_call(
+            addr = int('0x05327df4c669cb9be5c1e2cf79e121edef43c1416fac884559cd94fcb7e6e232', base=16),
+            selector = 'totalSupply',
+            calldata = [],
+        )
     )
     nostra_usdc_supply = decimal.Decimal(str(nostra_usdc_supply[0])) / src.constants.TOKEN_DECIMAL_FACTORS['USDC']
-    nostra_dai_supply = await src.blockchain_call.func_call(
-        addr = int('0x02ea39ba7a05f0c936b7468d8bc8d0e1f2116916064e7e163e7c1044d95bd135', base=16),
-        selector = 'totalSupply',
-        calldata = [],
+    nostra_dai_supply = asyncio.run(
+        src.blockchain_call.func_call(
+            addr = int('0x02ea39ba7a05f0c936b7468d8bc8d0e1f2116916064e7e163e7c1044d95bd135', base=16),
+            selector = 'totalSupply',
+            calldata = [],
+        )
     )
     nostra_dai_supply = decimal.Decimal(str(nostra_dai_supply[0])) / src.constants.TOKEN_DECIMAL_FACTORS['DAI']
-    nostra_usdt_supply = await src.blockchain_call.func_call(
-        addr = int('0x040375d0720245bc0d123aa35dc1c93d14a78f64456eff75f63757d99a0e6a83', base=16),
-        selector = 'totalSupply',
-        calldata = [],
+    nostra_usdt_supply = asyncio.run(
+        src.blockchain_call.func_call(
+            addr = int('0x040375d0720245bc0d123aa35dc1c93d14a78f64456eff75f63757d99a0e6a83', base=16),
+            selector = 'totalSupply',
+            calldata = [],
+        )
     )
     nostra_usdt_supply = decimal.Decimal(str(nostra_usdt_supply[0])) / src.constants.TOKEN_DECIMAL_FACTORS['USDT']
     supply_stats = pandas.DataFrame(
