@@ -68,7 +68,6 @@ def main():
     ) = src.nostra.load_data()
 
     col1, _ = streamlit.columns([1, 4])
-
     with col1:
         protocols = streamlit.multiselect(
             label="Select protocols",
@@ -205,8 +204,13 @@ def main():
     streamlit.table(large_loans_sample)
 
     streamlit.header("Comparison of lending protocols")
-    comparison_stats = pandas.read_csv("comparison_stats.csv")
-    streamlit.table(comparison_stats)
+    col1, col2 = streamlit.columns(2)
+    with col1:
+        streamlit.table(pandas.read_csv("general_stats.csv"))
+        streamlit.table(pandas.read_csv("supply_stats.csv"))
+    with col2:
+        streamlit.table(pandas.read_csv("collateral_stats.csv"))
+        streamlit.table(pandas.read_csv("debt_stats.csv"))
 
     streamlit.header("Loan size distribution")
     src.histogram.visualization(protocols)
