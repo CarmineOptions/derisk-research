@@ -515,7 +515,7 @@ def load_data():
     )
 
 
-def n_compute_standardized_health_factor(
+def compute_standardized_health_factor(
     risk_adjusted_collateral_usd: decimal.Decimal,
     borrowings_usd: decimal.Decimal,
 ) -> decimal.Decimal:
