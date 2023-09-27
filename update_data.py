@@ -376,6 +376,13 @@ def update_data(state):
         ),
         axis=1,
     )
+    zklend_loan_stats["Standardized health factor"] = zklend_loan_stats.apply(
+        lambda x: src.zklend.compute_standardized_health_factor(
+            risk_adjusted_collateral_usd=x["Risk adjusted collateral in USD"],
+            borrowings_usd=x["Borrowing in USD"],
+        ),
+        axis=1,
+    )
 
     hashstack_loan_stats = pandas.DataFrame()
     hashstack_loan_stats["User"] = [
@@ -420,6 +427,18 @@ def update_data(state):
             .collateral,
             prices=prices.prices,
             user=x["User"],
+        ),
+        axis=1,
+    )
+    hashstack_loan_stats["Standardized health factor"] = hashstack_loan_stats.apply(
+        lambda x: src.hashstack.compute_standardized_health_factor(
+            borrowings=hashstack_state.user_states[x["User"]]
+            .loans[x["Loan ID"]]
+            .borrowings,
+            collateral=hashstack_state.user_states[x["User"]]
+            .loans[x["Loan ID"]]
+            .collateral,
+            prices=prices.prices,
         ),
         axis=1,
     )
@@ -491,6 +510,13 @@ def update_data(state):
         lambda x: src.nostra.compute_health_factor(
             risk_adjusted_collateral_usd=x["Risk adjusted collateral in USD"],
             risk_adjusted_debt_usd=x["Borrowing in USD"],
+        ),
+        axis=1,
+    )
+    nostra_loan_stats["Standardized health factor"] = nostra_loan_stats.apply(
+        lambda x: src.nostra.compute_standardized_health_factor(
+            risk_adjusted_collateral_usd=x["Risk adjusted collateral in USD"],
+            borrowings_usd=x["Borrowing in USD"],
         ),
         axis=1,
     )
