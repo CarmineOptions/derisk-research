@@ -513,3 +513,15 @@ def load_data():
         small_loans_sample,
         large_loans_sample,
     )
+
+
+def n_compute_standardized_health_factor(
+    risk_adjusted_collateral_usd: decimal.Decimal,
+    borrowings_usd: decimal.Decimal,
+) -> decimal.Decimal:
+    # Compute the value of collateral at which the user/loan can be liquidated.
+    collateral_usd_threshold = borrowings_usd
+    if collateral_usd_threshold == decimal.Decimal("0"):
+        # TODO: assumes collateral is positive
+        return decimal.Decimal("Inf")
+    return risk_adjusted_collateral_usd / collateral_usd_threshold

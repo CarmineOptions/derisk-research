@@ -443,7 +443,7 @@ def compute_health_factor(
     collateral: HashStackCollateral,
     borrowings: HashStackBorrowings,
     prices: Dict[str, decimal.Decimal],
-    user: str,
+    user: str,  # TODO: redundant?
 ) -> decimal.Decimal:
     collateral_current_amount_usd = compute_collateral_current_amount_usd(
         collateral=collateral, prices=prices
@@ -461,13 +461,6 @@ def compute_health_factor(
     health_factor = (
         collateral_current_amount_usd + borrowings_current_amount_usd
     ) / borrowings_amount_usd
-    health_factor_liquidation_threshold = (
-        decimal.Decimal("1.06")
-        if borrowings.debt_category == 1
-        else decimal.Decimal("1.05")
-        if borrowings.debt_category == 2
-        else decimal.Decimal("1.04")
-    )
     return health_factor
 
 
@@ -634,3 +627,35 @@ def load_data():
         small_loans_sample,
         large_loans_sample,
     )
+
+
+def compute_standardized_health_factor(
+    collateral: HashStackCollateral,
+    borrowings: HashStackBorrowings,
+    prices: Dict[str, decimal.Decimal],
+) -> decimal.Decimal:
+    borrowings_amount_usd = compute_borrowings_amount_usd(
+        borrowings=borrowings, prices=prices
+    )
+    # Compute the value of collateral at which the user/loan can be liquidated.
+    health_factor_liquidation_threshold = (
+        decimal.Decimal("1.06")
+        if borrowings.debt_category == 1
+        else decimal.Decimal("1.05")
+        if borrowings.debt_category == 2
+        else decimal.Decimal("1.04")
+    )
+    collateral_usd_threshold = health_factor_liquidation_threshold * borrowings_amount_usd
+    if collateral_usd_threshold == decimal.Decimal("0"):
+        # TODO: assumes collateral is positive
+        return decimal.Decimal("Inf")
+
+    collateral_current_amount_usd = compute_collateral_current_amount_usd(
+        collateral=collateral, prices=prices
+    )
+    borrowings_current_amount_usd = compute_borrowings_current_amount_usd(
+        borrowings=borrowings, prices=prices
+    )
+    return (
+        collateral_current_amount_usd + borrowings_current_amount_usd
+    ) / collateral_usd_threshold
