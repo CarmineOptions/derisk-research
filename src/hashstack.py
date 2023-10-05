@@ -629,6 +629,47 @@ def load_data():
     )
 
 
+def compute_number_of_users(
+    state: State,
+) -> int:
+    return sum(
+        any(
+            loan.collateral.current_amount > decimal.Decimal('0')
+            or loan.borrowings.amount > decimal.Decimal('0')
+            for loan in user_state.loans.values()
+        )
+        for user_state in state.user_states.values()
+    )
+
+
+def compute_number_of_stakers(
+    state: State,
+) -> int:
+    return sum(
+        any(loan.collateral.current_amount > decimal.Decimal('0') for loan in user_state.loans.values())
+        for user_state in state.user_states.values()
+    )
+
+
+def compute_number_of_borrowers(
+    state: State,
+) -> int:
+    return sum(
+        any(loan.borrowings.amount > decimal.Decimal('0') for loan in user_state.loans.values())
+        for user_state in state.user_states.values()
+    )
+
+
+def compute_number_of_loans(
+    state: State,
+) -> int:
+    return sum(
+        loan.borrowings.amount > decimal.Decimal('0')
+        for user_state in state.user_states.values()
+        for loan in user_state.loans.values()
+    )
+
+
 def compute_standardized_health_factor(
     collateral: HashStackCollateral,
     borrowings: HashStackBorrowings,

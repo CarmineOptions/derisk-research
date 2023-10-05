@@ -515,6 +515,37 @@ def load_data():
     )
 
 
+def compute_number_of_users(
+    state: State,
+) -> int:
+    return sum(
+        any(
+            (token_state.collateral + token_state.interest_bearing_collateral) > decimal.Decimal('0')
+            or token_state.debt > decimal.Decimal('0')
+            for token_state in user_state.token_states.values()
+        )
+        for user_state in state.user_states.values()
+    )
+
+
+def compute_number_of_stakers(
+    state: State,
+) -> int:
+    return sum(
+        any((token_state.collateral + token_state.interest_bearing_collateral) > decimal.Decimal('0') for token_state in user_state.token_states.values())
+        for user_state in state.user_states.values()
+    )
+
+
+def compute_number_of_borrowers(
+    state: State,
+) -> int:
+    return sum(
+        any(token_state.debt > decimal.Decimal('0') for token_state in user_state.token_states.values())
+        for user_state in state.user_states.values()
+    )
+
+
 def compute_standardized_health_factor(
     risk_adjusted_collateral_usd: decimal.Decimal,
     borrowings_usd: decimal.Decimal,
