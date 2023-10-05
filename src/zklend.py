@@ -312,7 +312,7 @@ class State:
 
         # TODO
         if from_ == self.USER or to == self.USER:
-            print("tra", token, ztoken, debt_raw_amount, raw_amount)
+            print("tra", token, ztoken, value, raw_amount)
 
         if from_ != empty_address:
             self.user_states[from_].withdrawal(
