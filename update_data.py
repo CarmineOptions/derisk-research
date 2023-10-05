@@ -350,12 +350,12 @@ def update_data(state):
     zklend_loan_stats = pandas.DataFrame()
     zklend_loan_stats["User"] = [
         user
-        for user in zklend_state.user_states.keys()
+        for user in state.user_states.keys()
     ]
     zklend_loan_stats["Protocol"] = "zkLend"
     zklend_loan_stats["Borrowing in USD"] = zklend_loan_stats.apply(
         lambda x: src.zklend.compute_borrowings_usd(
-            user_state=zklend_state.user_states[x["User"]],
+            user_state=state.user_states[x["User"]],
             prices=prices.prices,
         ),
         axis=1,
@@ -364,13 +364,20 @@ def update_data(state):
         "Risk adjusted collateral in USD"
     ] = zklend_loan_stats.apply(
         lambda x: src.zklend.compute_risk_adjusted_collateral_usd(
-            user_state=zklend_state.user_states[x["User"]],
+            user_state=state.user_states[x["User"]],
             prices=prices.prices,
         ),
         axis=1,
     )
     zklend_loan_stats["Health factor"] = zklend_loan_stats.apply(
         lambda x: src.zklend.compute_health_factor(
+            risk_adjusted_collateral_usd=x["Risk adjusted collateral in USD"],
+            borrowings_usd=x["Borrowing in USD"],
+        ),
+        axis=1,
+    )
+    zklend_loan_stats["Standardized health factor"] = zklend_loan_stats.apply(
+        lambda x: src.zklend.compute_standardized_health_factor(
             risk_adjusted_collateral_usd=x["Risk adjusted collateral in USD"],
             borrowings_usd=x["Borrowing in USD"],
         ),
@@ -420,6 +427,18 @@ def update_data(state):
             .collateral,
             prices=prices.prices,
             user=x["User"],
+        ),
+        axis=1,
+    )
+    hashstack_loan_stats["Standardized health factor"] = hashstack_loan_stats.apply(
+        lambda x: src.hashstack.compute_standardized_health_factor(
+            borrowings=hashstack_state.user_states[x["User"]]
+            .loans[x["Loan ID"]]
+            .borrowings,
+            collateral=hashstack_state.user_states[x["User"]]
+            .loans[x["Loan ID"]]
+            .collateral,
+            prices=prices.prices,
         ),
         axis=1,
     )
@@ -491,6 +510,13 @@ def update_data(state):
         lambda x: src.nostra.compute_health_factor(
             risk_adjusted_collateral_usd=x["Risk adjusted collateral in USD"],
             risk_adjusted_debt_usd=x["Borrowing in USD"],
+        ),
+        axis=1,
+    )
+    nostra_loan_stats["Standardized health factor"] = nostra_loan_stats.apply(
+        lambda x: src.nostra.compute_standardized_health_factor(
+            risk_adjusted_collateral_usd=x["Risk adjusted collateral in USD"],
+            borrowings_usd=x["Borrowing in USD"],
         ),
         axis=1,
     )
@@ -720,27 +746,27 @@ def update_data(state):
                 'Nostra',
             ],
             'ETH collateral': [
-                round(sum(x.token_states['ETH'].deposit * x.token_states['ETH'].collateral_enabled for x in zklend_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['ETH'], 4),
+                round(sum(x.token_states['ETH'].deposit * x.token_states['ETH'].collateral_enabled for x in state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['ETH'], 4),
                 round(sum(loan.collateral.current_amount for user_state in hashstack_state.user_states.values() for loan in user_state.loans.values() if loan.collateral.market == 'ETH') / src.constants.TOKEN_DECIMAL_FACTORS['ETH'], 4),
                 round(sum(x.token_states['ETH'].collateral + x.token_states['ETH'].interest_bearing_collateral for x in nostra_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['ETH'], 4),
             ],
             'wBTC collateral': [
-                round(sum(x.token_states['wBTC'].deposit * x.token_states['wBTC'].collateral_enabled for x in zklend_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['wBTC'], 4),
+                round(sum(x.token_states['wBTC'].deposit * x.token_states['wBTC'].collateral_enabled for x in state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['wBTC'], 4),
                 round(sum(loan.collateral.current_amount for user_state in hashstack_state.user_states.values() for loan in user_state.loans.values() if loan.collateral.market == 'wBTC') / src.constants.TOKEN_DECIMAL_FACTORS['wBTC'], 4),
                 round(sum(x.token_states['wBTC'].collateral + x.token_states['wBTC'].interest_bearing_collateral for x in nostra_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['wBTC'], 4),
             ],
             'USDC collateral': [
-                round(sum(x.token_states['USDC'].deposit * x.token_states['USDC'].collateral_enabled for x in zklend_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['USDC'], 4),
+                round(sum(x.token_states['USDC'].deposit * x.token_states['USDC'].collateral_enabled for x in state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['USDC'], 4),
                 round(sum(loan.collateral.current_amount for user_state in hashstack_state.user_states.values() for loan in user_state.loans.values() if loan.collateral.market == 'USDC') / src.constants.TOKEN_DECIMAL_FACTORS['USDC'], 4),
                 round(sum(x.token_states['USDC'].collateral + x.token_states['USDC'].interest_bearing_collateral for x in nostra_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['USDC'], 4),
             ],
             'DAI collateral': [
-                round(sum(x.token_states['DAI'].deposit * x.token_states['DAI'].collateral_enabled for x in zklend_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['DAI'], 4),
+                round(sum(x.token_states['DAI'].deposit * x.token_states['DAI'].collateral_enabled for x in state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['DAI'], 4),
                 round(sum(loan.collateral.current_amount for user_state in hashstack_state.user_states.values() for loan in user_state.loans.values() if loan.collateral.market == 'DAI') / src.constants.TOKEN_DECIMAL_FACTORS['DAI'], 4),
                 round(sum(x.token_states['DAI'].collateral + x.token_states['DAI'].interest_bearing_collateral for x in nostra_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['DAI'], 4),
             ],
             'USDT collateral': [
-                round(sum(x.token_states['USDT'].deposit * x.token_states['USDT'].collateral_enabled for x in zklend_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['USDT'], 4),
+                round(sum(x.token_states['USDT'].deposit * x.token_states['USDT'].collateral_enabled for x in state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['USDT'], 4),
                 round(sum(loan.collateral.current_amount for user_state in hashstack_state.user_states.values() for loan in user_state.loans.values() if loan.collateral.market == 'USDT') / src.constants.TOKEN_DECIMAL_FACTORS['USDT'], 4),
                 round(sum(x.token_states['USDT'].collateral + x.token_states['USDT'].interest_bearing_collateral for x in nostra_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['USDT'], 4),
             ],
@@ -756,27 +782,27 @@ def update_data(state):
                 'Nostra',
             ],
             'ETH debt': [
-                round(sum(x.token_states['ETH'].borrowings for x in zklend_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['ETH'], 4),
+                round(sum(x.token_states['ETH'].borrowings for x in state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['ETH'], 4),
                 round(sum(loan.borrowings.amount for user_state in hashstack_state.user_states.values() for loan in user_state.loans.values() if loan.borrowings.market == 'ETH') / src.constants.TOKEN_DECIMAL_FACTORS['ETH'], 4),
                 round(sum(x.token_states['ETH'].debt for x in nostra_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['ETH'], 4),
             ],
             'wBTC debt': [
-                round(sum(x.token_states['wBTC'].borrowings for x in zklend_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['wBTC'], 4),
+                round(sum(x.token_states['wBTC'].borrowings for x in state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['wBTC'], 4),
                 round(sum(loan.borrowings.amount for user_state in hashstack_state.user_states.values() for loan in user_state.loans.values() if loan.borrowings.market == 'wBTC') / src.constants.TOKEN_DECIMAL_FACTORS['wBTC'], 4),
                 round(sum(x.token_states['wBTC'].debt for x in nostra_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['wBTC'], 4),
             ],
             'USDC debt': [
-                round(sum(x.token_states['USDC'].borrowings for x in zklend_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['USDC'], 4),
+                round(sum(x.token_states['USDC'].borrowings for x in state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['USDC'], 4),
                 round(sum(loan.borrowings.amount for user_state in hashstack_state.user_states.values() for loan in user_state.loans.values() if loan.borrowings.market == 'USDC') / src.constants.TOKEN_DECIMAL_FACTORS['USDC'], 4),
                 round(sum(x.token_states['USDC'].debt for x in nostra_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['USDC'], 4),
             ],
             'DAI debt': [
-                round(sum(x.token_states['DAI'].borrowings for x in zklend_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['DAI'], 4),
+                round(sum(x.token_states['DAI'].borrowings for x in state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['DAI'], 4),
                 round(sum(loan.borrowings.amount for user_state in hashstack_state.user_states.values() for loan in user_state.loans.values() if loan.borrowings.market == 'DAI') / src.constants.TOKEN_DECIMAL_FACTORS['DAI'], 4),
                 round(sum(x.token_states['DAI'].debt for x in nostra_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['DAI'], 4),
             ],
             'USDT debt': [
-                round(sum(x.token_states['USDT'].borrowings for x in zklend_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['USDT'], 4),
+                round(sum(x.token_states['USDT'].borrowings for x in state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['USDT'], 4),
                 round(sum(loan.borrowings.amount for user_state in hashstack_state.user_states.values() for loan in user_state.loans.values() if loan.borrowings.market == 'USDT') / src.constants.TOKEN_DECIMAL_FACTORS['USDT'], 4),
                 round(sum(x.token_states['USDT'].debt for x in nostra_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['USDT'], 4),
             ],
