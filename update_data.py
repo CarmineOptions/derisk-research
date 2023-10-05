@@ -560,9 +560,26 @@ def update_data(state):
                 'Nostra',
             ],
             'Number of users': [
-                len(zklend_loan_stats),
-                len(hashstack_loan_stats),
-                len(nostra_loan_stats),
+                src.zklend.compute_number_of_users(state),
+                src.hashstack.compute_number_of_users(hashstack_state),
+                src.nostra.compute_number_of_users(nostra_state),
+            ],
+            'Number of stakers': [
+                src.zklend.compute_number_of_stakers(state),
+                src.hashstack.compute_number_of_stakers(hashstack_state),
+                src.nostra.compute_number_of_stakers(nostra_state),
+            ],
+            'Number of borrowers': [
+                src.zklend.compute_number_of_borrowers(state),
+                src.hashstack.compute_number_of_borrowers(hashstack_state),
+                src.nostra.compute_number_of_borrowers(nostra_state),
+            ],
+            # Hashstack is the only protocol for which the number of loans doesn't equal the number of borrowers. The reason is
+            # that Hashstack allows for liquidations on the loan level, whereas other protocols use user-level liquidations.
+            'Number of loans': [
+                src.zklend.compute_number_of_borrowers(state),
+                src.hashstack.compute_number_of_loans(hashstack_state),
+                src.nostra.compute_number_of_borrowers(nostra_state),
             ],
             'Total debt in USD': [
                 round(zklend_loan_stats['Borrowing in USD'].sum(), 4),
@@ -809,6 +826,25 @@ def update_data(state):
         },
     )
     debt_stats.to_csv("debt_stats.csv", index=False)
+
+    utilization_stats = pandas.DataFrame(
+        {
+            'Protocol': [
+                'zkLend',
+                'Hashstack',
+                'Nostra',
+            ],
+            'Total utilization': general_stats['Total debt in USD'] / supply_stats['Total supply in USD'],
+            'ETH utilization': debt_stats['ETH debt'] / supply_stats['ETH supply'],
+            'wBTC utilization': debt_stats['wBTC debt'] / supply_stats['wBTC supply'],
+            'USDC utilization': debt_stats['USDC debt'] / supply_stats['USDC supply'],
+            'DAI utilization': debt_stats['DAI debt'] / supply_stats['DAI supply'],
+            'USDT utilization': debt_stats['USDT debt'] / supply_stats['USDT supply'],
+        },
+    )
+    utilization_columns = [x for x in utilization_stats.columns if 'utilization' in x]
+    utilization_stats[utilization_columns] = utilization_stats[utilization_columns].applymap(lambda x: round(x, 4))
+    utilization_stats.to_csv("utilization_stats.csv", index=False)
 
     max_block_number = zklend_events["block_number"].max()
     max_timestamp = zklend_events["timestamp"].max()
