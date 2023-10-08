@@ -1,4 +1,5 @@
 import datetime
+import decimal
 import json
 import multiprocessing
 import os
@@ -199,18 +200,19 @@ def main():
     streamlit.plotly_chart(figure, True)
 
     streamlit.header("Loans with low health factor")
-    streamlit.table(small_loans_sample)
+    streamlit.dataframe(small_loans_sample)
     streamlit.header("Sizeable loans with low health factor")
-    streamlit.table(large_loans_sample)
+    streamlit.dataframe(large_loans_sample)
 
     streamlit.header("Comparison of lending protocols")
     col1, col2 = streamlit.columns(2)
     with col1:
-        streamlit.table(pandas.read_csv("general_stats.csv"))
-        streamlit.table(pandas.read_csv("supply_stats.csv"))
+        streamlit.dataframe(pandas.read_csv("general_stats.csv"))
+        streamlit.dataframe(pandas.read_csv("supply_stats.csv"))
     with col2:
-        streamlit.table(pandas.read_csv("collateral_stats.csv"))
-        streamlit.table(pandas.read_csv("debt_stats.csv"))
+        streamlit.dataframe(pandas.read_csv("utilization_stats.csv"))
+        streamlit.dataframe(pandas.read_csv("collateral_stats.csv"))
+        streamlit.dataframe(pandas.read_csv("debt_stats.csv"))
 
     streamlit.header("Loan size distribution")
     src.histogram.visualization(protocols)
