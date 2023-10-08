@@ -323,6 +323,13 @@ def update_data(state):
         "User": [user.address for user in big_bad_users[:n]],
         "Protocol": ["zkLend" for user in big_bad_users[:n]],
         "Health factor": [user.health_factor for user in big_bad_users[:n]],
+        "Standardized health factor": [
+            src.zklend.compute_standardized_health_factor(
+                risk_adjusted_collateral_usd=user.collateral_size,
+                borrowings_usd=user.loan_size,
+            )
+            for user in big_bad_users[:n]
+        ],
         "Borrowing in USD": [user.loan_size for user in big_bad_users[:n]],
         "Risk adjusted collateral in USD": [
             user.collateral_size for user in big_bad_users[:n]
@@ -335,6 +342,13 @@ def update_data(state):
         "User": [user.address for user in small_bad_users[:n]],
         "Protocol": ["zkLend" for user in small_bad_users[:n]],
         "Health factor": [user.health_factor for user in small_bad_users[:n]],
+        "Standardized health factor": [
+            src.zklend.compute_standardized_health_factor(
+                risk_adjusted_collateral_usd=user.collateral_size,
+                borrowings_usd=user.loan_size,
+            )
+            for user in small_bad_users[:n]
+        ],
         "Borrowing in USD": [user.loan_size for user in small_bad_users[:n]],
         "Risk adjusted collateral in USD": [
             user.collateral_size for user in small_bad_users[:n]
