@@ -1,4 +1,5 @@
 import datetime
+import decimal
 import json
 import multiprocessing
 import os
@@ -195,22 +196,40 @@ def main():
     )
     figure.update_xaxes(title_text=f"{col} price")
     figure.update_yaxes(title_text="Volume")
+    collateral_token_price = src.swap_liquidity.Prices().prices[col]
+    figure.add_vline(
+        x=collateral_token_price,
+        line_width=2,
+        line_dash="dash",
+        line_color="black",
+    )
+    figure.add_vrect(
+        x0=decimal.Decimal("0.9") * collateral_token_price,
+        x1=decimal.Decimal("1.1") * collateral_token_price,
+        annotation_text="Current price +- 10%",
+        annotation_font_size=11,
+        annotation_position="top left",
+        fillcolor="gray",
+        opacity=0.25,
+        line_width=2,
+    )
 
     streamlit.plotly_chart(figure, True)
 
     streamlit.header("Loans with low health factor")
-    streamlit.table(small_loans_sample)
+    streamlit.dataframe(small_loans_sample)
     streamlit.header("Sizeable loans with low health factor")
-    streamlit.table(large_loans_sample)
+    streamlit.dataframe(large_loans_sample)
 
     streamlit.header("Comparison of lending protocols")
     col1, col2 = streamlit.columns(2)
     with col1:
-        streamlit.table(pandas.read_csv("general_stats.csv"))
-        streamlit.table(pandas.read_csv("supply_stats.csv"))
+        streamlit.dataframe(pandas.read_csv("general_stats.csv"))
+        streamlit.dataframe(pandas.read_csv("supply_stats.csv"))
     with col2:
-        streamlit.table(pandas.read_csv("collateral_stats.csv"))
-        streamlit.table(pandas.read_csv("debt_stats.csv"))
+        streamlit.dataframe(pandas.read_csv("utilization_stats.csv"))
+        streamlit.dataframe(pandas.read_csv("collateral_stats.csv"))
+        streamlit.dataframe(pandas.read_csv("debt_stats.csv"))
 
     streamlit.header("Loan size distribution")
     src.histogram.visualization(protocols)

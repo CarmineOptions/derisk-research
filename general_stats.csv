@@ -1,4 +1,4 @@
-Protocol,Number of users,Total debt in USD,Total risk adjusted collateral in USD
-zkLend,751961,2420502.4415,5717827.7303
-Hashstack,37,1941.5435,1129.8117
-Nostra,114166,27988.6240,146410.5983
+Protocol,Number of users,Number of stakers,Number of borrowers,Number of loans,Total debt in USD,Total risk adjusted collateral in USD
+zkLend,344542,344445,95141,95141,2467301.3364,5412859.0090
+Hashstack,31,31,30,34,1851.4386,1089.4501
+Nostra,96829,96829,22915,22915,28120.2880,147850.4671
