@@ -196,6 +196,23 @@ def main():
     )
     figure.update_xaxes(title_text=f"{col} price")
     figure.update_yaxes(title_text="Volume")
+    collateral_token_price = src.swap_liquidity.Prices().prices[col]
+    figure.add_vline(
+        x=collateral_token_price,
+        line_width=2,
+        line_dash="dash",
+        line_color="black",
+    )
+    figure.add_vrect(
+        x0=decimal.Decimal("0.9") * collateral_token_price,
+        x1=decimal.Decimal("1.1") * collateral_token_price,
+        annotation_text="Current price +- 10%",
+        annotation_font_size=11,
+        annotation_position="top left",
+        fillcolor="gray",
+        opacity=0.25,
+        line_width=2,
+    )
 
     streamlit.plotly_chart(figure, True)
 
