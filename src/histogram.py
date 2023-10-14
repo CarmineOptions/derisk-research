@@ -4,8 +4,8 @@ import streamlit
 
 
 def load_histogram_data():
-    zklend = pandas.read_csv("data/histogram.csv")
-    hashstack = pandas.read_csv("hashstack_data/histogram.csv")
+    zklend = pandas.read_csv("data/histogram.csv", compression="gzip")
+    hashstack = pandas.read_csv("hashstack_data/histogram.csv", compression="gzip")
     return (zklend, hashstack)
 
 

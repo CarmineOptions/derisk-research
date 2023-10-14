@@ -1,6 +1,5 @@
 import datetime
 import decimal
-import json
 import multiprocessing
 import os
 
@@ -8,67 +7,34 @@ import pandas
 import plotly.express
 import streamlit
 
+import src.constants
 import src.hashstack
 import src.histogram
 import update_data
 
 
-# TODO: Introduce other pairs.
-PAIRS = [
-    "ETH-USDC",
-    "ETH-USDT",
-    "ETH-DAI",
-    "wBTC-USDC",
-    "wBTC-USDT",
-    "wBTC-DAI",
-    # "ETH-wBTC",
-    # "wBTC-ETH",
-]
-
-
-def load_data():
-    data = {}
-    for pair in PAIRS:
-        data[pair] = pandas.read_csv(f"data/{pair}.csv")
-    small_loans_sample = pandas.read_csv("data/small_loans_sample.csv")
-    large_loans_sample = pandas.read_csv("data/large_loans_sample.csv")
-    with open("data/last_update.json", "r") as f:
-        last_update = json.load(f)
-    last_updated = last_update["timestamp"]
-    last_block_number = last_update["block_number"]
-    return (
-        data,
-        small_loans_sample,
-        large_loans_sample,
-        last_updated,
-        last_block_number,
-    )
-
-
 def main():
     streamlit.title("DeRisk")
 
+    # TODO: rename: data -> zklend_data
     (
         data,
-        small_loans_sample,
-        large_loans_sample,
+        zklend_loans,
         last_updated,
         last_block_number,
-    ) = load_data()
+    ) = src.zklend.load_data()
     (
         hashstack_data,
         hashstack_histogram_data,
-        hashstack_small_loans_sample,
-        hashstack_large_loans_sample,
+        hashstack_loans,
     ) = src.hashstack.load_data()
     (
         nostra_data,
         nostra_histogram_data,
-        nostra_small_loans_sample,
-        nostra_large_loans_sample,
+        nostra_loans,
     ) = src.nostra.load_data()
 
-    col1, _ = streamlit.columns([1, 4])
+    col1, _ = streamlit.columns([1, 3])
     with col1:
         protocols = streamlit.multiselect(
             label="Select protocols",
@@ -77,23 +43,20 @@ def main():
         )
         current_pair = streamlit.selectbox(
             label="Select collateral-loan pair:",
-            options=PAIRS,
+            options=src.constants.PAIRS,
             index=0,
         )
 
     # TODO: refactor this mess
     if protocols == ["zkLend"]:
         data[current_pair] = data[current_pair]
-        small_loans_sample = small_loans_sample
-        large_loans_sample = large_loans_sample
+        loans = zklend_loans
     elif protocols == ["Hashstack"]:
         data[current_pair] = hashstack_data[current_pair]
-        small_loans_sample = hashstack_small_loans_sample
-        large_loans_sample = hashstack_large_loans_sample
+        loans = hashstack_loans
     elif protocols == ["Nostra"]:
         data[current_pair] = nostra_data[current_pair]
-        small_loans_sample = nostra_small_loans_sample
-        large_loans_sample = nostra_large_loans_sample
+        loans = nostra_loans
     elif set(protocols) == {"zkLend", "Hashstack"}:
         data[current_pair]["max_borrowings_to_be_liquidated"] += hashstack_data[
             current_pair
@@ -101,16 +64,7 @@ def main():
         data[current_pair][
             "max_borrowings_to_be_liquidated_at_interval"
         ] += hashstack_data[current_pair]["max_borrowings_to_be_liquidated_at_interval"]
-        small_loans_sample = (
-            pandas.concat([small_loans_sample, hashstack_small_loans_sample])
-            .sort_values("Health factor")
-            .iloc[:20]
-        )
-        large_loans_sample = (
-            pandas.concat([large_loans_sample, hashstack_large_loans_sample])
-            .sort_values("Health factor")
-            .iloc[:20]
-        )
+        loans = pandas.concat([zklend_loans, hashstack_loans])
     elif set(protocols) == {"zkLend", "Nostra"}:
         data[current_pair]["max_borrowings_to_be_liquidated"] += nostra_data[
             current_pair
@@ -118,16 +72,7 @@ def main():
         data[current_pair][
             "max_borrowings_to_be_liquidated_at_interval"
         ] += nostra_data[current_pair]["max_borrowings_to_be_liquidated_at_interval"]
-        small_loans_sample = (
-            pandas.concat([small_loans_sample, nostra_small_loans_sample])
-            .sort_values("Health factor")
-            .iloc[:20]
-        )
-        large_loans_sample = (
-            pandas.concat([large_loans_sample, nostra_large_loans_sample])
-            .sort_values("Health factor")
-            .iloc[:20]
-        )
+        loans = pandas.concat([zklend_loans, nostra_loans])
     elif set(protocols) == {"Hashstack", "Nostra"}:
         data[current_pair]["max_borrowings_to_be_liquidated"] = (
             hashstack_data[current_pair]["max_borrowings_to_be_liquidated"]
@@ -137,16 +82,7 @@ def main():
             hashstack_data[current_pair]["max_borrowings_to_be_liquidated_at_interval"]
             + nostra_data[current_pair]["max_borrowings_to_be_liquidated_at_interval"]
         )
-        small_loans_sample = (
-            pandas.concat([hashstack_small_loans_sample, nostra_small_loans_sample])
-            .sort_values("Health factor")
-            .iloc[:20]
-        )
-        large_loans_sample = (
-            pandas.concat([hashstack_large_loans_sample, nostra_large_loans_sample])
-            .sort_values("Health factor")
-            .iloc[:20]
-        )
+        loans = pandas.concat([hashstack_loans, nostra_loans])
     elif set(protocols) == {"zkLend", "Hashstack", "Nostra"}:
         data[current_pair]["max_borrowings_to_be_liquidated"] += (
             hashstack_data[current_pair]["max_borrowings_to_be_liquidated"]
@@ -156,16 +92,7 @@ def main():
             hashstack_data[current_pair]["max_borrowings_to_be_liquidated_at_interval"]
             + nostra_data[current_pair]["max_borrowings_to_be_liquidated_at_interval"]
         )
-        small_loans_sample = (
-            pandas.concat([small_loans_sample, hashstack_small_loans_sample, nostra_small_loans_sample])
-            .sort_values("Health factor")
-            .iloc[:20]
-        )
-        large_loans_sample = (
-            pandas.concat([large_loans_sample, hashstack_large_loans_sample, nostra_large_loans_sample])
-            .sort_values("Health factor")
-            .iloc[:20]
-        )
+        loans = pandas.concat([zklend_loans, hashstack_loans, nostra_loans])
 
     [col, bor] = current_pair.split("-")
 
@@ -213,23 +140,177 @@ def main():
         opacity=0.25,
         line_width=2,
     )
-
     streamlit.plotly_chart(figure, True)
+    example_row = data[current_pair][
+        data[current_pair]['collateral_token_price'] > decimal.Decimal("0.5") * collateral_token_price
+    ].sort_values('collateral_token_price').iloc[0]
+
+    def _get_risk_level(debt_to_supply_ratio: float) -> str:
+        if debt_to_supply_ratio < 0.2:
+            return 'low'
+        elif debt_to_supply_ratio < 0.4:
+            return 'medium'
+        elif debt_to_supply_ratio < 0.6:
+            'high'
+        return 'very high'
+
+    debt_to_supply_ratio = example_row['max_borrowings_to_be_liquidated_at_interval'] / example_row['amm_borrowings_token_supply']
+    streamlit.write(
+        f"At price of {int(example_row['collateral_token_price'])}, debt worth of {int(example_row['max_borrowings_to_be_liquidated_at_interval'])} "
+        f"USD will be liquidated while the AMM swaps capacity will be {int(example_row['amm_borrowings_token_supply'])} USD. The ratio of liquidated "
+        f"debt to available supply is {round(debt_to_supply_ratio * 100)}% and the risk of acquiring bad debt for lending protocols is "
+        f"{_get_risk_level(debt_to_supply_ratio)}."
+    )
 
     streamlit.header("Loans with low health factor")
-    streamlit.dataframe(small_loans_sample)
-    streamlit.header("Sizeable loans with low health factor")
-    streamlit.dataframe(large_loans_sample)
+    col1, _ = streamlit.columns([1, 3])
+    with col1:
+        debt_usd_lower_bound, debt_usd_upper_bound = streamlit.slider(
+            label="Select range of USD borrowings",
+            min_value=0,
+            max_value=int(loans["Borrowing in USD"].max()),
+            value=(0, int(loans["Borrowing in USD"].max())),
+        )
+    streamlit.dataframe(
+        loans[
+            (loans["Health factor"] > 0.5)  # TODO: debug the negative HFs
+            & loans["Borrowing in USD"].between(debt_usd_lower_bound, debt_usd_upper_bound)
+        ].sort_values("Health factor").iloc[:20],
+        use_container_width=True,
+    )
 
     streamlit.header("Comparison of lending protocols")
-    col1, col2 = streamlit.columns(2)
+    streamlit.dataframe(pandas.read_csv("general_stats.csv", compression="gzip"))
+    streamlit.dataframe(pandas.read_csv("utilization_stats.csv", compression="gzip"))
+    supply_stats = pandas.read_csv("supply_stats.csv", compression="gzip")
+    collateral_stats = pandas.read_csv("collateral_stats.csv", compression="gzip")
+    debt_stats = pandas.read_csv("debt_stats.csv", compression="gzip")
+    col1, col2, col3, col4, col5 = streamlit.columns(5)
     with col1:
-        streamlit.dataframe(pandas.read_csv("general_stats.csv"))
-        streamlit.dataframe(pandas.read_csv("supply_stats.csv"))
+        figure = plotly.express.pie(
+            collateral_stats,
+            values='ETH collateral',
+            names='Protocol',
+            title="ETH collateral",
+            color_discrete_sequence=plotly.express.colors.sequential.Oranges_r,
+        )
+        streamlit.plotly_chart(figure, True)
+        figure = plotly.express.pie(
+            debt_stats,
+            values='ETH debt',
+            names='Protocol',
+            title="ETH debt",
+            color_discrete_sequence=plotly.express.colors.sequential.Greens_r,
+        )
+        streamlit.plotly_chart(figure, True)
+        figure = plotly.express.pie(
+            supply_stats,
+            values='ETH supply',
+            names='Protocol',
+            title="ETH supply",
+            color_discrete_sequence=plotly.express.colors.sequential.Blues_r,
+        )
+        streamlit.plotly_chart(figure, True)
     with col2:
-        streamlit.dataframe(pandas.read_csv("utilization_stats.csv"))
-        streamlit.dataframe(pandas.read_csv("collateral_stats.csv"))
-        streamlit.dataframe(pandas.read_csv("debt_stats.csv"))
+        figure = plotly.express.pie(
+            collateral_stats,
+            values='wBTC collateral',
+            names='Protocol',
+            title="wBTC collateral",
+            color_discrete_sequence=plotly.express.colors.sequential.Oranges_r,
+        )
+        streamlit.plotly_chart(figure, True)
+        figure = plotly.express.pie(
+            debt_stats,
+            values='wBTC debt',
+            names='Protocol',
+            title="wBTC debt",
+            color_discrete_sequence=plotly.express.colors.sequential.Greens_r,
+        )
+        streamlit.plotly_chart(figure, True)
+        figure = plotly.express.pie(
+            supply_stats,
+            values='wBTC supply',
+            names='Protocol',
+            title="wBTC supply",
+            color_discrete_sequence=plotly.express.colors.sequential.Blues_r,
+        )
+        streamlit.plotly_chart(figure, True)
+    with col3:
+        figure = plotly.express.pie(
+            collateral_stats,
+            values='USDC collateral',
+            names='Protocol',
+            title="USDC collateral",
+            color_discrete_sequence=plotly.express.colors.sequential.Oranges_r,
+        )
+        streamlit.plotly_chart(figure, True)
+        figure = plotly.express.pie(
+            debt_stats,
+            values='USDC debt',
+            names='Protocol',
+            title="USDC debt",
+            color_discrete_sequence=plotly.express.colors.sequential.Greens_r,
+        )
+        streamlit.plotly_chart(figure, True)
+        figure = plotly.express.pie(
+            supply_stats,
+            values='USDC supply',
+            names='Protocol',
+            title="USDC supply",
+            color_discrete_sequence=plotly.express.colors.sequential.Blues_r,
+        )
+        streamlit.plotly_chart(figure, True)
+    with col4:
+        figure = plotly.express.pie(
+            collateral_stats,
+            values='DAI collateral',
+            names='Protocol',
+            title="DAI collateral",
+            color_discrete_sequence=plotly.express.colors.sequential.Oranges_r,
+        )
+        streamlit.plotly_chart(figure, True)
+        figure = plotly.express.pie(
+            debt_stats,
+            values='DAI debt',
+            names='Protocol',
+            title="DAI debt",
+            color_discrete_sequence=plotly.express.colors.sequential.Greens_r,
+        )
+        streamlit.plotly_chart(figure, True)
+        figure = plotly.express.pie(
+            supply_stats,
+            values='DAI supply',
+            names='Protocol',
+            title="DAI supply",
+            color_discrete_sequence=plotly.express.colors.sequential.Blues_r,
+        )
+        streamlit.plotly_chart(figure, True)
+    with col5:
+        figure = plotly.express.pie(
+            collateral_stats,
+            values='USDT collateral',
+            names='Protocol',
+            title="USDT collateral",
+            color_discrete_sequence=plotly.express.colors.sequential.Oranges_r,
+        )
+        streamlit.plotly_chart(figure, True)
+        figure = plotly.express.pie(
+            debt_stats,
+            values='USDT debt',
+            names='Protocol',
+            title="USDT debt",
+            color_discrete_sequence=plotly.express.colors.sequential.Greens_r,
+        )
+        streamlit.plotly_chart(figure, True)
+        figure = plotly.express.pie(
+            supply_stats,
+            values='USDT supply',
+            names='Protocol',
+            title="USDT supply",
+            color_discrete_sequence=plotly.express.colors.sequential.Blues_r,
+        )
+        streamlit.plotly_chart(figure, True)
 
     streamlit.header("Loan size distribution")
     src.histogram.visualization(protocols)
