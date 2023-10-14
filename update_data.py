@@ -253,8 +253,8 @@ def update_data(state):
         axis=1,
     )
     zklend_loan_stats["Collateral"] = zklend_loan_stats.apply(
-        lambda x: ''.join(
-            f"{token}: {round(token_state.deposit * token_state.collateral_enabled / src.constants.TOKEN_DECIMAL_FACTORS[token], 4)}, "
+        lambda x: ', '.join(
+            f"{token}: {round(token_state.deposit * token_state.collateral_enabled / src.constants.TOKEN_DECIMAL_FACTORS[token], 4)}"
             for token, token_state
             in state.user_states[x["User"]].token_states.items()
             if (not token_state.z_token and token_state.deposit * token_state.collateral_enabled > 0)
@@ -262,8 +262,8 @@ def update_data(state):
         axis=1,
     )
     zklend_loan_stats["Borrowings"] = zklend_loan_stats.apply(
-        lambda x: ''.join(
-            f"{token}: {round(token_state.borrowings / src.constants.TOKEN_DECIMAL_FACTORS[token], 4)}, "
+        lambda x: ', '.join(
+            f"{token}: {round(token_state.borrowings / src.constants.TOKEN_DECIMAL_FACTORS[token], 4)}"
             for token, token_state
             in state.user_states[x["User"]].token_states.items()
             if (not token_state.z_token and token_state.borrowings > 0)
@@ -400,8 +400,8 @@ def update_data(state):
         axis=1,
     )
     nostra_loan_stats["Collateral"] = nostra_loan_stats.apply(
-        lambda x: ''.join(
-            f"{token}: {round((token_state.collateral + token_state.interest_bearing_collateral) / src.constants.TOKEN_DECIMAL_FACTORS[token], 4)}, "
+        lambda x: ', '.join(
+            f"{token}: {round((token_state.collateral + token_state.interest_bearing_collateral) / src.constants.TOKEN_DECIMAL_FACTORS[token], 4)}"
             for token, token_state
             in nostra_state.user_states[x["User"]].token_states.items()
             if (
@@ -412,8 +412,8 @@ def update_data(state):
         axis=1,
     )
     nostra_loan_stats["Borrowings"] = nostra_loan_stats.apply(
-        lambda x: ''.join(
-            f"{token}: {round(token_state.debt / src.constants.TOKEN_DECIMAL_FACTORS[token], 4)}, "
+        lambda x: ', '.join(
+            f"{token}: {round(token_state.debt / src.constants.TOKEN_DECIMAL_FACTORS[token], 4)}"
             for token, token_state
             in nostra_state.user_states[x["User"]].token_states.items()
             if token_state.debt > 0
@@ -704,12 +704,12 @@ def update_data(state):
                 'Hashstack',
                 'Nostra',
             ],
-            'Total utilization': general_stats['Total debt in USD'] / supply_stats['Total supply in USD'],
-            'ETH utilization': debt_stats['ETH debt'] / supply_stats['ETH supply'],
-            'wBTC utilization': debt_stats['wBTC debt'] / supply_stats['wBTC supply'],
-            'USDC utilization': debt_stats['USDC debt'] / supply_stats['USDC supply'],
-            'DAI utilization': debt_stats['DAI debt'] / supply_stats['DAI supply'],
-            'USDT utilization': debt_stats['USDT debt'] / supply_stats['USDT supply'],
+            'Total utilization': general_stats['Total debt in USD'] / (general_stats['Total debt in USD'] + supply_stats['Total supply in USD']),
+            'ETH utilization': debt_stats['ETH debt'] / (supply_stats['ETH supply'] + debt_stats['ETH debt']),
+            'wBTC utilization': debt_stats['wBTC debt'] / (supply_stats['wBTC supply'] + debt_stats['wBTC debt']),
+            'USDC utilization': debt_stats['USDC debt'] / (supply_stats['USDC supply'] + debt_stats['USDC debt']),
+            'DAI utilization': debt_stats['DAI debt'] / (supply_stats['DAI supply'] + debt_stats['DAI debt']),
+            'USDT utilization': debt_stats['USDT debt'] / (supply_stats['USDT supply'] + debt_stats['USDT debt']),
         },
     )
     utilization_columns = [x for x in utilization_stats.columns if 'utilization' in x]
