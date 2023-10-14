@@ -155,11 +155,14 @@ def main():
         return 'very high'
 
     debt_to_supply_ratio = example_row['max_borrowings_to_be_liquidated_at_interval'] / example_row['amm_borrowings_token_supply']
-    streamlit.write(
-        f"At price of {int(example_row['collateral_token_price'])}, debt worth of {int(example_row['max_borrowings_to_be_liquidated_at_interval'])} "
-        f"USD will be liquidated while the AMM swaps capacity will be {int(example_row['amm_borrowings_token_supply'])} USD. The ratio of liquidated "
-        f"debt to available supply is {round(debt_to_supply_ratio * 100)}% and the risk of acquiring bad debt for lending protocols is "
+    streamlit.subheader(
+        f":warning: At price of {int(example_row['collateral_token_price']):,}, the risk of acquiring bad debt for lending protocols is "
         f"{_get_risk_level(debt_to_supply_ratio)}."
+    )    
+    streamlit.write(
+        f"The ratio of liquidated debt to available supply is {round(debt_to_supply_ratio * 100)}%.Debt worth of "
+        f"{int(example_row['max_borrowings_to_be_liquidated_at_interval']):,} USD will be liquidated while the AMM swaps capacity will "
+        f"be {int(example_row['amm_borrowings_token_supply']):,} USD."
     )
 
     streamlit.header("Loans with low health factor")
