@@ -552,11 +552,10 @@ def generate_graph_data(state, prices, swap_amm, collateral_token, borrowings_to
 def generate_and_store_graph_data(state, prices, swap_amm, pair):
     t0 = time.time()
     print("hashstack: generating graph for", pair, flush=True)
-    c = pair[0]
-    b = pair[1]
+    c, b = pair.split("-")
     data = generate_graph_data(state, prices, swap_amm, c, b)
     filename = f"hashstack_data/{c}-{b}.csv"
-    data.to_csv(filename, index=False)
+    data.to_csv(filename, index=False, compression='gzip')
     print("hashstack: ", filename, "done in", time.time() - t0, flush=True)
 
 
@@ -602,30 +601,16 @@ def get_collateral_str(loan: HashStackLoan) -> str:
     )
 
 
-PAIRS = [
-    "ETH-USDC",
-    "ETH-USDT",
-    "ETH-DAI",
-    "wBTC-USDC",
-    "wBTC-USDT",
-    "wBTC-DAI",
-    # "ETH-wBTC",
-    # "wBTC-ETH",
-]
-
-
 def load_data():
     data = {}
-    for pair in PAIRS:
-        data[pair] = pandas.read_csv(f"hashstack_data/{pair}.csv")
-    histogram_data = pandas.read_csv("hashstack_data/histogram.csv")
-    small_loans_sample = pandas.read_csv("hashstack_data/small_loans_sample.csv")
-    large_loans_sample = pandas.read_csv("hashstack_data/large_loans_sample.csv")
+    for pair in src.constants.PAIRS:
+        data[pair] = pandas.read_csv(f"hashstack_data/{pair}.csv", compression="gzip")
+    histogram_data = pandas.read_csv("hashstack_data/histogram.csv", compression="gzip")
+    loans = pandas.read_csv("hashstack_data/loans.csv", compression="gzip")
     return (
         data,
         histogram_data,
-        small_loans_sample,
-        large_loans_sample,
+        loans,
     )
 
 

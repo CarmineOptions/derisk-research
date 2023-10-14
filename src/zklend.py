@@ -3,6 +3,7 @@ import asyncio
 import collections
 import copy
 import decimal
+import json
 
 import pandas
 import numpy
@@ -150,7 +151,7 @@ class State:
         "AccumulatorsSync": "process_accumulators_sync_event",
         "Transfer": "process_transfer_event",
     }
-    USER = "0x204c44e83f63803bcae77406aa749636d23d3c914e4aa9c84f89f45bad0f844"
+    USER = "0x5afb5f381aaeb123f31c6a66475dce5a29e87b50288f3122e97d2dc8681bbd5"
 
     def __init__(self) -> None:
         self.user_states: collections.defaultdict = collections.defaultdict(
@@ -542,6 +543,23 @@ def update_graph_data():
     )
 
     streamlit.session_state["data"] = data
+
+
+def load_data():
+    data = {}
+    for pair in src.constants.PAIRS:
+        data[pair] = pandas.read_csv(f"data/{pair}.csv", compression="gzip")
+    loans = pandas.read_csv("data/loans.csv", compression="gzip")
+    with open("data/last_update.json", "r") as f:
+        last_update = json.load(f)
+    last_updated = last_update["timestamp"]
+    last_block_number = last_update["block_number"]
+    return (
+        data,
+        loans,
+        last_updated,
+        last_block_number,
+    )
 
 
 def compute_number_of_users(

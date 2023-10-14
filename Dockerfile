@@ -13,6 +13,7 @@ COPY general_stats.csv .
 COPY supply_stats.csv .
 COPY collateral_stats.csv .
 COPY debt_stats.csv .
+COPY utilization_stats.csv .
 COPY ./src ./src
 COPY app.py .
 COPY update_data.py .

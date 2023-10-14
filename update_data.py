@@ -78,11 +78,10 @@ def generate_graph_data(state, prices, swap_amm, collateral_token, borrowings_to
 def generate_and_store_graph_data(state, prices, swap_amm, pair):
     t0 = time.time()
     print("generating graph for", pair, flush=True)
-    c = pair[0]
-    b = pair[1]
+    c, b = pair.split("-")
     data = generate_graph_data(state, prices, swap_amm, c, b)
     filename = f"data/{c}-{b}.csv"
-    data.to_csv(filename, index=False)
+    data.to_csv(filename, index=False, compression='gzip')
     print(filename, "done in", time.time() - t0, flush=True)
 
 
@@ -153,30 +152,19 @@ def update_data(state):
 
     print(f"swap in {time.time() - t_swap}s", flush=True)
 
-    pairs = [
-        # ("wBTC", "ETH"),
-        # ("ETH", "wBTC"),
-        ("ETH", "USDC"),
-        ("ETH", "USDT"),
-        ("ETH", "DAI"),
-        ("wBTC", "USDC"),
-        ("wBTC", "USDT"),
-        ("wBTC", "DAI"),
-    ]
-
     t2 = time.time()
 
     [generate_and_store_graph_data(
-        state, prices, swap_amms, pair) for pair in pairs]
+        state, prices, swap_amms, pair) for pair in src.constants.PAIRS]
     [
         src.hashstack.generate_and_store_graph_data(
             hashstack_state, prices, swap_amms, pair)
-        for pair in pairs
+        for pair in src.constants.PAIRS
     ]
     [
         src.nostra.generate_and_store_graph_data(
             nostra_state, prices, swap_amms, pair)
-        for pair in pairs
+        for pair in src.constants.PAIRS
     ]
 
     print(f"updated graphs in {time.time() - t2}s", flush=True)
@@ -220,146 +208,13 @@ def update_data(state):
         if token[0] != "z"
     ]
 
-    pandas.DataFrame(histogram_data).to_csv("data/histogram.csv", index=False)
+    pandas.DataFrame(histogram_data).to_csv("data/histogram.csv", index=False, compression='gzip')
     pandas.DataFrame(hashstack_histogram_data).to_csv(
-        "hashstack_data/histogram.csv", index=False
+        "hashstack_data/histogram.csv", index=False, compression='gzip'
     )
     pandas.DataFrame(nostra_histogram_data).to_csv(
-        "nostra_data/histogram.csv", index=False
+        "nostra_data/histogram.csv", index=False, compression='gzip'
     )
-
-    for user, user_state in state.user_states.items():
-        risk_adjusted_collateral_usd = src.zklend.compute_risk_adjusted_collateral_usd(
-            user_state=user_state,
-            prices=prices.prices,
-        )
-        borrowings_usd = src.zklend.compute_borrowings_usd(
-            user_state=user_state,
-            prices=prices.prices,
-        )
-        health_factor = src.zklend.compute_health_factor(
-            risk_adjusted_collateral_usd=risk_adjusted_collateral_usd,
-            borrowings_usd=borrowings_usd,
-        )
-        user_state.health_factor = health_factor
-
-    class BadUser:
-        def __init__(self, address, user_state):
-            self.health_factor = user_state.health_factor
-            self.address = address
-            self.loan_size = decimal.Decimal("0")
-            self.collateral_size = decimal.Decimal("0")
-            self.collateral = {}
-            self.borrowings = {}
-            self.formatted_collateral = ""
-            self.formatted_borrowings = ""
-            self.calculate(user_state)
-            self.format()
-
-        def calculate(self, user_state):
-            for token, token_state in user_state.token_states.items():
-                if token_state.z_token:
-                    continue
-                if token_state.borrowings > decimal.Decimal("0"):
-                    tokens = (
-                        token_state.borrowings /
-                        src.constants.TOKEN_DECIMAL_FACTORS[token]
-                    )
-                    self.borrowings[token] = (
-                        self.borrowings.get(
-                            token, decimal.Decimal("0")) + tokens
-                    )
-                    self.loan_size += tokens * prices.prices[token]
-                if (
-                    token_state.collateral_enabled
-                    and token_state.deposit > decimal.Decimal("0")
-                ):
-                    tokens = (
-                        token_state.deposit /
-                        src.constants.TOKEN_DECIMAL_FACTORS[token]
-                    )
-                    self.collateral[token] = (
-                        self.collateral.get(
-                            token, decimal.Decimal("0")) + tokens
-                    )
-                    self.collateral_size += (
-                        tokens
-                        * prices.prices[token]
-                        * src.constants.COLLATERAL_FACTORS[token]
-                    )
-
-        def format(self):
-            for token, size in self.collateral.items():
-                if self.formatted_collateral != "":
-                    self.formatted_collateral += ", "
-                formatted_size = format(size, ".4f")
-                self.formatted_collateral += f"{token}: {formatted_size}"
-            for token, size in self.borrowings.items():
-                if self.formatted_borrowings != "":
-                    self.formatted_borrowings += ", "
-                formatted_size = format(size, ".4f")
-                self.formatted_borrowings += f"{token}: {formatted_size}"
-
-    small_bad_users = []
-    big_bad_users = []
-
-    for user, user_state in state.user_states.items():
-        if user_state.health_factor < 1 and user_state.health_factor > 0.7:
-            bad_user = BadUser(address=user, user_state=user_state)
-            if bad_user.loan_size > 100:
-                big_bad_users.append(bad_user)
-            else:
-                small_bad_users.append(bad_user)
-
-    big_bad_users = sorted(
-        big_bad_users, key=lambda x: x.health_factor, reverse=False)
-    small_bad_users = sorted(
-        small_bad_users, key=lambda x: x.health_factor, reverse=False
-    )
-
-    n = 20
-
-    bbu_data = {
-        "User": [user.address for user in big_bad_users[:n]],
-        "Protocol": ["zkLend" for user in big_bad_users[:n]],
-        "Health factor": [user.health_factor for user in big_bad_users[:n]],
-        "Standardized health factor": [
-            src.zklend.compute_standardized_health_factor(
-                risk_adjusted_collateral_usd=user.collateral_size,
-                borrowings_usd=user.loan_size,
-            )
-            for user in big_bad_users[:n]
-        ],
-        "Borrowing in USD": [user.loan_size for user in big_bad_users[:n]],
-        "Risk adjusted collateral in USD": [
-            user.collateral_size for user in big_bad_users[:n]
-        ],
-        "Collateral": [user.formatted_collateral for user in big_bad_users[:n]],
-        "Borrowings": [user.formatted_borrowings for user in big_bad_users[:n]],
-    }
-
-    sbu_data = {
-        "User": [user.address for user in small_bad_users[:n]],
-        "Protocol": ["zkLend" for user in small_bad_users[:n]],
-        "Health factor": [user.health_factor for user in small_bad_users[:n]],
-        "Standardized health factor": [
-            src.zklend.compute_standardized_health_factor(
-                risk_adjusted_collateral_usd=user.collateral_size,
-                borrowings_usd=user.loan_size,
-            )
-            for user in small_bad_users[:n]
-        ],
-        "Borrowing in USD": [user.loan_size for user in small_bad_users[:n]],
-        "Risk adjusted collateral in USD": [
-            user.collateral_size for user in small_bad_users[:n]
-        ],
-        "Collateral": [user.formatted_collateral for user in small_bad_users[:n]],
-        "Borrowings": [user.formatted_borrowings for user in small_bad_users[:n]],
-    }
-    pandas.DataFrame(bbu_data).to_csv(
-        "data/large_loans_sample.csv", index=False)
-    pandas.DataFrame(sbu_data).to_csv(
-        "data/small_loans_sample.csv", index=False)
 
     zklend_loan_stats = pandas.DataFrame()
     zklend_loan_stats["User"] = [
@@ -397,6 +252,25 @@ def update_data(state):
         ),
         axis=1,
     )
+    zklend_loan_stats["Collateral"] = zklend_loan_stats.apply(
+        lambda x: ''.join(
+            f"{token}: {round(token_state.deposit * token_state.collateral_enabled / src.constants.TOKEN_DECIMAL_FACTORS[token], 4)}, "
+            for token, token_state
+            in state.user_states[x["User"]].token_states.items()
+            if (not token_state.z_token and token_state.deposit * token_state.collateral_enabled > 0)
+        ),
+        axis=1,
+    )
+    zklend_loan_stats["Borrowings"] = zklend_loan_stats.apply(
+        lambda x: ''.join(
+            f"{token}: {round(token_state.borrowings / src.constants.TOKEN_DECIMAL_FACTORS[token], 4)}, "
+            for token, token_state
+            in state.user_states[x["User"]].token_states.items()
+            if (not token_state.z_token and token_state.borrowings > 0)
+        ),
+        axis=1,
+    )
+    zklend_loan_stats.to_csv("data/loans.csv", index=False, compression='gzip')
 
     hashstack_loan_stats = pandas.DataFrame()
     hashstack_loan_stats["User"] = [
@@ -487,16 +361,7 @@ def update_data(state):
         axis=1,
     )
     hashstack_loan_stats.drop(columns=["Loan ID"], inplace=True)
-    hashstack_loan_stats.loc[
-        hashstack_loan_stats["Borrowing in USD"] >= decimal.Decimal("100")
-    ].sort_values("Health factor").iloc[:20].to_csv(
-        "hashstack_data/large_loans_sample.csv", index=False
-    )
-    hashstack_loan_stats.loc[
-        hashstack_loan_stats["Borrowing in USD"] < decimal.Decimal("100")
-    ].sort_values("Health factor").iloc[:20].to_csv(
-        "hashstack_data/small_loans_sample.csv", index=False
-    )
+    hashstack_loan_stats.to_csv("hashstack_data/loans.csv", index=False, compression='gzip')
 
     nostra_loan_stats = pandas.DataFrame()
     nostra_loan_stats["User"] = [
@@ -555,16 +420,7 @@ def update_data(state):
         ),
         axis=1,
     )
-    nostra_loan_stats.loc[
-        nostra_loan_stats["Borrowing in USD"] >= decimal.Decimal("100")
-    ].sort_values("Health factor").iloc[:20].to_csv(
-        "nostra_data/large_loans_sample.csv", index=False
-    )
-    nostra_loan_stats.loc[
-        nostra_loan_stats["Borrowing in USD"] < decimal.Decimal("100")
-    ].sort_values("Health factor").iloc[:20].to_csv(
-        "nostra_data/small_loans_sample.csv", index=False
-    )
+    nostra_loan_stats.to_csv("nostra_data/loans.csv", index=False, compression='gzip')
 
     general_stats = pandas.DataFrame(
         {
@@ -607,7 +463,7 @@ def update_data(state):
             ],
         },
     )
-    general_stats.to_csv("general_stats.csv", index=False)
+    general_stats.to_csv("general_stats.csv", index=False, compression='gzip')
 
     zklend_eth_supply = asyncio.run(
         src.blockchain_call.func_call(
@@ -766,8 +622,8 @@ def update_data(state):
         + supply_stats['USDC supply'] * prices.prices['USDC']
         + supply_stats['DAI supply'] * prices.prices['DAI']
         + supply_stats['USDT supply'] * prices.prices['USDT']
-    ).astype(float).round(4)
-    supply_stats.to_csv("supply_stats.csv", index=False)
+    ).apply(lambda x: round(x, 4))
+    supply_stats.to_csv("supply_stats.csv", index=False, compression='gzip')
 
     collateral_stats = pandas.DataFrame(
         {
@@ -803,7 +659,7 @@ def update_data(state):
             ],
         },
     )
-    collateral_stats.to_csv("collateral_stats.csv", index=False)
+    collateral_stats.to_csv("collateral_stats.csv", index=False, compression='gzip')
 
     debt_stats = pandas.DataFrame(
         {
@@ -839,7 +695,7 @@ def update_data(state):
             ],
         },
     )
-    debt_stats.to_csv("debt_stats.csv", index=False)
+    debt_stats.to_csv("debt_stats.csv", index=False, compression='gzip')
 
     utilization_stats = pandas.DataFrame(
         {
@@ -858,7 +714,7 @@ def update_data(state):
     )
     utilization_columns = [x for x in utilization_stats.columns if 'utilization' in x]
     utilization_stats[utilization_columns] = utilization_stats[utilization_columns].applymap(lambda x: round(x, 4))
-    utilization_stats.to_csv("utilization_stats.csv", index=False)
+    utilization_stats.to_csv("utilization_stats.csv", index=False, compression='gzip')
 
     max_block_number = zklend_events["block_number"].max()
     max_timestamp = zklend_events["timestamp"].max()

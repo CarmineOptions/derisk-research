@@ -2,6 +2,19 @@ import decimal
 import enum
 
 
+# TODO: Introduce other pairs.
+PAIRS = [
+    "ETH-USDC",
+    "ETH-USDT",
+    "ETH-DAI",
+    "wBTC-USDC",
+    "wBTC-USDT",
+    "wBTC-DAI",
+    # "ETH-wBTC",
+    # "wBTC-ETH",
+]
+
+
 # Source: Starkscan, e.g.
 # https://starkscan.co/token/0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7 for ETH.
 TOKEN_DECIMAL_FACTORS = {
