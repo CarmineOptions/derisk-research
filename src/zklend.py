@@ -50,6 +50,7 @@ class UserTokenState:
         "USDC": decimal.Decimal("1e4"),
         "DAI": decimal.Decimal("1e16"),
         "USDT": decimal.Decimal("1e4"),
+        "wstETH": decimal.Decimal("0.5") * decimal.Decimal("1e13"),
     }
 
     def __init__(self, token: str) -> None:
@@ -90,11 +91,13 @@ class UserState:
             "USDC": UserTokenState("USDC"),
             "DAI": UserTokenState("DAI"),
             "USDT": UserTokenState("USDT"),
+            "wstETH": UserTokenState("wstETH"),
             "zETH": UserTokenState("zETH"),
             "zWBTC": UserTokenState("zWBTC"),
             "zUSDC": UserTokenState("zUSDC"),
             "zDAI": UserTokenState("zDAI"),
             "zUSDT": UserTokenState("zUSDT"),
+            "zwstETH": UserTokenState("zwstETH"),
         }
         # TODO: implement healt_factor
         # TODO: use decimal
@@ -151,7 +154,7 @@ class State:
         "AccumulatorsSync": "process_accumulators_sync_event",
         "Transfer": "process_transfer_event",
     }
-    USER = "0x5afb5f381aaeb123f31c6a66475dce5a29e87b50288f3122e97d2dc8681bbd5"
+    USER = "0x4bcfbd372a874fc8e5fe1f9ee27d5eacb74766d996b0be95c1fb1576cca8d7a"
 
     def __init__(self) -> None:
         self.user_states: collections.defaultdict = collections.defaultdict(
@@ -162,6 +165,7 @@ class State:
             "USDC": AccumulatorState(),
             "DAI": AccumulatorState(),
             "USDT": AccumulatorState(),
+            "wstETH": AccumulatorState(),
         }
         self.last_block_number = 0
 

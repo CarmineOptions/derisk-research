@@ -176,7 +176,7 @@ def main():
         )
     streamlit.dataframe(
         loans[
-            (loans["Health factor"] > 0.5)  # TODO: debug the negative HFs
+            (loans["Health factor"] > 0)  # TODO: debug the negative HFs
             & loans["Borrowing in USD"].between(debt_usd_lower_bound, debt_usd_upper_bound)
         ].sort_values("Health factor").iloc[:20],
         use_container_width=True,
@@ -314,6 +314,7 @@ def main():
             color_discrete_sequence=plotly.express.colors.sequential.Blues_r,
         )
         streamlit.plotly_chart(figure, True)
+    # TODO: add wstETH
 
     streamlit.header("Loan size distribution")
     src.histogram.visualization(protocols)

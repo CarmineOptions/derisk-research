@@ -178,7 +178,7 @@ def update_data(state):
         }
         for user_state in state.user_states.values()
         for token in src.constants.symbol_decimals_map.keys()
-        if token[0] != "z"
+        if (token[0] != "z" and token != 'wstETH')  # TODO: add wstETH
     ]
     hashstack_histogram_data = [
         {
@@ -194,7 +194,7 @@ def update_data(state):
         for user_state in hashstack_state.user_states.values()
         for loan in user_state.loans.values()
         for token in src.constants.symbol_decimals_map.keys()
-        if token[0] != "z"
+        if (token[0] != "z" and token != 'wstETH')  # wstETH is only available for zkLend
     ]
     nostra_histogram_data = [
         {
@@ -205,7 +205,7 @@ def update_data(state):
         }
         for user_state in nostra_state.user_states.values()
         for token in src.constants.symbol_decimals_map.keys()
-        if token[0] != "z"
+        if (token[0] != "z" and token != 'wstETH')  # wstETH is only available for zkLend
     ]
 
     pandas.DataFrame(histogram_data).to_csv("data/histogram.csv", index=False, compression='gzip')
@@ -505,6 +505,15 @@ def update_data(state):
         )
     )
     zklend_usdt_supply = decimal.Decimal(str(zklend_usdt_supply[0])) / src.constants.TOKEN_DECIMAL_FACTORS['USDT']
+    # TODO: add wstETH
+    # zklend_wsteth_supply = asyncio.run(
+    #     src.blockchain_call.func_call(
+    #         addr = int('0x0536aa7e01ecc0235ca3e29da7b5ad5b12cb881e29034d87a4290edbb20b7c28', base=16),
+    #         selector = 'felt_total_supply',
+    #         calldata = [],
+    #     )
+    # )
+    # zklend_wsteth_supply = decimal.Decimal(str(zklend_wsteth_supply[0])) / src.constants.TOKEN_DECIMAL_FACTORS['wstETH']
 
     hashstack_eth_supply = asyncio.run(
         src.blockchain_call.balance_of(
@@ -614,6 +623,7 @@ def update_data(state):
                 round(hashstack_usdt_supply, 4),
                 round(nostra_usdt_supply, 4),
             ],
+            # TODO: add wstETH
         }
     )
     supply_stats['Total supply in USD'] = (
@@ -657,6 +667,7 @@ def update_data(state):
                 round(sum(loan.collateral.current_amount for user_state in hashstack_state.user_states.values() for loan in user_state.loans.values() if loan.collateral.market == 'USDT') / src.constants.TOKEN_DECIMAL_FACTORS['USDT'], 4),
                 round(sum(x.token_states['USDT'].collateral + x.token_states['USDT'].interest_bearing_collateral for x in nostra_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['USDT'], 4),
             ],
+            # TODO: add wstETH
         },
     )
     collateral_stats.to_csv("collateral_stats.csv", index=False, compression='gzip')
@@ -693,6 +704,7 @@ def update_data(state):
                 round(sum(loan.borrowings.amount for user_state in hashstack_state.user_states.values() for loan in user_state.loans.values() if loan.borrowings.market == 'USDT') / src.constants.TOKEN_DECIMAL_FACTORS['USDT'], 4),
                 round(sum(x.token_states['USDT'].debt for x in nostra_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['USDT'], 4),
             ],
+            # TODO: add wstETH
         },
     )
     debt_stats.to_csv("debt_stats.csv", index=False, compression='gzip')
@@ -710,6 +722,7 @@ def update_data(state):
             'USDC utilization': debt_stats['USDC debt'] / (supply_stats['USDC supply'] + debt_stats['USDC debt']),
             'DAI utilization': debt_stats['DAI debt'] / (supply_stats['DAI supply'] + debt_stats['DAI debt']),
             'USDT utilization': debt_stats['USDT debt'] / (supply_stats['USDT supply'] + debt_stats['USDT debt']),
+            # TODO: add wstETH
         },
     )
     utilization_columns = [x for x in utilization_stats.columns if 'utilization' in x]
