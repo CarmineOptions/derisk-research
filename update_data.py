@@ -87,6 +87,7 @@ def generate_and_store_graph_data(state, prices, swap_amm, pair):
 
 def get_events(block_number) -> pandas.DataFrame:
     connection = src.db.establish_connection()
+    relevant_events = tuple(src.zklend.EVENTS_METHODS_MAPPING)
     zklend_events = pandas.read_sql(
         sql=f"""
       SELECT
@@ -96,7 +97,7 @@ def get_events(block_number) -> pandas.DataFrame:
       WHERE
           from_address='{src.constants.Protocol.ZKLEND.value}'
       AND
-          key_name IN ('Deposit', 'Withdrawal', 'CollateralEnabled', 'CollateralDisabled', 'Borrowing', 'Repayment', 'Liquidation', 'AccumulatorsSync')
+          key_name IN {relevant_events}
       AND
           block_number > {block_number}
       ORDER BY
