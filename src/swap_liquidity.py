@@ -13,7 +13,8 @@ class Prices:
             ("usd-coin", "USDC"),
             ("dai", "DAI"),
             ("tether", "USDT"),
-        ]
+            ("wrapped-steth", "wstETH"),
+       ]
         self.vs_currency = "usd"
         self.prices = {}
         self.get_prices()
@@ -142,6 +143,7 @@ class Pool(Pair):
 class SwapAmm(Pair):
     async def init(self):
         self.pools = {}
+        # TODO: add wstETH pools
         self.add_pool(
             "ETH",
             "USDC",
