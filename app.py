@@ -188,7 +188,7 @@ def main():
     supply_stats = pandas.read_csv("supply_stats.csv", compression="gzip")
     collateral_stats = pandas.read_csv("collateral_stats.csv", compression="gzip")
     debt_stats = pandas.read_csv("debt_stats.csv", compression="gzip")
-    col1, col2, col3, col4, col5 = streamlit.columns(5)
+    col1, col2, col3, col4, col5, col6 = streamlit.columns(6)
     with col1:
         figure = plotly.express.pie(
             collateral_stats,
@@ -314,8 +314,31 @@ def main():
             color_discrete_sequence=plotly.express.colors.sequential.Blues_r,
         )
         streamlit.plotly_chart(figure, True)
-    # TODO: add wstETH
-
+    with col6:
+        figure = plotly.express.pie(
+            collateral_stats,
+            values='wstETH collateral',
+            names='Protocol',
+            title="wstETH collateral",
+            color_discrete_sequence=plotly.express.colors.sequential.Oranges_r,
+        )
+        streamlit.plotly_chart(figure, True)
+        figure = plotly.express.pie(
+            debt_stats,
+            values='wstETH debt',
+            names='Protocol',
+            title="wstETH debt",
+            color_discrete_sequence=plotly.express.colors.sequential.Greens_r,
+        )
+        streamlit.plotly_chart(figure, True)
+        figure = plotly.express.pie(
+            supply_stats,
+            values='wstETH supply',
+            names='Protocol',
+            title="USDT supply",
+            color_discrete_sequence=plotly.express.colors.sequential.Blues_r,
+        )
+        streamlit.plotly_chart(figure, True)
     streamlit.header("Loan size distribution")
     src.histogram.visualization(protocols)
 
