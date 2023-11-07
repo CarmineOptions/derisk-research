@@ -1,3 +1,4 @@
+# TODO: rename to `swap_amm.py`
 import decimal
 import requests
 
@@ -246,3 +247,14 @@ class SwapAmm(Pair):
             raise Exception(
                 f"Trying to get pool that is not set: {self.tokens_to_id(t1, t2)}"
             )
+
+
+def get_supply_at_price(
+    collateral_token: str,
+    collateral_token_price: decimal.Decimal,
+    debt_token: str,
+    swap_amms: SwapAmm,
+) -> decimal.Decimal:
+    return swap_amms.get_pool(collateral_token, debt_token).supply_at_price(
+        debt_token, collateral_token_price
+    )
