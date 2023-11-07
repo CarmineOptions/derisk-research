@@ -11,7 +11,7 @@ import src.db
 import src.swap_liquidity
 
 
-# TODO
+
 NOSTRA_ETH_ADDRESSES = [
     '0x04f89253e37ca0ab7190b2e9565808f105585c9cacca6b2fa6145553fa061a41',  # ETH
     '0x0553cea5d1dc0e0157ffcd36a51a0ced717efdadd5ef1b4644352bb45bd35453',  # ETH Collateral
@@ -48,6 +48,20 @@ NOSTRA_WBTC_ADDRESSES = [
     '0x00687b5d9e591844169bc6ad7d7256c4867a10cee6599625b9d78ea17a7caef9',  # wBTC Interest Bearing Collateral
 ]
 
+NOSTRA_ADDRESSES = [  # TODO: We can probably ignore these
+    '0x04f89253e37ca0ab7190b2e9565808f105585c9cacca6b2fa6145553fa061a41',  # ETH
+    '0x05327df4c669cb9be5c1e2cf79e121edef43c1416fac884559cd94fcb7e6e232',  # USDC
+    '0x040375d0720245bc0d123aa35dc1c93d14a78f64456eff75f63757d99a0e6a83',  # USDT
+    '0x02ea39ba7a05f0c936b7468d8bc8d0e1f2116916064e7e163e7c1044d95bd135',  # DAI
+    '0x07788bc687f203b6451f2a82e842b27f39c7cae697dace12edfb86c9b1c12f3d',  # wBTC
+]
+NOSTRA_INTEREST_BEARING_ADDRESSES = [  # TODO: We can probably ignore these
+    '0x002f8deaebb9da2cb53771b9e2c6d67265d11a4e745ebd74a726b8859c9337b9',  # ETH Interest Bearing
+    '0x06af9a313434c0987f5952277f1ac8c61dc4d50b8b009539891ed8aaee5d041d',  # USDC Interest Bearing
+    '0x06404c8e886fea27590710bb0e0e8c7a3e7d74afccc60663beb82707495f8609',  # USDT Interest Bearing
+    '0x00b9b1a4373de5b1458e598df53195ea3204aa926f46198b50b32ed843ce508b',  # DAI Interest Bearing
+    '0x0061d892cccf43daf73407194da9f0ea6dbece950bb24c50be2356444313a707',  # wBTC Interest Bearing
+]
 NOSTRA_COLLATERAL_ADDRESSES = [
     '0x0553cea5d1dc0e0157ffcd36a51a0ced717efdadd5ef1b4644352bb45bd35453',  # ETH Collateral
     '0x047e794d7c49c49fd2104a724cfa69a92c5a4b50a5753163802617394e973833',  # USDC Collateral
@@ -72,6 +86,17 @@ NOSTRA_DEBT_ADDRESSES = [
 
 ALL_RELEVANT_NOSTRA_ADDRESSES = NOSTRA_COLLATERAL_ADDRESSES + NOSTRA_INTEREST_BEARING_COLLATERAL_ADDRESSES + NOSTRA_DEBT_ADDRESSES
 
+NOSTRA_INTEREST_MODEL_UPDATES_ADDRESS = '0x03d39f7248fb2bfb960275746470f7fb470317350ad8656249ec66067559e892'
+
+NOSTRA_DEBT_ADDRESSES_TO_TOKEN = {
+    # TODO: remove the first `0`'s after the `x`, e.g. `0x040...` -> `0x40...`
+    '0x40b091cb020d91f4a4b34396946b4d4e2a450dbd9410432ebdbfe10e55ee5e5': 'ETH',  # ETH Debt
+    '0x3b6058a9f6029b519bc72b2cc31bcb93ca704d0ab79fec2ae5d43f79ac07f7a': 'USDC',  # USDC Debt
+    '0x65c6c7119b738247583286021ea05acc6417aa86d391dcdda21843c1fc6e9c6': 'USDT',  # USDT Debt
+    '0x362b4455f5f4cc108a5a1ab1fd2cc6c4f0c70597abb541a99cf2734435ec9cb': 'DAI',  # DAI Debt
+    '0x75b0d87aca8dee25df35cdc39a82b406168fa23a76fc3f03abbfdc6620bb6d7': 'wBTC',  # wBTC Debt
+}
+
 
 def get_nostra_events() -> pandas.DataFrame:
     connection = src.db.establish_connection()
@@ -82,9 +107,17 @@ def get_nostra_events() -> pandas.DataFrame:
             FROM
                 starkscan_events
             WHERE
-                from_address IN {tuple(ALL_RELEVANT_NOSTRA_ADDRESSES)}
-            AND
-                key_name IN ('Burn', 'Mint')
+                (
+                    from_address IN {tuple(ALL_RELEVANT_NOSTRA_ADDRESSES)}
+                AND
+                    key_name IN ('Burn', 'Mint')
+                )
+            OR 
+                (
+                    from_address = '{NOSTRA_INTEREST_MODEL_UPDATES_ADDRESS}'
+                AND
+                    key_name = 'InterestStateUpdated'
+                )
             ORDER BY
                 block_number, id ASC;
         """,
@@ -107,6 +140,33 @@ def get_token(address: str) -> str:
         return 'DAI'
     if address in NOSTRA_WBTC_ADDRESSES:
         return 'wBTC'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class InterestModelState:
+    """
+    TODO
+    """
+
+    def __init__(self) -> None:
+        self.lend_index: decimal.Decimal = decimal.Decimal("1e18")  # Reflects interest rate at which users lend.
+        self.borrow_index: decimal.Decimal = decimal.Decimal("1e18")  # Reflects interest rate at which users borrow.
+
+    def interest_model_update(self, lend_index: decimal.Decimal, borrow_index: decimal.Decimal):
+        self.lend_index = lend_index / decimal.Decimal("1e18")
+        self.borrow_index = borrow_index / decimal.Decimal("1e18")
 
 
 class UserTokenState:
@@ -141,12 +201,22 @@ class State:
     TODO
     """
 
-    USER = "0x5a0042fa9bb87ed72fbee4d5a2da416528ebc84a569081ad02e9ad60b0af7d7"
+    USER = "0x5fe47a2abea8664fbbdd3c0ec52cdf027019eb5162ae015cdaecad4108cab34"
 
     def __init__(self) -> None:
         self.user_states: collections.defaultdict = collections.defaultdict(UserState)
+        self.interest_model_states: Dict[str, InterestModelState] = {
+            "ETH": InterestModelState(),
+            "wBTC": InterestModelState(),
+            "USDC": InterestModelState(),
+            "DAI": InterestModelState(),
+            "USDT": InterestModelState(),
+        }
 
     def process_event(self, event: pandas.Series) -> None:
+        if event['from_address'] == NOSTRA_INTEREST_MODEL_UPDATES_ADDRESS:
+            self.process_interest_model_update_event(event)
+
         is_collateral = event['from_address'] in NOSTRA_COLLATERAL_ADDRESSES
         is_interest_bearing_collateral = event['from_address'] in NOSTRA_INTEREST_BEARING_COLLATERAL_ADDRESSES
         is_debt = event['from_address'] in NOSTRA_DEBT_ADDRESSES
@@ -159,6 +229,16 @@ class State:
         if is_debt:
             self.process_debt_event(event)
 
+    def process_interest_model_update_event(self, event: pandas.Series) -> None:
+        # The order of the arguments is: `debtToken`, `lendingRate`, `borrowRate`, `lendIndex`, `borrowIndex`.
+        token = NOSTRA_DEBT_ADDRESSES_TO_TOKEN[event["data"][0]]
+        lend_index = decimal.Decimal(str(int(event["data"][5], base=16)))
+        borrow_index = decimal.Decimal(str(int(event["data"][7], base=16)))
+        self.interest_model_states[token].interest_model_update(
+            lend_index=lend_index,
+            borrow_index=borrow_index,
+        )
+
     def process_collateral_event(self, event: pandas.Series) -> None:
         # The order of the arguments is: `user`, `amount`.
         name = event["key_name"]
@@ -168,13 +248,13 @@ class State:
             return
         token = get_token(event['from_address'])
         amount = decimal.Decimal(str(int(event['data'][1], base=16)))
-        if name == 'Mint':
-            self.user_states[user].token_states[token].collateral += amount
-        if name == 'Burn':
-            self.user_states[user].token_states[token].collateral -= amount
+        if name == 'Mint':  # Collateral deposited.
+            self.user_states[user].token_states[token].collateral += amount / self.interest_model_states[token].lend_index
+        if name == 'Burn':  # Collateral withdrawn.
+            self.user_states[user].token_states[token].collateral -= amount / self.interest_model_states[token].lend_index
         # TODO
         if user == self.USER:
-            print(event['block_number'], "col", token, amount)
+            print(event['block_number'], "col", name, token, amount)
 
     def process_interest_bearing_collateral_event(self, event: pandas.Series) -> None:
         # The order of the arguments is: `user`, `amount`.
@@ -185,13 +265,13 @@ class State:
             return
         token = get_token(event['from_address'])
         amount = decimal.Decimal(str(int(event['data'][1], base=16)))
-        if name == 'Mint':
-            self.user_states[user].token_states[token].interest_bearing_collateral += amount
-        if name == 'Burn':
-            self.user_states[user].token_states[token].interest_bearing_collateral -= amount
+        if name == 'Mint':  # Collateral deposited.
+            self.user_states[user].token_states[token].interest_bearing_collateral += amount / self.interest_model_states[token].lend_index
+        if name == 'Burn':  # Collateral withdrawn.
+            self.user_states[user].token_states[token].interest_bearing_collateral -= amount / self.interest_model_states[token].lend_index
         # TODO
         if user == self.USER:
-            print(event['block_number'], "ib col", token, amount)
+            print(event['block_number'], "ib col", name, token, amount)
 
     def process_debt_event(self, event: pandas.Series) -> None:
         # The order of the arguments is: `user`, `amount`.
@@ -199,43 +279,15 @@ class State:
         user = event['data'][0]
         token = get_token(event['from_address'])
         amount = decimal.Decimal(str(int(event['data'][1], base=16)))
-        if name == 'Mint':
-            self.user_states[user].token_states[token].debt += amount
-        if name == 'Burn':
-            self.user_states[user].token_states[token].debt -= amount
+        if name == 'Mint':  # Debt borrowed.
+            self.user_states[user].token_states[token].debt += amount / self.interest_model_states[token].borrow_index
+        if name == 'Burn':  # Debt repayed.
+            self.user_states[user].token_states[token].debt -= amount / self.interest_model_states[token].borrow_index
         # TODO
         if user == self.USER:
-            print(event['block_number'], "deb", token, amount)
+            print(event['block_number'], "deb", name, token, amount)
 
 
-def get_range(start, stop, step):
-    return [
-        x
-        for x in src.zklend.decimal_range(
-            # TODO: make it dependent on the collateral token .. use prices.prices[COLLATERAL_TOKEN]
-            start=decimal.Decimal(start),
-            stop=decimal.Decimal(stop),
-            # TODO: make it dependent on the collateral token
-            step=decimal.Decimal(step),
-        )
-    ]
-
-
-# TODO: move this somewhere
-def get_pair_range(c, b):
-    if c == "ETH" and b == "wBTC":
-        return get_range("0", "0.2", "0.0015")
-    if c == "wBTC" and b == "ETH":
-        return get_range("0", "25", "0.375")
-    if c == "ETH":
-        return get_range("50", "2500", "50")
-    if c == "wBTC":
-        return get_range("250", "32000", "250")
-    raise ValueError(f"Wrong pair {c}-{b}")
-
-
-# Source: Starkscan, e.g. 
-# https://starkscan.co/token/0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7 for ETH.
 # TODO: find collateral factors
 COLLATERAL_FACTORS = {
     'ETH': decimal.Decimal('0.8'),  # https://starkscan.co/call/0x06f619127a63ddb5328807e535e56baa1e244c8923a3b50c123d41dcbed315da_1_1
@@ -304,7 +356,6 @@ def compute_risk_adjusted_collateral_usd(
     )
 
 
-
 def compute_risk_adjusted_debt_usd(
     user_state: UserState,
     prices: Dict[str, decimal.Decimal],
@@ -312,19 +363,6 @@ def compute_risk_adjusted_debt_usd(
     return sum(
         token_state.debt
         / DEBT_FACTORS[token]
-        * prices[token]
-        # TODO: perform the conversion using TOKEN_DECIMAL_FACTORS sooner (in `UserTokenState`?)?
-        / TOKEN_DECIMAL_FACTORS[token]
-        for token, token_state in user_state.token_states.items()
-    )
-
-
-def compute_borrowings_amount_usd(
-    user_state: UserState,
-    prices: Dict[str, decimal.Decimal],
-) -> decimal.Decimal:
-    return sum(
-        token_state.debt
         * prices[token]
         # TODO: perform the conversion using TOKEN_DECIMAL_FACTORS sooner (in `UserTokenState`?)?
         / TOKEN_DECIMAL_FACTORS[token]
@@ -390,6 +428,7 @@ def compute_max_liquidated_amount(
 ) -> decimal.Decimal:
     liquidated_debt_amount = decimal.Decimal("0")
     for user, user_state in state.user_states.items():
+        # TODO: do this?
         # Filter out users who borrowed the token of interest.
         debt_tokens = {
             token_state.token
@@ -439,13 +478,51 @@ def simulate_liquidations_under_absolute_price_change(
     collateral_token: str,
     collateral_token_price: decimal.Decimal,
     state: State,
-    borrowings_token: str,
+    debt_token: str,
 ) -> decimal.Decimal:
     changed_prices = copy.deepcopy(prices.prices)
     changed_prices[collateral_token] = collateral_token_price
     return compute_max_liquidated_amount(
-        state=state, prices=changed_prices, debt_token=borrowings_token
+        state=state, prices=changed_prices, debt_token=debt_token
     )
+
+
+# TODO: this function is general for all protocols
+def get_amm_supply_at_price(
+    collateral_token: str,
+    collateral_token_price: decimal.Decimal,
+    debt_token: str,
+    amm: src.swap_liquidity.SwapAmm,
+) -> decimal.Decimal:
+    return amm.get_pool(collateral_token, debt_token).supply_at_price(
+        debt_token, collateral_token_price
+    )
+
+
+def get_range(start, stop, step):
+    return [
+        x
+        for x in src.zklend.decimal_range(
+            # TODO: make it dependent on the collateral token .. use prices.prices[COLLATERAL_TOKEN]
+            start=decimal.Decimal(start),
+            stop=decimal.Decimal(stop),
+            # TODO: make it dependent on the collateral token
+            step=decimal.Decimal(step),
+        )
+    ]
+
+
+# TODO: move this somewhere
+def get_pair_range(c, b):
+    if c == "ETH" and b == "wBTC":
+        return get_range("0", "0.2", "0.0015")
+    if c == "wBTC" and b == "ETH":
+        return get_range("0", "25", "0.375")
+    if c == "ETH":
+        return get_range("50", "2500", "50")
+    if c == "wBTC":
+        return get_range("250", "32000", "250")
+    raise ValueError(f"Wrong pair {c}-{b}")
 
 
 def generate_graph_data(state, prices, swap_amm, collateral_token, borrowings_token):
