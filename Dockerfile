@@ -9,6 +9,7 @@ RUN pip install -r requirements.txt
 COPY ./data ./data
 COPY ./hashstack_data ./hashstack_data
 COPY ./nostra_data ./nostra_data
+COPY ./nostra_uncapped_data ./nostra_uncapped_data
 COPY general_stats.csv .
 COPY supply_stats.csv .
 COPY collateral_stats.csv .
