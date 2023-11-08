@@ -174,11 +174,47 @@ class UserTokenState:
     TODO
     """
 
+    MAX_ROUNDING_ERRORS = {
+        "ETH": decimal.Decimal("0.5") * decimal.Decimal("1e13"),
+        "wBTC": decimal.Decimal("1e2"),
+        "USDC": decimal.Decimal("1e4"),
+        "DAI": decimal.Decimal("1e16"),
+        "USDT": decimal.Decimal("1e4"),
+        "wstETH": decimal.Decimal("0.5") * decimal.Decimal("1e13"),
+    }
+
     def __init__(self, token: str) -> None:
         self.token: str = token
         self.collateral: decimal.Decimal = decimal.Decimal("0")
         self.interest_bearing_collateral: decimal.Decimal = decimal.Decimal("0")
         self.debt: decimal.Decimal = decimal.Decimal("0")
+
+    def update_collateral(self, raw_amount: decimal.Decimal):
+        self.collateral += raw_amount
+        if (
+            -self.MAX_ROUNDING_ERRORS[self.token]
+            < self.collateral
+            < self.MAX_ROUNDING_ERRORS[self.token]
+        ):
+            self.collateral = decimal.Decimal("0")
+
+    def update_interest_bearing_collateral(self, raw_amount: decimal.Decimal):
+        self.interest_bearing_collateral += raw_amount
+        if (
+            -self.MAX_ROUNDING_ERRORS[self.token]
+            < self.interest_bearing_collateral
+            < self.MAX_ROUNDING_ERRORS[self.token]
+        ):
+            self.interest_bearing_collateral = decimal.Decimal("0")
+
+    def update_debt(self, raw_amount: decimal.Decimal):
+        self.debt += raw_amount
+        if (
+            -self.MAX_ROUNDING_ERRORS[self.token]
+            < self.debt
+            < self.MAX_ROUNDING_ERRORS[self.token]
+        ):
+            self.debt = decimal.Decimal("0")
 
 
 class UserState:
