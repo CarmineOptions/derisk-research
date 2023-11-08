@@ -10,15 +10,17 @@ import streamlit
 import src.constants
 import src.hashstack
 import src.histogram
+import src.nostra
+import src.nostra_uncapped
+import src.zklend
 import update_data
 
 
 def main():
     streamlit.title("DeRisk")
 
-    # TODO: rename: data -> zklend_data
     (
-        data,
+        zklend_data,
         zklend_loans,
         last_updated,
         last_block_number,
@@ -33,13 +35,18 @@ def main():
         nostra_histogram_data,
         nostra_loans,
     ) = src.nostra.load_data()
+    (
+        nostra_uncapped_data,
+        nostra_uncapped_histogram_data,
+        nostra_uncapped_loans,
+    ) = src.nostra_uncapped.load_data()
 
     col1, _ = streamlit.columns([1, 3])
     with col1:
         protocols = streamlit.multiselect(
             label="Select protocols",
-            options=["zkLend", "Hashstack", "Nostra"],
-            default=["zkLend", "Hashstack", "Nostra"],
+            options=["zkLend", "Hashstack", "Nostra", "Nostra uncapped"],
+            default=["zkLend", "Hashstack", "Nostra", "Nostra uncapped"],
         )
         current_pair = streamlit.selectbox(
             label="Select collateral-loan pair:",
@@ -47,52 +54,32 @@ def main():
             index=0,
         )
 
-    # TODO: refactor this mess
-    if protocols == ["zkLend"]:
-        data[current_pair] = data[current_pair]
-        loans = zklend_loans
-    elif protocols == ["Hashstack"]:
-        data[current_pair] = hashstack_data[current_pair]
-        loans = hashstack_loans
-    elif protocols == ["Nostra"]:
-        data[current_pair] = nostra_data[current_pair]
-        loans = nostra_loans
-    elif set(protocols) == {"zkLend", "Hashstack"}:
-        data[current_pair]["max_borrowings_to_be_liquidated"] += hashstack_data[
-            current_pair
-        ]["max_borrowings_to_be_liquidated"]
-        data[current_pair][
-            "max_borrowings_to_be_liquidated_at_interval"
-        ] += hashstack_data[current_pair]["max_borrowings_to_be_liquidated_at_interval"]
-        loans = pandas.concat([zklend_loans, hashstack_loans])
-    elif set(protocols) == {"zkLend", "Nostra"}:
-        data[current_pair]["max_borrowings_to_be_liquidated"] += nostra_data[
-            current_pair
-        ]["max_borrowings_to_be_liquidated"]
-        data[current_pair][
-            "max_borrowings_to_be_liquidated_at_interval"
-        ] += nostra_data[current_pair]["max_borrowings_to_be_liquidated_at_interval"]
-        loans = pandas.concat([zklend_loans, nostra_loans])
-    elif set(protocols) == {"Hashstack", "Nostra"}:
-        data[current_pair]["max_borrowings_to_be_liquidated"] = (
-            hashstack_data[current_pair]["max_borrowings_to_be_liquidated"]
-            + nostra_data[current_pair]["max_borrowings_to_be_liquidated"]
-        )
-        data[current_pair]["max_borrowings_to_be_liquidated_at_interval"] = (
-            hashstack_data[current_pair]["max_borrowings_to_be_liquidated_at_interval"]
-            + nostra_data[current_pair]["max_borrowings_to_be_liquidated_at_interval"]
-        )
-        loans = pandas.concat([hashstack_loans, nostra_loans])
-    elif set(protocols) == {"zkLend", "Hashstack", "Nostra"}:
-        data[current_pair]["max_borrowings_to_be_liquidated"] += (
-            hashstack_data[current_pair]["max_borrowings_to_be_liquidated"]
-            + nostra_data[current_pair]["max_borrowings_to_be_liquidated"]
-        )
-        data[current_pair]["max_borrowings_to_be_liquidated_at_interval"] += (
-            hashstack_data[current_pair]["max_borrowings_to_be_liquidated_at_interval"]
-            + nostra_data[current_pair]["max_borrowings_to_be_liquidated_at_interval"]
-        )
-        loans = pandas.concat([zklend_loans, hashstack_loans, nostra_loans])
+    data = pandas.DataFrame()
+    loans = pandas.DataFrame()
+    protocol_data_mapping = {
+        'zkLend': zklend_data[current_pair],
+        'Hashstack': hashstack_data[current_pair],
+        'Nostra': nostra_data[current_pair],
+        'Nostra uncapped': nostra_uncapped_data[current_pair],
+    }
+    protocol_loans_mapping = {
+        'zkLend': zklend_loans,
+        'Hashstack': hashstack_loans,
+        'Nostra': nostra_loans,
+        'Nostra uncapped': nostra_uncapped_loans,
+    }
+    for protocol in protocols:
+        protocol_data = protocol_data_mapping[protocol]
+        protocol_loans = protocol_loans_mapping[protocol]
+        if data.empty:
+            data = protocol_data
+        else:
+            data["max_borrowings_to_be_liquidated"] += protocol_data["max_borrowings_to_be_liquidated"]
+            data["max_borrowings_to_be_liquidated_at_interval"] += protocol_data["max_borrowings_to_be_liquidated_at_interval"]
+        if loans.empty:
+            loans = protocol_loans
+        else:
+            loans = pandas.concat([loans, protocol_loans])
 
     [col, bor] = current_pair.split("-")
 
@@ -102,7 +89,7 @@ def main():
     }
 
     figure = plotly.express.bar(
-        data[current_pair].astype(float),
+        data.astype(float),
         x="collateral_token_price",
         y=[
             "max_borrowings_to_be_liquidated_at_interval",
@@ -141,8 +128,8 @@ def main():
         line_width=2,
     )
     streamlit.plotly_chart(figure, True)
-    example_row = data[current_pair][
-        data[current_pair]['collateral_token_price'] > decimal.Decimal("0.5") * collateral_token_price
+    example_row = data[
+        data['collateral_token_price'] > decimal.Decimal("0.5") * collateral_token_price
     ].sort_values('collateral_token_price').iloc[0]
 
     def _get_risk_level(debt_to_supply_ratio: float) -> str:

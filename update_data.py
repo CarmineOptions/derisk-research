@@ -9,6 +9,7 @@ import src.constants
 import src.db
 import src.hashstack
 import src.nostra
+import src.nostra_uncapped
 import src.persistent_state
 import src.swap_liquidity
 import src.zklend
@@ -121,6 +122,7 @@ def update_data(state):
     zklend_events = get_events(state.last_block_number)
     hashstack_events = src.hashstack.get_hashstack_events()
     nostra_events = src.nostra.get_nostra_events()
+    nostra_uncapped_events = src.nostra_uncapped.get_nostra_uncapped_events()
     print(f"got events in {time.time() - t0}s", flush=True)
 
     new_latest_block = zklend_events["block_number"].max()
@@ -139,6 +141,10 @@ def update_data(state):
     nostra_state = src.nostra.State()
     for _, nostra_event in nostra_events.iterrows():
         nostra_state.process_event(event=nostra_event)
+
+    nostra_uncapped_state = src.nostra_uncapped.State()
+    for _, nostra_uncapped_event in nostra_uncapped_events.iterrows():
+        nostra_uncapped_state.process_event(event=nostra_uncapped_event)
 
     print(f"updated state in {time.time() - t1}s", flush=True)
 
@@ -165,6 +171,11 @@ def update_data(state):
     [
         src.nostra.generate_and_store_graph_data(
             nostra_state, prices, swap_amms, pair)
+        for pair in src.constants.PAIRS
+    ]
+    [
+        src.nostra_uncapped.generate_and_store_graph_data(
+            nostra_uncapped_state, prices, swap_amms, pair)
         for pair in src.constants.PAIRS
     ]
 
@@ -208,6 +219,17 @@ def update_data(state):
         for token in src.constants.symbol_decimals_map.keys()
         if (token[0] != "z" and token != 'wstETH')  # wstETH is only available for zkLend
     ]
+    nostra_uncapped_histogram_data = [
+        {
+            "token": token,
+            "borrowings": user_state.token_states[token].debt
+            * prices.prices[token]
+            / 10 ** src.constants.get_decimals(token),
+        }
+        for user_state in nostra_uncapped_state.user_states.values()
+        for token in src.constants.symbol_decimals_map.keys()
+        if (token[0] != "z" and token != 'wstETH')  # wstETH is only available for zkLend
+    ]
 
     pandas.DataFrame(histogram_data).to_csv("data/histogram.csv", index=False, compression='gzip')
     pandas.DataFrame(hashstack_histogram_data).to_csv(
@@ -215,6 +237,9 @@ def update_data(state):
     )
     pandas.DataFrame(nostra_histogram_data).to_csv(
         "nostra_data/histogram.csv", index=False, compression='gzip'
+    )
+    pandas.DataFrame(nostra_uncapped_histogram_data).to_csv(
+        "nostra_uncapped_data/histogram.csv", index=False, compression='gzip'
     )
 
     zklend_loan_stats = pandas.DataFrame()
@@ -423,27 +448,90 @@ def update_data(state):
     )
     nostra_loan_stats.to_csv("nostra_data/loans.csv", index=False, compression='gzip')
 
+    nostra_uncapped_loan_stats = pandas.DataFrame()
+    nostra_uncapped_loan_stats["User"] = [
+        user
+        for user in nostra_uncapped_state.user_states.keys()
+    ]
+    nostra_uncapped_loan_stats["Protocol"] = "Nostra uncapped"
+    nostra_uncapped_loan_stats["Borrowing in USD"] = nostra_uncapped_loan_stats.apply(
+        lambda x: src.nostra_uncapped.compute_borrowings_amount_usd(
+            user_state=nostra_uncapped_state.user_states[x["User"]],
+            prices=prices.prices,
+        ),
+        axis=1,
+    )
+    nostra_uncapped_loan_stats[
+        "Risk adjusted collateral in USD"
+    ] = nostra_uncapped_loan_stats.apply(
+        lambda x: src.nostra_uncapped.compute_risk_adjusted_collateral_usd(
+            user_state=nostra_uncapped_state.user_states[x["User"]],
+            prices=prices.prices,
+        ),
+        axis=1,
+    )
+    nostra_uncapped_loan_stats["Health factor"] = nostra_uncapped_loan_stats.apply(
+        lambda x: src.nostra_uncapped.compute_health_factor(
+            risk_adjusted_collateral_usd=x["Risk adjusted collateral in USD"],
+            risk_adjusted_debt_usd=x["Borrowing in USD"],
+        ),
+        axis=1,
+    )
+    nostra_uncapped_loan_stats["Standardized health factor"] = nostra_uncapped_loan_stats.apply(
+        lambda x: src.nostra_uncapped.compute_standardized_health_factor(
+            risk_adjusted_collateral_usd=x["Risk adjusted collateral in USD"],
+            borrowings_usd=x["Borrowing in USD"],
+        ),
+        axis=1,
+    )
+    nostra_uncapped_loan_stats["Collateral"] = nostra_uncapped_loan_stats.apply(
+        lambda x: ', '.join(
+            f"{token}: {round((token_state.collateral + token_state.interest_bearing_collateral) / src.constants.TOKEN_DECIMAL_FACTORS[token], 4)}"
+            for token, token_state
+            in nostra_uncapped_state.user_states[x["User"]].token_states.items()
+            if (
+                token_state.collateral > 0
+                or token_state.interest_bearing_collateral > 0
+            )
+        ),
+        axis=1,
+    )
+    nostra_uncapped_loan_stats["Borrowings"] = nostra_uncapped_loan_stats.apply(
+        lambda x: ', '.join(
+            f"{token}: {round(token_state.debt / src.constants.TOKEN_DECIMAL_FACTORS[token], 4)}"
+            for token, token_state
+            in nostra_uncapped_state.user_states[x["User"]].token_states.items()
+            if token_state.debt > 0
+        ),
+        axis=1,
+    )
+    nostra_uncapped_loan_stats.to_csv("nostra_uncapped_data/loans.csv", index=False, compression='gzip')
+
     general_stats = pandas.DataFrame(
         {
             'Protocol': [
                 'zkLend',
                 'Hashstack',
                 'Nostra',
+                'Nostra uncapped',
             ],
             'Number of users': [
                 src.zklend.compute_number_of_users(state),
                 src.hashstack.compute_number_of_users(hashstack_state),
                 src.nostra.compute_number_of_users(nostra_state),
+                src.nostra_uncapped.compute_number_of_users(nostra_uncapped_state),
             ],
             'Number of stakers': [
                 src.zklend.compute_number_of_stakers(state),
                 src.hashstack.compute_number_of_stakers(hashstack_state),
                 src.nostra.compute_number_of_stakers(nostra_state),
+                src.nostra_uncapped.compute_number_of_stakers(nostra_uncapped_state),
             ],
             'Number of borrowers': [
                 src.zklend.compute_number_of_borrowers(state),
                 src.hashstack.compute_number_of_borrowers(hashstack_state),
                 src.nostra.compute_number_of_borrowers(nostra_state),
+                src.nostra_uncapped.compute_number_of_borrowers(nostra_uncapped_state),
             ],
             # Hashstack is the only protocol for which the number of loans doesn't equal the number of borrowers. The reason is
             # that Hashstack allows for liquidations on the loan level, whereas other protocols use user-level liquidations.
@@ -451,16 +539,19 @@ def update_data(state):
                 src.zklend.compute_number_of_borrowers(state),
                 src.hashstack.compute_number_of_loans(hashstack_state),
                 src.nostra.compute_number_of_borrowers(nostra_state),
+                src.nostra_uncapped.compute_number_of_borrowers(nostra_uncapped_state),
             ],
             'Total debt in USD': [
                 round(zklend_loan_stats['Borrowing in USD'].sum(), 4),
                 round(hashstack_loan_stats['Borrowing in USD'].sum(), 4),
                 round(nostra_loan_stats['Borrowing in USD'].sum(), 4),
+                round(nostra_uncapped_loan_stats['Borrowing in USD'].sum(), 4),
             ],
             'Total risk adjusted collateral in USD': [
                 round(zklend_loan_stats['Risk adjusted collateral in USD'].sum(), 4),
                 round(hashstack_loan_stats['Risk adjusted collateral in USD'].sum(), 4),
                 round(nostra_loan_stats['Risk adjusted collateral in USD'].sum(), 4),
+                round(nostra_uncapped_loan_stats['Risk adjusted collateral in USD'].sum(), 4),
             ],
         },
     )
@@ -594,42 +685,91 @@ def update_data(state):
     nostra_usdt_supply = decimal.Decimal(str(nostra_usdt_supply[0])) / src.constants.TOKEN_DECIMAL_FACTORS['USDT']
     nostra_wsteth_supply = decimal.Decimal("0")
 
+    nostra_uncapped_eth_supply = asyncio.run(
+        src.blockchain_call.func_call(
+            addr = int('0x04f89253e37ca0ab7190b2e9565808f105585c9cacca6b2fa6145553fa061a41', base=16),
+            selector = 'totalSupply',
+            calldata = [],
+        )
+    )
+    nostra_uncapped_eth_supply = decimal.Decimal(str(nostra_uncapped_eth_supply[0])) / src.constants.TOKEN_DECIMAL_FACTORS['ETH']
+    nostra_uncapped_wbtc_supply = asyncio.run(
+        src.blockchain_call.func_call(
+            addr = int('0x07788bc687f203b6451f2a82e842b27f39c7cae697dace12edfb86c9b1c12f3d', base=16),
+            selector = 'totalSupply',
+            calldata = [],
+        )
+    )
+    nostra_uncapped_wbtc_supply = decimal.Decimal(str(nostra_uncapped_wbtc_supply[0])) / src.constants.TOKEN_DECIMAL_FACTORS['wBTC']
+    nostra_uncapped_usdc_supply = asyncio.run(
+        src.blockchain_call.func_call(
+            addr = int('0x05327df4c669cb9be5c1e2cf79e121edef43c1416fac884559cd94fcb7e6e232', base=16),
+            selector = 'totalSupply',
+            calldata = [],
+        )
+    )
+    nostra_uncapped_usdc_supply = decimal.Decimal(str(nostra_uncapped_usdc_supply[0])) / src.constants.TOKEN_DECIMAL_FACTORS['USDC']
+    nostra_uncapped_dai_supply = asyncio.run(
+        src.blockchain_call.func_call(
+            addr = int('0x02ea39ba7a05f0c936b7468d8bc8d0e1f2116916064e7e163e7c1044d95bd135', base=16),
+            selector = 'totalSupply',
+            calldata = [],
+        )
+    )
+    nostra_uncapped_dai_supply = decimal.Decimal(str(nostra_uncapped_dai_supply[0])) / src.constants.TOKEN_DECIMAL_FACTORS['DAI']
+    nostra_uncapped_usdt_supply = asyncio.run(
+        src.blockchain_call.func_call(
+            addr = int('0x040375d0720245bc0d123aa35dc1c93d14a78f64456eff75f63757d99a0e6a83', base=16),
+            selector = 'totalSupply',
+            calldata = [],
+        )
+    )
+    nostra_uncapped_usdt_supply = decimal.Decimal(str(nostra_uncapped_usdt_supply[0])) / src.constants.TOKEN_DECIMAL_FACTORS['USDT']
+    nostra_uncapped_wsteth_supply = decimal.Decimal("0")
+
     supply_stats = pandas.DataFrame(
         {
             'Protocol': [
                 'zkLend',
                 'Hashstack',
                 'Nostra',
+                'Nostra uncapped',
             ],
             'ETH supply': [
                 round(zklend_eth_supply, 4),
                 round(hashstack_eth_supply, 4),
                 round(nostra_eth_supply, 4),
+                round(nostra_uncapped_eth_supply, 4),
             ],
             'wBTC supply': [
                 round(zklend_wbtc_supply, 4),
                 round(hashstack_wbtc_supply, 4),
                 round(nostra_wbtc_supply, 4),
+                round(nostra_uncapped_wbtc_supply, 4),
             ],
             'USDC supply': [
                 round(zklend_usdc_supply, 4),
                 round(hashstack_usdc_supply, 4),
                 round(nostra_usdc_supply, 4),
+                round(nostra_uncapped_usdc_supply, 4),
             ],
             'DAI supply': [
                 round(zklend_dai_supply, 4),
                 round(hashstack_dai_supply, 4),
                 round(nostra_dai_supply, 4),
+                round(nostra_uncapped_dai_supply, 4),
             ],
             'USDT supply': [
                 round(zklend_usdt_supply, 4),
                 round(hashstack_usdt_supply, 4),
                 round(nostra_usdt_supply, 4),
+                round(nostra_uncapped_usdt_supply, 4),
             ],
             'wstETH supply': [
                 round(zklend_wsteth_supply, 4),
                 round(hashstack_wsteth_supply, 4),
                 round(nostra_wsteth_supply, 4),
+                round(nostra_uncapped_wsteth_supply, 4),
             ],
         }
     )
@@ -649,34 +789,41 @@ def update_data(state):
                 'zkLend',
                 'Hashstack',
                 'Nostra',
+                'Nostra uncapped',
             ],
             'ETH collateral': [
                 round(sum(x.token_states['ETH'].deposit * x.token_states['ETH'].collateral_enabled for x in state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['ETH'], 4),
                 round(sum(loan.collateral.current_amount for user_state in hashstack_state.user_states.values() for loan in user_state.loans.values() if loan.collateral.market == 'ETH') / src.constants.TOKEN_DECIMAL_FACTORS['ETH'], 4),
                 round(sum(x.token_states['ETH'].collateral + x.token_states['ETH'].interest_bearing_collateral for x in nostra_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['ETH'], 4),
+                round(sum(x.token_states['ETH'].collateral + x.token_states['ETH'].interest_bearing_collateral for x in nostra_uncapped_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['ETH'], 4),
             ],
             'wBTC collateral': [
                 round(sum(x.token_states['wBTC'].deposit * x.token_states['wBTC'].collateral_enabled for x in state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['wBTC'], 4),
                 round(sum(loan.collateral.current_amount for user_state in hashstack_state.user_states.values() for loan in user_state.loans.values() if loan.collateral.market == 'wBTC') / src.constants.TOKEN_DECIMAL_FACTORS['wBTC'], 4),
                 round(sum(x.token_states['wBTC'].collateral + x.token_states['wBTC'].interest_bearing_collateral for x in nostra_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['wBTC'], 4),
+                round(sum(x.token_states['wBTC'].collateral + x.token_states['wBTC'].interest_bearing_collateral for x in nostra_uncapped_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['wBTC'], 4),
             ],
             'USDC collateral': [
                 round(sum(x.token_states['USDC'].deposit * x.token_states['USDC'].collateral_enabled for x in state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['USDC'], 4),
                 round(sum(loan.collateral.current_amount for user_state in hashstack_state.user_states.values() for loan in user_state.loans.values() if loan.collateral.market == 'USDC') / src.constants.TOKEN_DECIMAL_FACTORS['USDC'], 4),
                 round(sum(x.token_states['USDC'].collateral + x.token_states['USDC'].interest_bearing_collateral for x in nostra_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['USDC'], 4),
+                round(sum(x.token_states['USDC'].collateral + x.token_states['USDC'].interest_bearing_collateral for x in nostra_uncapped_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['USDC'], 4),
             ],
             'DAI collateral': [
                 round(sum(x.token_states['DAI'].deposit * x.token_states['DAI'].collateral_enabled for x in state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['DAI'], 4),
                 round(sum(loan.collateral.current_amount for user_state in hashstack_state.user_states.values() for loan in user_state.loans.values() if loan.collateral.market == 'DAI') / src.constants.TOKEN_DECIMAL_FACTORS['DAI'], 4),
                 round(sum(x.token_states['DAI'].collateral + x.token_states['DAI'].interest_bearing_collateral for x in nostra_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['DAI'], 4),
+                round(sum(x.token_states['DAI'].collateral + x.token_states['DAI'].interest_bearing_collateral for x in nostra_uncapped_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['DAI'], 4),
             ],
             'USDT collateral': [
                 round(sum(x.token_states['USDT'].deposit * x.token_states['USDT'].collateral_enabled for x in state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['USDT'], 4),
                 round(sum(loan.collateral.current_amount for user_state in hashstack_state.user_states.values() for loan in user_state.loans.values() if loan.collateral.market == 'USDT') / src.constants.TOKEN_DECIMAL_FACTORS['USDT'], 4),
                 round(sum(x.token_states['USDT'].collateral + x.token_states['USDT'].interest_bearing_collateral for x in nostra_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['USDT'], 4),
+                round(sum(x.token_states['USDT'].collateral + x.token_states['USDT'].interest_bearing_collateral for x in nostra_uncapped_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['USDT'], 4),
             ],
             'wstETH collateral': [
                 round(sum(x.token_states['wstETH'].deposit * x.token_states['wstETH'].collateral_enabled for x in state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['wstETH'], 4),
+                round(decimal.Decimal("0"), 4),
                 round(decimal.Decimal("0"), 4),
                 round(decimal.Decimal("0"), 4),
             ],
@@ -690,34 +837,41 @@ def update_data(state):
                 'zkLend',
                 'Hashstack',
                 'Nostra',
+                'Nostra uncapped',
             ],
             'ETH debt': [
                 round(sum(x.token_states['ETH'].borrowings for x in state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['ETH'], 4),
                 round(sum(loan.borrowings.amount for user_state in hashstack_state.user_states.values() for loan in user_state.loans.values() if loan.borrowings.market == 'ETH') / src.constants.TOKEN_DECIMAL_FACTORS['ETH'], 4),
                 round(sum(x.token_states['ETH'].debt for x in nostra_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['ETH'], 4),
+                round(sum(x.token_states['ETH'].debt for x in nostra_uncapped_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['ETH'], 4),
             ],
             'wBTC debt': [
                 round(sum(x.token_states['wBTC'].borrowings for x in state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['wBTC'], 4),
                 round(sum(loan.borrowings.amount for user_state in hashstack_state.user_states.values() for loan in user_state.loans.values() if loan.borrowings.market == 'wBTC') / src.constants.TOKEN_DECIMAL_FACTORS['wBTC'], 4),
                 round(sum(x.token_states['wBTC'].debt for x in nostra_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['wBTC'], 4),
+                round(sum(x.token_states['wBTC'].debt for x in nostra_uncapped_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['wBTC'], 4),
             ],
             'USDC debt': [
                 round(sum(x.token_states['USDC'].borrowings for x in state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['USDC'], 4),
                 round(sum(loan.borrowings.amount for user_state in hashstack_state.user_states.values() for loan in user_state.loans.values() if loan.borrowings.market == 'USDC') / src.constants.TOKEN_DECIMAL_FACTORS['USDC'], 4),
                 round(sum(x.token_states['USDC'].debt for x in nostra_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['USDC'], 4),
+                round(sum(x.token_states['USDC'].debt for x in nostra_uncapped_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['USDC'], 4),
             ],
             'DAI debt': [
                 round(sum(x.token_states['DAI'].borrowings for x in state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['DAI'], 4),
                 round(sum(loan.borrowings.amount for user_state in hashstack_state.user_states.values() for loan in user_state.loans.values() if loan.borrowings.market == 'DAI') / src.constants.TOKEN_DECIMAL_FACTORS['DAI'], 4),
                 round(sum(x.token_states['DAI'].debt for x in nostra_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['DAI'], 4),
+                round(sum(x.token_states['DAI'].debt for x in nostra_uncapped_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['DAI'], 4),
             ],
             'USDT debt': [
                 round(sum(x.token_states['USDT'].borrowings for x in state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['USDT'], 4),
                 round(sum(loan.borrowings.amount for user_state in hashstack_state.user_states.values() for loan in user_state.loans.values() if loan.borrowings.market == 'USDT') / src.constants.TOKEN_DECIMAL_FACTORS['USDT'], 4),
                 round(sum(x.token_states['USDT'].debt for x in nostra_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['USDT'], 4),
+                round(sum(x.token_states['USDT'].debt for x in nostra_uncapped_state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['USDT'], 4),
             ],
             'wstETH debt': [
                 round(sum(x.token_states['wstETH'].borrowings for x in state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['wstETH'], 4),
+                round(decimal.Decimal("0"), 4),
                 round(decimal.Decimal("0"), 4),
                 round(decimal.Decimal("0"), 4),
             ],
@@ -731,6 +885,7 @@ def update_data(state):
                 'zkLend',
                 'Hashstack',
                 'Nostra',
+                'Nostra uncapped',
             ],
             'Total utilization': general_stats['Total debt in USD'] / (general_stats['Total debt in USD'] + supply_stats['Total supply in USD']),
             'ETH utilization': debt_stats['ETH debt'] / (supply_stats['ETH supply'] + debt_stats['ETH debt']),
