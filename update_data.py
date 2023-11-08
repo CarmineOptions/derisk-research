@@ -122,7 +122,7 @@ def update_data(state):
     zklend_events = get_events(state.last_block_number)
     hashstack_events = src.hashstack.get_hashstack_events()
     nostra_events = src.nostra.get_nostra_events()
-    nostra_uncapped_events = src.nostra_uncapped.get_nostra_events()
+    nostra_uncapped_events = src.nostra_uncapped.get_nostra_uncapped_events()
     print(f"got events in {time.time() - t0}s", flush=True)
 
     new_latest_block = zklend_events["block_number"].max()
@@ -769,6 +769,7 @@ def update_data(state):
                 round(zklend_wsteth_supply, 4),
                 round(hashstack_wsteth_supply, 4),
                 round(nostra_wsteth_supply, 4),
+                round(nostra_uncapped_wsteth_supply, 4),
             ],
         }
     )
@@ -824,6 +825,7 @@ def update_data(state):
                 round(sum(x.token_states['wstETH'].deposit * x.token_states['wstETH'].collateral_enabled for x in state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['wstETH'], 4),
                 round(decimal.Decimal("0"), 4),
                 round(decimal.Decimal("0"), 4),
+                round(decimal.Decimal("0"), 4),
             ],
         },
     )
@@ -869,6 +871,7 @@ def update_data(state):
             ],
             'wstETH debt': [
                 round(sum(x.token_states['wstETH'].borrowings for x in state.user_states.values()) / src.constants.TOKEN_DECIMAL_FACTORS['wstETH'], 4),
+                round(decimal.Decimal("0"), 4),
                 round(decimal.Decimal("0"), 4),
                 round(decimal.Decimal("0"), 4),
             ],
