@@ -356,6 +356,19 @@ def compute_risk_adjusted_collateral_usd(
     )
 
 
+def compute_borrowings_amount_usd(
+    user_state: UserState,
+    prices: Dict[str, decimal.Decimal],
+) -> decimal.Decimal:
+    return sum(
+        token_state.debt
+        * prices[token]
+        # TODO: perform the conversion using TOKEN_DECIMAL_FACTORS sooner (in `UserTokenState`?)?
+        / TOKEN_DECIMAL_FACTORS[token]
+        for token, token_state in user_state.token_states.items()
+    )
+
+
 def compute_risk_adjusted_debt_usd(
     user_state: UserState,
     prices: Dict[str, decimal.Decimal],
@@ -487,18 +500,6 @@ def simulate_liquidations_under_absolute_price_change(
     )
 
 
-# TODO: this function is general for all protocols
-def get_amm_supply_at_price(
-    collateral_token: str,
-    collateral_token_price: decimal.Decimal,
-    debt_token: str,
-    amm: src.swap_liquidity.SwapAmm,
-) -> decimal.Decimal:
-    return amm.get_pool(collateral_token, debt_token).supply_at_price(
-        debt_token, collateral_token_price
-    )
-
-
 def get_range(start, stop, step):
     return [
         x
@@ -535,7 +536,7 @@ def generate_graph_data(state, prices, swap_amm, collateral_token, borrowings_to
             collateral_token=collateral_token,
             collateral_token_price=x,
             state=state,
-            borrowings_token=borrowings_token,
+            debt_token=borrowings_token,
         )
     )
     data["max_borrowings_to_be_liquidated_at_interval"] = (
