@@ -164,7 +164,6 @@ def main():
     streamlit.dataframe(
         loans[
             (loans["Health factor"] > 0)  # TODO: debug the negative HFs
-            & ~loans["Protocol"].isin(["Nostra", "Nostra uncapped"])  # TODO: remove after Nostra and Nostra-U events are complete
             & loans["Borrowing in USD"].between(debt_usd_lower_bound, debt_usd_upper_bound)
         ].sort_values("Health factor").iloc[:20],
         use_container_width=True,
