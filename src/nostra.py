@@ -284,10 +284,11 @@ class State:
             return
         token = get_token(event['from_address'])
         amount = decimal.Decimal(str(int(event['data'][1], base=16)))
+        raw_amount = amount / self.interest_model_states[token].lend_index
         if name == 'Mint':  # Collateral deposited.
-            self.user_states[user].token_states[token].collateral += amount / self.interest_model_states[token].lend_index
+            self.user_states[user].token_states[token].update_collateral(raw_amount = raw_amount)
         if name == 'Burn':  # Collateral withdrawn.
-            self.user_states[user].token_states[token].collateral -= amount / self.interest_model_states[token].lend_index
+            self.user_states[user].token_states[token].update_collateral(raw_amount = -raw_amount)
         # TODO
         if user == self.USER:
             print(event['block_number'], "col", name, token, amount)
@@ -301,10 +302,11 @@ class State:
             return
         token = get_token(event['from_address'])
         amount = decimal.Decimal(str(int(event['data'][1], base=16)))
+        raw_amount = amount / self.interest_model_states[token].lend_index
         if name == 'Mint':  # Collateral deposited.
-            self.user_states[user].token_states[token].interest_bearing_collateral += amount / self.interest_model_states[token].lend_index
+            self.user_states[user].token_states[token].update_interest_bearing_collateral(raw_amount = raw_amount)
         if name == 'Burn':  # Collateral withdrawn.
-            self.user_states[user].token_states[token].interest_bearing_collateral -= amount / self.interest_model_states[token].lend_index
+            self.user_states[user].token_states[token].update_interest_bearing_collateral(raw_amount = -raw_amount)
         # TODO
         if user == self.USER:
             print(event['block_number'], "ib col", name, token, amount)
@@ -315,10 +317,11 @@ class State:
         user = event['data'][0]
         token = get_token(event['from_address'])
         amount = decimal.Decimal(str(int(event['data'][1], base=16)))
+        raw_amount = amount / self.interest_model_states[token].borrow_index
         if name == 'Mint':  # Debt borrowed.
-            self.user_states[user].token_states[token].debt += amount / self.interest_model_states[token].borrow_index
+            self.user_states[user].token_states[token].update_debt(raw_amount = raw_amount)
         if name == 'Burn':  # Debt repayed.
-            self.user_states[user].token_states[token].debt -= amount / self.interest_model_states[token].borrow_index
+            self.user_states[user].token_states[token].update_debt(raw_amount = -raw_amount)
         # TODO
         if user == self.USER:
             print(event['block_number'], "deb", name, token, amount)
