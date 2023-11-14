@@ -1,20 +1,19 @@
-from typing import Dict
-import asyncio
-import collections
-import copy
+from typing import Dict, Optional
 import decimal
-import json
+import logging
 
 import pandas
-import numpy
-import streamlit
 
 import src.constants
-import src.swap_liquidity
+import src.helpers
+import src.state
 
+
+
+ADDRESS: str = "0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05"
 
 # Keys are values of the "key_name" column in the database, values are the respective method names.
-EVENTS_METHODS_MAPPING = {
+EVENTS_METHODS_MAPPING: Dict[str, str] = {
     "AccumulatorsSync": "process_accumulators_sync_event",
     "zklend::market::Market::AccumulatorsSync": "process_accumulators_sync_event",
     "Deposit": "process_deposit_event",
@@ -33,589 +32,229 @@ EVENTS_METHODS_MAPPING = {
     "zklend::market::Market::Liquidation": "process_liquidation_event",
 }
 
+# Source: https://zklend.gitbook.io/documentation/using-zklend/technical/asset-parameters.
+COLLATERAL_FACTORS: Dict[str, decimal.Decimal] = {
+    "ETH": decimal.Decimal("0.80"),
+    "wBTC": decimal.Decimal("0.70"),
+    "USDC": decimal.Decimal("0.80"),
+    "DAI": decimal.Decimal("0.70"),
+    "USDT": decimal.Decimal("0.70"),
+    "wstETH": decimal.Decimal("0.80"),
+}
+# Source: https://zklend.gitbook.io/documentation/using-zklend/technical/asset-parameters.
+LIQUIDATION_BONUSES: Dict[str, decimal.Decimal] = {
+    "ETH": decimal.Decimal("0.10"),
+    "wBTC": decimal.Decimal("0.15"),
+    "USDC": decimal.Decimal("0.10"),
+    "DAI": decimal.Decimal("0.10"),
+    "USDT": decimal.Decimal("0.10"),
+    "wstETH": decimal.Decimal("0.10"),
+}
 
-# TODO: convert numbers/amounts (divide by sth)
-# TODO: remove irrelevant variables (in events)
-# TODO: add self.user to UserState and UserTokenState?
-# TODO: add logs
-class AccumulatorState:
+SUPPLY_ADRESSES: Dict[str, str] = {
+    "ETH": "0x01b5bd713e72fdc5d63ffd83762f81297f6175a5e0a4771cdadbc1dd5fe72cb1",
+    "wBTC": "0x02b9ea3acdb23da566cee8e8beae3125a1458e720dea68c4a9a7a2d8eb5bbb4a",
+    "USDC": "0x047ad51726d891f972e74e4ad858a261b43869f7126ce7436ee0b2529a98f486",
+    "DAI": "0x062fa7afe1ca2992f8d8015385a279f49fad36299754fb1e9866f4f052289376",
+    "USDT": "0x00811d8da5dc8a2206ea7fd0b28627c2d77280a515126e62baa4d78e22714c4a",
+    "wstETH": "0x0536aa7e01ecc0235ca3e29da7b5ad5b12cb881e29034d87a4290edbb20b7c28",
+}
+
+
+
+def get_events(start_block_number: int = 0) -> pandas.DataFrame:
+    return src.helpers.get_events(
+        adresses = (ADDRESS, ''),
+        events = tuple(EVENTS_METHODS_MAPPING),
+        start_block_number = start_block_number,
+    )
+
+
+# TODO: Make this a dataclass?
+class Accumulators:
     """
-    TODO
-    """
-
-    def __init__(self) -> None:
-        self.lending_accumulator: decimal.Decimal = decimal.Decimal("1e27")
-        self.debt_accumulator: decimal.Decimal = decimal.Decimal("1e27")
-
-    def accumulators_sync(
-        self, lending_accumulator: decimal.Decimal, debt_accumulator: decimal.Decimal
-    ):
-        self.lending_accumulator = lending_accumulator / \
-            decimal.Decimal("1e27")
-        self.debt_accumulator = debt_accumulator / decimal.Decimal("1e27")
-
-
-class UserTokenState:
-    """
-    TODO
-
-    We are making a simplifying assumption that when collateral is enabled, all
-    deposits of the given token are considered as collateral.
-    """
-
-    # TODO: make it token-dependent (advanced solution: fetch token prices in $ -> round each token's
-    #   balance e.g. to the nearest cent)
-    MAX_ROUNDING_ERRORS = {
-        "ETH": decimal.Decimal("0.5") * decimal.Decimal("1e13"),
-        "wBTC": decimal.Decimal("1e2"),
-        "USDC": decimal.Decimal("1e4"),
-        "DAI": decimal.Decimal("1e16"),
-        "USDT": decimal.Decimal("1e4"),
-        "wstETH": decimal.Decimal("0.5") * decimal.Decimal("1e13"),
-    }
-
-    def __init__(self, token: str) -> None:
-        self.token: str = token
-        self.deposit: decimal.Decimal = decimal.Decimal("0")
-        self.collateral_enabled: bool = False
-        self.borrowings: decimal.Decimal = decimal.Decimal("0")
-        self.z_token: bool = token[0] == "z"
-
-    def update_borrowings(self, raw_amount: decimal.Decimal):
-        self.borrowings += raw_amount
-        if (
-            -self.MAX_ROUNDING_ERRORS[self.token]
-            < self.borrowings
-            < self.MAX_ROUNDING_ERRORS[self.token]
-        ):
-            self.borrowings = decimal.Decimal("0")
-
-    def update_deposit(self, raw_amount: decimal.Decimal):
-        self.deposit += raw_amount
-        if (
-            -self.MAX_ROUNDING_ERRORS[self.token]
-            < self.deposit
-            < self.MAX_ROUNDING_ERRORS[self.token]
-        ):
-            self.deposit = decimal.Decimal("0")
-
-
-class UserState:
-    """
-    TODO
+    A class that describes the state of the lending and debt accumulators which help transform face amounts into raw 
+    amounts. Raw amount is the amount that would have been accumulated into the face amount if it were deposited at 
+    genesis.
     """
 
     def __init__(self) -> None:
-        self.token_states: Dict[str, UserTokenState] = {
-            "ETH": UserTokenState("ETH"),
-            "wBTC": UserTokenState("wBTC"),
-            "USDC": UserTokenState("USDC"),
-            "DAI": UserTokenState("DAI"),
-            "USDT": UserTokenState("USDT"),
-            "wstETH": UserTokenState("wstETH"),
-            "zETH": UserTokenState("zETH"),
-            "zWBTC": UserTokenState("zWBTC"),
-            "zUSDC": UserTokenState("zUSDC"),
-            "zDAI": UserTokenState("zDAI"),
-            "zUSDT": UserTokenState("zUSDT"),
-            "zwstETH": UserTokenState("zwstETH"),
-        }
-        # TODO: implement healt_factor
-        # TODO: use decimal
-        self.health_factor: float = 1.0  # TODO: is this a good default value??
+        self.lending_accumulator: decimal.Decimal = decimal.Decimal("1")
+        self.debt_accumulator: decimal.Decimal = decimal.Decimal("1")
 
-    def deposit(self, token: str, raw_amount: decimal.Decimal):
-        self.token_states[token].update_deposit(raw_amount)
 
-    def withdrawal(self, token: str, raw_amount: decimal.Decimal):
-        self.token_states[token].update_deposit(-raw_amount)
+class ZkLendLoanEntity(src.state.LoanEntity):
+    """
+    A class that describes the zkLend loan entity. On top of the abstract `LoanEntity`, it implements the `deposit` and
+    `collateral_enabled` attributes in order to help with accounting for the changes in collateral. This is because 
+    under zkLend, collateral is the amount deposited that is specificaly flagged with `collateral_enabled` set to True 
+    for the given token. To properly account for the changes in collateral, we must hold the information about the 
+    given token's deposits being enabled as collateral or not and the amount of the deposits. We keep all balances in raw 
+    amounts.
+    """
 
-    def collateral_enabled(self, token: str):
-        self.token_states[token].collateral_enabled = True
+    COLLATERAL_FACTORS = COLLATERAL_FACTORS
+    LIQUIDATION_BONUSES = LIQUIDATION_BONUSES
 
-    def collateral_disabled(self, token: str):
-        self.token_states[token].collateral_enabled = False
+    def __init__(self) -> None:
+        super().__init__()
+        self.deposit: src.state.TokenAmounts = src.state.TokenAmounts()
+        self.collateral_enabled: Dict[str, bool] = {x: False for x in src.constants.TOKEN_DECIMAL_FACTORS}
 
-    def borrowing(
-        self, token: str, raw_amount: decimal.Decimal, face_amount: decimal.Decimal
-    ):
-        self.token_states[token].update_borrowings(raw_amount)
 
-    def repayment(
-        self, token: str, raw_amount: decimal.Decimal, face_amount: decimal.Decimal
-    ):
-        self.token_states[token].update_borrowings(-raw_amount)
+class ZkLendState(src.state.State):
+    """
+    A class that describes the state of all zkLend loan entities. It implements a method for correct processing of 
+    every relevant event.
+    """
 
-    def liquidation(
+    EVENTS_METHODS_MAPPING = EVENTS_METHODS_MAPPING
+
+    def __init__(
         self,
-        debt_token: str,
-        debt_raw_amount: decimal.Decimal,
-        debt_face_amount: decimal.Decimal,
-        collateral_token: decimal.Decimal,
-        collateral_raw_amount: decimal.Decimal,
-    ):
-        self.token_states[debt_token].update_borrowings(-debt_raw_amount)
-        self.token_states[collateral_token].update_deposit(
-            -collateral_raw_amount)
+        verbose_user: Optional[str] = None,
+    ) -> None:
+        super().__init__(
+            loan_entity_class=ZkLendLoanEntity,
+            verbose_user=verbose_user,
+        )
+        self.accumulators: Dict[str, Accumulators] = {x: Accumulators() for x in src.constants.TOKEN_DECIMAL_FACTORS}
 
-
-class State:
-    """
-    TODO
-    """
-
-    EVENTS_FUNCTIONS_MAPPING = EVENTS_METHODS_MAPPING
-    USER = "0x4bcfbd372a874fc8e5fe1f9ee27d5eacb74766d996b0be95c1fb1576cca8d7a"
-
-    def __init__(self) -> None:
-        self.user_states: collections.defaultdict = collections.defaultdict(
-            UserState)
-        self.accumulator_states: Dict[str, AccumulatorState] = {
-            "ETH": AccumulatorState(),
-            "wBTC": AccumulatorState(),
-            "USDC": AccumulatorState(),
-            "DAI": AccumulatorState(),
-            "USDT": AccumulatorState(),
-            "wstETH": AccumulatorState(),
-        }
-        self.last_block_number = 0
-
-    def update_block_number(self, block_number):
-        if isinstance(block_number, (int, numpy.integer)):
-            self.last_block_number = block_number
-
-    def process_event(self, event: pandas.Series) -> None:
-        name = event["key_name"]
-        getattr(self, self.EVENTS_FUNCTIONS_MAPPING[name])(event=event)
+    def process_accumulators_sync_event(self, event: pandas.Series) -> None:
+        # The order of the values in the `data` column is: `token`, `lending_accumulator`, `debt_accumulator`.
+        # Example: https://starkscan.co/event/0x029628b89875a98c1c64ae206e7eb65669cb478a24449f3485f5e98aba6204dc_0.
+        token = src.constants.get_symbol(event["data"][0])
+        lending_accumulator = decimal.Decimal(str(int(event["data"][1], base=16))) / decimal.Decimal("1e27")
+        debt_accumulator = decimal.Decimal(str(int(event["data"][2], base=16))) / decimal.Decimal("1e27")
+        self.accumulators[token].lending_accumulator = lending_accumulator
+        self.accumulators[token].debt_accumulator = debt_accumulator
 
     def process_deposit_event(self, event: pandas.Series) -> None:
-        # The order of the arguments is: `user`, `token`, `face_amount`.
-        user = event["data"][0]
-        token = src.constants.get_symbol(event["data"][1])
-        # TODO: divide by something or store like this?
-        # TODO: any better conversion to decimals?
-        face_amount = decimal.Decimal(str(int(event["data"][2], base=16)))
-        # TODO: sanity checks/asserts?
-        raw_amount = face_amount / \
-            self.accumulator_states[token].lending_accumulator
-        self.user_states[user].deposit(token=token, raw_amount=raw_amount)
-        # TODO
-        if user == self.USER:
-            print("dep", token, raw_amount)
-
-    def process_withdrawal_event(self, event: pandas.Series) -> None:
-        # The order of the arguments is: `user`, `token`, `face_amount`.
+        # The order of the values in the `data` column is: `user`, `token`, `face_amount`.
+        # Example: https://starkscan.co/event/0x036185142bb51e2c1f5bfdb1e6cef81f8ea87fd4d777990014249bf5435fd31b_3.
         user = event["data"][0]
         token = src.constants.get_symbol(event["data"][1])
         face_amount = decimal.Decimal(str(int(event["data"][2], base=16)))
-        raw_amount = face_amount / \
-            self.accumulator_states[token].lending_accumulator
-        self.user_states[user].withdrawal(token=token, raw_amount=raw_amount)
-        # TODO
-        if user == self.USER:
-            print("wit", token, raw_amount)
+        raw_amount = face_amount / self.accumulators[token].lending_accumulator
+        self.loan_entities[user].deposit.increase_value(token=token, amount=raw_amount)
+        if self.loan_entities[user].collateral_enabled[token]:
+            self.loan_entities[user].collateral.increase_value(token=token, amount=raw_amount)
+        if user == self.verbose_user:
+            logging.info(
+                'In block number = {}, raw amount = {} of token = {} was deposited.'.format(
+                    event["block_number"],
+                    raw_amount,
+                    token,
+                )
+            )
 
     def process_collateral_enabled_event(self, event: pandas.Series) -> None:
-        # The order of the arguments is: `user`, `token`.
+        # The order of the values in the `data` column is: `user`, `token`.
+        # Example: https://starkscan.co/event/0x036185142bb51e2c1f5bfdb1e6cef81f8ea87fd4d777990014249bf5435fd31b_6.
         user = event["data"][0]
         token = src.constants.get_symbol(event["data"][1])
-        self.user_states[user].collateral_enabled(token=token)
-        # TODO
-        if user == self.USER:
-            print("colena", token)
+        self.loan_entities[user].collateral_enabled[token] = True
+        self.loan_entities[user].collateral.rewrite_value(
+            token=token,
+            amount=self.loan_entities[user].deposit.token_amounts[token],
+        )
+        if user == self.verbose_user:
+            logging.info(
+                'In block number = {}, collateral was enabled for token = {}.'.format(
+                    event["block_number"],
+                    token,
+                )
+            )
 
     def process_collateral_disabled_event(self, event: pandas.Series) -> None:
-        # The order of the arguments is: `user`, `token`.
+        # The order of the values in the `data` column is: `user`, `token`.
+        # Example: https://starkscan.co/event/0x0049b445bed84e0118795dbd22d76610ccac2ad626f8f04a1fc7e38113c2afe7_0.
         user = event["data"][0]
         token = src.constants.get_symbol(event["data"][1])
-        self.user_states[user].collateral_disabled(token=token)
-        # TODO
-        if user == self.USER:
-            print("coldis", token)
+        self.loan_entities[user].collateral_enabled[token] = False
+        self.loan_entities[user].collateral.rewrite_value(token=token, amount=decimal.Decimal("0"))
+        if user == self.verbose_user:
+            logging.info(
+                'In block number = {}, collateral was disabled for token = {}.'.format(
+                    event["block_number"],
+                    token,
+                )
+            )
+
+    def process_withdrawal_event(self, event: pandas.Series) -> None:
+        # The order of the values in the `data` column is: `user`, `token`, `face_amount`.
+        # Example: https://starkscan.co/event/0x03472cf7511687a55bc7247f8765c4bbd2c18b70e09b2a10a77c61f567bfd2cb_4.
+        user = event["data"][0]
+        token = src.constants.get_symbol(event["data"][1])
+        face_amount = decimal.Decimal(str(int(event["data"][2], base=16)))
+        raw_amount = face_amount / self.accumulators[token].lending_accumulator
+        self.loan_entities[user].deposit.increase_value(token=token, amount=-raw_amount)
+        if self.loan_entities[user].collateral_enabled[token]:
+            self.loan_entities[user].collateral.increase_value(token=token, amount=-raw_amount)
+        if user == self.verbose_user:
+            logging.info(
+                'In block number = {}, raw amount = {} of token = {} was withdrawn.'.format(
+                    event["block_number"],
+                    raw_amount,
+                    token,
+                )
+            )
 
     def process_borrowing_event(self, event: pandas.Series) -> None:
-        # The order of the arguments is: `user`, `token`, `raw_amount`, `face_amount`.
+        # The order of the values in the `data` column is: `user`, `token`, `raw_amount`, `face_amount`.
+        # Example: https://starkscan.co/event/0x076b1615750528635cf0b63ca80986b185acbd20fa37f0f2b5368a4f743931f8_3.
         user = event["data"][0]
         token = src.constants.get_symbol(event["data"][1])
         raw_amount = decimal.Decimal(str(int(event["data"][2], base=16)))
-        face_amount = decimal.Decimal(
-            str(int(event["data"][3], base=16))
-        )  # TODO: relevant?
-        self.user_states[user].borrowing(
-            token=token,
-            raw_amount=raw_amount,
-            face_amount=face_amount,
-        )
-        # TODO
-        if user == self.USER:
-            print("bor", token, raw_amount)
+        self.loan_entities[user].debt.increase_value(token=token, amount=raw_amount)
+        if user == self.verbose_user:
+            logging.info(
+                'In block number = {}, raw amount = {} of token = {} was borrowed.'.format(
+                    event["block_number"],
+                    raw_amount,
+                    token,
+                )
+            )
 
     def process_repayment_event(self, event: pandas.Series) -> None:
-        # The order of the arguments is: `repayer`, `beneficiary`, `token`, `raw_amount`,
+        # The order of the values in the `data` column is: `repayer`, `beneficiary`, `token`, `raw_amount`, 
         # `face_amount`.
-        repayer = event["data"][0]  # TODO: relevant?
-        beneficiary = event["data"][1]
+        # Example: https://starkscan.co/event/0x06fa3dd6e12c9a66aeacd2eefa5a2ff2915dd1bb4207596de29bd0e8cdeeae66_5.
+        user = event["data"][1]
         token = src.constants.get_symbol(event["data"][2])
         raw_amount = decimal.Decimal(str(int(event["data"][3], base=16)))
-        face_amount = decimal.Decimal(
-            str(int(event["data"][4], base=16))
-        )  # TODO: relevant?
-        self.user_states[beneficiary].repayment(
-            token=token,
-            raw_amount=raw_amount,
-            face_amount=face_amount,
-        )
-        # TODO
-        if beneficiary == self.USER:
-            print("rep", token, raw_amount)
+        self.loan_entities[user].debt.increase_value(token=token, amount=-raw_amount)
+        if user == self.verbose_user:
+            logging.info(
+                'In block number = {}, raw amount = {} of token = {} was repayed.'.format(
+                    event["block_number"],
+                    raw_amount,
+                    token,
+                )
+            )
 
     def process_liquidation_event(self, event: pandas.Series) -> None:
-        # The order of the arguments is: `liquidator`, `user`, `debt_token`, `debt_raw_amount`,
-        # `debt_face_amount`, `collateral_token`, `collateral_amount`.
-        liquidator = event["data"][0]  # TODO: relevant?
+        # The order of the arguments is: `liquidator`, `user`, `debt_token`, `debt_raw_amount`, `debt_face_amount`,
+        # `collateral_token`, `collateral_amount`.
+        # Example: https://starkscan.co/event/0x07b8ec709df1066d9334d56b426c45440ca1f1bb841285a5d7b33f9d1008f256_5.
         user = event["data"][1]
         debt_token = src.constants.get_symbol(event["data"][2])
         debt_raw_amount = decimal.Decimal(str(int(event["data"][3], base=16)))
-        debt_face_amount = decimal.Decimal(
-            str(int(event["data"][4], base=16))
-        )  # TODO: relevant?
         collateral_token = src.constants.get_symbol(event["data"][5])
-        collateral_amount = decimal.Decimal(
-            str(int(event["data"][6], base=16)))
-        collateral_raw_amount = (
-            collateral_amount
-            / self.accumulator_states[collateral_token].lending_accumulator
-        )
-        self.user_states[user].liquidation(
-            debt_token=debt_token,
-            debt_raw_amount=debt_raw_amount,
-            debt_face_amount=debt_face_amount,
-            collateral_token=collateral_token,
-            collateral_raw_amount=collateral_raw_amount,
-        )
-        # TODO
-        if user == self.USER:
-            print(
-                "liq",
-                debt_token,
-                debt_raw_amount,
-                collateral_token,
-                collateral_raw_amount,
-            )
-
-    def process_accumulators_sync_event(self, event: pandas.Series) -> None:
-        # The order of the arguments is: `token`, `lending_accumulator`, `debt_accumulator`.
-        token = src.constants.get_symbol(event["data"][0])
-        lending_accumulator = decimal.Decimal(
-            str(int(event["data"][1], base=16)))
-        debt_accumulator = decimal.Decimal(str(int(event["data"][2], base=16)))
-        self.accumulator_states[token].accumulators_sync(
-            lending_accumulator=lending_accumulator,
-            debt_accumulator=debt_accumulator,
-        )
-
-    def process_transfer_event(self, event: pandas.Series) -> None:
-        # The order of the arguments is: `from_`, `to`, `value`.
-        empty_address = "0x0"
-        # token contract emitted this event
-        ztoken = src.constants.get_symbol(event["from_address"])
-        # zTokens share accumulator value with token
-        token = src.constants.ztoken_to_token(ztoken)
-        from_ = event["data"][0]
-        to = event["data"][1]
-        value = decimal.Decimal(str(int(event["data"][2], base=16)))
-        raw_amount = value / self.accumulator_states[token].lending_accumulator
-
-        # TODO
-        if from_ == self.USER or to == self.USER:
-            print("tra", token, ztoken, value, raw_amount)
-
-        if from_ != empty_address:
-            self.user_states[from_].withdrawal(
-                token=ztoken, raw_amount=raw_amount)
-        if to != empty_address:
-            self.user_states[to].deposit(token=ztoken, raw_amount=raw_amount)
-
-
-def compute_risk_adjusted_collateral_usd(
-    user_state: UserState,
-    prices: Dict[str, decimal.Decimal],
-) -> decimal.Decimal:
-    return sum(
-        token_state.collateral_enabled
-        * token_state.deposit
-        * src.constants.COLLATERAL_FACTORS[token]
-        * prices[token]
-        # TODO: perform the conversion using TOKEN_DECIMAL_FACTORS sooner (in `UserTokenState`?)?
-        / src.constants.TOKEN_DECIMAL_FACTORS[token]
-        for token, token_state in user_state.token_states.items()
-        if not token_state.z_token
-    )
-
-
-def compute_borrowings_usd(
-    user_state: UserState,
-    prices: Dict[str, decimal.Decimal],
-) -> decimal.Decimal:
-    return sum(
-        token_state.borrowings * prices[token]
-        # TODO: perform the conversion using TOKEN_DECIMAL_FACTORS sooner (in `UserTokenState`?)?
-        / src.constants.TOKEN_DECIMAL_FACTORS[token]
-        for token, token_state in user_state.token_states.items()
-        if not token_state.z_token
-    )
-
-
-def compute_health_factor(
-    risk_adjusted_collateral_usd: decimal.Decimal,
-    borrowings_usd: decimal.Decimal,
-) -> decimal.Decimal:
-    if borrowings_usd == decimal.Decimal("0"):
-        # TODO: assumes collateral is positive
-        return decimal.Decimal("Inf")
-
-    health_factor = risk_adjusted_collateral_usd / borrowings_usd
-    # TODO: enable?
-    #     if health_factor < decimal.Decimal('0.9'):
-    #         print(f'Suspiciously low health factor = {health_factor} of user = {user}, investigate.')
-    # TODO: too many loans eligible for liquidation?
-    #     elif health_factor < decimal.Decimal('1'):
-    #         print(f'Health factor = {health_factor} of user = {user} eligible for liquidation.')
-    return health_factor
-
-
-# TODO
-# TODO: compute_health_factor, etc. should be methods of class UserState
-def compute_borrowings_to_be_liquidated(
-    risk_adjusted_collateral_usd: decimal.Decimal,
-    borrowings_usd: decimal.Decimal,
-    borrowings_token_price: decimal.Decimal,
-    collateral_token_collateral_factor: decimal.Decimal,
-    collateral_token_liquidation_bonus: decimal.Decimal,
-) -> decimal.Decimal:
-    # TODO: commit the derivation of the formula in a document?
-    numerator = borrowings_usd - risk_adjusted_collateral_usd
-    denominator = borrowings_token_price * (
-        1
-        - collateral_token_collateral_factor *
-        (1 + collateral_token_liquidation_bonus)
-    )
-    return numerator / denominator
-
-
-def compute_max_liquidated_amount(
-    state: State,
-    prices: Dict[str, decimal.Decimal],
-    borrowings_token: str,
-) -> decimal.Decimal:
-    liquidated_borrowings_amount = decimal.Decimal("0")
-    for user, user_state in state.user_states.items():
-        # TODO: do this?
-        # Filter out users who borrowed the token of interest.
-        borrowings_tokens = {
-            token_state.token
-            for token_state in user_state.token_states.values()
-            if token_state.borrowings > decimal.Decimal("0")
-        }
-        if not borrowings_token in borrowings_tokens:
-            continue
-
-        # Filter out users with health below 1.
-        risk_adjusted_collateral_usd = compute_risk_adjusted_collateral_usd(
-            user_state=user_state,
-            prices=prices,
-        )
-        borrowings_usd = compute_borrowings_usd(
-            user_state=user_state,
-            prices=prices,
-        )
-        health_factor = compute_health_factor(
-            risk_adjusted_collateral_usd=risk_adjusted_collateral_usd,
-            borrowings_usd=borrowings_usd,
-        )
-        # TODO
-        if health_factor >= decimal.Decimal("1") or health_factor <= decimal.Decimal(
-            "0"
-        ):
-            #         if health_factor >= decimal.Decimal('1'):
-            continue
-
-        # TODO: find out how much of the borrowings_token will be liquidated
-        collateral_tokens = {
-            token_state.token
-            for token_state in user_state.token_states.values()
-            if token_state.deposit * token_state.collateral_enabled
-            != decimal.Decimal("0")
-        }
-        # TODO: choose the most optimal collateral_token to be liquidated .. or is the liquidator indifferent?
-        #         print(user, collateral_tokens, health_factor, borrowings_usd, risk_adjusted_collateral_usd)
-        collateral_token = list(collateral_tokens)[0]
-        liquidated_borrowings_amount += compute_borrowings_to_be_liquidated(
-            risk_adjusted_collateral_usd=risk_adjusted_collateral_usd,
-            borrowings_usd=borrowings_usd,
-            borrowings_token_price=prices[borrowings_token],
-            collateral_token_collateral_factor=src.constants.COLLATERAL_FACTORS[
-                collateral_token],
-            collateral_token_liquidation_bonus=src.constants.LIQUIDATION_BONUSES[
-                collateral_token],
-        )
-    return liquidated_borrowings_amount
-
-
-# TODO: this function is general for all protocols
-def decimal_range(start: decimal.Decimal, stop: decimal.Decimal, step: decimal.Decimal):
-    while start < stop:
-        yield start
-        start += step
-
-
-def simulate_liquidations_under_absolute_price_change(
-    prices: src.swap_liquidity.Prices,
-    collateral_token: str,
-    collateral_token_price: decimal.Decimal,
-    state: State,
-    borrowings_token: str,
-) -> decimal.Decimal:
-    changed_prices = copy.deepcopy(prices.prices)
-    changed_prices[collateral_token] = collateral_token_price
-    return compute_max_liquidated_amount(
-        state=state, prices=changed_prices, borrowings_token=borrowings_token
-    )
-
-
-def simulate_liquidations_under_price_change(
-    prices: src.swap_liquidity.Prices,
-    collateral_token: str,
-    collateral_token_price_multiplier: decimal.Decimal,
-    state: State,
-    borrowings_token: str,
-) -> decimal.Decimal:
-    changed_prices = copy.deepcopy(prices.prices)
-    changed_prices[collateral_token] *= collateral_token_price_multiplier
-    return compute_max_liquidated_amount(
-        state=state, prices=changed_prices, borrowings_token=borrowings_token
-    )
-
-
-# TODO: this function is general for all protocols
-def get_amm_supply_at_price(
-    collateral_token: str,
-    collateral_token_price: decimal.Decimal,
-    borrowings_token: str,
-    amm: src.swap_liquidity.SwapAmm,
-) -> decimal.Decimal:
-    return amm.get_pool(collateral_token, borrowings_token).supply_at_price(
-        borrowings_token, collateral_token_price
-    )
-
-
-def update_graph_data():
-    params = streamlit.session_state["parameters"]
-
-    data = pandas.DataFrame(
-        {
-            "collateral_token_price": [
-                x
-                for x in decimal_range(
-                    # TODO: make it dependent on the collateral token .. use prices.prices[COLLATERAL_TOKEN]
-                    start=decimal.Decimal("1000"),
-                    stop=decimal.Decimal("3000"),
-                    # TODO: make it dependent on the collateral token
-                    step=decimal.Decimal("50"),
+        collateral_face_amount = decimal.Decimal(str(int(event["data"][6], base=16)))
+        collateral_raw_amount = (collateral_face_amount / self.accumulators[collateral_token].lending_accumulator)
+        self.loan_entities[user].debt.increase_value(token=debt_token, amount=-debt_raw_amount)
+        self.loan_entities[user].deposit.increase_value(token=collateral_token, amount=-collateral_raw_amount)
+        if self.loan_entities[user].collateral_enabled[collateral_token]:
+            self.loan_entities[user].collateral.increase_value(token=collateral_token, amount=-collateral_raw_amount)
+        if user == self.verbose_user:
+            logging.info(
+                'In block number = {}, debt of raw amount = {} of token = {} and collateral of raw amount = {} of '
+                'token = {} were liquidated.'.format(
+                    event["block_number"],
+                    debt_raw_amount,
+                    debt_token,
+                    collateral_raw_amount,
+                    collateral_token,
                 )
-            ]
-        },
-    )
-    # TOOD: needed?
-    # data['collateral_token_price_multiplier'] = data['collateral_token_price_multiplier'].map(decimal.Decimal)
-    data["max_borrowings_to_be_liquidated"] = data["collateral_token_price"].apply(
-        lambda x: simulate_liquidations_under_absolute_price_change(
-            prices=streamlit.session_state.prices,
-            collateral_token=params["COLLATERAL_TOKEN"],
-            collateral_token_price=x,
-            state=streamlit.session_state.state,
-            borrowings_token=params["BORROWINGS_TOKEN"],
-        )
-    )
-
-    # TODO
-    data["max_borrowings_to_be_liquidated_at_interval"] = (
-        data["max_borrowings_to_be_liquidated"].diff().abs()
-    )
-    # TODO: drops also other NaN, if there are any
-    data.dropna(inplace=True)
-
-    # Setup the AMM.
-    swap_amms = asyncio.run(src.swap_liquidity.SwapAmm().init())
-
-    data["amm_borrowings_token_supply"] = data["collateral_token_price"].apply(
-        lambda x: get_amm_supply_at_price(
-            collateral_token=streamlit.session_state["parameters"]["COLLATERAL_TOKEN"],
-            collateral_token_price=x,
-            borrowings_token=streamlit.session_state["parameters"]["BORROWINGS_TOKEN"],
-            amm=swap_amms,
-        )
-    )
-
-    streamlit.session_state["data"] = data
-
-
-def load_data():
-    data = {}
-    for pair in src.constants.PAIRS:
-        data[pair] = pandas.read_csv(f"data/{pair}.csv", compression="gzip")
-    loans = pandas.read_csv("data/loans.csv", compression="gzip")
-    with open("data/last_update.json", "r") as f:
-        last_update = json.load(f)
-    last_updated = last_update["timestamp"]
-    last_block_number = last_update["block_number"]
-    return (
-        data,
-        loans,
-        last_updated,
-        last_block_number,
-    )
-
-
-def compute_number_of_users(
-    state: State,
-) -> int:
-    return sum(
-        any(
-            token_state.deposit > decimal.Decimal('0')
-            or token_state.borrowings > decimal.Decimal('0')
-            for token_state in user_state.token_states.values()
-            if not token_state.z_token
-        )
-        for user_state in state.user_states.values()
-    )
-
-
-def compute_number_of_stakers(
-    state: State,
-) -> int:
-    return sum(
-        any(token_state.deposit > decimal.Decimal('0') for token_state in user_state.token_states.values() if not token_state.z_token)
-        for user_state in state.user_states.values()
-    )
-
-
-def compute_number_of_borrowers(
-    state: State,
-) -> int:
-    return sum(
-        any(token_state.borrowings > decimal.Decimal('0') for token_state in user_state.token_states.values() if not token_state.z_token)
-        for user_state in state.user_states.values()
-    )
-
-
-def compute_standardized_health_factor(
-    risk_adjusted_collateral_usd: decimal.Decimal,
-    borrowings_usd: decimal.Decimal,
-) -> decimal.Decimal:
-    # Compute the value of collateral at which the user/loan can be liquidated.
-    collateral_usd_threshold = borrowings_usd
-    if collateral_usd_threshold == decimal.Decimal("0"):
-        # TODO: assumes collateral is positive
-        return decimal.Decimal("Inf")
-    return risk_adjusted_collateral_usd / collateral_usd_threshold
+            )
