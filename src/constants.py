@@ -1,5 +1,5 @@
 import decimal
-import enum
+
 
 
 # TODO: Introduce other pairs.
@@ -17,6 +17,7 @@ PAIRS = [
 
 # Source: Starkscan, e.g.
 # https://starkscan.co/token/0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7 for ETH.
+# TODO: Rename TOKEN_DECIMAL_FACTORS -> TOKENS_TO_DECIMAL_FACTORS.
 TOKEN_DECIMAL_FACTORS = {
     "ETH": decimal.Decimal("1e18"),
     "wBTC": decimal.Decimal("1e8"),
@@ -25,39 +26,6 @@ TOKEN_DECIMAL_FACTORS = {
     "USDT": decimal.Decimal("1e6"),
     "wstETH": decimal.Decimal("1e18"),
 }
-
-
-# Source: https://zklend.gitbook.io/documentation/using-zklend/technical/asset-parameters.
-COLLATERAL_FACTORS = {
-    "ETH": decimal.Decimal("0.80"),
-    "wBTC": decimal.Decimal("0.70"),
-    "USDC": decimal.Decimal("0.80"),
-    "DAI": decimal.Decimal("0.70"),
-    "USDT": decimal.Decimal("0.70"),
-    "wstETH": decimal.Decimal("0.80"),
-}
-
-
-# Source: https://zklend.gitbook.io/documentation/using-zklend/technical/asset-parameters.
-LIQUIDATION_BONUSES = {
-    "ETH": decimal.Decimal("0.10"),
-    "wBTC": decimal.Decimal("0.15"),
-    "USDC": decimal.Decimal("0.10"),
-    "DAI": decimal.Decimal("0.10"),
-    "USDT": decimal.Decimal("0.10"),
-    "wstETH": decimal.Decimal("0.10"),
-}
-
-
-class Protocol(enum.Enum):
-    HASHSTACK = "0x03dcf5c72ba60eb7b2fe151032769d49dd3df6b04fa3141dffd6e2aa162b7a6e"
-    ZKLEND = "0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05"
-
-
-class Table(enum.Enum):
-    EVENTS = "starkscan_events"
-    BLOCKS = "blocks"
-    PRICES = "oracle_prices"
 
 
 symbol_address_map = {
