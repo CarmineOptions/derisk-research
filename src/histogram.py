@@ -1,14 +1,45 @@
+from typing import Dict
+import decimal
+
 import pandas
 import plotly.express
 import streamlit
 
+import src.constants
+import src.helpers
+
+
+
+def get_histogram_data(
+    state: src.state.State,
+    prices: Dict[str, decimal.Decimal],
+    save_data: bool = False,
+) -> pandas.DataFrame:
+    data = [
+        {
+            "token": token,
+            "borrowings": token_amount / src.constants.TOKEN_DECIMAL_FACTORS[token] * prices[token],
+        }
+        for loan_entity in state.loan_entities.values()
+        for token, token_amount in loan_entity.debt.token_amounts.items()
+    ]
+    data = pandas.DataFrame(data)
+    if save_data:
+        # TODO: Save data to Google Storage.
+        # TODO: Save to parquet.
+        directory = src.helpers.get_directory(state=state)
+        data.to_csv(f"{directory}/histogram.csv", index=False, compression='gzip')
+    return data
+
 
 def load_histogram_data():
-    zklend = pandas.read_csv("data/histogram.csv", compression="gzip")
+    zklend = pandas.read_csv("zklend_data/histogram.csv", compression="gzip")
     hashstack = pandas.read_csv("hashstack_data/histogram.csv", compression="gzip")
+    # TODO: Add Nostra and Nostra uncapped.
     return (zklend, hashstack)
 
 
+# TODO: Rename borrowings -> debt_usd.
 def visualization(protocols):
     (zklend, hashstack) = load_histogram_data()
     values = streamlit.slider(
