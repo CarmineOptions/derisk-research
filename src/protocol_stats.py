@@ -116,7 +116,7 @@ def get_collateral_stats(
             collateral = sum(
                 loan_entity.collateral.token_amounts[token]
                 for loan_entity in state.loan_entities.values()
-            ) / src.constants.TOKEN_DECIMAL_FACTORS['ETH']
+            ) / src.constants.TOKEN_DECIMAL_FACTORS[token]
             token_collaterals[token] = round(collateral, 4)
         data.append(
             {
@@ -152,7 +152,7 @@ def get_debt_stats(
             debt = sum(
                 loan_entity.debt.token_amounts[token]
                 for loan_entity in state.loan_entities.values()
-            ) / src.constants.TOKEN_DECIMAL_FACTORS['ETH']
+            ) / src.constants.TOKEN_DECIMAL_FACTORS[token]
             token_debts[token] = round(debt, 4)
         data.append(
             {
