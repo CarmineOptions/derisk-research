@@ -3,15 +3,15 @@ import itertools
 import json
 import time
 
-import src.constants
+import src.settings
 import src.hashstack
-import src.helpers
 import src.histogram
 import src.loans_table
 import src.main_chart
 import src.nostra
 import src.nostra_uncapped
 import src.persistent_state
+import src.protocol_parameters
 import src.protocol_stats
 import src.swap_liquidity
 import src.zklend
@@ -54,14 +54,15 @@ def update_data(zklend_state):
 
     t_swap = time.time()
 
-    swap_amms = asyncio.run(src.swap_liquidity.SwapAmm().init())
+    swap_amms = src.swap_liquidity.SwapAmm()
+    asyncio.run(swap_amms.init())
 
     print(f"swap in {time.time() - t_swap}s", flush=True)
 
     t2 = time.time()
 
     states = [zklend_state, hashstack_state, nostra_state, nostra_uncapped_state]
-    for pair, state in itertools.product(src.constants.PAIRS, states):
+    for pair, state in itertools.product(src.settings.PAIRS, states):
         # TODO: Decipher `pair` in a smarter way.
         collateral_token, borrowings_token = pair.split("-")
         _ = src.main_chart.get_main_chart_data(
@@ -81,7 +82,7 @@ def update_data(zklend_state):
 
     loan_stats = {}
     for state in states:
-        protocol = src.helpers.get_protocol(state=state)
+        protocol = src.protocol_parameters.get_protocol(state=state)
         loan_stats[protocol] = src.loans_table.get_loans_table_data(state=state, prices=prices.prices, save_data=True)
 
     general_stats = src.protocol_stats.get_general_stats(states=states, loan_stats=loan_stats, save_data=True)
