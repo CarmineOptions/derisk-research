@@ -1,14 +1,10 @@
-from typing import Iterator, Dict, List, Tuple
+from typing import Iterator, Dict, List, Optional, Tuple
 import decimal
 
 import pandas
 
 import src.constants
 import src.db
-import src.hashstack
-import src.nostra
-import src.nostra_uncapped
-import src.zklend
 
 
 
@@ -39,6 +35,52 @@ def get_events(
     return events.set_index("id")
 
 
+class TokenValues:
+    def __init__(self, values: Optional[Dict[str, decimal.Decimal]] = None, init_value: decimal.Decimal = decimal.Decimal("0")) -> None:
+        if values:
+            assert set(values.keys()) == set(src.constants.TOKEN_SETTINGS.keys())
+            self.values = values
+        else:
+            self.values: Dict[str, decimal.Decimal] = {
+                token: init_value
+                for token in src.constants.TOKEN_SETTINGS
+            }
+
+
+class Portfolio(TokenValues):
+    """ A class that describes holdings of tokens. """
+
+    # TODO: Find a better solution to fix the discrepancies.
+    # TODO: Use TokenValues?
+    MAX_ROUNDING_ERRORS: Dict[str, decimal.Decimal] = {
+        "ETH": decimal.Decimal("0.5") * decimal.Decimal("1e13"),
+        "wBTC": decimal.Decimal("1e2"),
+        "USDC": decimal.Decimal("1e4"),
+        "DAI": decimal.Decimal("1e16"),
+        "USDT": decimal.Decimal("1e4"),
+        "wstETH": decimal.Decimal("0.5") * decimal.Decimal("1e13"),
+    }
+
+    def __init__(self) -> None:
+        super().__init__(init_value=decimal.Decimal("0"))
+
+    def round_small_value_to_zero(self, token: str):
+        if (
+            -self.MAX_ROUNDING_ERRORS[token]
+            < self.values[token]
+            < self.MAX_ROUNDING_ERRORS[token]
+        ):
+            self.values[token] = decimal.Decimal("0")
+
+    def increase_value(self, token: str, value: decimal.Decimal):
+        self.values[token] += value
+        self.round_small_value_to_zero(token=token)
+
+    def set_value(self, token: str, value: decimal.Decimal):
+        self.values[token] = value
+        self.round_small_value_to_zero(token=token)
+
+
 def decimal_range(start: decimal.Decimal, stop: decimal.Decimal, step: decimal.Decimal) -> Iterator[decimal.Decimal]:
     while start < stop:
         yield start
@@ -54,45 +96,6 @@ def get_collateral_token_range(collateral_token: str) -> List[decimal.Decimal]:
     if collateral_token == "ETH":
         return get_range(decimal.Decimal("50"), decimal.Decimal("2500"), decimal.Decimal("50"))
     return get_range(decimal.Decimal("250"), decimal.Decimal("40000"), decimal.Decimal("250"))
-
-
-def get_directory(state: src.state.State) -> str:
-    # TODO: Improve the inference.
-    # TODO: rename data -> zklend_data
-    if isinstance(state, src.zklend.ZkLendState):
-        return "zklend_data"
-    if isinstance(state, src.hashstack.HashstackState):
-        return "hashstack_data"
-    if isinstance(state, src.nostra.NostraState) and not isinstance(state, src.nostra_uncapped.NostraUncappedState):
-        return "nostra_data"
-    if isinstance(state, src.nostra_uncapped.NostraUncappedState):
-        return "nostra_uncapped_data"
-    raise ValueError
-
-
-def get_protocol(state: src.state.State) -> str:
-    # TODO: Improve the inference.
-    if isinstance(state, src.zklend.ZkLendState):
-        return "zkLend"
-    if isinstance(state, src.hashstack.HashstackState):
-        return "Hashstack"
-    if isinstance(state, src.nostra.NostraState) and not isinstance(state, src.nostra_uncapped.NostraUncappedState):
-        return "Nostra"
-    if isinstance(state, src.nostra_uncapped.NostraUncappedState):
-        return "Nostra uncapped"
-    raise ValueError
-
-
-def get_supply_function_call_parameters(protocol: str, token: str) -> Tuple[str, str]:
-    if protocol == 'zkLend':
-        return src.zklend.SUPPLY_ADRESSES[token], 'felt_total_supply'
-    if protocol in {'Nostra', 'Nostra uncapped'}:
-        return src.nostra.SUPPLY_ADRESSES[token], 'totalSupply'
-    raise ValueError
-
-
-def get_hashstack_supply_parameters(token: str) -> Tuple[str, str]:
-    return src.hashstack.SUPPLY_TOKEN_ADRESSES[token], src.hashstack.SUPPLY_HOLDER_ADRESSES[token]
 
 
 def load_data(protocol: str) -> Tuple[Dict[str, pandas.DataFrame], pandas.DataFrame, pandas.DataFrame]:
