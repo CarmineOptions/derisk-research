@@ -1,9 +1,11 @@
-# TODO: rename to `swap_amm.py`
+from typing import Optional
+import dataclasses
 import decimal
 import requests
 
 import src.blockchain_call
-import src.constants
+import src.helpers
+import src.settings
 
 
 class Prices:
@@ -17,7 +19,7 @@ class Prices:
             ("wrapped-steth", "wstETH"),
        ]
         self.vs_currency = "usd"
-        self.prices = {}
+        self.prices: src.helpers.TokenValues = src.helpers.TokenValues()
         self.get_prices()
 
     def get_prices(self):
@@ -30,7 +32,7 @@ class Prices:
             data = response.json()
             for token in self.tokens:
                 (id, symbol) = token
-                self.prices[symbol] = decimal.Decimal(
+                self.prices.values[symbol] = decimal.Decimal(
                     data[id][self.vs_currency])
         else:
             raise Exception(
@@ -38,19 +40,19 @@ class Prices:
             )
 
     def get_by_symbol(self, symbol):
-        symbol = src.constants.ztoken_to_token(symbol)
-        if symbol in self.prices:
-            return self.prices[symbol]
+        symbol = src.helpers.ztoken_to_token(symbol)
+        if symbol in self.prices.values:
+            return self.prices.values[symbol]
         raise Exception(f"Unknown symbol {symbol}")
 
     def to_dollars(self, n, symbol):
-        symbol = src.constants.ztoken_to_token(symbol)
+        symbol = src.helpers.ztoken_to_token(symbol)
         try:
-            price = self.prices[symbol]
-            decimals = src.constants.get_decimals(symbol)
+            price = self.prices.values[symbol]
+            decimal_factor = src.settings.TOKEN_SETTINGS[symbol].decimal_factor
         except:
             raise Exception(f"Unknown symbol {symbol}")
-        return n / 10**decimals * price
+        return n / decimal_factor * price
 
     def to_dollars_pretty(self, n, symbol):
         v = self.to_dollars(n, symbol)
@@ -59,13 +61,11 @@ class Prices:
         return f"${v:.5f}"
 
 
-class Token:
-    def __init__(self, symbol) -> None:
-        self.symbol = symbol
-        self.address = src.constants.get_address(self.symbol)
-        self.decimals = src.constants.get_decimals(self.symbol)
-        self.balance_base = None
-        self.balance_converted = None
+@dataclasses.dataclass
+class SwapAmmToken(src.settings.TokenSettings):
+    # TODO: Improve this.
+    balance_base: Optional[float] = None
+    balance_converted: Optional[float] = None
 
 
 class Pair:
@@ -78,8 +78,16 @@ class Pool(Pair):
     def __init__(self, symbol1, symbol2, addresses, myswap_id):
         self.id = self.tokens_to_id(symbol1, symbol2)
         self.addresses = addresses
-        t1 = Token(symbol1)
-        t2 = Token(symbol2)
+        t1 = SwapAmmToken(
+            symbol=src.settings.TOKEN_SETTINGS[symbol1].symbol,
+            decimal_factor=src.settings.TOKEN_SETTINGS[symbol1].decimal_factor,
+            address=src.settings.TOKEN_SETTINGS[symbol1].address,
+        )
+        t2 = SwapAmmToken(
+            symbol=src.settings.TOKEN_SETTINGS[symbol2].symbol,
+            decimal_factor=src.settings.TOKEN_SETTINGS[symbol2].decimal_factor,
+            address=src.settings.TOKEN_SETTINGS[symbol2].address,
+        )
         setattr(self, symbol1, t1)
         setattr(self, symbol2, t2)
         self.tokens = [t1, t2]
@@ -95,14 +103,11 @@ class Pool(Pair):
             if self.myswap_id is not None:
                 balance += myswap_pool[token.symbol.upper()]
             token.balance_base = balance
-            token.balance_converted = decimal.Decimal(
-                balance) / decimal.Decimal(10**token.decimals)
+            token.balance_converted = decimal.Decimal(balance) / token.decimal_factor
 
     def update_converted_balance(self):
         for token in self.tokens:
-            token.balance_converted = decimal.Decimal(token.balance_base) / decimal.Decimal(
-                10**token.decimals
-            )
+            token.balance_converted = decimal.Decimal(token.balance_base) / token.decimal_factor
 
     def buy_tokens(self, symbol, amount):
         # assuming constant product function
@@ -126,15 +131,9 @@ class Pool(Pair):
         self.update_converted_balance()
         return tokens_paid
 
-    def supply_at_price(self, symbol: str, initial_price: decimal.Decimal):
+    def supply_at_price(self, initial_price: decimal.Decimal):
         # assuming constant product function
-        constant = (
-            decimal.Decimal(self.tokens[0].balance_base)
-            / (decimal.Decimal("10") ** decimal.Decimal(f"{self.tokens[0].decimals}"))
-        ) * (
-            decimal.Decimal(self.tokens[1].balance_base)
-            / (decimal.Decimal("10") ** decimal.Decimal(f"{self.tokens[1].decimals}"))
-        )
+        constant = self.tokens[0].balance_converted * self.tokens[1].balance_converted
         return (initial_price * constant) ** decimal.Decimal("0.5") * (
             decimal.Decimal("1") -
             decimal.Decimal("0.95") ** decimal.Decimal("0.5")
@@ -155,7 +154,8 @@ class SwapAmm(Pair):
                 "0x010884171baf1914edc28d7afb619b40a4051cfae78a094a55d230f19e944a28",  # myswap
             ],
             1
-        ).add_pool(
+        )
+        self.add_pool(
             "DAI",
             "ETH",
             [
@@ -164,7 +164,8 @@ class SwapAmm(Pair):
                 "0x017e9e62c04b50800d7c59454754fe31a2193c9c3c6c92c093f2ab0faadf8c87",  # 10kswap
             ],
             2
-        ).add_pool(
+        )
+        self.add_pool(
             "ETH",
             "USDT",
             [
@@ -173,14 +174,16 @@ class SwapAmm(Pair):
                 "0x05900cfa2b50d53b097cb305d54e249e31f24f881885aae5639b0cd6af4ed298",  # 10kswap
             ],
             4
-        ).add_pool(
+        )
+        self.add_pool(
             "wBTC",
             "ETH",
             [
                 "0x0260e98362e0949fefff8b4de85367c035e44f734c9f8069b6ce2075ae86b45c",  # jediswap
                 "0x02a6e0ecda844736c4803a385fb1372eff458c365d2325c7d4e08032c7a908f3",  # 10kswap
             ]
-        ).add_pool(
+        )
+        self.add_pool(
             "wBTC",
             "USDC",
             [
@@ -188,21 +191,24 @@ class SwapAmm(Pair):
                 "0x022e45d94d5c6c477d9efd440aad71b2c02a5cd5bed9a4d6da10bb7c19fd93ba",  # 10kswap
             ],
             3
-        ).add_pool(
+        )
+        self.add_pool(
             "wBTC",
             "USDT",
             [
                 "0x044d13ad98a46fd2322ef2637e5e4c292ce8822f47b7cb9a1d581176a801c1a0",  # jediswap
                 "0x050031010bcee2f43575b3afe197878e064e1a03c12f2ff437f29a2710e0b6ef",  # 10kswap
             ]
-        ).add_pool(
+        )
+        self.add_pool(
             "DAI",
             "wBTC",
             [
                 "0x039c183c8e5a2df130eefa6fbaa3b8aad89b29891f6272cb0c90deaa93ec6315",  # jediswap
                 "0x00f9d8f827734f5fd54571f0e78398033a3c1f1074a471cd4623f2aa45163718",  # 10kswap
             ]
-        ).add_pool(
+        )
+        self.add_pool(
             "DAI",
             "USDC",
             [
@@ -211,14 +217,16 @@ class SwapAmm(Pair):
                 "0x02e767b996c8d4594c73317bb102c2018b9036aee8eed08ace5f45b3568b94e5",  # 10kswap
             ],
             6
-        ).add_pool(
+        )
+        self.add_pool(
             "DAI",
             "USDT",
             [
                 "0x00f0f5b3eed258344152e1f17baf84a2e1b621cd754b625bec169e8595aea767",  # jediswap
                 "0x041d52e15e82b003bf0ad52ca58393c87abef3e00f1bf69682fd4162d5773f8f",  # 10kswap
             ]
-        ).add_pool(
+        )
+        self.add_pool(
             "USDC",
             "USDT",
             [
@@ -229,7 +237,6 @@ class SwapAmm(Pair):
             5
         )
         await self.get_balance()
-        return self
 
     async def get_balance(self):
         for pool in self.pools.values():
@@ -238,7 +245,6 @@ class SwapAmm(Pair):
     def add_pool(self, t1, t2, addresses, myswap_id=None):
         pool = Pool(t1, t2, addresses, myswap_id)
         self.pools[pool.id] = pool
-        return self
 
     def get_pool(self, t1, t2):
         try:
@@ -255,6 +261,4 @@ def get_supply_at_price(
     debt_token: str,
     swap_amms: SwapAmm,
 ) -> decimal.Decimal:
-    return swap_amms.get_pool(collateral_token, debt_token).supply_at_price(
-        debt_token, collateral_token_price
-    )
+    return swap_amms.get_pool(collateral_token, debt_token).supply_at_price(collateral_token_price)

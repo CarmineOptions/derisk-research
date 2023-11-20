@@ -13,7 +13,7 @@ import src.nostra_uncapped
 import src.persistent_state
 import src.protocol_parameters
 import src.protocol_stats
-import src.swap_liquidity
+import src.swap_amm
 import src.zklend
 
 
@@ -48,13 +48,13 @@ def update_data(zklend_state):
     print(f"updated state in {time.time() - t1}s", flush=True)
 
     t_prices = time.time()
-    prices = src.swap_liquidity.Prices()
+    prices = src.swap_amm.Prices()
 
     print(f"prices in {time.time() - t_prices}s", flush=True)
 
     t_swap = time.time()
 
-    swap_amms = src.swap_liquidity.SwapAmm()
+    swap_amms = src.swap_amm.SwapAmm()
     asyncio.run(swap_amms.init())
 
     print(f"swap in {time.time() - t_swap}s", flush=True)

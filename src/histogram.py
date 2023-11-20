@@ -1,70 +1,55 @@
-from typing import Dict
-import decimal
-
 import pandas
 import plotly.express
 import streamlit
 
-import src.constants
 import src.helpers
+import src.protocol_parameters
+import src.settings
 
 
 
 def get_histogram_data(
     state: src.state.State,
-    prices: Dict[str, decimal.Decimal],
+    prices: src.helpers.TokenValues,
     save_data: bool = False,
 ) -> pandas.DataFrame:
     data = [
         {
             "token": token,
-            "borrowings": token_amount / src.constants.TOKEN_DECIMAL_FACTORS[token] * prices[token],
+            "debt": (
+                token_amount 
+                / src.settings.TOKEN_SETTINGS[token].decimal_factor 
+                * state.debt_interest_rate_models.values[token] 
+                * prices.values[token]
+            ),
         }
         for loan_entity in state.loan_entities.values()
-        for token, token_amount in loan_entity.debt.token_amounts.items()
+        for token, token_amount in loan_entity.debt.values.items()
     ]
     data = pandas.DataFrame(data)
     if save_data:
         # TODO: Save data to Google Storage.
         # TODO: Save to parquet.
-        directory = src.helpers.get_directory(state=state)
+        directory = src.protocol_parameters.get_directory(state=state)
         data.to_csv(f"{directory}/histogram.csv", index=False, compression='gzip')
     return data
 
 
-def load_histogram_data():
-    zklend = pandas.read_csv("zklend_data/histogram.csv", compression="gzip")
-    hashstack = pandas.read_csv("hashstack_data/histogram.csv", compression="gzip")
-    # TODO: Add Nostra and Nostra uncapped.
-    return (zklend, hashstack)
-
-
-# TODO: Rename borrowings -> debt_usd.
-def visualization(protocols):
-    (zklend, hashstack) = load_histogram_data()
+def visualization(data: pandas.DataFrame):
     values = streamlit.slider(
-        "Select a range of borrowing values:", 0.0, 16000.0, (1.0, 100.0)
+        "Select a range of debt values:", 0.0, 16000.0, (1.0, 100.0)
     )
-    streamlit.write("Borrowings Range:", values)
-
-    if "zkLend" in protocols and "Hashstack" in protocols:
-        data = pandas.concat([zklend, hashstack])
-    elif "zkLend" in protocols:
-        data = zklend
-    elif "Hashstack" in protocols:
-        data = hashstack
-    else:
-        data = pandas.concat([zklend, hashstack])
+    streamlit.write("Debt Range:", values)
 
     token_data = data.copy()
-    token_data["borrowings"] = token_data["borrowings"].astype(float)
-    token_data = token_data[token_data["borrowings"] > values[0]]
-    token_data = token_data[token_data["borrowings"] < values[1]]
+    token_data["debt"] = token_data["debt"].astype(float)
+    token_data = token_data[token_data["debt"] > values[0]]
+    token_data = token_data[token_data["debt"] < values[1]]
 
     streamlit.plotly_chart(
         plotly.express.histogram(
             token_data,
-            x="borrowings",
+            x="debt",
             color="token",
             color_discrete_map={
                 "DAI": "red",
@@ -74,7 +59,7 @@ def visualization(protocols):
                 "wBTC": "orange",
                 "wstETH": "brown",
             },
-            title="Distribution of all Token Borrowings",
+            title="Distribution of all Token Debt",
             nbins=100,
         ),
         True,
@@ -82,14 +67,14 @@ def visualization(protocols):
 
     # Comparative Token Distribution (between 0 and 1)
     token_data_small = data.copy()
-    token_data_small["borrowings"] = token_data_small["borrowings"].astype(float)
-    token_data_small = token_data_small[token_data_small["borrowings"] < 1]
-    token_data_small = token_data_small[token_data_small["borrowings"] > 0]
+    token_data_small["debt"] = token_data_small["debt"].astype(float)
+    token_data_small = token_data_small[token_data_small["debt"] < 1]
+    token_data_small = token_data_small[token_data_small["debt"] > 0]
 
     streamlit.plotly_chart(
         plotly.express.histogram(
             token_data_small,
-            x="borrowings",
+            x="debt",
             color="token",
             color_discrete_map={
                 "DAI": "red",
@@ -99,7 +84,7 @@ def visualization(protocols):
                 "wBTC": "orange",
                 "wstETH": "brown",
             },
-            title="Distribution of all Token Borrowings (Between 0 and 1)",
+            title="Distribution of all Token Debt (Between 0 and 1)",
             nbins=100,
         ),
         True,
