@@ -8,10 +8,11 @@ import pandas
 import plotly.express
 import streamlit
 
-import src.constants
+import src.helpers
 import src.histogram
 import src.main_chart
-import src.swap_liquidity
+import src.settings
+import src.swap_amm
 import update_data
 
 
@@ -21,22 +22,22 @@ def main():
     (
         zklend_main_chart_data,
         zklend_histogram_data,
-        zklend_loans,
+        zklend_loans_data,
     ) = src.helpers.load_data(protocol='zkLend')
     (
         hashstack_main_chart_data,
         hashstack_histogram_data,
-        hashstack_loans,
+        hashstack_loans_data,
     ) = src.helpers.load_data(protocol='Hashstack')
     (
         nostra_main_chart_data,
         nostra_histogram_data,
-        nostra_loans,
+        nostra_loans_data,
     ) = src.helpers.load_data(protocol='Nostra')
     (
         nostra_uncapped_main_chart_data,
         nostra_uncapped_histogram_data,
-        nostra_uncapped_loans,
+        nostra_uncapped_loans_data,
     ) = src.helpers.load_data(protocol='Nostra uncapped')
 
     col1, _ = streamlit.columns([1, 3])
@@ -48,49 +49,61 @@ def main():
         )
         current_pair = streamlit.selectbox(
             label="Select collateral-loan pair:",
-            options=src.constants.PAIRS,
+            options=src.settings.PAIRS,
             index=0,
         )
 
-    data = pandas.DataFrame()
-    loans = pandas.DataFrame()
-    protocol_data_mapping = {
+    main_chart_data = pandas.DataFrame()
+    histogram_data = pandas.DataFrame()
+    loans_data = pandas.DataFrame()
+    protocol_main_chart_data_mapping = {
         'zkLend': zklend_main_chart_data[current_pair],
         'Hashstack': hashstack_main_chart_data[current_pair],
         'Nostra': nostra_main_chart_data[current_pair],
         'Nostra uncapped': nostra_uncapped_main_chart_data[current_pair],
     }
-    protocol_loans_mapping = {
-        'zkLend': zklend_loans,
-        'Hashstack': hashstack_loans,
-        'Nostra': nostra_loans,
-        'Nostra uncapped': nostra_uncapped_loans,
+    protocol_histogram_data_mapping = {
+        'zkLend': zklend_histogram_data,
+        'Hashstack': hashstack_histogram_data,
+        'Nostra': nostra_histogram_data,
+        'Nostra uncapped': nostra_uncapped_histogram_data,
+    }
+    protocol_loans_data_mapping = {
+        'zkLend': zklend_loans_data,
+        'Hashstack': hashstack_loans_data,
+        'Nostra': nostra_loans_data,
+        'Nostra uncapped': nostra_uncapped_loans_data,
     }
     for protocol in protocols:
-        protocol_data = protocol_data_mapping[protocol]
-        protocol_loans = protocol_loans_mapping[protocol]
-        if data.empty:
-            data = protocol_data
+        protocol_main_chart_data = protocol_main_chart_data_mapping[protocol]
+        protocol_histogram_data = protocol_histogram_data_mapping[protocol]
+        protocol_loans_data = protocol_loans_data_mapping[protocol]
+        if main_chart_data.empty:
+            main_chart_data = protocol_main_chart_data
         else:
-            data["liquidable_debt"] += protocol_data["liquidable_debt"]
-            data["liquidable_debt_at_interval"] += protocol_data["liquidable_debt_at_interval"]
-        if loans.empty:
-            loans = protocol_loans
+            main_chart_data["liquidable_debt"] += protocol_main_chart_data["liquidable_debt"]
+            main_chart_data["liquidable_debt_at_interval"] += protocol_main_chart_data["liquidable_debt_at_interval"]
+        if histogram_data.empty:
+            histogram_data = protocol_histogram_data
         else:
-            loans = pandas.concat([loans, protocol_loans])
+            histogram_data = pandas.concat([histogram_data, protocol_histogram_data])
+        if loans_data.empty:
+            loans_data = protocol_loans_data
+        else:
+            loans_data = pandas.concat([loans_data, protocol_loans_data])
 
     # Plot the liquidable debt against the available supply.
     collateral_token, debt_token = current_pair.split("-")
     figure = src.main_chart.get_main_chart_figure(
-        data=data.astype(float),
+        data=main_chart_data.astype(float),
         collateral_token=collateral_token,
         debt_token=debt_token,
     )
     streamlit.plotly_chart(figure_or_data=figure, use_container_width=True)
 
-    collateral_token_price = src.swap_liquidity.Prices().prices[collateral_token]
-    example_row = data[
-        data['collateral_token_price'] > decimal.Decimal("0.5") * collateral_token_price
+    collateral_token_price = src.swap_amm.Prices().prices.values[collateral_token]
+    example_row = main_chart_data[
+        main_chart_data['collateral_token_price'] > decimal.Decimal("0.5") * collateral_token_price
     ].sort_values('collateral_token_price').iloc[0]
 
     def _get_risk_level(debt_to_supply_ratio: float) -> str:
@@ -119,13 +132,13 @@ def main():
         debt_usd_lower_bound, debt_usd_upper_bound = streamlit.slider(
             label="Select range of USD borrowings",
             min_value=0,
-            max_value=int(loans["Debt (USD)"].max()),
-            value=(0, int(loans["Debt (USD)"].max())),
+            max_value=int(loans_data["Debt (USD)"].max()),
+            value=(0, int(loans_data["Debt (USD)"].max())),
         )
     streamlit.dataframe(
-        loans[
-            (loans["Health factor"] > 0)  # TODO: debug the negative HFs
-            & loans["Debt (USD)"].between(debt_usd_lower_bound, debt_usd_upper_bound)
+        loans_data[
+            (loans_data["Health factor"] > 0)  # TODO: debug the negative HFs
+            & loans_data["Debt (USD)"].between(debt_usd_lower_bound, debt_usd_upper_bound)
         ].sort_values("Health factor").iloc[:20],
         use_container_width=True,
     )
@@ -138,7 +151,7 @@ def main():
     debt_stats = pandas.read_csv("data/debt_stats.csv", compression="gzip")
 
     columns = streamlit.columns(6)
-    for column, token in zip(columns, src.constants.TOKEN_DECIMAL_FACTORS.keys()):
+    for column, token in zip(columns, src.settings.TOKEN_SETTINGS.keys()):
         with column:
             figure = plotly.express.pie(
                 collateral_stats,
@@ -166,7 +179,7 @@ def main():
             streamlit.plotly_chart(figure, True)
 
     streamlit.header("Loan size distribution")
-    src.histogram.visualization(protocols)
+    src.histogram.visualization(data=histogram_data)
 
     with open("zklend_data/last_update.json", "r") as f:
         last_update = json.load(f)
