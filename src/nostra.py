@@ -1,17 +1,20 @@
-from typing import Dict, Optional, Set, Tuple
+from typing import Optional
 import copy
+import dataclasses
 import decimal
 import logging
 
 import pandas
 
-import src.constants
 import src.helpers
+import src.settings
 import src.state
 
 
 
-ADDRESSES_TO_TOKENS: Dict[str, str] = {
+# TODO: Move to `NostraSpecificTokenSettings`?
+# Source: https://docs.nostra.finance/lend/deployed-contracts/lend-alpha#asset-contracts.
+ADDRESSES_TO_TOKENS: dict[str, str] = {
     '0x0553cea5d1dc0e0157ffcd36a51a0ced717efdadd5ef1b4644352bb45bd35453': 'ETH',
     '0x047e794d7c49c49fd2104a724cfa69a92c5a4b50a5753163802617394e973833': 'USDC',
     '0x003cd2066f3c8b4677741b39db13acebba843bbbaa73d657412102ab4fd98601': 'USDT',
@@ -28,7 +31,9 @@ ADDRESSES_TO_TOKENS: Dict[str, str] = {
     '0x0362b4455f5f4cc108a5a1ab1fd2cc6c4f0c70597abb541a99cf2734435ec9cb': 'DAI',
     '0x075b0d87aca8dee25df35cdc39a82b406168fa23a76fc3f03abbfdc6620bb6d7': 'wBTC',
 }
-ADDRESSES_TO_EVENTS: Dict[str, str] = {
+# TODO: Move to `NostraSpecificTokenSettings`?
+# Source: https://docs.nostra.finance/lend/deployed-contracts/lend-alpha#asset-contracts.
+ADDRESSES_TO_EVENTS: dict[str, str] = {
     '0x0553cea5d1dc0e0157ffcd36a51a0ced717efdadd5ef1b4644352bb45bd35453': 'non_interest_bearing_collateral',
     '0x047e794d7c49c49fd2104a724cfa69a92c5a4b50a5753163802617394e973833': 'non_interest_bearing_collateral',
     '0x003cd2066f3c8b4677741b39db13acebba843bbbaa73d657412102ab4fd98601': 'non_interest_bearing_collateral',
@@ -46,72 +51,109 @@ ADDRESSES_TO_EVENTS: Dict[str, str] = {
     '0x075b0d87aca8dee25df35cdc39a82b406168fa23a76fc3f03abbfdc6620bb6d7': 'debt',
 }
 
+# Source: https://docs.nostra.finance/lend/deployed-contracts/lend-alpha#core-contracts.
 INTEREST_RATE_MODEL_ADDRESS: str = '0x03d39f7248fb2bfb960275746470f7fb470317350ad8656249ec66067559e892'
 
+
+@dataclasses.dataclass
+class NostraSpecificTokenSettings:
+    # TODO: Load these via chain calls?
+    # Source: Starkscan, e.g. 
+    # https://starkscan.co/call/0x06f619127a63ddb5328807e535e56baa1e244c8923a3b50c123d41dcbed315da_1_1 for ETH.
+    collateral_factor: decimal.Decimal
+    # TODO: Add source.
+    debt_factor: decimal.Decimal
+    # TODO: Add sources for liquidation parameters.
+    liquidator_fee_beta: decimal.Decimal
+    liquidator_fee_max: decimal.Decimal
+    protocol_fee: decimal.Decimal   
+    protocol_token_address: str
+
+
+@dataclasses.dataclass
+class TokenSettings(NostraSpecificTokenSettings, src.settings.TokenSettings):
+    pass
+
+
+NOSTRA_SPECIFIC_TOKEN_SETTINGS: dict[str, NostraSpecificTokenSettings] = {
+    "ETH": NostraSpecificTokenSettings(
+        collateral_factor=decimal.Decimal("0.8"),
+        debt_factor=decimal.Decimal("0.9"),
+        liquidator_fee_beta=decimal.Decimal("2.75"),
+        liquidator_fee_max=decimal.Decimal("0.25"),
+        protocol_fee=decimal.Decimal("0.02"),
+        protocol_token_address="0x04f89253e37ca0ab7190b2e9565808f105585c9cacca6b2fa6145553fa061a41",
+    ),
+    "wBTC": NostraSpecificTokenSettings(
+        collateral_factor=decimal.Decimal("0"), 
+        debt_factor=decimal.Decimal("0.8"),
+        liquidator_fee_beta=decimal.Decimal("2.75"),
+        liquidator_fee_max=decimal.Decimal("0.25"),
+        protocol_fee=decimal.Decimal("0.02"),
+        protocol_token_address="0x07788bc687f203b6451f2a82e842b27f39c7cae697dace12edfb86c9b1c12f3d",
+    ),
+    "USDC": NostraSpecificTokenSettings(
+        collateral_factor=decimal.Decimal("0.9"), 
+        debt_factor=decimal.Decimal("0.95"),
+        liquidator_fee_beta=decimal.Decimal("1.65"),
+        liquidator_fee_max=decimal.Decimal("0.15"),
+        protocol_fee=decimal.Decimal("0.02"),
+        protocol_token_address="0x05327df4c669cb9be5c1e2cf79e121edef43c1416fac884559cd94fcb7e6e232",
+    ),
+    "DAI": NostraSpecificTokenSettings(
+        collateral_factor=decimal.Decimal("0"), 
+        debt_factor=decimal.Decimal("0.95"),
+        liquidator_fee_beta=decimal.Decimal("2.2"),
+        liquidator_fee_max=decimal.Decimal("0.2"),
+        protocol_fee=decimal.Decimal("0.02"),
+        protocol_token_address="0x02ea39ba7a05f0c936b7468d8bc8d0e1f2116916064e7e163e7c1044d95bd135",
+    ),
+    "USDT": NostraSpecificTokenSettings(
+        collateral_factor=decimal.Decimal("0.9"), 
+        debt_factor=decimal.Decimal("0.95"),
+        liquidator_fee_beta=decimal.Decimal("1.65"),
+        liquidator_fee_max=decimal.Decimal("0.15"),
+        protocol_fee=decimal.Decimal("0.02"),
+        protocol_token_address="0x040375d0720245bc0d123aa35dc1c93d14a78f64456eff75f63757d99a0e6a83",
+    ),
+    # TODO: Add wstETH.
+    "wstETH": NostraSpecificTokenSettings(
+        collateral_factor=decimal.Decimal("1"), 
+        debt_factor=decimal.Decimal("1"),
+        liquidator_fee_beta=decimal.Decimal("1"),
+        liquidator_fee_max=decimal.Decimal("0"),
+        protocol_fee=decimal.Decimal("0"),
+        protocol_token_address="",
+    ),
+}
+TOKEN_SETTINGS: dict[str, TokenSettings] = {
+    token: TokenSettings(
+        symbol=src.settings.TOKEN_SETTINGS[token].symbol,
+        decimal_factor=src.settings.TOKEN_SETTINGS[token].decimal_factor,
+        address=src.settings.TOKEN_SETTINGS[token].address,
+        collateral_factor=NOSTRA_SPECIFIC_TOKEN_SETTINGS[token].collateral_factor,
+        debt_factor=NOSTRA_SPECIFIC_TOKEN_SETTINGS[token].debt_factor,
+        liquidator_fee_beta=NOSTRA_SPECIFIC_TOKEN_SETTINGS[token].liquidator_fee_beta,
+        liquidator_fee_max=NOSTRA_SPECIFIC_TOKEN_SETTINGS[token].liquidator_fee_max,
+        protocol_fee=NOSTRA_SPECIFIC_TOKEN_SETTINGS[token].protocol_fee,
+        protocol_token_address=NOSTRA_SPECIFIC_TOKEN_SETTINGS[token].protocol_token_address,
+    )
+    for token in src.settings.TOKEN_SETTINGS
+}
+
+# TODO: Add sources for liquidation parameters.
+LIQUIDATION_HEALTH_FACTOR_THRESHOLD = decimal.Decimal('1')
+TARGET_HEALTH_FACTOR = decimal.Decimal('1.25')
+
+
 # Keys are values of the "key_name" column in the database, values are the respective method names.
-EVENTS_METHODS_MAPPING: Dict[Tuple[str, str], str] = {
+EVENTS_METHODS_MAPPING: dict[tuple[str, str], str] = {
     ("non_interest_bearing_collateral", "Mint"): "process_non_interest_bearing_collateral_mint_event",
     ("non_interest_bearing_collateral", "Burn"): "process_non_interest_bearing_collateral_burn_event",
     ("interest_bearing_collateral", "Mint"): "process_interest_bearing_collateral_mint_event",
     ("interest_bearing_collateral", "Burn"): "process_interest_bearing_collateral_burn_event",
     ("debt", "Mint"): "process_debt_mint_event",
     ("debt", "Burn"): "process_debt_burn_event",
-}
-
-# Source: Starkscan, e.g. 
-# https://starkscan.co/call/0x06f619127a63ddb5328807e535e56baa1e244c8923a3b50c123d41dcbed315da_1_1 for ETH.
-# TODO: Load these via chain calls?
-COLLATERAL_FACTORS = {
-    'ETH': decimal.Decimal('0.8'),
-    'USDC': decimal.Decimal('0.9'),
-    'USDT': decimal.Decimal('0.9'),
-    'DAI': decimal.Decimal('0'),
-    'wBTC': decimal.Decimal('0'),
-    # TODO: Add wstETH.
-    'wstETH': decimal.Decimal('1'),
-}
-# TODO: Add source.
-DEBT_FACTORS = {
-    'ETH': decimal.Decimal('0.9'),
-    'USDC': decimal.Decimal('0.95'),
-    'USDT': decimal.Decimal('0.95'),
-    'DAI': decimal.Decimal('0.95'),
-    'wBTC': decimal.Decimal('0.8'),
-    # TODO: Add wstETH.
-    'wstETH': decimal.Decimal('1'),
-}
-# TODO: Add sources for liquidation parameters.
-LIQUIDATION_HEALTH_FACTOR_THRESHOLD = decimal.Decimal('1')
-TARGET_HEALTH_FACTOR = decimal.Decimal('1.25')
-LIQUIDATOR_FEE_BETAS = {
-    'ETH': decimal.Decimal('2.75'),
-    'USDC': decimal.Decimal('1.65'),
-    'USDT': decimal.Decimal('1.65'),
-    'DAI': decimal.Decimal('2.2'),
-    'wBTC': decimal.Decimal('2.75'),
-}
-LIQUIDATOR_FEE_MAXS = {
-    'ETH': decimal.Decimal('0.25'),
-    'USDC': decimal.Decimal('0.15'),
-    'USDT': decimal.Decimal('0.15'),
-    'DAI': decimal.Decimal('0.2'),
-    'wBTC': decimal.Decimal('0.25'),
-}
-PROTOCOL_FEES = {
-    'ETH': decimal.Decimal('0.02'),
-    'USDC': decimal.Decimal('0.02'),
-    'USDT': decimal.Decimal('0.02'),
-    'DAI': decimal.Decimal('0.02'),
-    'wBTC': decimal.Decimal('0.02'),
-}
-
-
-SUPPLY_ADRESSES: Dict[str, str] = {
-    "ETH": "0x04f89253e37ca0ab7190b2e9565808f105585c9cacca6b2fa6145553fa061a41",
-    "wBTC": "0x07788bc687f203b6451f2a82e842b27f39c7cae697dace12edfb86c9b1c12f3d",
-    "USDC": "0x05327df4c669cb9be5c1e2cf79e121edef43c1416fac884559cd94fcb7e6e232",
-    "DAI": "0x02ea39ba7a05f0c936b7468d8bc8d0e1f2116916064e7e163e7c1044d95bd135",
-    "USDT": "0x040375d0720245bc0d123aa35dc1c93d14a78f64456eff75f63757d99a0e6a83",
 }
 
 
@@ -133,87 +175,61 @@ def get_events(start_block_number: int = 0) -> pandas.DataFrame:
     return events
 
 
-# TODO: Make this a dataclass?
-# TODO: Explore similarities with zkLend's `Accumulators` class.`
-class InterestRateModel:
-    """
-    A class that describes the state of the collateral and debt interest rate indices which help transform face amounts
-    into raw amounts. Raw amount is the amount that would have been accumulated into the face amount if it were 
-    deposited at genesis.
-    """
-
-    def __init__(self) -> None:
-        # This number reflects the interest rate at which users lend/stake funds.
-        self.collateral_interest_rate_index: decimal.Decimal = decimal.Decimal("1")
-        # This number reflects the interest rate at which users borrow funds.
-        self.debt_interest_rate_index: decimal.Decimal = decimal.Decimal("1")
-
-
 class NostraLoanEntity(src.state.LoanEntity):
     """
-    A class that describes the Nostra loan entity. Compared to the abstract `LoanEntity`, it implements its own 
-    `compute_risk_adjusted_debt_usd`, `compute_health_factor` and `compute_debt_to_be_liquidated` methods in order to 
-    reflect specific features of Nostra, such as using `DEBT_FACTORS`, or its specific liquidation process.
+    A class that describes the Nostra loan entity. On top of the abstract `LoanEntity`, it implements the 
+    `non_interest_bearing_collateral` and `interest_bearing_collateral` attributes in order to help with accounting for
+    the changes in collateral. This is because Nostra allows the user to decide the amount of collateral that earns 
+    interest and the amount that doesn't. We keep all balances in raw amounts.
     """
 
-    COLLATERAL_FACTORS = COLLATERAL_FACTORS
-    DEBT_FACTORS = DEBT_FACTORS
+    TOKEN_SETTINGS: dict[str, TokenSettings] = TOKEN_SETTINGS
+    # TODO: Move these to `PROTOCOL_SETTINGS` (similar to `TOKEN_SETTINGS`)? Might be useful when 
+    # `compute_health_factor` is generalized.
     LIQUIDATION_HEALTH_FACTOR_THRESHOLD = LIQUIDATION_HEALTH_FACTOR_THRESHOLD
     TARGET_HEALTH_FACTOR = TARGET_HEALTH_FACTOR
-    LIQUIDATOR_FEE_BETAS = LIQUIDATOR_FEE_BETAS
-    LIQUIDATOR_FEE_MAXS = LIQUIDATOR_FEE_MAXS
-    PROTOCOL_FEES = PROTOCOL_FEES
 
     def __init__(self) -> None:
         super().__init__()
-        self.non_interest_bearing_collateral: src.state.TokenAmounts = src.state.TokenAmounts()
-        self.interest_bearing_collateral: src.state.TokenAmounts = src.state.TokenAmounts()
-
-    def compute_risk_adjusted_debt_usd(self, prices: Dict[str, decimal.Decimal]) -> decimal.Decimal:
-        return sum(
-            token_amount
-            / src.constants.TOKEN_DECIMAL_FACTORS[token]
-            / self.DEBT_FACTORS[token]
-            * prices[token]
-            for token, token_amount in self.debt.token_amounts.items()
-        )
+        self.non_interest_bearing_collateral: src.helpers.Portfolio = src.helpers.Portfolio()
+        self.interest_bearing_collateral: src.helpers.Portfolio = src.helpers.Portfolio()
 
     def compute_health_factor(
         self,
-        prices: Optional[Dict[str, decimal.Decimal]] = None,
+        standardized: bool,
+        collateral_interest_rate_models: Optional[src.state.InterestRateModels] = None,
+        debt_interest_rate_models: Optional[src.state.InterestRateModels] = None,
+        prices: Optional[src.helpers.TokenValues] = None,
         risk_adjusted_collateral_usd: Optional[decimal.Decimal] = None,
         risk_adjusted_debt_usd: Optional[decimal.Decimal] = None,
     ) -> decimal.Decimal:
         if risk_adjusted_collateral_usd is None:
-            risk_adjusted_collateral_usd = self.compute_risk_adjusted_collateral_usd(prices = prices)
+            risk_adjusted_collateral_usd = self.compute_collateral_usd(
+                collateral_interest_rate_models = collateral_interest_rate_models,
+                prices = prices, 
+                risk_adjusted = True,
+            )
         if risk_adjusted_debt_usd is None:
-            risk_adjusted_debt_usd = self.compute_risk_adjusted_debt_usd(prices = prices)
-        if risk_adjusted_debt_usd == decimal.Decimal("0"):
+            risk_adjusted_debt_usd = self.compute_debt_usd(
+                debt_interest_rate_models = debt_interest_rate_models,
+                prices = prices,
+                risk_adjusted = True,
+            )
+        if standardized:
+            # Denominator is the value of (risk-adjusted) collateral at which the risk_adjusted_debt_usd can be liquidated.
+            # TODO: denominator = risk_adjusted_debt_usd * liquidation_threshold??
+            denominator = risk_adjusted_debt_usd
+        else: 
+            denominator = risk_adjusted_debt_usd
+        if denominator == decimal.Decimal("0"):
             # TODO: Assumes collateral is positive.
             return decimal.Decimal("Inf")
-        return risk_adjusted_collateral_usd / risk_adjusted_debt_usd
-
-    def compute_standardized_health_factor(
-        self,
-        prices: Optional[Dict[str, decimal.Decimal]] = None,
-        risk_adjusted_collateral_usd: Optional[decimal.Decimal] = None,
-        risk_adjusted_debt_usd: Optional[decimal.Decimal] = None,
-    ) -> decimal.Decimal:
-        if risk_adjusted_collateral_usd is None:
-            risk_adjusted_collateral_usd = self.compute_risk_adjusted_collateral_usd(prices = prices)
-        if risk_adjusted_debt_usd is None:
-            risk_adjusted_debt_usd = self.compute_risk_adjusted_debt_usd(prices = prices)
-        # Compute the value of (risk-adjusted) collateral at which the user/loan can be liquidated.
-        collateral_usd_threshold = risk_adjusted_debt_usd
-        if collateral_usd_threshold == decimal.Decimal("0"):
-            # TODO: Assumes collateral is positive.
-            return decimal.Decimal("Inf")
-        return risk_adjusted_collateral_usd / collateral_usd_threshold
+        return risk_adjusted_collateral_usd / denominator
 
     def compute_debt_to_be_liquidated(
         self,
         debt_token: str,
-        collateral_tokens: Set[str],
+        collateral_tokens: set[str],
         health_factor: decimal.Decimal,
         debt_token_debt_amount: decimal.Decimal,
         debt_token_price: decimal.Decimal,
@@ -226,24 +242,24 @@ class NostraLoanEntity(src.state.LoanEntity):
             # See an example of a liquidation here: 
             # https://docs.nostra.finance/lend/liquidations/an-example-of-liquidation.
             liquidator_fee = min(
-                self.LIQUIDATOR_FEE_BETAS[collateral_token]
+                self.TOKEN_SETTINGS[collateral_token].liquidator_fee_beta
                 * (self.LIQUIDATION_HEALTH_FACTOR_THRESHOLD - health_factor),
-                self.LIQUIDATOR_FEE_MAXS[collateral_token],
+                self.TOKEN_SETTINGS[collateral_token].liquidator_fee_max,
             )
-            total_fee = liquidator_fee + self.PROTOCOL_FEES[collateral_token]
+            total_fee = liquidator_fee + self.TOKEN_SETTINGS[collateral_token].protocol_fee
             max_liquidation_percentage = (
                 self.TARGET_HEALTH_FACTOR - health_factor
             ) / (
                 self.TARGET_HEALTH_FACTOR - (
-                    self.COLLATERAL_FACTORS[collateral_token]
-                    * self.DEBT_FACTORS[debt_token]
+                    self.TOKEN_SETTINGS[collateral_token].collateral_factor
+                    * self.TOKEN_SETTINGS[debt_token].debt_factor
                     * (decimal.Decimal('1') + total_fee)
                 )
             )
             max_liquidation_percentage = min(max_liquidation_percentage, decimal.Decimal('1'))
             max_liquidation_amount = max_liquidation_percentage * debt_token_debt_amount
             max_liquidation_amount_usd = (
-                max_liquidation_amount * debt_token_price / src.constants.TOKEN_DECIMAL_FACTORS[debt_token]
+                max_liquidation_amount * debt_token_price / self.TOKEN_SETTINGS[debt_token].decimal_factor
             )
             max_liquidator_fee_usd = liquidator_fee * max_liquidation_amount_usd
             if max_liquidator_fee_usd > liquidator_fee_usd:
@@ -267,19 +283,18 @@ class NostraState(src.state.State):
 
     def __init__(
         self,
+        loan_entity_class: NostraLoanEntity = NostraLoanEntity,
         verbose_user: Optional[str] = None,
     ) -> None:
         super().__init__(
-            loan_entity_class=NostraLoanEntity,
+            loan_entity_class=loan_entity_class,
             verbose_user=verbose_user,
         )
-        self.interest_rate_models: Dict[str, InterestRateModel] = {x: InterestRateModel() for x in src.constants.TOKEN_DECIMAL_FACTORS}
 
     def process_event(self, event: pandas.Series) -> None:
         assert event["block_number"] >= self.last_block_number
         self.last_block_number = event["block_number"]
         if event['from_address'] == self.INTEREST_RATE_MODEL_ADDRESS:
-            # TODO: name of the method?
             self.process_interest_rate_model_event(event)
             return
         event_type = self.ADDRESSES_TO_EVENTS[event['from_address']]
@@ -296,8 +311,8 @@ class NostraState(src.state.State):
         token = self.ADDRESSES_TO_TOKENS[token_address]
         collateral_interest_rate_index = decimal.Decimal(str(int(event["data"][5], base=16))) / decimal.Decimal("1e18")
         debt_interest_rate_index = decimal.Decimal(str(int(event["data"][7], base=16))) / decimal.Decimal("1e18")
-        self.interest_rate_models[token].collateral_interest_rate_index = collateral_interest_rate_index
-        self.interest_rate_models[token].debt_interest_rate_index = debt_interest_rate_index
+        self.collateral_interest_rate_models.values[token] = collateral_interest_rate_index
+        self.debt_interest_rate_models.values[token] = debt_interest_rate_index
 
     def process_non_interest_bearing_collateral_mint_event(self, event: pandas.Series) -> None:
         # The order of the values in the `data` column is: `user`, `amount`, ``.
@@ -307,14 +322,14 @@ class NostraState(src.state.State):
             return
         token = self.ADDRESSES_TO_TOKENS[event['from_address']]
         face_amount = decimal.Decimal(str(int(event['data'][1], base=16)))
-        raw_amount = face_amount / self.interest_rate_models[token].collateral_interest_rate_index
-        self.loan_entities[user].non_interest_bearing_collateral.increase_value(token=token, amount=raw_amount)
-        self.loan_entities[user].collateral.token_amounts = {
+        raw_amount = face_amount / self.collateral_interest_rate_models.values[token]
+        self.loan_entities[user].non_interest_bearing_collateral.increase_value(token=token, value=raw_amount)
+        self.loan_entities[user].collateral.values = {
             token: (
-                self.loan_entities[user].non_interest_bearing_collateral.token_amounts[token]
-                + self.loan_entities[user].interest_bearing_collateral.token_amounts[token]
+                self.loan_entities[user].non_interest_bearing_collateral.values[token]
+                + self.loan_entities[user].interest_bearing_collateral.values[token]
             )
-            for token in src.constants.TOKEN_DECIMAL_FACTORS
+            for token in src.settings.TOKEN_SETTINGS
         }
         if user == self.verbose_user:
             logging.info(
@@ -334,14 +349,14 @@ class NostraState(src.state.State):
             return
         token = self.ADDRESSES_TO_TOKENS[event['from_address']]
         face_amount = decimal.Decimal(str(int(event['data'][1], base=16)))
-        raw_amount = face_amount / self.interest_rate_models[token].collateral_interest_rate_index
-        self.loan_entities[user].non_interest_bearing_collateral.increase_value(token=token, amount=-raw_amount)
-        self.loan_entities[user].collateral.token_amounts = {
+        raw_amount = face_amount / self.collateral_interest_rate_models.values[token]
+        self.loan_entities[user].non_interest_bearing_collateral.increase_value(token=token, value=-raw_amount)
+        self.loan_entities[user].collateral.values = {
             token: (
-                self.loan_entities[user].non_interest_bearing_collateral.token_amounts[token]
-                + self.loan_entities[user].interest_bearing_collateral.token_amounts[token]
+                self.loan_entities[user].non_interest_bearing_collateral.values[token]
+                + self.loan_entities[user].interest_bearing_collateral.values[token]
             )
-            for token in src.constants.TOKEN_DECIMAL_FACTORS
+            for token in src.settings.TOKEN_SETTINGS
         }
         if user == self.verbose_user:
             logging.info(
@@ -361,14 +376,14 @@ class NostraState(src.state.State):
             return
         token = self.ADDRESSES_TO_TOKENS[event['from_address']]
         face_amount = decimal.Decimal(str(int(event['data'][1], base=16)))
-        raw_amount = face_amount / self.interest_rate_models[token].collateral_interest_rate_index
-        self.loan_entities[user].interest_bearing_collateral.increase_value(token=token, amount=raw_amount)
-        self.loan_entities[user].collateral.token_amounts = {
+        raw_amount = face_amount / self.collateral_interest_rate_models.values[token]
+        self.loan_entities[user].interest_bearing_collateral.increase_value(token=token, value=raw_amount)
+        self.loan_entities[user].collateral.values = {
             token: (
-                self.loan_entities[user].non_interest_bearing_collateral.token_amounts[token]
-                + self.loan_entities[user].interest_bearing_collateral.token_amounts[token]
+                self.loan_entities[user].non_interest_bearing_collateral.values[token]
+                + self.loan_entities[user].interest_bearing_collateral.values[token]
             )
-            for token in src.constants.TOKEN_DECIMAL_FACTORS
+            for token in src.settings.TOKEN_SETTINGS
         }
         if user == self.verbose_user:
             logging.info(
@@ -387,14 +402,14 @@ class NostraState(src.state.State):
             return
         token = self.ADDRESSES_TO_TOKENS[event['from_address']]
         face_amount = decimal.Decimal(str(int(event['data'][1], base=16)))
-        raw_amount = face_amount / self.interest_rate_models[token].collateral_interest_rate_index
-        self.loan_entities[user].interest_bearing_collateral.increase_value(token=token, amount=-raw_amount)
-        self.loan_entities[user].collateral.token_amounts = {
+        raw_amount = face_amount / self.collateral_interest_rate_models.values[token]
+        self.loan_entities[user].interest_bearing_collateral.increase_value(token=token, value=-raw_amount)
+        self.loan_entities[user].collateral.values = {
             token: (
-                self.loan_entities[user].non_interest_bearing_collateral.token_amounts[token]
-                + self.loan_entities[user].interest_bearing_collateral.token_amounts[token]
+                self.loan_entities[user].non_interest_bearing_collateral.values[token]
+                + self.loan_entities[user].interest_bearing_collateral.values[token]
             )
-            for token in src.constants.TOKEN_DECIMAL_FACTORS
+            for token in src.settings.TOKEN_SETTINGS
         }
         if user == self.verbose_user:
             logging.info(
@@ -414,8 +429,8 @@ class NostraState(src.state.State):
             return
         token = self.ADDRESSES_TO_TOKENS[event['from_address']]
         face_amount = decimal.Decimal(str(int(event['data'][1], base=16)))
-        raw_amount = face_amount / self.interest_rate_models[token].debt_interest_rate_index
-        self.loan_entities[user].debt.increase_value(token=token, amount=raw_amount)
+        raw_amount = face_amount / self.debt_interest_rate_models.values[token]
+        self.loan_entities[user].debt.increase_value(token=token, value=raw_amount)
         if user == self.verbose_user:
             logging.info(
                 'In block number = {}, raw amount = {} of token = {} was borrowed.'.format(
@@ -433,8 +448,8 @@ class NostraState(src.state.State):
             return
         token = self.ADDRESSES_TO_TOKENS[event['from_address']]
         face_amount = decimal.Decimal(str(int(event['data'][1], base=16)))
-        raw_amount = face_amount / self.interest_rate_models[token].debt_interest_rate_index
-        self.loan_entities[user].debt.increase_value(token=token, amount=-raw_amount)
+        raw_amount = face_amount / self.debt_interest_rate_models.values[token]
+        self.loan_entities[user].debt.increase_value(token=token, value=-raw_amount)
         if user == self.verbose_user:
             logging.info(
                 'In block number = {}, raw amount = {} of token = {} was repayed.'.format(
@@ -444,31 +459,40 @@ class NostraState(src.state.State):
                 )
             )
 
-    # TODO: This method looks very similar to that of the parent class.
+    # TODO: This method looks very similar to that of zkLend.
     def compute_liquidable_debt_at_price(
         self,
-        prices: Dict[str, decimal.Decimal],
+        prices: src.helpers.TokenValues,
         collateral_token: str,
         collateral_token_price: decimal.Decimal,
         debt_token: str,
     ) -> decimal.Decimal:
         changed_prices = copy.deepcopy(prices)
-        changed_prices[collateral_token] = collateral_token_price
+        changed_prices.values[collateral_token] = collateral_token_price
         max_liquidated_amount = decimal.Decimal("0")
-        for _, loan_entity in self.loan_entities.items():
+        for loan_entity in self.loan_entities.values():
             # Filter out entities who borrowed the token of interest.
             debt_tokens = {
                 token
-                for token, token_amount in loan_entity.debt.token_amounts.items()
+                for token, token_amount in loan_entity.debt.values.items()
                 if token_amount > decimal.Decimal("0")
             }
             if not debt_token in debt_tokens:
                 continue
 
             # Filter out entities with health factor below 1.
-            risk_adjusted_collateral_usd = loan_entity.compute_risk_adjusted_collateral_usd(prices=changed_prices)
-            risk_adjusted_debt_usd = loan_entity.compute_risk_adjusted_debt_usd(prices=changed_prices)
+            risk_adjusted_collateral_usd = loan_entity.compute_collateral_usd(
+                risk_adjusted=True,
+                collateral_interest_rate_models=self.collateral_interest_rate_models,
+                prices=changed_prices,
+            )
+            risk_adjusted_debt_usd = loan_entity.compute_debt_usd(
+                risk_adjusted=True,
+                debt_interest_rate_models=self.debt_interest_rate_models,
+                prices=changed_prices,
+            )
             health_factor = loan_entity.compute_health_factor(
+                standardized=False,
                 risk_adjusted_collateral_usd=risk_adjusted_collateral_usd,
                 risk_adjusted_debt_usd=risk_adjusted_debt_usd,
             )
@@ -478,14 +502,14 @@ class NostraState(src.state.State):
             # Find out how much of the `debt_token` will be liquidated.
             collateral_tokens = {
                 token
-                for token, token_amount in loan_entity.collateral.token_amounts.items()
+                for token, token_amount in loan_entity.collateral.values.items()
                 if token_amount > decimal.Decimal("0")
             }
             max_liquidated_amount += loan_entity.compute_debt_to_be_liquidated(
                 debt_token=debt_token,
                 collateral_tokens=collateral_tokens,
                 health_factor=health_factor,
-                debt_token_debt_amount=loan_entity.debt.token_amounts[debt_token],
-                debt_token_price=prices[debt_token],
+                debt_token_debt_amount=loan_entity.debt.values[debt_token],
+                debt_token_price=prices.values[debt_token],
             )
         return max_liquidated_amount

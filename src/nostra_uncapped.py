@@ -1,4 +1,5 @@
-from typing import Dict
+from typing import Optional
+import dataclasses
 
 import pandas
 
@@ -7,7 +8,8 @@ import src.nostra
 
 
 
-ADDRESSES_TO_TOKENS: Dict[str, str] = {
+# Source: https://docs.nostra.finance/lend/deployed-contracts/lend-mainnet#asset-contracts.
+ADDRESSES_TO_TOKENS: dict[str, str] = {
     '0x044debfe17e4d9a5a1e226dabaf286e72c9cc36abbe71c5b847e669da4503893': 'ETH',
     '0x05f296e1b9f4cf1ab452c218e72e02a8713cee98921dad2d3b5706235e128ee4': 'USDC',
     '0x057717edc5b1e56743e8153be626729eb0690b882466ef0cbedc8a28bb4973b1': 'USDT',
@@ -24,7 +26,8 @@ ADDRESSES_TO_TOKENS: Dict[str, str] = {
     '0x066037c083c33330a8460a65e4748ceec275bbf5f28aa71b686cbc0010e12597': 'DAI',
     '0x0491480f21299223b9ce770f23a2c383437f9fbf57abc2ac952e9af8cdb12c97': 'wBTC',
 }
-ADDRESSES_TO_EVENTS: Dict[str, str] = {
+# Source: https://docs.nostra.finance/lend/deployed-contracts/lend-mainnet#asset-contracts.
+ADDRESSES_TO_EVENTS: dict[str, str] = {
     '0x044debfe17e4d9a5a1e226dabaf286e72c9cc36abbe71c5b847e669da4503893': 'non_interest_bearing_collateral',
     '0x05f296e1b9f4cf1ab452c218e72e02a8713cee98921dad2d3b5706235e128ee4': 'non_interest_bearing_collateral',
     '0x057717edc5b1e56743e8153be626729eb0690b882466ef0cbedc8a28bb4973b1': 'non_interest_bearing_collateral',
@@ -42,7 +45,53 @@ ADDRESSES_TO_EVENTS: Dict[str, str] = {
     '0x0491480f21299223b9ce770f23a2c383437f9fbf57abc2ac952e9af8cdb12c97': 'debt',
 }
 
+# Source: https://docs.nostra.finance/lend/deployed-contracts/lend-mainnet#core-contracts.
 INTEREST_RATE_MODEL_ADDRESS: str = '0x059a943ca214c10234b9a3b61c558ac20c005127d183b86a99a8f3c60a08b4ff'
+
+
+@dataclasses.dataclass
+class NostraUncappedSpecificTokenSettings:
+    protocol_token_address: str
+
+
+@dataclasses.dataclass
+class TokenSettings(NostraUncappedSpecificTokenSettings, src.nostra.TokenSettings):
+    pass
+
+
+NOSTRA_UNCAPPED_SPECIFIC_TOKEN_SETTINGS: dict[str, NostraUncappedSpecificTokenSettings] = {
+    "ETH": NostraUncappedSpecificTokenSettings(
+        protocol_token_address="0x07170f54dd61ae85377f75131359e3f4a12677589bb7ec5d61f362915a5c0982",
+    ),
+    "wBTC": NostraUncappedSpecificTokenSettings(
+        protocol_token_address="0x073132577e25b06937c64787089600886ede6202d085e6340242a5a32902e23e",
+    ),
+    "USDC": NostraUncappedSpecificTokenSettings(
+        protocol_token_address="0x06eda767a143da12f70947192cd13ee0ccc077829002412570a88cd6539c1d85",
+    ),
+    "DAI": NostraUncappedSpecificTokenSettings(
+        protocol_token_address="0x02b5fd690bb9b126e3517f7abfb9db038e6a69a068303d06cf500c49c1388e20",
+    ),
+    "USDT": NostraUncappedSpecificTokenSettings(
+        protocol_token_address="0x06669cb476aa7e6a29c18b59b54f30b8bfcfbb8444f09e7bbb06c10895bf5d7b",
+    ),
+    # TODO: Add wstETH.
+    "wstETH": NostraUncappedSpecificTokenSettings(protocol_token_address=""),
+}
+TOKEN_SETTINGS: dict[str, TokenSettings] = {
+    token: TokenSettings(
+        symbol=src.nostra.TOKEN_SETTINGS[token].symbol,
+        decimal_factor=src.nostra.TOKEN_SETTINGS[token].decimal_factor,
+        address=src.nostra.TOKEN_SETTINGS[token].address,
+        collateral_factor=src.nostra.TOKEN_SETTINGS[token].collateral_factor,
+        debt_factor=src.nostra.TOKEN_SETTINGS[token].debt_factor,
+        liquidator_fee_beta=src.nostra.TOKEN_SETTINGS[token].liquidator_fee_beta,
+        liquidator_fee_max=src.nostra.TOKEN_SETTINGS[token].liquidator_fee_max,
+        protocol_fee=src.nostra.TOKEN_SETTINGS[token].protocol_fee,
+        protocol_token_address=NOSTRA_UNCAPPED_SPECIFIC_TOKEN_SETTINGS[token].protocol_token_address,
+    )
+    for token in src.nostra.TOKEN_SETTINGS
+}
 
 
 
@@ -62,10 +111,19 @@ def get_events(start_block_number: int = 0) -> pandas.DataFrame:
     return events
 
 
+class NostraUncappedLoanEntity(src.nostra.NostraLoanEntity):
+    """
+    A class that describes the Nostra Uncapped loan entity. Compared to `src.nostra.NostraLoanEntity`, it only 
+    implements its own `TOKEN_SETTINGS`.
+    """
+
+    TOKEN_SETTINGS: dict[str, TokenSettings] = TOKEN_SETTINGS
+
+
 class NostraUncappedState(src.nostra.NostraState):
     """
-    A class that describes the state of all Nostra uncapped loan entities. It implements a method for correct 
-    processing of every relevant event.
+    A class that describes the state of all Nostra uncapped loan entities. All methods for correct processing of every 
+    relevant event are implemented in `src.nostra.NostraState`.
     """
 
     ADDRESSES_TO_TOKENS = ADDRESSES_TO_TOKENS
@@ -73,3 +131,12 @@ class NostraUncappedState(src.nostra.NostraState):
     INTEREST_RATE_MODEL_ADDRESS = INTEREST_RATE_MODEL_ADDRESS
     # TODO: This seems to be a magical address.
     IGNORE_USER: str = '0x5fc7053cca20fcb38550d7554c84fa6870e2b9e7ebd66398a67697ba440f12b'
+
+    def __init__(
+        self,
+        verbose_user: Optional[str] = None,
+    ) -> None:
+        super().__init__(
+            loan_entity_class=NostraUncappedLoanEntity,
+            verbose_user=verbose_user,
+        )

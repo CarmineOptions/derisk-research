@@ -1,4 +1,4 @@
-from typing import Iterator, Optional
+from typing import Iterator, Optional, Union
 import decimal
 
 import pandas
@@ -36,7 +36,7 @@ def get_events(
 
 
 class TokenValues:
-    def __init__(self, values: Optional[dict[str, decimal.Decimal]] = None, init_value: decimal.Decimal = decimal.Decimal("0")) -> None:
+    def __init__(self, values: Optional[dict[str, Union[bool, decimal.Decimal]]] = None, init_value: decimal.Decimal = decimal.Decimal("0")) -> None:
         if values:
             assert set(values.keys()) == set(src.settings.TOKEN_SETTINGS.keys())
             self.values: dict[str, decimal.Decimal] = values
