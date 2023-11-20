@@ -1,16 +1,16 @@
-from typing import Iterator, Dict, List, Optional, Tuple
+from typing import Iterator, Optional
 import decimal
 
 import pandas
 
-import src.constants
 import src.db
+import src.settings
 
 
 
 def get_events(
-    adresses: Tuple[str, ...],
-    events: Tuple[str, ...],
+    adresses: tuple[str, ...],
+    events: tuple[str, ...],
     start_block_number: int = 0,
 ) -> pandas.DataFrame:
     connection = src.db.establish_connection()
@@ -36,14 +36,14 @@ def get_events(
 
 
 class TokenValues:
-    def __init__(self, values: Optional[Dict[str, decimal.Decimal]] = None, init_value: decimal.Decimal = decimal.Decimal("0")) -> None:
+    def __init__(self, values: Optional[dict[str, decimal.Decimal]] = None, init_value: decimal.Decimal = decimal.Decimal("0")) -> None:
         if values:
-            assert set(values.keys()) == set(src.constants.TOKEN_SETTINGS.keys())
-            self.values = values
+            assert set(values.keys()) == set(src.settings.TOKEN_SETTINGS.keys())
+            self.values: dict[str, decimal.Decimal] = values
         else:
-            self.values: Dict[str, decimal.Decimal] = {
+            self.values: dict[str, decimal.Decimal] = {
                 token: init_value
-                for token in src.constants.TOKEN_SETTINGS
+                for token in src.settings.TOKEN_SETTINGS
             }
 
 
@@ -51,24 +51,26 @@ class Portfolio(TokenValues):
     """ A class that describes holdings of tokens. """
 
     # TODO: Find a better solution to fix the discrepancies.
-    # TODO: Use TokenValues?
-    MAX_ROUNDING_ERRORS: Dict[str, decimal.Decimal] = {
-        "ETH": decimal.Decimal("0.5") * decimal.Decimal("1e13"),
-        "wBTC": decimal.Decimal("1e2"),
-        "USDC": decimal.Decimal("1e4"),
-        "DAI": decimal.Decimal("1e16"),
-        "USDT": decimal.Decimal("1e4"),
-        "wstETH": decimal.Decimal("0.5") * decimal.Decimal("1e13"),
-    }
+    # TODO: Update the values.
+    MAX_ROUNDING_ERRORS: TokenValues = TokenValues(
+        values={
+            "ETH": decimal.Decimal("0.5e13"),
+            "wBTC": decimal.Decimal("1e2"),
+            "USDC": decimal.Decimal("1e4"),
+            "DAI": decimal.Decimal("1e16"),
+            "USDT": decimal.Decimal("1e4"),
+            "wstETH": decimal.Decimal("0.5e13"),
+        },
+    )
 
     def __init__(self) -> None:
         super().__init__(init_value=decimal.Decimal("0"))
 
     def round_small_value_to_zero(self, token: str):
         if (
-            -self.MAX_ROUNDING_ERRORS[token]
+            -self.MAX_ROUNDING_ERRORS.values[token]
             < self.values[token]
-            < self.MAX_ROUNDING_ERRORS[token]
+            < self.MAX_ROUNDING_ERRORS.values[token]
         ):
             self.values[token] = decimal.Decimal("0")
 
@@ -87,21 +89,21 @@ def decimal_range(start: decimal.Decimal, stop: decimal.Decimal, step: decimal.D
         start += step
 
 
-def get_range(start: decimal.Decimal, stop: decimal.Decimal, step: decimal.Decimal) -> List[decimal.Decimal]:
+def get_range(start: decimal.Decimal, stop: decimal.Decimal, step: decimal.Decimal) -> list[decimal.Decimal]:
     return [x for x in decimal_range(start=start, stop=stop, step=step)]
 
 
-def get_collateral_token_range(collateral_token: str) -> List[decimal.Decimal]:
+def get_collateral_token_range(collateral_token: str) -> list[decimal.Decimal]:
     assert collateral_token in {"ETH", "wBTC"}
     if collateral_token == "ETH":
         return get_range(decimal.Decimal("50"), decimal.Decimal("2500"), decimal.Decimal("50"))
     return get_range(decimal.Decimal("250"), decimal.Decimal("40000"), decimal.Decimal("250"))
 
 
-def load_data(protocol: str) -> Tuple[Dict[str, pandas.DataFrame], pandas.DataFrame, pandas.DataFrame]:
+def load_data(protocol: str) -> tuple[dict[str, pandas.DataFrame], pandas.DataFrame, pandas.DataFrame]:
     directory = f"{protocol.lower().replace(' ', '_')}_data"
     main_chart_data = {}
-    for pair in src.constants.PAIRS:
+    for pair in src.settings.PAIRS:
         main_chart_data[pair] = pandas.read_csv(f"{directory}/{pair}.csv", compression="gzip")
     histogram_data = pandas.read_csv(f"{directory}/histogram.csv", compression="gzip")
     loans_data = pandas.read_csv(f"{directory}/loans.csv", compression="gzip")
@@ -110,3 +112,24 @@ def load_data(protocol: str) -> Tuple[Dict[str, pandas.DataFrame], pandas.DataFr
         histogram_data,
         loans_data,
     )
+
+
+# TODO: Improve this.
+def get_symbol(address: str) -> str:
+    # you can match addresses as numbers
+    n = int(address, base=16)
+    symbol_address_map = {token: token_settings.address for token, token_settings in src.settings.TOKEN_SETTINGS.items()}
+    for symbol, addr in symbol_address_map.items():
+        if int(addr, base=16) == n:
+            return symbol
+    raise KeyError(f"Address = {address} does not exist in the symbol table.")
+
+
+def ztoken_to_token(symbol: str) -> str:
+    if symbol == "zWBTC":
+        # weird exception
+        return "wBTC"
+    if symbol.startswith("z"):
+        return symbol[1:]
+    else:
+        return symbol

@@ -1,4 +1,3 @@
-# TODO: rename to settings.py?
 import dataclasses
 import decimal
 
@@ -56,24 +55,3 @@ PAIRS: list[str] = [
     "wBTC-USDT",
     "wBTC-DAI",
 ]
-
-
-# TODO: Improve this.
-def get_symbol(address):
-    # you can match addresses as numbers
-    n = int(address, base=16)
-    symbol_address_map = {token: token_settings.address for token, token_settings in TOKEN_SETTINGS.items()}
-    for symbol, addr in symbol_address_map.items():
-        if int(addr, base=16) == n:
-            return symbol
-    raise KeyError(f"Address = {address} does not exist in the symbol table.")
-
-
-def ztoken_to_token(symbol):
-    if symbol == "zWBTC":
-        # weird exception
-        return "wBTC"
-    if symbol.startswith("z"):
-        return symbol[1:]
-    else:
-        return symbol
