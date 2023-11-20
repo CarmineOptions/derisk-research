@@ -1,12 +1,14 @@
-from typing import Any, Dict, Optional
+from typing import Any, Optional
+import abc
 import collections
-import copy
+import dataclasses
 import decimal
 import logging
 
 import pandas
 
-import src.constants
+import src.settings
+import src.helpers
 
 
 
@@ -14,183 +16,141 @@ logging.basicConfig(level=logging.INFO)
 
 
 
-class TokenAmounts:
-    """
-    A class that describes the holdings of collateral or debt of a loan entity.
-    """
+@dataclasses.dataclass
+class SpecificTokenSettings:
+    collateral_factor: decimal.Decimal
+    debt_factor: decimal.Decimal
 
-    # TODO: Find a better solution to fix the discrepancies.
-    MAX_ROUNDING_ERRORS: Dict[str, decimal.Decimal] = {
-        "ETH": decimal.Decimal("0.5") * decimal.Decimal("1e13"),
-        "wBTC": decimal.Decimal("1e2"),
-        "USDC": decimal.Decimal("1e4"),
-        "DAI": decimal.Decimal("1e16"),
-        "USDT": decimal.Decimal("1e4"),
-        "wstETH": decimal.Decimal("0.5") * decimal.Decimal("1e13"),
-    }
+
+@dataclasses.dataclass
+class TokenSettings(SpecificTokenSettings, src.settings.TokenSettings):
+    pass
+
+
+LOAN_ENTITY_SPECIFIC_TOKEN_SETTINGS: dict[str, SpecificTokenSettings] = {
+    "ETH": SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
+    "wBTC": SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
+    "USDC": SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
+    "DAI": SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
+    "USDT": SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
+    "wstETH": SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
+}
+TOKEN_SETTINGS: dict[str, TokenSettings] = {
+    token: TokenSettings(
+        symbol=src.settings.TOKEN_SETTINGS[token].symbol,
+        decimal_factor=src.settings.TOKEN_SETTINGS[token].decimal_factor,
+        address=src.settings.TOKEN_SETTINGS[token].address,
+        collateral_factor=LOAN_ENTITY_SPECIFIC_TOKEN_SETTINGS[token].collateral_factor,
+        debt_factor=LOAN_ENTITY_SPECIFIC_TOKEN_SETTINGS[token].debt_factor,
+    )
+    for token in src.settings.TOKEN_SETTINGS
+}
+
+
+class InterestRateModels(src.helpers.TokenValues):
+    """
+    A class that describes the state of the interest rate indices which help transform face amounts into raw amounts. 
+    Raw amount is the amount that would have been accumulated into the face amount if it were deposited at genesis.
+    """
 
     def __init__(self) -> None:
-        # TODO: Get a better source of a list of tokens then src.constants.TOKEN_DECIMAL_FACTORS
-        self.token_amounts: Dict[str, decimal.Decimal] = {x: decimal.Decimal("0") for x in src.constants.TOKEN_DECIMAL_FACTORS}
-
-    def round_small_amount_to_zero(self, token: str):
-        if (
-            -self.MAX_ROUNDING_ERRORS[token]
-            < self.token_amounts[token]
-            < self.MAX_ROUNDING_ERRORS[token]
-        ):
-            self.token_amounts[token] = decimal.Decimal("0")
-
-    def increase_value(self, token: str, amount: decimal.Decimal):
-        self.token_amounts[token] += amount
-        self.round_small_amount_to_zero(token=token)
-
-    def rewrite_value(self, token: str, amount: decimal.Decimal):
-        self.token_amounts[token] = amount
-        self.round_small_amount_to_zero(token=token)
+        super().__init__(init_value=decimal.Decimal("1"))
 
 
-class LoanEntity:
+class LoanEntity(abc.ABC):
     """
     A class that describes and entity which can hold collateral, borrow debt and be liquidable. For example, on 
     Starknet, such an entity is the user in case of zkLend and Nostra, or an individual loan in case od Hashstack.
     """
 
-    # TODO: Implement a dataclass for `COLLATERAL_FACTORS`?
-    COLLATERAL_FACTORS: Dict[str, decimal.Decimal] = {}
-    # TODO: Implement a dataclass for `LIQUIDATION_BONUSES`?
-    LIQUIDATION_BONUSES: Dict[str, decimal.Decimal] = {}
+    TOKEN_SETTINGS: dict[str, TokenSettings] = TOKEN_SETTINGS
 
     def __init__(self) -> None:
-        self.collateral: TokenAmounts = TokenAmounts()
-        self.debt: TokenAmounts = TokenAmounts()
+        self.collateral: src.helpers.Portfolio = src.helpers.Portfolio()
+        self.debt: src.helpers.Portfolio = src.helpers.Portfolio()
 
-    def compute_collateral_usd(self, prices: Dict[str, decimal.Decimal]) -> decimal.Decimal:
+    def compute_collateral_usd(
+        self,
+        risk_adjusted: bool,
+        collateral_interest_rate_models: InterestRateModels,
+        prices: src.helpers.TokenValues,
+    ) -> decimal.Decimal:
         return sum(
             token_amount
-            / src.constants.TOKEN_DECIMAL_FACTORS[token]
-            * prices[token]
-            for token, token_amount in self.collateral.token_amounts.items()
+            / self.TOKEN_SETTINGS[token].decimal_factor
+            * (self.TOKEN_SETTINGS[token].collateral_factor if risk_adjusted else decimal.Decimal("1"))
+            * collateral_interest_rate_models.values[token]
+            * prices.values[token]
+            for token, token_amount in self.collateral.values.items()
         )
 
-    # TODO: Implement a dataclass for `prices`?
-    def compute_risk_adjusted_collateral_usd(self, prices: Dict[str, decimal.Decimal]) -> decimal.Decimal:
+    def compute_debt_usd(
+        self, 
+        risk_adjusted: bool,
+        debt_interest_rate_models: InterestRateModels,
+        prices: src.helpers.TokenValues,
+    ) -> decimal.Decimal:
         return sum(
             token_amount
-            / src.constants.TOKEN_DECIMAL_FACTORS[token]
-            * self.COLLATERAL_FACTORS[token]
-            * prices[token]
-            for token, token_amount in self.collateral.token_amounts.items()
+            / self.TOKEN_SETTINGS[token].decimal_factor
+            / (self.TOKEN_SETTINGS[token].debt_factor if risk_adjusted else decimal.Decimal("1"))
+            * debt_interest_rate_models.values[token]
+            * prices.values[token]
+            for token, token_amount in self.debt.values.items()
         )
 
-    # TODO: Force `DEBT_FACTORS` (=1 if irrelevant)?
-    def compute_debt_usd(self, prices: Dict[str, decimal.Decimal]) -> decimal.Decimal:
-        return sum(
-            token_amount
-            / src.constants.TOKEN_DECIMAL_FACTORS[token]
-            * prices[token]
-            for token, token_amount in self.debt.token_amounts.items()
-        )
+    @abc.abstractmethod
+    def compute_health_factor(self):
+        pass
 
-    # TODO: This method will likely differ across protocols. -> Leave empty?
-    def compute_health_factor(
-        self,
-        prices: Optional[Dict[str, decimal.Decimal]] = None,
-        # TODO: Use just `collateral_measure_usd` and `debt_measure_usd` and each protocol can use its own preferred 
-        #  measure (risk-adjusted or non-adjusted)?
-        risk_adjusted_collateral_usd: Optional[decimal.Decimal] = None,
-        debt_usd: Optional[decimal.Decimal] = None,
-    ) -> decimal.Decimal:
-        if risk_adjusted_collateral_usd is None:
-            risk_adjusted_collateral_usd = self.compute_risk_adjusted_collateral_usd(prices = prices)
-        if debt_usd is None:
-            debt_usd = self.compute_debt_usd(prices = prices)
-        if debt_usd == decimal.Decimal("0"):
-            # TODO: Assumes collateral is positive.
-            return decimal.Decimal("Inf")
-        return risk_adjusted_collateral_usd / debt_usd
+    @abc.abstractmethod
+    def compute_debt_to_be_liquidated(self):
+        pass
 
-    # TODO: This method will likely differ across protocols. -> Leave empty?
-    def compute_standardized_health_factor(
-        self,
-        prices: Optional[Dict[str, decimal.Decimal]] = None,
-        risk_adjusted_collateral_usd: Optional[decimal.Decimal] = None,
-        debt_usd: Optional[decimal.Decimal] = None,
-    ) -> decimal.Decimal:
-        if risk_adjusted_collateral_usd is None:
-            risk_adjusted_collateral_usd = self.compute_risk_adjusted_collateral_usd(prices = prices)
-        if debt_usd is None:
-            debt_usd = self.compute_debt_usd(prices = prices)
-        # Compute the value of (risk-adjusted) collateral at which the user/loan can be liquidated.
-        collateral_usd_threshold = debt_usd
-        if collateral_usd_threshold == decimal.Decimal("0"):
-            # TODO: Assumes collateral is positive.
-            return decimal.Decimal("Inf")
-        return risk_adjusted_collateral_usd / collateral_usd_threshold
-
-    # TODO: This method will likely differ across protocols. -> Leave empty?
-    def compute_debt_to_be_liquidated(
-        self,
-        debt_token: str,
-        collateral_token: str,
-        prices: Dict[str, decimal.Decimal],
-        risk_adjusted_collateral_usd: Optional[decimal.Decimal] = None,
-        debt_usd: Optional[decimal.Decimal] = None,
-    ) -> decimal.Decimal:
-        if risk_adjusted_collateral_usd is None:
-            risk_adjusted_collateral_usd = self.compute_risk_adjusted_collateral_usd(prices = prices)
-        if debt_usd is None:
-            debt_usd = self.compute_debt_usd(prices = prices)
-        # TODO: Commit a PDF with the derivation of the formula?
-        numerator = debt_usd - risk_adjusted_collateral_usd
-        denominator = prices[debt_token] * (
-            1
-            - self.COLLATERAL_FACTORS[collateral_token] *
-            (1 + self.LIQUIDATION_BONUSES[collateral_token])
-        )
-        return numerator / denominator
-
-    def get_collateral_str(self) -> str:
+    def get_collateral_str(self, collateral_interest_rate_models: InterestRateModels) -> str:
         return ', '.join(
-            f"{token}: {round(token_amount / src.constants.TOKEN_DECIMAL_FACTORS[token], 4)}"
-            for token, token_amount in self.collateral.token_amounts.items()
+            f"{token}: {round(token_amount / self.TOKEN_SETTINGS[token].decimal_factor * collateral_interest_rate_models.values[token], 4)}"
+            for token, token_amount in self.collateral.values.items()
             if token_amount > decimal.Decimal("0")
         )
 
-    def get_debt_str(self) -> str:
+    def get_debt_str(self, debt_interest_rate_models: InterestRateModels) -> str:
         return ', '.join(
-            f"{token}: {round(token_amount / src.constants.TOKEN_DECIMAL_FACTORS[token], 4)}"
-            for token, token_amount in self.debt.token_amounts.items()
+            f"{token}: {round(token_amount / self.TOKEN_SETTINGS[token].decimal_factor * debt_interest_rate_models.values[token], 4)}"
+            for token, token_amount in self.debt.values.items()
             if token_amount > decimal.Decimal("0")
         )
 
     def has_collateral(self) -> bool:
-        if any(token_amount for token_amount in self.collateral.token_amounts.values()):
+        if any(token_amount for token_amount in self.collateral.values.values()):
             return True
         return False
 
     def has_debt(self) -> bool:
-        if any(token_amount for token_amount in self.debt.token_amounts.values()):
+        if any(token_amount for token_amount in self.debt.values.values()):
             return True
         return False
 
 
-class State:
+class State(abc.ABC):
     """
     A class that describes the state of all loan entities of the given lending protocol.
     """
 
-    EVENTS_METHODS_MAPPING: Dict[str, str] = {}
+    EVENTS_METHODS_MAPPING: dict[str, str] = {}
 
-    # TODO: Fix the type of `loan_entity_class`.
     def __init__(
         self,
-        loan_entity_class: Any,
+        loan_entity_class: LoanEntity,
         verbose_user: Optional[str] = None,
     ) -> None:
         self.loan_entity_class = loan_entity_class
         self.verbose_user = verbose_user
         self.loan_entities: collections.defaultdict = collections.defaultdict(self.loan_entity_class)
+        # These models reflect the interest rates at which users lend/stake funds.
+        self.collateral_interest_rate_models: InterestRateModels = InterestRateModels()
+        # These models reflect the interest rates at which users borrow funds.
+        self.debt_interest_rate_models: InterestRateModels = InterestRateModels()
         self.last_block_number: int = 0
 
     def process_event(self, event: pandas.Series) -> None:
@@ -199,63 +159,17 @@ class State:
         self.last_block_number = event["block_number"]
         getattr(self, self.EVENTS_METHODS_MAPPING[event["key_name"]])(event=event)
 
-    # TODO: This method will likely differ across protocols. -> Leave empty?
-    def compute_liquidable_debt_at_price(
-        self,
-        prices: Dict[str, decimal.Decimal],
-        collateral_token: str,
-        collateral_token_price: decimal.Decimal,
-        debt_token: str,
-    ) -> decimal.Decimal:
-        changed_prices = copy.deepcopy(prices)
-        changed_prices[collateral_token] = collateral_token_price
-        max_liquidated_amount = decimal.Decimal("0")
-        # TODO: for loan_entity in self.loan_entities.values(): + Search for other `for _, loan_entity`.
-        for _, loan_entity in self.loan_entities.items():
-            # Filter out entities who borrowed the token of interest.
-            debt_tokens = {
-                token
-                for token, token_amount in loan_entity.debt.token_amounts.items()
-                if token_amount > decimal.Decimal("0")
-            }
-            if not debt_token in debt_tokens:
-                continue
+    @abc.abstractmethod
+    def compute_liquidable_debt_at_price(self):
+        pass
 
-            # Filter out entities with health factor below 1.
-            risk_adjusted_collateral_usd = loan_entity.compute_risk_adjusted_collateral_usd(prices=changed_prices)
-            debt_usd = loan_entity.compute_debt_usd(prices=changed_prices)
-            health_factor = loan_entity.compute_health_factor(
-                risk_adjusted_collateral_usd=risk_adjusted_collateral_usd,
-                debt_usd=debt_usd,
-            )
-            # TODO: `health_factor` < 0 should not be possible if the data is right. Should we keep the filter?
-            if health_factor >= decimal.Decimal("1") or health_factor <= decimal.Decimal("0"):
-                continue
-
-            # Find out how much of the `debt_token` will be liquidated.
-            collateral_tokens = {
-                token
-                for token, token_amount in loan_entity.collateral.token_amounts.items()
-                if token_amount > decimal.Decimal("0")
-            }
-            # TODO: Choose the most optimal collateral_token to be liquidated. Or is the liquidator indifferent?
-            collateral_token = list(collateral_tokens)[0]
-            max_liquidated_amount += loan_entity.compute_debt_to_be_liquidated(
-                debt_token=debt_token,
-                collateral_token=collateral_token,
-                prices=changed_prices,
-                risk_adjusted_collateral_usd=risk_adjusted_collateral_usd,
-                debt_usd=debt_usd,
-            )
-        return max_liquidated_amount
-
-    # TODO: This method will likely differ across protocols. -> Leave empty?
+    # TODO: This method will likely differ across protocols. -> Leave undefined?
     def compute_number_of_active_loan_entities(self) -> int:
         return sum(
             loan_entity.has_collateral() or loan_entity.has_debt()
             for loan_entity in self.loan_entities.values()
         )
 
-    # TODO: This method will likely differ across protocols. -> Leave empty?
+    # TODO: This method will likely differ across protocols. -> Leave undefined?
     def compute_number_of_active_loan_entities_with_debt(self) -> int:
         return sum(loan_entity.has_debt() for loan_entity in self.loan_entities.values())
