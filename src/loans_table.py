@@ -79,8 +79,10 @@ def get_loans_table_data(
                 "Debt (USD)": debt_usd,
                 "Health factor": health_factor,
                 "Standardized health factor": standardized_health_factor,
-                "Collateral": loan_entity.get_collateral_str(),
-                "Debt": loan_entity.get_debt_str(),
+                "Collateral": loan_entity.get_collateral_str(
+                    collateral_interest_rate_models = state.collateral_interest_rate_models,
+                ),
+                "Debt": loan_entity.get_debt_str(debt_interest_rate_models = state.debt_interest_rate_models),
             }
         )
     data = pandas.DataFrame(data)
