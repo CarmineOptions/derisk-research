@@ -1,4 +1,3 @@
-from typing import Dict
 import decimal
 
 import pandas
@@ -6,34 +5,34 @@ import plotly.express
 import plotly.graph_objs
 
 import src.helpers
+import src.protocol_parameters
 import src.state
-import src.swap_liquidity
+import src.swap_amm
 
 
 
 def get_main_chart_data(
     state: src.state.State,
-    prices: Dict[str, decimal.Decimal],
-    swap_amms: src.swap_liquidity.SwapAmm,
+    prices: src.helpers.TokenValues,
+    swap_amms: src.swap_amm.SwapAmm,
     collateral_token: str,
     debt_token: str,
     save_data: bool = False,
 ) -> pandas.DataFrame:
     data = pandas.DataFrame({"collateral_token_price": src.helpers.get_collateral_token_range(collateral_token)})
-    data['liquidable_debt'] = \
-        data['collateral_token_price'].apply(
-            lambda x: state.compute_liquidable_debt_at_price(
-                prices = prices,
-                collateral_token = collateral_token,
-                collateral_token_price = x,
-                debt_token = debt_token,
-            )
+    data['liquidable_debt'] = data['collateral_token_price'].apply(
+        lambda x: state.compute_liquidable_debt_at_price(
+            prices = prices,
+            collateral_token = collateral_token,
+            collateral_token_price = x,
+            debt_token = debt_token,
         )
+    )
     data['liquidable_debt_at_interval'] = data['liquidable_debt'].diff().abs()
     data.dropna(inplace = True)
 
     data["debt_token_supply"] = data["collateral_token_price"].apply(
-        lambda x: src.swap_liquidity.get_supply_at_price(
+        lambda x: src.swap_amm.get_supply_at_price(
             collateral_token=collateral_token,
             collateral_token_price=x,
             debt_token=debt_token,
@@ -43,7 +42,7 @@ def get_main_chart_data(
     if save_data:
         # TODO: Save data to Google Storage.
         # TODO: Save to parquet.
-        directory = src.helpers.get_directory(state=state)
+        directory = src.protocol_parameters.get_directory(state=state)
         data.to_csv(f"{directory}/{collateral_token}-{debt_token}.csv", index=False, compression='gzip')
     return data
 
@@ -69,7 +68,7 @@ def get_main_chart_figure(
     figure.update_traces(selector={"name": "debt_token_supply"}, name=f"{debt_token} supply")
     figure.update_xaxes(title_text=f"{collateral_token} Price (USD)")
     figure.update_yaxes(title_text="Volume (USD)")
-    collateral_token_price = src.swap_liquidity.Prices().prices[collateral_token]
+    collateral_token_price = src.swap_amm.Prices().prices.values[collateral_token]
     figure.add_vline(
         x=collateral_token_price,
         line_width=2,

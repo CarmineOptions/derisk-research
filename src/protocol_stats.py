@@ -1,23 +1,24 @@
-from typing import Dict, List
 import asyncio
 import decimal
 import pandas
 
 import src.blockchain_call
-import src.constants
+import src.hashstack
 import src.helpers
+import src.protocol_parameters
+import src.settings
 import src.state
 
 
 
 def get_general_stats(
-    states: List[src.state.State],
-    loan_stats: Dict[str, pandas.DataFrame],
+    states: list[src.state.State],
+    loan_stats: dict[str, pandas.DataFrame],
     save_data: bool = False,
 ) -> pandas.DataFrame:
     data = []
     for state in states:
-        protocol = src.helpers.get_protocol(state=state)
+        protocol = src.protocol_parameters.get_protocol(state=state)
         if isinstance(state, src.hashstack.HashstackState):
             number_of_active_users = state.compute_number_of_active_users()
             number_of_active_borrowers = state.compute_number_of_active_borrowers()
@@ -46,28 +47,30 @@ def get_general_stats(
 
 
 def get_supply_stats(
-    states: List[src.state.State],
-    prices: Dict[str, decimal.Decimal],
+    states: list[src.state.State],
+    prices: src.helpers.TokenValues,
     save_data: bool = False,
 ) -> pandas.DataFrame:
     data = []
     for state in states:
-        protocol = src.helpers.get_protocol(state=state)
+        protocol = src.protocol_parameters.get_protocol(state=state)
         token_supplies = {}
-        for token in src.constants.TOKEN_DECIMAL_FACTORS:
+        for token in src.settings.TOKEN_SETTINGS:
             if token == 'wstETH' and protocol != 'zkLend':
                 token_supplies[token] = decimal.Decimal("0")
                 continue
             if protocol == 'Hashstack':
-                token_address, holder_address = src.helpers.get_hashstack_supply_parameters(token=token)
                 supply = asyncio.run(
                     src.blockchain_call.balance_of(
-                        token_addr = token_address,
-                        holder_addr = holder_address,
+                        token_addr = src.settings.TOKEN_SETTINGS[token].address,
+                        holder_addr = src.hashstack.ADDRESS,
                     )
                 )
             else:
-                address, selector = src.helpers.get_supply_function_call_parameters(protocol=protocol, token=token)
+                address, selector = src.protocol_parameters.get_supply_function_call_parameters(
+                    protocol=protocol, 
+                    token=token,
+                )
                 supply = asyncio.run(
                     src.blockchain_call.func_call(
                         addr = int(address, base=16),
@@ -75,7 +78,7 @@ def get_supply_stats(
                         calldata = [],
                     )
                 )[0]
-            supply = decimal.Decimal(str(supply)) / src.constants.TOKEN_DECIMAL_FACTORS[token]
+            supply = decimal.Decimal(str(supply)) / src.settings.TOKEN_SETTINGS[token].decimal_factor
             token_supplies[token] = round(supply, 4)
         data.append(
             {
@@ -90,7 +93,7 @@ def get_supply_stats(
         )
     data = pandas.DataFrame(data)
     data['Total supply (USD)'] = sum(
-        data[column] * prices[column.split(' ')[0]] 
+        data[column] * prices.values[column.split(' ')[0]] 
         for column in data.columns 
         if 'supply' in column
     ).apply(lambda x: round(x, 4))
@@ -102,21 +105,25 @@ def get_supply_stats(
 
 
 def get_collateral_stats(
-    states: List[src.state.State],
+    states: list[src.state.State],
     save_data: bool = False,
 ) -> pandas.DataFrame:
     data = []
     for state in states:
-        protocol = src.helpers.get_protocol(state=state)
+        protocol = src.protocol_parameters.get_protocol(state=state)
         token_collaterals = {}
-        for token in src.constants.TOKEN_DECIMAL_FACTORS:
+        for token in src.settings.TOKEN_SETTINGS:
             if token == 'wstETH' and protocol != 'zkLend':
                 token_collaterals[token] = decimal.Decimal("0")
                 continue
-            collateral = sum(
-                loan_entity.collateral.token_amounts[token]
-                for loan_entity in state.loan_entities.values()
-            ) / src.constants.TOKEN_DECIMAL_FACTORS[token]
+            collateral = (
+                sum(
+                    loan_entity.collateral.values[token]
+                    for loan_entity in state.loan_entities.values()
+                )
+                / src.settings.TOKEN_SETTINGS[token].decimal_factor
+                * state.collateral_interest_rate_models.values[token]
+            )
             token_collaterals[token] = round(collateral, 4)
         data.append(
             {
@@ -138,21 +145,25 @@ def get_collateral_stats(
 
 
 def get_debt_stats(
-    states: List[src.state.State],
+    states: list[src.state.State],
     save_data: bool = False,
 ) -> pandas.DataFrame:
     data = []
     for state in states:
-        protocol = src.helpers.get_protocol(state=state)
+        protocol = src.protocol_parameters.get_protocol(state=state)
         token_debts = {}
-        for token in src.constants.TOKEN_DECIMAL_FACTORS:
+        for token in src.settings.TOKEN_SETTINGS:
             if token == 'wstETH' and protocol != 'zkLend':
                 token_debts[token] = decimal.Decimal("0")
                 continue
-            debt = sum(
-                loan_entity.debt.token_amounts[token]
-                for loan_entity in state.loan_entities.values()
-            ) / src.constants.TOKEN_DECIMAL_FACTORS[token]
+            debt = (
+                sum(
+                    loan_entity.debt.values[token]
+                    for loan_entity in state.loan_entities.values()
+                )
+                / src.settings.TOKEN_SETTINGS[token].decimal_factor
+                * state.debt_interest_rate_models.values[token]
+            )
             token_debts[token] = round(debt, 4)
         data.append(
             {
