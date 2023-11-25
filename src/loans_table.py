@@ -1,3 +1,5 @@
+import os
+
 import pandas
 
 import src.hashstack
@@ -87,10 +89,12 @@ def get_loans_table_data(
         )
     data = pandas.DataFrame(data)
     if save_data:
-        # TODO: Save data to Google Storage.
         # TODO: Save to parquet.
         directory = src.protocol_parameters.get_directory(state=state)
-        data.to_csv(f"{directory}/loans.csv", index=False, compression='gzip')
+        path = f"{directory}/loans.csv"
+        data.to_csv(path, index=False, compression='gzip')
+        src.helpers.upload_file_to_bucket(source_path=path, target_path=path)
+        os.remove(path)
     return data
 
 
