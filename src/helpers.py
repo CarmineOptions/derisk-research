@@ -1,10 +1,17 @@
 from typing import Iterator, Optional, Union
 import decimal
+import logging
+import os
 
+import google.cloud.storage
 import pandas
 
 import src.db
 import src.settings
+
+
+
+GS_BUCKET_NAME = "derisk-persistent-state"
 
 
 
@@ -104,9 +111,9 @@ def load_data(protocol: str) -> tuple[dict[str, pandas.DataFrame], pandas.DataFr
     directory = f"{protocol.lower().replace(' ', '_')}_data"
     main_chart_data = {}
     for pair in src.settings.PAIRS:
-        main_chart_data[pair] = pandas.read_csv(f"{directory}/{pair}.csv", compression="gzip")
-    histogram_data = pandas.read_csv(f"{directory}/histogram.csv", compression="gzip")
-    loans_data = pandas.read_csv(f"{directory}/loans.csv", compression="gzip")
+        main_chart_data[pair] = pandas.read_csv(f"gs://{src.helpers.GS_BUCKET_NAME}/{directory}/{pair}.csv", compression="gzip")
+    histogram_data = pandas.read_csv(f"gs://{src.helpers.GS_BUCKET_NAME}/{directory}/histogram.csv", compression="gzip")
+    loans_data = pandas.read_csv(f"gs://{src.helpers.GS_BUCKET_NAME}/{directory}/loans.csv", compression="gzip")
     return (
         main_chart_data,
         histogram_data,
@@ -133,3 +140,16 @@ def ztoken_to_token(symbol: str) -> str:
         return symbol[1:]
     else:
         return symbol
+
+
+def upload_file_to_bucket(source_path: str, target_path: str):
+    # Initialize the Google Cloud Storage client with the credentials.
+    storage_client = google.cloud.storage.Client.from_service_account_json(os.getenv("CREDENTIALS_PATH"))
+
+    # Get the target bucket.
+    bucket = storage_client.bucket(GS_BUCKET_NAME)
+
+    # Upload the file to the bucket.
+    blob = bucket.blob(target_path)
+    blob.upload_from_filename(source_path)
+    logging.info(f"File = {source_path} uploaded to = gs://{GS_BUCKET_NAME}/{target_path}")
