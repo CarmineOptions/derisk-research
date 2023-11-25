@@ -205,7 +205,7 @@ if __name__ == "__main__":
     if os.environ.get("UPDATE_RUNNING") is None:
         os.environ["UPDATE_RUNNING"] = "True"
         # TODO: Switch to logging.
-        (logging.info"Spawning the updating process.")
+        logging.info("Spawning the updating process.")
         update_data_process = multiprocessing.Process(
             target=update_data.update_data_continuously, daemon=True
         )
