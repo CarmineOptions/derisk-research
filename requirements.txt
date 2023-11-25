@@ -5,3 +5,5 @@ streamlit==1.25.0
 plotly==5.15.0
 starknet-py==0.16.1
 google-cloud-storage==2.10.0
+fsspec==2023.10.0
+gcsfs==2023.10.0
