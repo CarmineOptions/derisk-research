@@ -1,4 +1,5 @@
 import decimal
+import os
 
 import pandas
 import plotly.express
@@ -40,10 +41,12 @@ def get_main_chart_data(
         )
     )
     if save_data:
-        # TODO: Save data to Google Storage.
         # TODO: Save to parquet.
         directory = src.protocol_parameters.get_directory(state=state)
-        data.to_csv(f"{directory}/{collateral_token}-{debt_token}.csv", index=False, compression='gzip')
+        path = f"{directory}/{collateral_token}-{debt_token}.csv"
+        data.to_csv(path, index=False, compression='gzip')
+        src.helpers.upload_file_to_bucket(source_path=path, target_path=path)
+        os.remove(path)
     return data
 
 

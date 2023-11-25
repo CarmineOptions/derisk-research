@@ -1,10 +1,9 @@
 import logging
-import os
 import pickle
-import sys
-import google.cloud.storage
+
 import requests
 
+import src.helpers
 import src.zklend
 
 
@@ -30,20 +29,27 @@ def download_and_load_state_from_pickle():
 def upload_state_as_pickle(state):
     with open(PERSISTENT_STATE_FILENAME, "wb") as out_file:
         pickle.dump(state, out_file)
-    upload_file_to_bucket(PERSISTENT_STATE_FILENAME, PERSISTENT_STATE_FILENAME)
+    src.helpers.upload_file_to_bucket(
+        source_path=PERSISTENT_STATE_FILENAME,
+        target_path=PERSISTENT_STATE_FILENAME,
+    )
 
 
-def upload_file_to_bucket(source, target):
-    bucket_name = "derisk-persistent-state"
+def update_persistent_state_manually():
+    zklend_events = src.zklend.get_events()
 
-    # Initialize the Google Cloud Storage client with the credentials
-    storage_client = google.cloud.storage.Client.from_service_account_json(
-        os.getenv("CREDENTIALS_PATH"))
+    zklend_state = src.zklend.ZkLendState()
+    for _, zklend_event in zklend_events.iterrows():
+        zklend_state.process_event(event=zklend_event)
 
-    # Get the target bucket
-    bucket = storage_client.bucket(bucket_name)
+    with open(PERSISTENT_STATE_FILENAME, "wb") as file:
+        pickle.dump(zklend_state, file)
 
-    # Upload the file to the bucket
-    blob = bucket.blob(target)
-    blob.upload_from_filename(source)
-    logging.info(f"File {source} uploaded to gs://{bucket_name}/{target}")
+    src.helpers.upload_file_to_bucket(
+        source_path=PERSISTENT_STATE_FILENAME,
+        target_path=PERSISTENT_STATE_FILENAME,
+    )
+    # TODO: Remove persistent state?
+    logging.info(
+        f"Created and saved a new persistent state under the latest block = {zklend_state.last_block_number}."
+    )

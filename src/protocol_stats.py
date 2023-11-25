@@ -1,5 +1,7 @@
 import asyncio
 import decimal
+import os
+
 import pandas
 
 import src.blockchain_call
@@ -40,9 +42,11 @@ def get_general_stats(
         )
     data = pandas.DataFrame(data)
     if save_data:
-        # TODO: Save data to Google Storage.
         # TODO: Save to parquet.
-        data.to_csv("data/general_stats.csv", index=False, compression='gzip')
+        path = "data/general_stats.csv"
+        data.to_csv(path, index=False, compression='gzip')
+        src.helpers.upload_file_to_bucket(source_path=path, target_path=path)
+        os.remove(path)
     return data
 
 
@@ -98,9 +102,11 @@ def get_supply_stats(
         if 'supply' in column
     ).apply(lambda x: round(x, 4))
     if save_data:
-        # TODO: Save data to Google Storage.
         # TODO: Save to parquet.
-        data.to_csv("data/supply_stats.csv", index=False, compression='gzip')
+        path = "data/supply_stats.csv"
+        data.to_csv(path, index=False, compression='gzip')
+        src.helpers.upload_file_to_bucket(source_path=path, target_path=path)
+        os.remove(path)
     return data
 
 
@@ -138,9 +144,11 @@ def get_collateral_stats(
         )
     data = pandas.DataFrame(data)
     if save_data:
-        # TODO: Save data to Google Storage.
         # TODO: Save to parquet.
-        data.to_csv("data/collateral_stats.csv", index=False, compression='gzip')
+        path = "data/collateral_stats.csv"
+        data.to_csv(path, index=False, compression='gzip')
+        src.helpers.upload_file_to_bucket(source_path=path, target_path=path)
+        os.remove(path)
     return data
 
 
@@ -178,9 +186,11 @@ def get_debt_stats(
         )
     data = pandas.DataFrame(data)
     if save_data:
-        # TODO: Save data to Google Storage.
         # TODO: Save to parquet.
-        data.to_csv("data/debt_stats.csv", index=False, compression='gzip')
+        path = "data/debt_stats.csv"
+        data.to_csv(path, index=False, compression='gzip')
+        src.helpers.upload_file_to_bucket(source_path=path, target_path=path)
+        os.remove(path)
     return data
 
 
@@ -210,7 +220,9 @@ def get_utilization_stats(
     utilization_columns = [x for x in data.columns if 'utilization' in x]
     data[utilization_columns] = data[utilization_columns].applymap(lambda x: round(x, 4))
     if save_data:
-        # TODO: Save data to Google Storage.
         # TODO: Save to parquet.
-        data.to_csv("data/utilization_stats.csv", index=False, compression='gzip')
+        path = "data/utilization_stats.csv"
+        data.to_csv(path, index=False, compression='gzip')
+        src.helpers.upload_file_to_bucket(source_path=path, target_path=path)
+        os.remove(path)
     return data

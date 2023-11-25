@@ -1,3 +1,5 @@
+import os
+
 import pandas
 import plotly.express
 import streamlit
@@ -28,10 +30,12 @@ def get_histogram_data(
     ]
     data = pandas.DataFrame(data)
     if save_data:
-        # TODO: Save data to Google Storage.
         # TODO: Save to parquet.
         directory = src.protocol_parameters.get_directory(state=state)
-        data.to_csv(f"{directory}/histogram.csv", index=False, compression='gzip')
+        path = f"{directory}/histogram.csv"
+        data.to_csv(path, index=False, compression='gzip')
+        src.helpers.upload_file_to_bucket(source_path=path, target_path=path)
+        os.remove(path)
     return data
 
 
