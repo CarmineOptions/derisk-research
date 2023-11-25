@@ -1,6 +1,7 @@
 import asyncio
 import itertools
 import json
+import logging
 import time
 
 import src.settings
@@ -18,14 +19,18 @@ import src.zklend
 
 
 
+logging.basicConfig(level=logging.INFO)
+
+
+
 def update_data(zklend_state):
     t0 = time.time()
-    print(f"Updating CSV data from {zklend_state.last_block_number}...", flush=True)
+    logging.info(f"Updating CSV data from {zklend_state.last_block_number}...")
     zklend_events = src.zklend.get_events(start_block_number = zklend_state.last_block_number + 1)
     hashstack_events = src.hashstack.get_events()
     nostra_events = src.nostra.get_events()
     nostra_uncapped_events = src.nostra_uncapped.get_events()
-    print(f"got events in {time.time() - t0}s", flush=True)
+    logging.info(f"got events in {time.time() - t0}s")
 
     t1 = time.time()
 
@@ -45,19 +50,19 @@ def update_data(zklend_state):
     for _, nostra_uncapped_event in nostra_uncapped_events.iterrows():
         nostra_uncapped_state.process_event(event=nostra_uncapped_event)
 
-    print(f"updated state in {time.time() - t1}s", flush=True)
+    logging.info(f"updated state in {time.time() - t1}s")
 
     t_prices = time.time()
     prices = src.swap_amm.Prices()
 
-    print(f"prices in {time.time() - t_prices}s", flush=True)
+    logging.info(f"prices in {time.time() - t_prices}s")
 
     t_swap = time.time()
 
     swap_amms = src.swap_amm.SwapAmm()
     asyncio.run(swap_amms.init())
 
-    print(f"swap in {time.time() - t_swap}s", flush=True)
+    logging.info(f"swap in {time.time() - t_swap}s")
 
     t2 = time.time()
 
@@ -73,9 +78,9 @@ def update_data(zklend_state):
             debt_token=borrowings_token,
             save_data=True,
         )
-        print(f"Main chart data for pair = {pair} prepared in {time.time() - t2}s", flush=True)
+        logging.info(f"Main chart data for pair = {pair} prepared in {time.time() - t2}s")
 
-    print(f"updated graphs in {time.time() - t2}s", flush=True)
+    logging.info(f"updated graphs in {time.time() - t2}s")
 
     for state in states:
         _ = src.histogram.get_histogram_data(state=state, prices=prices.prices, save_data=True)
@@ -105,7 +110,7 @@ def update_data(zklend_state):
     with open("zklend_data/last_update.json", "w") as outfile:
         outfile.write(json.dumps(dict))
 
-    print(f"Updated CSV data in {time.time() - t0}s", flush=True)
+    logging.info(f"Updated CSV data in {time.time() - t0}s")
     return zklend_state
 
 
@@ -114,7 +119,7 @@ def update_data_continuously():
     while True:
         state = update_data(state)
         src.persistent_state.upload_state_as_pickle(state)
-        print("DATA UPDATED", flush=True)
+        logging.info("DATA UPDATED")
         time.sleep(120)
 
 

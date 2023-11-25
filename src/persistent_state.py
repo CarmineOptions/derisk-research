@@ -1,3 +1,4 @@
+import logging
 import os
 import pickle
 import sys
@@ -19,11 +20,10 @@ def download_and_load_state_from_pickle():
             state = pickle.loads(response.content)
             return state
         except pickle.UnpicklingError as e:
-            print("Failed to unpickle the data:", e, flush=True)
+            logging.info(f"Failed to unpickle the data: {e}")
             return src.zklend.ZkLendState()
     else:
-        print(
-            f"Failed to download file. Status code: {response.status_code}", flush=True)
+        logging.info(f"Failed to download file. Status code: {response.status_code}")
         return src.zklend.ZkLendState()
 
 
@@ -46,4 +46,4 @@ def upload_file_to_bucket(source, target):
     # Upload the file to the bucket
     blob = bucket.blob(target)
     blob.upload_from_filename(source)
-    print(f"File {source} uploaded to gs://{bucket_name}/{target}")
+    logging.info(f"File {source} uploaded to gs://{bucket_name}/{target}")

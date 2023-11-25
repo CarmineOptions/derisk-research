@@ -1,6 +1,7 @@
 import datetime
 import decimal
 import json
+import logging
 import multiprocessing
 import os
 
@@ -14,6 +15,11 @@ import src.main_chart
 import src.settings
 import src.swap_amm
 import update_data
+
+
+
+logging.basicConfig(level=logging.INFO)
+
 
 
 def main():
@@ -199,7 +205,7 @@ if __name__ == "__main__":
     if os.environ.get("UPDATE_RUNNING") is None:
         os.environ["UPDATE_RUNNING"] = "True"
         # TODO: Switch to logging.
-        print("Spawning the updating process.", flush=True)
+        (logging.info"Spawning the updating process.")
         update_data_process = multiprocessing.Process(
             target=update_data.update_data_continuously, daemon=True
         )
