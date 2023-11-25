@@ -3,16 +3,11 @@ import abc
 import collections
 import dataclasses
 import decimal
-import logging
 
 import pandas
 
 import src.settings
 import src.helpers
-
-
-
-logging.basicConfig(level=logging.INFO)
 
 
 
