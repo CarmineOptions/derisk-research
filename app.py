@@ -150,11 +150,18 @@ def main():
     )
 
     streamlit.header("Comparison of lending protocols")
-    streamlit.dataframe(pandas.read_csv("data/general_stats.csv", compression="gzip"))
-    streamlit.dataframe(pandas.read_csv("data/utilization_stats.csv", compression="gzip"))
-    supply_stats = pandas.read_csv("data/supply_stats.csv", compression="gzip")
-    collateral_stats = pandas.read_csv("data/collateral_stats.csv", compression="gzip")
-    debt_stats = pandas.read_csv("data/debt_stats.csv", compression="gzip")
+    streamlit.dataframe(
+        pandas.read_csv(f"gs://{src.helpers.GS_BUCKET_NAME}/data/general_stats.csv", compression="gzip")
+    )
+    streamlit.dataframe(
+        pandas.read_csv(f"gs://{src.helpers.GS_BUCKET_NAME}/data/utilization_stats.csv", compression="gzip")
+    )
+    supply_stats = pandas.read_csv(f"gs://{src.helpers.GS_BUCKET_NAME}/data/supply_stats.csv", compression="gzip")
+    collateral_stats = pandas.read_csv(
+        f"gs://{src.helpers.GS_BUCKET_NAME}/data/collateral_stats.csv",
+        compression="gzip",
+    )
+    debt_stats = pandas.read_csv(f"gs://{src.helpers.GS_BUCKET_NAME}/data/debt_stats.csv", compression="gzip")
 
     columns = streamlit.columns(6)
     for column, token in zip(columns, src.settings.TOKEN_SETTINGS.keys()):
