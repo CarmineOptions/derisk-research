@@ -1,4 +1,5 @@
 import logging
+import os
 import pickle
 
 import requests
@@ -7,7 +8,9 @@ import src.helpers
 import src.zklend
 
 
+
 PERSISTENT_STATE_FILENAME = "persistent-state.pckl"
+
 
 
 def download_and_load_state_from_pickle():
@@ -33,6 +36,7 @@ def upload_state_as_pickle(state):
         source_path=PERSISTENT_STATE_FILENAME,
         target_path=PERSISTENT_STATE_FILENAME,
     )
+    os.remove(PERSISTENT_STATE_FILENAME)
 
 
 def update_persistent_state_manually():
@@ -44,12 +48,12 @@ def update_persistent_state_manually():
 
     with open(PERSISTENT_STATE_FILENAME, "wb") as file:
         pickle.dump(zklend_state, file)
-
     src.helpers.upload_file_to_bucket(
         source_path=PERSISTENT_STATE_FILENAME,
         target_path=PERSISTENT_STATE_FILENAME,
     )
-    # TODO: Remove persistent state?
+    os.remove(PERSISTENT_STATE_FILENAME)
+    
     logging.info(
         f"Created and saved a new persistent state under the latest block = {zklend_state.last_block_number}."
     )
