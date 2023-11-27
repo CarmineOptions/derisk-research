@@ -115,13 +115,9 @@ def load_data(protocol: str) -> tuple[dict[str, pandas.DataFrame], pandas.DataFr
     directory = f"{protocol.lower().replace(' ', '_')}_data"
     main_chart_data = {}
     for pair in src.settings.PAIRS:
-        main_chart_data[pair] = pandas.read_parquet(
-            f"gs://{src.helpers.GS_BUCKET_NAME}/{directory}/{pair}.csv", compression="gzip"
-        )
-    histogram_data = pandas.read_parquet(
-        f"gs://{src.helpers.GS_BUCKET_NAME}/{directory}/histogram.csv", compression="gzip"
-    )
-    loans_data = pandas.read_parquet(f"gs://{src.helpers.GS_BUCKET_NAME}/{directory}/loans.csv", compression="gzip")
+        main_chart_data[pair] = pandas.read_parquet(f"gs://{src.helpers.GS_BUCKET_NAME}/{directory}/{pair}.parquet")
+    histogram_data = pandas.read_parquet(f"gs://{src.helpers.GS_BUCKET_NAME}/{directory}/histogram.parquet")
+    loans_data = pandas.read_parquet(f"gs://{src.helpers.GS_BUCKET_NAME}/{directory}/loans.parquet")
     return (
         main_chart_data,
         histogram_data,
@@ -168,7 +164,8 @@ def upload_file_to_bucket(source_path: str, target_path: str):
 
 def save_dataframe(data: pandas.DataFrame, path: str) -> None:
     directory = path.rstrip(path.split('/')[-1])
-    os.makedirs(directory, exist_ok=True)
-    data.to_parquet(path, index=False, compression='gzip')
+    if not directory == '':
+        os.makedirs(directory, exist_ok=True)
+    data.to_parquet(path, index=False, engine = 'fastparquet', compression='gzip')
     src.helpers.upload_file_to_bucket(source_path=path, target_path=path)
     os.remove(path)

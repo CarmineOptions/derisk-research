@@ -151,18 +151,11 @@ def main():
     )
 
     streamlit.header("Comparison of lending protocols")
-    streamlit.dataframe(
-        pandas.read_parquet(f"gs://{src.helpers.GS_BUCKET_NAME}/data/general_stats.csv", compression="gzip")
-    )
-    streamlit.dataframe(
-        pandas.read_parquet(f"gs://{src.helpers.GS_BUCKET_NAME}/data/utilization_stats.csv", compression="gzip")
-    )
-    supply_stats = pandas.read_parquet(f"gs://{src.helpers.GS_BUCKET_NAME}/data/supply_stats.csv", compression="gzip")
-    collateral_stats = pandas.read_parquet(
-        f"gs://{src.helpers.GS_BUCKET_NAME}/data/collateral_stats.csv",
-        compression="gzip",
-    )
-    debt_stats = pandas.read_parquet(f"gs://{src.helpers.GS_BUCKET_NAME}/data/debt_stats.csv", compression="gzip")
+    streamlit.dataframe(pandas.read_parquet(f"gs://{src.helpers.GS_BUCKET_NAME}/data/general_stats.parquet"))
+    streamlit.dataframe(pandas.read_parquet(f"gs://{src.helpers.GS_BUCKET_NAME}/data/utilization_stats.parquet"))
+    supply_stats = pandas.read_parquet(f"gs://{src.helpers.GS_BUCKET_NAME}/data/supply_stats.parquet")
+    collateral_stats = pandas.read_parquet(f"gs://{src.helpers.GS_BUCKET_NAME}/data/collateral_stats.parquet")
+    debt_stats = pandas.read_parquet(f"gs://{src.helpers.GS_BUCKET_NAME}/data/debt_stats.parquet")
 
     columns = streamlit.columns(6)
     for column, token in zip(columns, src.settings.TOKEN_SETTINGS.keys()):

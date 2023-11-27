@@ -42,8 +42,7 @@ def get_general_stats(
         )
     data = pandas.DataFrame(data)
     if save_data:
-        # TODO: Save to parquet.
-        path = "data/general_stats.csv"
+        path = "data/general_stats.parquet"
         src.helpers.save_dataframe(data=data, path=path)
     return data
 
@@ -100,8 +99,7 @@ def get_supply_stats(
         if 'supply' in column
     ).apply(lambda x: round(x, 4))
     if save_data:
-        # TODO: Save to parquet.
-        path = "data/supply_stats.csv"
+        path = "data/supply_stats.parquet"
         src.helpers.save_dataframe(data=data, path=path)
     return data
 
@@ -140,8 +138,7 @@ def get_collateral_stats(
         )
     data = pandas.DataFrame(data)
     if save_data:
-        # TODO: Save to parquet.
-        path = "data/collateral_stats.csv"
+        path = "data/collateral_stats.parquet"
         src.helpers.save_dataframe(data=data, path=path)
     return data
 
@@ -180,8 +177,7 @@ def get_debt_stats(
         )
     data = pandas.DataFrame(data)
     if save_data:
-        # TODO: Save to parquet.
-        path = "data/debt_stats.csv"
+        path = "data/debt_stats.parquet"
         src.helpers.save_dataframe(data=data, path=path)
     return data
 
@@ -212,7 +208,6 @@ def get_utilization_stats(
     utilization_columns = [x for x in data.columns if 'utilization' in x]
     data[utilization_columns] = data[utilization_columns].applymap(lambda x: round(x, 4))
     if save_data:
-        # TODO: Save to parquet.
-        path = "data/utilization_stats.csv"
+        path = "data/utilization_stats.parquet"
         src.helpers.save_dataframe(data=data, path=path)
     return data

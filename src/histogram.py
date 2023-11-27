@@ -30,9 +30,8 @@ def get_histogram_data(
     ]
     data = pandas.DataFrame(data)
     if save_data:
-        # TODO: Save to parquet.
         directory = src.protocol_parameters.get_directory(state=state)
-        path = f"{directory}/histogram.csv"
+        path = f"{directory}/histogram.parquet"
         src.helpers.save_dataframe(data=data, path=path)
     return data
 

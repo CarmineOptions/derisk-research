@@ -41,9 +41,8 @@ def get_main_chart_data(
         )
     )
     if save_data:
-        # TODO: Save to parquet.
         directory = src.protocol_parameters.get_directory(state=state)
-        path = f"{directory}/{collateral_token}-{debt_token}.csv"
+        path = f"{directory}/{collateral_token}-{debt_token}.parquet"
         src.helpers.save_dataframe(data=data, path=path)
     return data
 
