@@ -12,6 +12,7 @@ import streamlit
 import src.helpers
 import src.histogram
 import src.main_chart
+import src.persistent_state
 import src.settings
 import src.swap_amm
 import update_data
@@ -150,18 +151,11 @@ def main():
     )
 
     streamlit.header("Comparison of lending protocols")
-    streamlit.dataframe(
-        pandas.read_csv(f"gs://{src.helpers.GS_BUCKET_NAME}/data/general_stats.csv", compression="gzip")
-    )
-    streamlit.dataframe(
-        pandas.read_csv(f"gs://{src.helpers.GS_BUCKET_NAME}/data/utilization_stats.csv", compression="gzip")
-    )
-    supply_stats = pandas.read_csv(f"gs://{src.helpers.GS_BUCKET_NAME}/data/supply_stats.csv", compression="gzip")
-    collateral_stats = pandas.read_csv(
-        f"gs://{src.helpers.GS_BUCKET_NAME}/data/collateral_stats.csv",
-        compression="gzip",
-    )
-    debt_stats = pandas.read_csv(f"gs://{src.helpers.GS_BUCKET_NAME}/data/debt_stats.csv", compression="gzip")
+    streamlit.dataframe(pandas.read_parquet(f"gs://{src.helpers.GS_BUCKET_NAME}/data/general_stats.parquet"))
+    streamlit.dataframe(pandas.read_parquet(f"gs://{src.helpers.GS_BUCKET_NAME}/data/utilization_stats.parquet"))
+    supply_stats = pandas.read_parquet(f"gs://{src.helpers.GS_BUCKET_NAME}/data/supply_stats.parquet")
+    collateral_stats = pandas.read_parquet(f"gs://{src.helpers.GS_BUCKET_NAME}/data/collateral_stats.parquet")
+    debt_stats = pandas.read_parquet(f"gs://{src.helpers.GS_BUCKET_NAME}/data/debt_stats.parquet")
 
     columns = streamlit.columns(6)
     for column, token in zip(columns, src.settings.TOKEN_SETTINGS.keys()):
@@ -194,12 +188,11 @@ def main():
     streamlit.header("Loan size distribution")
     src.histogram.visualization(data=histogram_data)
 
-    with open("zklend_data/last_update.json", "r") as f:
-        last_update = json.load(f)
-        last_updated = last_update["timestamp"]
-        last_block_number = last_update["block_number"]
-    date_str = datetime.datetime.utcfromtimestamp(int(last_updated))
-    streamlit.write(f"Last updated {date_str} UTC, last block: {last_block_number}")
+    last_update = src.persistent_state.load_pickle(path=src.persistent_state.LAST_UPDATE_FILENAME)
+    last_timestamp = last_update["timestamp"]
+    last_block_number = last_update["block_number"]
+    date_str = datetime.datetime.utcfromtimestamp(int(last_timestamp))
+    streamlit.write(f"Last updated {date_str} UTC, last block: {last_block_number}.")
 
 
 if __name__ == "__main__":
@@ -211,7 +204,6 @@ if __name__ == "__main__":
 
     if os.environ.get("UPDATE_RUNNING") is None:
         os.environ["UPDATE_RUNNING"] = "True"
-        # TODO: Switch to logging.
         logging.info("Spawning the updating process.")
         update_data_process = multiprocessing.Process(
             target=update_data.update_data_continuously, daemon=True

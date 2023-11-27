@@ -1,3 +1,4 @@
+from typing import Any
 import logging
 import os
 import pickle
@@ -10,33 +11,33 @@ import src.zklend
 
 
 PERSISTENT_STATE_FILENAME = "persistent-state.pckl"
+LAST_UPDATE_FILENAME = "last_update.json"
 
 
 
-def download_and_load_state_from_pickle():
+def load_pickle(path: str) -> src.zklend.ZkLendState:
+    # TODO: generalize to every protocol
+    # TODO: use https://stackoverflow.com/a/58709164 instead?
     response = requests.get(
-        "https://storage.googleapis.com/derisk-persistent-state/persistent-state.pckl"
+        f"https://storage.googleapis.com/derisk-persistent-state/{path}"
     )
     if response.status_code == 200:
         try:
             state = pickle.loads(response.content)
             return state
         except pickle.UnpicklingError as e:
-            logging.info(f"Failed to unpickle the data: {e}")
+            logging.info(f"Failed to unpickle the data: {e}.")
             return src.zklend.ZkLendState()
     else:
-        logging.info(f"Failed to download file. Status code: {response.status_code}")
+        logging.info(f"Failed to load the file. Status code: {response.status_code}.")
         return src.zklend.ZkLendState()
 
 
-def upload_state_as_pickle(state):
-    with open(PERSISTENT_STATE_FILENAME, "wb") as out_file:
-        pickle.dump(state, out_file)
-    src.helpers.upload_file_to_bucket(
-        source_path=PERSISTENT_STATE_FILENAME,
-        target_path=PERSISTENT_STATE_FILENAME,
-    )
-    os.remove(PERSISTENT_STATE_FILENAME)
+def upload_object_as_pickle(object: Any, path: str):
+    with open(path, "wb") as out_file:
+        pickle.dump(object, out_file)
+    src.helpers.upload_file_to_bucket(source_path=path, target_path=path)
+    os.remove(path)
 
 
 def update_persistent_state_manually():

@@ -89,12 +89,9 @@ def get_loans_table_data(
         )
     data = pandas.DataFrame(data)
     if save_data:
-        # TODO: Save to parquet.
         directory = src.protocol_parameters.get_directory(state=state)
-        path = f"{directory}/loans.csv"
-        data.to_csv(path, index=False, compression='gzip')
-        src.helpers.upload_file_to_bucket(source_path=path, target_path=path)
-        os.remove(path)
+        path = f"{directory}/loans.parquet"
+        src.helpers.save_dataframe(data=data, path=path)
     return data
 
 
