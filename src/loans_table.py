@@ -92,9 +92,7 @@ def get_loans_table_data(
         # TODO: Save to parquet.
         directory = src.protocol_parameters.get_directory(state=state)
         path = f"{directory}/loans.csv"
-        data.to_csv(path, index=False, compression='gzip')
-        src.helpers.upload_file_to_bucket(source_path=path, target_path=path)
-        os.remove(path)
+        src.helpers.save_csv(data=data, path=path)
     return data
 
 

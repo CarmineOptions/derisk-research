@@ -103,22 +103,18 @@ def update_data(zklend_state):
 
     max_block_number = zklend_events["block_number"].max()
     max_timestamp = zklend_events["timestamp"].max()
-
-    dict = {"timestamp": str(max_timestamp),
-            "block_number": str(max_block_number)}
-
-    with open("zklend_data/last_update.json", "w") as outfile:
-        outfile.write(json.dumps(dict))
+    last_update = {"timestamp": str(max_timestamp), "block_number": str(max_block_number)}
+    src.persistent_state.upload_object_as_pickle(last_update, path=src.persistent_state.LAST_UPDATE_FILENAME)
 
     logging.info(f"Updated CSV data in {time.time() - t0}s")
     return zklend_state
 
 
 def update_data_continuously():
-    state = src.persistent_state.download_and_load_state_from_pickle()
+    state = src.persistent_state.load_pickle(path=src.persistent_state.PERSISTENT_STATE_FILENAME)
     while True:
         state = update_data(state)
-        src.persistent_state.upload_state_as_pickle(state)
+        src.persistent_state.upload_object_as_pickle(state, path=src.persistent_state.PERSISTENT_STATE_FILENAME)
         logging.info("DATA UPDATED")
         time.sleep(120)
 
