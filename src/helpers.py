@@ -43,7 +43,11 @@ def get_events(
 
 
 class TokenValues:
-    def __init__(self, values: Optional[dict[str, Union[bool, decimal.Decimal]]] = None, init_value: decimal.Decimal = decimal.Decimal("0")) -> None:
+    def __init__(
+        self,
+        values: Optional[dict[str, Union[bool, decimal.Decimal]]] = None,
+        init_value: decimal.Decimal = decimal.Decimal("0"),
+    ) -> None:
         if values:
             assert set(values.keys()) == set(src.settings.TOKEN_SETTINGS.keys())
             self.values: dict[str, decimal.Decimal] = values
@@ -111,9 +115,13 @@ def load_data(protocol: str) -> tuple[dict[str, pandas.DataFrame], pandas.DataFr
     directory = f"{protocol.lower().replace(' ', '_')}_data"
     main_chart_data = {}
     for pair in src.settings.PAIRS:
-        main_chart_data[pair] = pandas.read_csv(f"gs://{src.helpers.GS_BUCKET_NAME}/{directory}/{pair}.csv", compression="gzip")
-    histogram_data = pandas.read_csv(f"gs://{src.helpers.GS_BUCKET_NAME}/{directory}/histogram.csv", compression="gzip")
-    loans_data = pandas.read_csv(f"gs://{src.helpers.GS_BUCKET_NAME}/{directory}/loans.csv", compression="gzip")
+        main_chart_data[pair] = pandas.read_parquet(
+            f"gs://{src.helpers.GS_BUCKET_NAME}/{directory}/{pair}.csv", compression="gzip"
+        )
+    histogram_data = pandas.read_parquet(
+        f"gs://{src.helpers.GS_BUCKET_NAME}/{directory}/histogram.csv", compression="gzip"
+    )
+    loans_data = pandas.read_parquet(f"gs://{src.helpers.GS_BUCKET_NAME}/{directory}/loans.csv", compression="gzip")
     return (
         main_chart_data,
         histogram_data,
@@ -125,7 +133,10 @@ def load_data(protocol: str) -> tuple[dict[str, pandas.DataFrame], pandas.DataFr
 def get_symbol(address: str) -> str:
     # you can match addresses as numbers
     n = int(address, base=16)
-    symbol_address_map = {token: token_settings.address for token, token_settings in src.settings.TOKEN_SETTINGS.items()}
+    symbol_address_map = {
+        token: token_settings.address
+        for token, token_settings in src.settings.TOKEN_SETTINGS.items()
+    }
     for symbol, addr in symbol_address_map.items():
         if int(addr, base=16) == n:
             return symbol
@@ -155,9 +166,9 @@ def upload_file_to_bucket(source_path: str, target_path: str):
     logging.info(f"File = {source_path} uploaded to = gs://{GS_BUCKET_NAME}/{target_path}")
 
 
-def save_csv(data: pandas.DataFrame, path: str) -> None:
+def save_dataframe(data: pandas.DataFrame, path: str) -> None:
     directory = path.rstrip(path.split('/')[-1])
     os.makedirs(directory, exist_ok=True)
-    data.to_csv(path, index=False, compression='gzip')
+    data.to_parquet(path, index=False, compression='gzip')
     src.helpers.upload_file_to_bucket(source_path=path, target_path=path)
     os.remove(path)
