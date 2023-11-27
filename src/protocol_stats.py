@@ -44,7 +44,7 @@ def get_general_stats(
     if save_data:
         # TODO: Save to parquet.
         path = "data/general_stats.csv"
-        src.helpers.save_csv(data=data, path=path)
+        src.helpers.save_dataframe(data=data, path=path)
     return data
 
 
@@ -102,7 +102,7 @@ def get_supply_stats(
     if save_data:
         # TODO: Save to parquet.
         path = "data/supply_stats.csv"
-        src.helpers.save_csv(data=data, path=path)
+        src.helpers.save_dataframe(data=data, path=path)
     return data
 
 
@@ -142,7 +142,7 @@ def get_collateral_stats(
     if save_data:
         # TODO: Save to parquet.
         path = "data/collateral_stats.csv"
-        src.helpers.save_csv(data=data, path=path)
+        src.helpers.save_dataframe(data=data, path=path)
     return data
 
 
@@ -182,7 +182,7 @@ def get_debt_stats(
     if save_data:
         # TODO: Save to parquet.
         path = "data/debt_stats.csv"
-        src.helpers.save_csv(data=data, path=path)
+        src.helpers.save_dataframe(data=data, path=path)
     return data
 
 
@@ -214,5 +214,5 @@ def get_utilization_stats(
     if save_data:
         # TODO: Save to parquet.
         path = "data/utilization_stats.csv"
-        src.helpers.save_csv(data=data, path=path)
+        src.helpers.save_dataframe(data=data, path=path)
     return data

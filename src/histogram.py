@@ -33,7 +33,7 @@ def get_histogram_data(
         # TODO: Save to parquet.
         directory = src.protocol_parameters.get_directory(state=state)
         path = f"{directory}/histogram.csv"
-        src.helpers.save_csv(data=data, path=path)
+        src.helpers.save_dataframe(data=data, path=path)
     return data
 
 
