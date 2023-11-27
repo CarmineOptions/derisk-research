@@ -153,3 +153,11 @@ def upload_file_to_bucket(source_path: str, target_path: str):
     blob = bucket.blob(target_path)
     blob.upload_from_filename(source_path)
     logging.info(f"File = {source_path} uploaded to = gs://{GS_BUCKET_NAME}/{target_path}")
+
+
+def save_csv(data: pandas.DataFrame, path: str) -> None:
+    directory = path.rstrip(path.split('/')[-1])
+    os.makedirs(directory, exist_ok=True)
+    data.to_csv(path, index=False, compression='gzip')
+    src.helpers.upload_file_to_bucket(source_path=path, target_path=path)
+    os.remove(path)
