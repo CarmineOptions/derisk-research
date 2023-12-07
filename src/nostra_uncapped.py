@@ -80,6 +80,7 @@ NOSTRA_UNCAPPED_SPECIFIC_TOKEN_SETTINGS: dict[str, NostraUncappedSpecificTokenSe
 }
 TOKEN_SETTINGS: dict[str, TokenSettings] = {
     token: TokenSettings(
+        # TODO: These can differ between Nostra and Nostra-uncapped.
         symbol=src.nostra.TOKEN_SETTINGS[token].symbol,
         decimal_factor=src.nostra.TOKEN_SETTINGS[token].decimal_factor,
         address=src.nostra.TOKEN_SETTINGS[token].address,
