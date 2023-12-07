@@ -85,7 +85,7 @@ NOSTRA_SPECIFIC_TOKEN_SETTINGS: dict[str, NostraSpecificTokenSettings] = {
         protocol_token_address="0x04f89253e37ca0ab7190b2e9565808f105585c9cacca6b2fa6145553fa061a41",
     ),
     "wBTC": NostraSpecificTokenSettings(
-        collateral_factor=decimal.Decimal("0"), 
+        collateral_factor=decimal.Decimal("0.7"), 
         debt_factor=decimal.Decimal("0.8"),
         liquidator_fee_beta=decimal.Decimal("2.75"),
         liquidator_fee_max=decimal.Decimal("0.25"),
@@ -101,7 +101,7 @@ NOSTRA_SPECIFIC_TOKEN_SETTINGS: dict[str, NostraSpecificTokenSettings] = {
         protocol_token_address="0x05327df4c669cb9be5c1e2cf79e121edef43c1416fac884559cd94fcb7e6e232",
     ),
     "DAI": NostraSpecificTokenSettings(
-        collateral_factor=decimal.Decimal("0"), 
+        collateral_factor=decimal.Decimal("0.8"), 
         debt_factor=decimal.Decimal("0.95"),
         liquidator_fee_beta=decimal.Decimal("2.2"),
         liquidator_fee_max=decimal.Decimal("0.2"),
@@ -109,7 +109,7 @@ NOSTRA_SPECIFIC_TOKEN_SETTINGS: dict[str, NostraSpecificTokenSettings] = {
         protocol_token_address="0x02ea39ba7a05f0c936b7468d8bc8d0e1f2116916064e7e163e7c1044d95bd135",
     ),
     "USDT": NostraSpecificTokenSettings(
-        collateral_factor=decimal.Decimal("0.9"), 
+        collateral_factor=decimal.Decimal("0.8"), 
         debt_factor=decimal.Decimal("0.95"),
         liquidator_fee_beta=decimal.Decimal("1.65"),
         liquidator_fee_max=decimal.Decimal("0.15"),
