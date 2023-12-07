@@ -17,7 +17,7 @@ GS_BUCKET_NAME = "derisk-persistent-state"
 
 def get_events(
     adresses: tuple[str, ...],
-    events: tuple[str, ...],
+    event_names: tuple[str, ...],
     start_block_number: int = 0,
 ) -> pandas.DataFrame:
     connection = src.db.establish_connection()
@@ -30,7 +30,7 @@ def get_events(
             WHERE
                 from_address IN {adresses}
             AND
-                key_name IN {events}
+                key_name IN {event_names}
             AND
                 block_number >= {start_block_number}
             ORDER BY
