@@ -108,7 +108,7 @@ EVENTS_METHODS_MAPPING: dict[str, str] = {
 def get_events(start_block_number: int = 0) -> pandas.DataFrame:
     return src.helpers.get_events(
         adresses = (ADDRESS, ''),
-        events = tuple(EVENTS_METHODS_MAPPING),
+        event_names = tuple(EVENTS_METHODS_MAPPING),
         start_block_number = start_block_number,
     )
 
