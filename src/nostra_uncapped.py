@@ -99,12 +99,12 @@ TOKEN_SETTINGS: dict[str, TokenSettings] = {
 def get_events(start_block_number: int = 0) -> pandas.DataFrame:
     user_events = src.helpers.get_events(
         adresses = tuple(ADDRESSES_TO_TOKENS),
-        events = ('Burn', 'Mint'),
+        event_names = ('Burn', 'Mint'),
         start_block_number = start_block_number,
     )
     interest_rate_events = src.helpers.get_events(
         adresses = (INTEREST_RATE_MODEL_ADDRESS, ''),
-        events = ('InterestStateUpdated', ''),
+        event_names = ('InterestStateUpdated', ''),
         start_block_number = start_block_number,
     )
     events = pandas.concat([user_events, interest_rate_events])

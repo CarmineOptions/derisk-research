@@ -66,7 +66,7 @@ EVENTS_METHODS_MAPPING: dict[str, str] = {
 def get_events(start_block_number: int = 0) -> pandas.DataFrame:
     events = src.helpers.get_events(
         adresses = (ADDRESS, ''),
-        events = tuple(EVENTS_METHODS_MAPPING),
+        event_names = tuple(EVENTS_METHODS_MAPPING),
         start_block_number = start_block_number,
     )
     # Ensure we're processing `loan_repaid` after other loan-altering events and the other events in a logical order.
