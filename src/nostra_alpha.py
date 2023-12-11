@@ -12,7 +12,7 @@ import src.state
 
 
 
-# TODO: Move to `NostraSpecificTokenSettings`?
+# TODO: Move to `NostraAlphaSpecificTokenSettings`?
 # Source: https://docs.nostra.finance/lend/deployed-contracts/lend-alpha#asset-contracts.
 ADDRESSES_TO_TOKENS: dict[str, str] = {
     '0x0553cea5d1dc0e0157ffcd36a51a0ced717efdadd5ef1b4644352bb45bd35453': 'ETH',
@@ -31,7 +31,7 @@ ADDRESSES_TO_TOKENS: dict[str, str] = {
     '0x0362b4455f5f4cc108a5a1ab1fd2cc6c4f0c70597abb541a99cf2734435ec9cb': 'DAI',
     '0x075b0d87aca8dee25df35cdc39a82b406168fa23a76fc3f03abbfdc6620bb6d7': 'wBTC',
 }
-# TODO: Move to `NostraSpecificTokenSettings`?
+# TODO: Move to `NostraAlphaSpecificTokenSettings`?
 # Source: https://docs.nostra.finance/lend/deployed-contracts/lend-alpha#asset-contracts.
 ADDRESSES_TO_EVENTS: dict[str, str] = {
     '0x0553cea5d1dc0e0157ffcd36a51a0ced717efdadd5ef1b4644352bb45bd35453': 'non_interest_bearing_collateral',
@@ -56,7 +56,7 @@ INTEREST_RATE_MODEL_ADDRESS: str = '0x03d39f7248fb2bfb960275746470f7fb470317350a
 
 
 @dataclasses.dataclass
-class NostraSpecificTokenSettings:
+class NostraAlphaSpecificTokenSettings:
     # TODO: Load these via chain calls?
     # Source: Starkscan, e.g. 
     # https://starkscan.co/call/0x06f619127a63ddb5328807e535e56baa1e244c8923a3b50c123d41dcbed315da_1_1 for ETH.
@@ -71,12 +71,12 @@ class NostraSpecificTokenSettings:
 
 
 @dataclasses.dataclass
-class TokenSettings(NostraSpecificTokenSettings, src.settings.TokenSettings):
+class TokenSettings(NostraAlphaSpecificTokenSettings, src.settings.TokenSettings):
     pass
 
 
-NOSTRA_SPECIFIC_TOKEN_SETTINGS: dict[str, NostraSpecificTokenSettings] = {
-    "ETH": NostraSpecificTokenSettings(
+NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS: dict[str, NostraAlphaSpecificTokenSettings] = {
+    "ETH": NostraAlphaSpecificTokenSettings(
         collateral_factor=decimal.Decimal("0.8"),
         debt_factor=decimal.Decimal("0.9"),
         liquidator_fee_beta=decimal.Decimal("2.75"),
@@ -84,7 +84,7 @@ NOSTRA_SPECIFIC_TOKEN_SETTINGS: dict[str, NostraSpecificTokenSettings] = {
         protocol_fee=decimal.Decimal("0.02"),
         protocol_token_address="0x04f89253e37ca0ab7190b2e9565808f105585c9cacca6b2fa6145553fa061a41",
     ),
-    "wBTC": NostraSpecificTokenSettings(
+    "wBTC": NostraAlphaSpecificTokenSettings(
         collateral_factor=decimal.Decimal("0.7"), 
         debt_factor=decimal.Decimal("0.8"),
         liquidator_fee_beta=decimal.Decimal("2.75"),
@@ -92,7 +92,7 @@ NOSTRA_SPECIFIC_TOKEN_SETTINGS: dict[str, NostraSpecificTokenSettings] = {
         protocol_fee=decimal.Decimal("0.02"),
         protocol_token_address="0x07788bc687f203b6451f2a82e842b27f39c7cae697dace12edfb86c9b1c12f3d",
     ),
-    "USDC": NostraSpecificTokenSettings(
+    "USDC": NostraAlphaSpecificTokenSettings(
         collateral_factor=decimal.Decimal("0.9"), 
         debt_factor=decimal.Decimal("0.95"),
         liquidator_fee_beta=decimal.Decimal("1.65"),
@@ -100,7 +100,7 @@ NOSTRA_SPECIFIC_TOKEN_SETTINGS: dict[str, NostraSpecificTokenSettings] = {
         protocol_fee=decimal.Decimal("0.02"),
         protocol_token_address="0x05327df4c669cb9be5c1e2cf79e121edef43c1416fac884559cd94fcb7e6e232",
     ),
-    "DAI": NostraSpecificTokenSettings(
+    "DAI": NostraAlphaSpecificTokenSettings(
         collateral_factor=decimal.Decimal("0.8"), 
         debt_factor=decimal.Decimal("0.95"),
         liquidator_fee_beta=decimal.Decimal("2.2"),
@@ -108,7 +108,7 @@ NOSTRA_SPECIFIC_TOKEN_SETTINGS: dict[str, NostraSpecificTokenSettings] = {
         protocol_fee=decimal.Decimal("0.02"),
         protocol_token_address="0x02ea39ba7a05f0c936b7468d8bc8d0e1f2116916064e7e163e7c1044d95bd135",
     ),
-    "USDT": NostraSpecificTokenSettings(
+    "USDT": NostraAlphaSpecificTokenSettings(
         collateral_factor=decimal.Decimal("0.8"), 
         debt_factor=decimal.Decimal("0.95"),
         liquidator_fee_beta=decimal.Decimal("1.65"),
@@ -117,7 +117,7 @@ NOSTRA_SPECIFIC_TOKEN_SETTINGS: dict[str, NostraSpecificTokenSettings] = {
         protocol_token_address="0x040375d0720245bc0d123aa35dc1c93d14a78f64456eff75f63757d99a0e6a83",
     ),
     # TODO: Add wstETH.
-    "wstETH": NostraSpecificTokenSettings(
+    "wstETH": NostraAlphaSpecificTokenSettings(
         collateral_factor=decimal.Decimal("1"), 
         debt_factor=decimal.Decimal("1"),
         liquidator_fee_beta=decimal.Decimal("1"),
@@ -131,12 +131,12 @@ TOKEN_SETTINGS: dict[str, TokenSettings] = {
         symbol=src.settings.TOKEN_SETTINGS[token].symbol,
         decimal_factor=src.settings.TOKEN_SETTINGS[token].decimal_factor,
         address=src.settings.TOKEN_SETTINGS[token].address,
-        collateral_factor=NOSTRA_SPECIFIC_TOKEN_SETTINGS[token].collateral_factor,
-        debt_factor=NOSTRA_SPECIFIC_TOKEN_SETTINGS[token].debt_factor,
-        liquidator_fee_beta=NOSTRA_SPECIFIC_TOKEN_SETTINGS[token].liquidator_fee_beta,
-        liquidator_fee_max=NOSTRA_SPECIFIC_TOKEN_SETTINGS[token].liquidator_fee_max,
-        protocol_fee=NOSTRA_SPECIFIC_TOKEN_SETTINGS[token].protocol_fee,
-        protocol_token_address=NOSTRA_SPECIFIC_TOKEN_SETTINGS[token].protocol_token_address,
+        collateral_factor=NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS[token].collateral_factor,
+        debt_factor=NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS[token].debt_factor,
+        liquidator_fee_beta=NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS[token].liquidator_fee_beta,
+        liquidator_fee_max=NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS[token].liquidator_fee_max,
+        protocol_fee=NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS[token].protocol_fee,
+        protocol_token_address=NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS[token].protocol_token_address,
     )
     for token in src.settings.TOKEN_SETTINGS
 }
@@ -175,12 +175,12 @@ def get_events(start_block_number: int = 0) -> pandas.DataFrame:
     return events
 
 
-class NostraLoanEntity(src.state.LoanEntity):
+class NostraAlphaLoanEntity(src.state.LoanEntity):
     """
-    A class that describes the Nostra loan entity. On top of the abstract `LoanEntity`, it implements the 
+    A class that describes the Nostra Alpha loan entity. On top of the abstract `LoanEntity`, it implements the 
     `non_interest_bearing_collateral` and `interest_bearing_collateral` attributes in order to help with accounting for
-    the changes in collateral. This is because Nostra allows the user to decide the amount of collateral that earns 
-    interest and the amount that doesn't. We keep all balances in raw amounts.
+    the changes in collateral. This is because Nostra Alpha allows the user to decide the amount of collateral that 
+    earns interest and the amount that doesn't. We keep all balances in raw amounts.
     """
 
     TOKEN_SETTINGS: dict[str, TokenSettings] = TOKEN_SETTINGS
@@ -268,10 +268,10 @@ class NostraLoanEntity(src.state.LoanEntity):
         return liquidation_amount_usd
 
 
-class NostraState(src.state.State):
+class NostraAlphaState(src.state.State):
     """
-    A class that describes the state of all Nostra loan entities. It implements a method for correct processing of 
-    every relevant event.
+    A class that describes the state of all Nostra Alpha loan entities. It implements a method for correct processing 
+    of every relevant event.
     """
 
     ADDRESSES_TO_TOKENS = ADDRESSES_TO_TOKENS
@@ -283,7 +283,7 @@ class NostraState(src.state.State):
 
     def __init__(
         self,
-        loan_entity_class: NostraLoanEntity = NostraLoanEntity,
+        loan_entity_class: NostraAlphaLoanEntity = NostraAlphaLoanEntity,
         verbose_user: Optional[str] = None,
     ) -> None:
         super().__init__(
