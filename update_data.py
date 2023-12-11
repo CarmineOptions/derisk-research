@@ -9,8 +9,8 @@ import src.hashstack
 import src.histogram
 import src.loans_table
 import src.main_chart
-import src.nostra
-import src.nostra_uncapped
+import src.nostra_alpha
+import src.nostra_mainnet
 import src.persistent_state
 import src.protocol_parameters
 import src.protocol_stats
@@ -28,8 +28,8 @@ def update_data(zklend_state):
     logging.info(f"Updating CSV data from {zklend_state.last_block_number}...")
     zklend_events = src.zklend.get_events(start_block_number = zklend_state.last_block_number + 1)
     hashstack_events = src.hashstack.get_events()
-    nostra_events = src.nostra.get_events()
-    nostra_uncapped_events = src.nostra_uncapped.get_events()
+    nostra_alpha_events = src.nostra_alpha.get_events()
+    nostra_mainnet_events = src.nostra_mainnet.get_events()
     logging.info(f"got events in {time.time() - t0}s")
 
     t1 = time.time()
@@ -42,13 +42,13 @@ def update_data(zklend_state):
     for _, hashstack_event in hashstack_events.iterrows():
         hashstack_state.process_event(event=hashstack_event)
 
-    nostra_state = src.nostra.NostraState()
-    for _, nostra_event in nostra_events.iterrows():
-        nostra_state.process_event(event=nostra_event)
+    nostra_alpha_state = src.nostra_alpha.NostraAlphaState()
+    for _, nostra_alpha_event in nostra_alpha_events.iterrows():
+        nostra_alpha_state.process_event(event=nostra_alpha_event)
 
-    nostra_uncapped_state = src.nostra_uncapped.NostraUncappedState()
-    for _, nostra_uncapped_event in nostra_uncapped_events.iterrows():
-        nostra_uncapped_state.process_event(event=nostra_uncapped_event)
+    nostra_mainnet_state = src.nostra_mainnet.NostraMainnetState()
+    for _, nostra_mainnet_event in nostra_mainnet_events.iterrows():
+        nostra_mainnet_state.process_event(event=nostra_mainnet_event)
 
     logging.info(f"updated state in {time.time() - t1}s")
 
@@ -66,7 +66,7 @@ def update_data(zklend_state):
 
     t2 = time.time()
 
-    states = [zklend_state, hashstack_state, nostra_state, nostra_uncapped_state]
+    states = [zklend_state, hashstack_state, nostra_alpha_state, nostra_mainnet_state]
     for pair, state in itertools.product(src.settings.PAIRS, states):
         # TODO: Decipher `pair` in a smarter way.
         collateral_token, borrowings_token = pair.split("-")
