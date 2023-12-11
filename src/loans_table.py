@@ -4,8 +4,8 @@ import pandas
 
 import src.hashstack
 import src.helpers
-import src.nostra
-import src.nostra_uncapped
+import src.nostra_alpha
+import src.nostra_mainnet
 import src.protocol_parameters
 import src.state
 
@@ -33,7 +33,10 @@ def get_loans_table_data(
             debt_interest_rate_models=state.debt_interest_rate_models,
             prices=prices,
         )
-        if isinstance(state, src.nostra.NostraState) or isinstance(state, src.nostra_uncapped.NostraUncappedState):
+        if (
+            isinstance(state, src.nostra_alpha.NostraAlphaState)
+            or isinstance(state, src.nostra_mainnet.NostraMainnetState)
+        ):
             risk_adjusted_debt_usd = loan_entity.compute_debt_usd(
                 risk_adjusted=True,
                 debt_interest_rate_models=state.debt_interest_rate_models,

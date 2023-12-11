@@ -4,7 +4,7 @@ import dataclasses
 import pandas
 
 import src.helpers
-import src.nostra
+import src.nostra_alpha
 
 
 
@@ -50,48 +50,48 @@ INTEREST_RATE_MODEL_ADDRESS: str = '0x059a943ca214c10234b9a3b61c558ac20c005127d1
 
 
 @dataclasses.dataclass
-class NostraUncappedSpecificTokenSettings:
+class NostraMainnetSpecificTokenSettings:
     protocol_token_address: str
 
 
 @dataclasses.dataclass
-class TokenSettings(NostraUncappedSpecificTokenSettings, src.nostra.TokenSettings):
+class TokenSettings(NostraMainnetSpecificTokenSettings, src.nostra_alpha.TokenSettings):
     pass
 
 
-NOSTRA_UNCAPPED_SPECIFIC_TOKEN_SETTINGS: dict[str, NostraUncappedSpecificTokenSettings] = {
-    "ETH": NostraUncappedSpecificTokenSettings(
+NOSTRA_MAINNET_SPECIFIC_TOKEN_SETTINGS: dict[str, NostraMainnetSpecificTokenSettings] = {
+    "ETH": NostraMainnetSpecificTokenSettings(
         protocol_token_address="0x07170f54dd61ae85377f75131359e3f4a12677589bb7ec5d61f362915a5c0982",
     ),
-    "wBTC": NostraUncappedSpecificTokenSettings(
+    "wBTC": NostraMainnetSpecificTokenSettings(
         protocol_token_address="0x073132577e25b06937c64787089600886ede6202d085e6340242a5a32902e23e",
     ),
-    "USDC": NostraUncappedSpecificTokenSettings(
+    "USDC": NostraMainnetSpecificTokenSettings(
         protocol_token_address="0x06eda767a143da12f70947192cd13ee0ccc077829002412570a88cd6539c1d85",
     ),
-    "DAI": NostraUncappedSpecificTokenSettings(
+    "DAI": NostraMainnetSpecificTokenSettings(
         protocol_token_address="0x02b5fd690bb9b126e3517f7abfb9db038e6a69a068303d06cf500c49c1388e20",
     ),
-    "USDT": NostraUncappedSpecificTokenSettings(
+    "USDT": NostraMainnetSpecificTokenSettings(
         protocol_token_address="0x06669cb476aa7e6a29c18b59b54f30b8bfcfbb8444f09e7bbb06c10895bf5d7b",
     ),
     # TODO: Add wstETH.
-    "wstETH": NostraUncappedSpecificTokenSettings(protocol_token_address=""),
+    "wstETH": NostraMainnetSpecificTokenSettings(protocol_token_address=""),
 }
 TOKEN_SETTINGS: dict[str, TokenSettings] = {
     token: TokenSettings(
-        # TODO: These can differ between Nostra and Nostra-uncapped.
-        symbol=src.nostra.TOKEN_SETTINGS[token].symbol,
-        decimal_factor=src.nostra.TOKEN_SETTINGS[token].decimal_factor,
-        address=src.nostra.TOKEN_SETTINGS[token].address,
-        collateral_factor=src.nostra.TOKEN_SETTINGS[token].collateral_factor,
-        debt_factor=src.nostra.TOKEN_SETTINGS[token].debt_factor,
-        liquidator_fee_beta=src.nostra.TOKEN_SETTINGS[token].liquidator_fee_beta,
-        liquidator_fee_max=src.nostra.TOKEN_SETTINGS[token].liquidator_fee_max,
-        protocol_fee=src.nostra.TOKEN_SETTINGS[token].protocol_fee,
-        protocol_token_address=NOSTRA_UNCAPPED_SPECIFIC_TOKEN_SETTINGS[token].protocol_token_address,
+        # TODO: These can actually differ between Nostra Alpha and Nostra Mainnet.
+        symbol=src.nostra_alpha.TOKEN_SETTINGS[token].symbol,
+        decimal_factor=src.nostra_alpha.TOKEN_SETTINGS[token].decimal_factor,
+        address=src.nostra_alpha.TOKEN_SETTINGS[token].address,
+        collateral_factor=src.nostra_alpha.TOKEN_SETTINGS[token].collateral_factor,
+        debt_factor=src.nostra_alpha.TOKEN_SETTINGS[token].debt_factor,
+        liquidator_fee_beta=src.nostra_alpha.TOKEN_SETTINGS[token].liquidator_fee_beta,
+        liquidator_fee_max=src.nostra_alpha.TOKEN_SETTINGS[token].liquidator_fee_max,
+        protocol_fee=src.nostra_alpha.TOKEN_SETTINGS[token].protocol_fee,
+        protocol_token_address=NOSTRA_MAINNET_SPECIFIC_TOKEN_SETTINGS[token].protocol_token_address,
     )
-    for token in src.nostra.TOKEN_SETTINGS
+    for token in src.nostra_alpha.TOKEN_SETTINGS
 }
 
 
@@ -112,19 +112,19 @@ def get_events(start_block_number: int = 0) -> pandas.DataFrame:
     return events
 
 
-class NostraUncappedLoanEntity(src.nostra.NostraLoanEntity):
+class NostraMainnetLoanEntity(src.nostra_alpha.NostraAlphaLoanEntity):
     """
-    A class that describes the Nostra Uncapped loan entity. Compared to `src.nostra.NostraLoanEntity`, it only 
-    implements its own `TOKEN_SETTINGS`.
+    A class that describes the Nostra Mainnet loan entity. Compared to `src.nostra_alpha.NostraAlphaLoanEntity`, it 
+    only implements its own `TOKEN_SETTINGS`.
     """
 
     TOKEN_SETTINGS: dict[str, TokenSettings] = TOKEN_SETTINGS
 
 
-class NostraUncappedState(src.nostra.NostraState):
+class NostraMainnetState(src.nostra_alpha.NostraAlphaState):
     """
-    A class that describes the state of all Nostra uncapped loan entities. All methods for correct processing of every 
-    relevant event are implemented in `src.nostra.NostraState`.
+    A class that describes the state of all Nostra Mainnet loan entities. All methods for correct processing of every 
+    relevant event are implemented in `src.nostra_alpha.NostraAlphaState`.
     """
 
     ADDRESSES_TO_TOKENS = ADDRESSES_TO_TOKENS
@@ -138,6 +138,6 @@ class NostraUncappedState(src.nostra.NostraState):
         verbose_user: Optional[str] = None,
     ) -> None:
         super().__init__(
-            loan_entity_class=NostraUncappedLoanEntity,
+            loan_entity_class=NostraMainnetLoanEntity,
             verbose_user=verbose_user,
         )

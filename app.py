@@ -37,22 +37,22 @@ def main():
         hashstack_loans_data,
     ) = src.helpers.load_data(protocol='Hashstack')
     (
-        nostra_main_chart_data,
-        nostra_histogram_data,
-        nostra_loans_data,
-    ) = src.helpers.load_data(protocol='Nostra')
+        nostra_alpha_main_chart_data,
+        nostra_alpha_histogram_data,
+        nostra_alpha_loans_data,
+    ) = src.helpers.load_data(protocol='Nostra Alpha')
     (
-        nostra_uncapped_main_chart_data,
-        nostra_uncapped_histogram_data,
-        nostra_uncapped_loans_data,
-    ) = src.helpers.load_data(protocol='Nostra uncapped')
+        nostra_mainnet_main_chart_data,
+        nostra_mainnet_histogram_data,
+        nostra_mainnet_loans_data,
+    ) = src.helpers.load_data(protocol='Nostra Mainnet')
 
     col1, _ = streamlit.columns([1, 3])
     with col1:
         protocols = streamlit.multiselect(
             label="Select protocols",
-            options=["zkLend", "Hashstack", "Nostra", "Nostra uncapped"],
-            default=["zkLend", "Hashstack", "Nostra", "Nostra uncapped"],
+            options=["zkLend", "Hashstack", "Nostra Alpha", "Nostra Mainnet"],
+            default=["zkLend", "Hashstack", "Nostra Alpha", "Nostra Mainnet"],
         )
         current_pair = streamlit.selectbox(
             label="Select collateral-loan pair:",
@@ -66,20 +66,20 @@ def main():
     protocol_main_chart_data_mapping = {
         'zkLend': zklend_main_chart_data[current_pair],
         'Hashstack': hashstack_main_chart_data[current_pair],
-        'Nostra': nostra_main_chart_data[current_pair],
-        'Nostra uncapped': nostra_uncapped_main_chart_data[current_pair],
+        'Nostra Alpha': nostra_alpha_main_chart_data[current_pair],
+        'Nostra Mainnet': nostra_mainnet_main_chart_data[current_pair],
     }
     protocol_histogram_data_mapping = {
         'zkLend': zklend_histogram_data,
         'Hashstack': hashstack_histogram_data,
-        'Nostra': nostra_histogram_data,
-        'Nostra uncapped': nostra_uncapped_histogram_data,
+        'Nostra Alpha': nostra_alpha_histogram_data,
+        'Nostra Mainnet': nostra_mainnet_histogram_data,
     }
     protocol_loans_data_mapping = {
         'zkLend': zklend_loans_data,
         'Hashstack': hashstack_loans_data,
-        'Nostra': nostra_loans_data,
-        'Nostra uncapped': nostra_uncapped_loans_data,
+        'Nostra Alpha': nostra_alpha_loans_data,
+        'Nostra Mainnet': nostra_mainnet_loans_data,
     }
     for protocol in protocols:
         protocol_main_chart_data = protocol_main_chart_data_mapping[protocol]
