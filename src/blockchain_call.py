@@ -1,14 +1,12 @@
 import time
 
-import starknet_py.net.gateway_client
 import starknet_py.hash.selector
 import starknet_py.net.client_models
 import starknet_py.net.networks
 import starknet_py.cairo.felt
+from starknet_py.net.full_node_client import FullNodeClient
 
-
-NET = starknet_py.net.gateway_client.GatewayClient(
-    starknet_py.net.networks.MAINNET)
+NET = FullNodeClient(node_url="https://starknet-mainnet.public.blastapi.io")
 
 
 async def func_call(addr, selector, calldata):
