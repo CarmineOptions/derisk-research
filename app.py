@@ -18,9 +18,7 @@ import src.swap_amm
 import update_data
 
 
-
 logging.basicConfig(level=logging.INFO)
-
 
 
 def main():
@@ -93,7 +91,8 @@ def main():
         if histogram_data.empty:
             histogram_data = protocol_histogram_data
         else:
-            histogram_data = pandas.concat([histogram_data, protocol_histogram_data])
+            histogram_data = pandas.concat(
+                [histogram_data, protocol_histogram_data])
         if loans_data.empty:
             loans_data = protocol_loans_data
         else:
@@ -108,9 +107,11 @@ def main():
     )
     streamlit.plotly_chart(figure_or_data=figure, use_container_width=True)
 
-    collateral_token_price = src.swap_amm.Prices().prices.values[collateral_token]
+    collateral_token_price = src.swap_amm.Prices(
+    ).prices.values[collateral_token]
     example_row = main_chart_data[
-        main_chart_data['collateral_token_price'] > decimal.Decimal("0.5") * collateral_token_price
+        main_chart_data['collateral_token_price'] > decimal.Decimal(
+            "0.5") * collateral_token_price
     ].sort_values('collateral_token_price').iloc[0]
 
     def _get_risk_level(debt_to_supply_ratio: float) -> str:
@@ -122,11 +123,12 @@ def main():
             'high'
         return 'very high'
 
-    debt_to_supply_ratio = example_row['liquidable_debt_at_interval'] / example_row['debt_token_supply']
+    debt_to_supply_ratio = example_row['liquidable_debt_at_interval'] / \
+        example_row['debt_token_supply']
     streamlit.subheader(
         f":warning: At price of {int(example_row['collateral_token_price']):,}, the risk of acquiring bad debt for "
         f"lending protocols is {_get_risk_level(debt_to_supply_ratio)}."
-    )    
+    )
     streamlit.write(
         f"The ratio of liquidated debt to available supply is {round(debt_to_supply_ratio * 100)}%.Debt worth of "
         f"{int(example_row['liquidable_debt_at_interval']):,} USD will be liquidated while the AMM swaps capacity "
@@ -151,11 +153,16 @@ def main():
     )
 
     streamlit.header("Comparison of lending protocols")
-    streamlit.dataframe(pandas.read_parquet(f"gs://{src.helpers.GS_BUCKET_NAME}/data/general_stats.parquet"))
-    streamlit.dataframe(pandas.read_parquet(f"gs://{src.helpers.GS_BUCKET_NAME}/data/utilization_stats.parquet"))
-    supply_stats = pandas.read_parquet(f"gs://{src.helpers.GS_BUCKET_NAME}/data/supply_stats.parquet")
-    collateral_stats = pandas.read_parquet(f"gs://{src.helpers.GS_BUCKET_NAME}/data/collateral_stats.parquet")
-    debt_stats = pandas.read_parquet(f"gs://{src.helpers.GS_BUCKET_NAME}/data/debt_stats.parquet")
+    streamlit.dataframe(pandas.read_parquet(
+        f"gs://{src.helpers.GS_BUCKET_NAME}/data/general_stats.parquet"))
+    streamlit.dataframe(pandas.read_parquet(
+        f"gs://{src.helpers.GS_BUCKET_NAME}/data/utilization_stats.parquet"))
+    supply_stats = pandas.read_parquet(
+        f"gs://{src.helpers.GS_BUCKET_NAME}/data/supply_stats.parquet")
+    collateral_stats = pandas.read_parquet(
+        f"gs://{src.helpers.GS_BUCKET_NAME}/data/collateral_stats.parquet")
+    debt_stats = pandas.read_parquet(
+        f"gs://{src.helpers.GS_BUCKET_NAME}/data/debt_stats.parquet")
 
     columns = streamlit.columns(6)
     for column, token in zip(columns, src.settings.TOKEN_SETTINGS.keys()):
@@ -188,11 +195,13 @@ def main():
     streamlit.header("Loan size distribution")
     src.histogram.visualization(data=histogram_data)
 
-    last_update = src.persistent_state.load_pickle(path=src.persistent_state.LAST_UPDATE_FILENAME)
+    last_update = src.persistent_state.load_pickle(
+        path=src.persistent_state.LAST_UPDATE_FILENAME)
     last_timestamp = last_update["timestamp"]
     last_block_number = last_update["block_number"]
     date_str = datetime.datetime.utcfromtimestamp(int(last_timestamp))
-    streamlit.write(f"Last updated {date_str} UTC, last block: {last_block_number}.")
+    streamlit.write(
+        f"Last updated {date_str} UTC, last block: {last_block_number}.")
 
 
 if __name__ == "__main__":
@@ -201,6 +210,10 @@ if __name__ == "__main__":
         page_title="DeRisk by Carmine Finance",
         page_icon="https://carmine.finance/assets/logo.svg",
     )
+    # Append Google Analytics script
+    with open("src/analytics.html", "r", encoding="utf-8") as f:
+        analytics_html = f.read()
+        streamlit.markdown(analytics_html, unsafe_allow_html=True)
 
     if os.environ.get("UPDATE_RUNNING") is None:
         os.environ["UPDATE_RUNNING"] = "True"
