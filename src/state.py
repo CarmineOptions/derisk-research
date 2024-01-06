@@ -56,7 +56,7 @@ class LoanEntity(abc.ABC):
     """
     A class that describes and entity which can hold collateral, borrow debt and be liquidable. For example, on 
     Starknet, such an entity is the user in case of zkLend, Nostra Alpha and Nostra Mainnet, or an individual loan in 
-    case od Hashstack.
+    case od Hashstack V0 and Hashstack V1..
     """
 
     TOKEN_SETTINGS: dict[str, TokenSettings] = TOKEN_SETTINGS

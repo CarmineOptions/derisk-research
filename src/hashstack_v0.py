@@ -16,34 +16,37 @@ ADDRESS: str = "0x03dcf5c72ba60eb7b2fe151032769d49dd3df6b04fa3141dffd6e2aa162b7a
 
 
 @dataclasses.dataclass
-class HashstackSpecificTokenSettings:
-    # These are set to neutral values because Hashstack doesn't use collateral factors.
+class HashstackV0SpecificTokenSettings:
+    # These are set to neutral values because Hashstack V0 doesn't use collateral factors.
     collateral_factor: decimal.Decimal
-    # These are set to neutral values because Hashstack doesn't use debt factors.
+    # These are set to neutral values because Hashstack V0 doesn't use debt factors.
     debt_factor: decimal.Decimal
 
 
 @dataclasses.dataclass
-class TokenSettings(HashstackSpecificTokenSettings, src.settings.TokenSettings):
+class TokenSettings(HashstackV0SpecificTokenSettings, src.settings.TokenSettings):
     pass
 
 
-HASHSTACK_SPECIFIC_TOKEN_SETTINGS: dict[str, HashstackSpecificTokenSettings] = {
-    "ETH": HashstackSpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
-    "wBTC": HashstackSpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
-    "USDC": HashstackSpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
-    "DAI": HashstackSpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
-    "USDT": HashstackSpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
+HASHSTACK_V0_SPECIFIC_TOKEN_SETTINGS: dict[str, HashstackV0SpecificTokenSettings] = {
+    "ETH": HashstackV0SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
+    "wBTC": HashstackV0SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
+    "USDC": HashstackV0SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
+    "DAI": HashstackV0SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
+    "USDT": HashstackV0SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
     # TODO: Add wstETH.
-    "wstETH": HashstackSpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
+    "wstETH": HashstackV0SpecificTokenSettings(
+        collateral_factor=decimal.Decimal("1"),
+        debt_factor=decimal.Decimal("1"),
+    ),
 }
 TOKEN_SETTINGS: dict[str, TokenSettings] = {
     token: TokenSettings(
         symbol=src.settings.TOKEN_SETTINGS[token].symbol,
         decimal_factor=src.settings.TOKEN_SETTINGS[token].decimal_factor,
         address=src.settings.TOKEN_SETTINGS[token].address,
-        collateral_factor=HASHSTACK_SPECIFIC_TOKEN_SETTINGS[token].collateral_factor,
-        debt_factor=HASHSTACK_SPECIFIC_TOKEN_SETTINGS[token].debt_factor,
+        collateral_factor=HASHSTACK_V0_SPECIFIC_TOKEN_SETTINGS[token].collateral_factor,
+        debt_factor=HASHSTACK_V0_SPECIFIC_TOKEN_SETTINGS[token].debt_factor,
     )
     for token in src.settings.TOKEN_SETTINGS
 }
@@ -88,16 +91,16 @@ def get_events(start_block_number: int = 0) -> pandas.DataFrame:
     return events
 
 
-class HashstackLoanEntity(src.state.LoanEntity):
+class HashstackV0LoanEntity(src.state.LoanEntity):
     """
-    A class that describes the Hashstack loan entity. On top of the abstract `LoanEntity`, it implements the `user`, 
+    A class that describes the Hashstack V0 loan entity. On top of the abstract `LoanEntity`, it implements the `user`,
     `debt_category`, `original_collateral` and `borrowed_collateral` attributes in order to help with accounting for 
-    the changes in collateral. This is because under Hashstack, each user can have multiple loans which are treated 
+    the changes in collateral. This is because under Hashstack V0, each user can have multiple loans which are treated 
     completely separately (including liquidations). The `debt_category` attribute determines liquidation conditions.
-    Also, because Hashstack provides leverage to its users, we split `collateral` into `original_collateral` 
+    Also, because Hashstack V0 provides leverage to its users, we split `collateral` into `original_collateral` 
     (collateral deposited by the user directly) and `borrowed_collateral` (the current state, i.e. token and amount of 
     the borrowed funds). We also use face amounts (no need to convert amounts using interest rates) because Hashstack 
-    doesn't publish interest rate events.
+    V0 doesn't publish interest rate events.
     """
 
     TOKEN_SETTINGS: dict[str, TokenSettings] = TOKEN_SETTINGS
@@ -162,11 +165,11 @@ class HashstackLoanEntity(src.state.LoanEntity):
         return debt_usd
 
 
-class HashstackState(src.state.State):
+class HashstackV0State(src.state.State):
     """
-    A class that describes the state of all Hashstack loan entities. It implements a method for correct processing of 
-    every relevant event. Hashstack events always contain the final state of the loan entity's collateral and debt, 
-    thus we always rewrite the balances whenever they are updated. 
+    A class that describes the state of all Hashstack V0 loan entities. It implements a method for correct processing 
+    of every relevant event. Hashstack V0 events always contain the final state of the loan entity's collateral and 
+    debt, thus we always rewrite the balances whenever they are updated. 
     """
 
     EVENTS_METHODS_MAPPING: dict[str, str] = EVENTS_METHODS_MAPPING
@@ -176,7 +179,7 @@ class HashstackState(src.state.State):
         verbose_user: Optional[str] = None,
     ) -> None:
         super().__init__(
-            loan_entity_class=HashstackLoanEntity,
+            loan_entity_class=HashstackV0LoanEntity,
             verbose_user=verbose_user,
         )
 
@@ -204,7 +207,7 @@ class HashstackState(src.state.State):
             original_collateral_token = src.helpers.get_symbol(event["data"][13])
             original_collateral_face_amount = decimal.Decimal(str(int(event["data"][16], base=16)))
 
-        self.loan_entities[loan_id] = HashstackLoanEntity(user=user, debt_category=debt_category)
+        self.loan_entities[loan_id] = HashstackV0LoanEntity(user=user, debt_category=debt_category)
         # TODO: Make it possible to initialize src.helpers.Portfolio with some token amount directly.
         original_collateral = src.helpers.Portfolio()
         original_collateral.values[original_collateral_token] = original_collateral_face_amount

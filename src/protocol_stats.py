@@ -1,11 +1,10 @@
 import asyncio
 import decimal
-import os
 
 import pandas
 
 import src.blockchain_call
-import src.hashstack
+import src.hashstack_v0
 import src.helpers
 import src.protocol_parameters
 import src.settings
@@ -21,7 +20,7 @@ def get_general_stats(
     data = []
     for state in states:
         protocol = src.protocol_parameters.get_protocol(state=state)
-        if isinstance(state, src.hashstack.HashstackState):
+        if isinstance(state, src.hashstack_v0.HashstackV0State):
             number_of_active_users = state.compute_number_of_active_users()
             number_of_active_borrowers = state.compute_number_of_active_borrowers()
         else:
@@ -31,9 +30,9 @@ def get_general_stats(
             {
                 'Protocol': protocol,
                 'Number of active users': number_of_active_users,
-                # At the moment, Hashstack is the only protocol for which the number of active loans doesn't equal the 
-                # number of active users. The reason is that Hashstack allows for liquidations on the loan level, 
-                # whereas other protocols use user-level liquidations.
+                # At the moment, Hashstack V0 and Hashstack V1 are the only protocols for which the number of active 
+                # loans doesn't equal the number of active users. The reason is that Hashstack V0 and Hashstack V1 
+                # allow for liquidations on the loan level, whereas other protocols use user-level liquidations.
                 'Number of active loans': state.compute_number_of_active_loan_entities(),
                 'Number of active borrowers': number_of_active_borrowers,
                 'Total debt (USD)': round(loan_stats[protocol]['Debt (USD)'].sum(), 4),
@@ -60,11 +59,11 @@ def get_supply_stats(
             if token == 'wstETH' and protocol != 'zkLend':
                 token_supplies[token] = decimal.Decimal("0")
                 continue
-            if protocol == 'Hashstack':
+            if protocol == 'Hashstack V0':
                 supply = asyncio.run(
                     src.blockchain_call.balance_of(
                         token_addr = src.settings.TOKEN_SETTINGS[token].address,
-                        holder_addr = src.hashstack.ADDRESS,
+                        holder_addr = src.hashstack_v0.ADDRESS,
                     )
                 )
             else:

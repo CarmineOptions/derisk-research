@@ -5,7 +5,7 @@ import logging
 import time
 
 import src.settings
-import src.hashstack
+import hashstack_v0
 import src.histogram
 import src.loans_table
 import src.main_chart
@@ -27,7 +27,7 @@ def update_data(zklend_state):
     t0 = time.time()
     logging.info(f"Updating CSV data from {zklend_state.last_block_number}...")
     zklend_events = src.zklend.get_events(start_block_number = zklend_state.last_block_number + 1)
-    hashstack_events = src.hashstack.get_events()
+    hashstack_v0_events = src.hashstack_v0.get_events()
     nostra_alpha_events = src.nostra_alpha.get_events()
     nostra_mainnet_events = src.nostra_mainnet.get_events()
     logging.info(f"got events in {time.time() - t0}s")
@@ -38,9 +38,9 @@ def update_data(zklend_state):
     for _, zklend_event in zklend_events.iterrows():
         zklend_state.process_event(event=zklend_event)
 
-    hashstack_state = src.hashstack.HashstackState()
-    for _, hashstack_event in hashstack_events.iterrows():
-        hashstack_state.process_event(event=hashstack_event)
+    hashstack_v0_state = src.hashstack_v0.HashstackV0State()
+    for _, hashstack_v0_event in hashstack_v0_events.iterrows():
+        hashstack_v0_state.process_event(event=hashstack_v0_event)
 
     nostra_alpha_state = src.nostra_alpha.NostraAlphaState()
     for _, nostra_alpha_event in nostra_alpha_events.iterrows():
@@ -66,7 +66,7 @@ def update_data(zklend_state):
 
     t2 = time.time()
 
-    states = [zklend_state, hashstack_state, nostra_alpha_state, nostra_mainnet_state]
+    states = [zklend_state, hashstack_v0_state, nostra_alpha_state, nostra_mainnet_state]
     for pair, state in itertools.product(src.settings.PAIRS, states):
         # TODO: Decipher `pair` in a smarter way.
         collateral_token, borrowings_token = pair.split("-")
