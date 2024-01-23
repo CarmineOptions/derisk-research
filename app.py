@@ -108,30 +108,32 @@ def main():
     )
     streamlit.plotly_chart(figure_or_data=figure, use_container_width=True)
 
-    collateral_token_price = src.swap_amm.Prices().prices.values[collateral_token]
-    example_row = main_chart_data[
-        main_chart_data['collateral_token_price'] > decimal.Decimal("0.5") * collateral_token_price
-    ].sort_values('collateral_token_price').iloc[0]
-
-    def _get_risk_level(debt_to_supply_ratio: float) -> str:
-        if debt_to_supply_ratio < 0.2:
-            return 'low'
-        elif debt_to_supply_ratio < 0.4:
-            return 'medium'
-        elif debt_to_supply_ratio < 0.6:
-            'high'
-        return 'very high'
-
-    debt_to_supply_ratio = example_row['liquidable_debt_at_interval'] / example_row['debt_token_supply']
-    streamlit.subheader(
-        f":warning: At price of {int(example_row['collateral_token_price']):,}, the risk of acquiring bad debt for "
-        f"lending protocols is {_get_risk_level(debt_to_supply_ratio)}."
-    )    
-    streamlit.write(
-        f"The ratio of liquidated debt to available supply is {round(debt_to_supply_ratio * 100)}%.Debt worth of "
-        f"{int(example_row['liquidable_debt_at_interval']):,} USD will be liquidated while the AMM swaps capacity "
-        f"will be {int(example_row['debt_token_supply']):,} USD."
+    main_chart_data['debt_to_supply_ratio'] = (
+        main_chart_data['liquidable_debt_at_interval'] / main_chart_data['debt_token_supply']
     )
+    example_row = main_chart_data[
+        main_chart_data['debt_to_supply_ratio'] > 0.75
+    ].sort_values('collateral_token_price').iloc[-1]
+
+    if not example_row.empty:
+        def _get_risk_level(debt_to_supply_ratio: float) -> str:
+            if debt_to_supply_ratio < 0.2:
+                return 'low'
+            elif debt_to_supply_ratio < 0.4:
+                return 'medium'
+            elif debt_to_supply_ratio < 0.6:
+                'high'
+            return 'very high'
+
+        streamlit.subheader(
+            f":warning: At price of {int(example_row['collateral_token_price']):,}, the risk of acquiring bad debt for "
+            f"lending protocols is {_get_risk_level(example_row['debt_to_supply_ratio'])}."
+        )    
+        streamlit.write(
+            f"The ratio of liquidated debt to available supply is {round(example_row['debt_to_supply_ratio'] * 100)}%.Debt"
+            f" worth of {int(example_row['liquidable_debt_at_interval']):,} USD will be liquidated while the AMM swaps "
+            f"capacity will be {int(example_row['debt_token_supply']):,} USD."
+        )
 
     streamlit.header("Loans with low health factor")
     col1, _ = streamlit.columns([1, 3])
