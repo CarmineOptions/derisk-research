@@ -104,11 +104,20 @@ def get_range(start: decimal.Decimal, stop: decimal.Decimal, step: decimal.Decim
     return [x for x in decimal_range(start=start, stop=stop, step=step)]
 
 
-def get_collateral_token_range(collateral_token: str) -> list[decimal.Decimal]:
+def get_collateral_token_range(
+    collateral_token: str,
+    collateral_token_price: decimal.Decimal,
+) -> list[decimal.Decimal]:
     assert collateral_token in {"ETH", "wBTC"}
-    if collateral_token == "ETH":
-        return get_range(decimal.Decimal("50"), decimal.Decimal("2500"), decimal.Decimal("50"))
-    return get_range(decimal.Decimal("250"), decimal.Decimal("40000"), decimal.Decimal("250"))
+    TOKEN_STEP = {
+        "ETH": decimal.Decimal("50"),
+        "wBTC": decimal.Decimal("250"),
+    }
+    return get_range(
+        start = TOKEN_STEP[collateral_token],
+        stop = collateral_token_price * decimal.Decimal("1.2"),
+        step = TOKEN_STEP[collateral_token],
+    )
 
 
 def load_data(protocol: str) -> tuple[dict[str, pandas.DataFrame], pandas.DataFrame, pandas.DataFrame]:

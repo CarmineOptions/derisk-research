@@ -20,7 +20,15 @@ def get_main_chart_data(
     debt_token: str,
     save_data: bool = False,
 ) -> pandas.DataFrame:
-    data = pandas.DataFrame({"collateral_token_price": src.helpers.get_collateral_token_range(collateral_token)})
+    collateral_token_price = prices.values[collateral_token]
+    data = pandas.DataFrame(
+        {
+            "collateral_token_price": src.helpers.get_collateral_token_range(
+                collateral_token = collateral_token,
+                collateral_token_price = collateral_token_price,
+            ),
+        }
+    )
     data['liquidable_debt'] = data['collateral_token_price'].apply(
         lambda x: state.compute_liquidable_debt_at_price(
             prices = prices,
