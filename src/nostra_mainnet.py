@@ -127,9 +127,9 @@ class NostraMainnetState(src.nostra_alpha.NostraAlphaState):
     relevant event are implemented in `src.nostra_alpha.NostraAlphaState`.
     """
 
-    ADDRESSES_TO_TOKENS = ADDRESSES_TO_TOKENS
-    ADDRESSES_TO_EVENTS = ADDRESSES_TO_EVENTS
-    INTEREST_RATE_MODEL_ADDRESS = INTEREST_RATE_MODEL_ADDRESS
+    ADDRESSES_TO_TOKENS: dict[str, str] = ADDRESSES_TO_TOKENS
+    ADDRESSES_TO_EVENTS: dict[str, str] = ADDRESSES_TO_EVENTS
+    INTEREST_RATE_MODEL_ADDRESS: str = INTEREST_RATE_MODEL_ADDRESS
     # TODO: This seems to be a magical address.
     IGNORE_USER: str = '0x5fc7053cca20fcb38550d7554c84fa6870e2b9e7ebd66398a67697ba440f12b'
 

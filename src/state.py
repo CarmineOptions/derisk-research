@@ -140,8 +140,8 @@ class State(abc.ABC):
         loan_entity_class: LoanEntity,
         verbose_user: Optional[str] = None,
     ) -> None:
-        self.loan_entity_class = loan_entity_class
-        self.verbose_user = verbose_user
+        self.loan_entity_class: LoanEntity = loan_entity_class
+        self.verbose_user: Optional[str] = verbose_user
         self.loan_entities: collections.defaultdict = collections.defaultdict(self.loan_entity_class)
         # These models reflect the interest rates at which users lend/stake funds.
         self.collateral_interest_rate_models: InterestRateModels = InterestRateModels()

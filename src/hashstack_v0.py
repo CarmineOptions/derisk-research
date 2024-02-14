@@ -107,8 +107,8 @@ class HashstackV0LoanEntity(src.state.LoanEntity):
 
     def __init__(self, user: str, debt_category: int) -> None:
         super().__init__()
-        self.user = user
-        self.debt_category = debt_category
+        self.user: str = user
+        self.debt_category: int = debt_category
         self.original_collateral: src.helpers.Portfolio = src.helpers.Portfolio()
         self.borrowed_collateral: src.helpers.Portfolio = src.helpers.Portfolio()
 

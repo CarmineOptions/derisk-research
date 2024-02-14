@@ -200,7 +200,7 @@ class ZkLendState(src.state.State):
     relevant event.
     """
 
-    EVENTS_METHODS_MAPPING = EVENTS_METHODS_MAPPING
+    EVENTS_METHODS_MAPPING: dict[str, str] = EVENTS_METHODS_MAPPING
 
     def __init__(
         self,

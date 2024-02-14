@@ -274,10 +274,10 @@ class NostraAlphaState(src.state.State):
     of every relevant event.
     """
 
-    ADDRESSES_TO_TOKENS = ADDRESSES_TO_TOKENS
-    ADDRESSES_TO_EVENTS = ADDRESSES_TO_EVENTS
-    INTEREST_RATE_MODEL_ADDRESS = INTEREST_RATE_MODEL_ADDRESS
-    EVENTS_METHODS_MAPPING = EVENTS_METHODS_MAPPING
+    ADDRESSES_TO_TOKENS: dict[str, str] = ADDRESSES_TO_TOKENS
+    ADDRESSES_TO_EVENTS: dict[str, str] = ADDRESSES_TO_EVENTS
+    INTEREST_RATE_MODEL_ADDRESS: str = INTEREST_RATE_MODEL_ADDRESS
+    EVENTS_METHODS_MAPPING: dict[str, str] = EVENTS_METHODS_MAPPING
     # TODO: This seems to be a magical address.
     IGNORE_USER: str = '0x5a0042fa9bb87ed72fbee4d5a2da416528ebc84a569081ad02e9ad60b0af7d7'
 
@@ -304,10 +304,7 @@ class NostraAlphaState(src.state.State):
         # The order of the values in the `data` column is: `debtToken`, `lendingRate`, ``, `borrowRate`, ``, 
         # `lendIndex`, ``, `borrowIndex`, ``.
         # Example: https://starkscan.co/event/0x05e95588e281d7cab6f89aa266057c4c9bcadf3ff0bb85d4feea40a4faa94b09_4.
-        token_address = event["data"][0]
-        # The address is not recognized if one forgets to add `0`'s after the `x`, e.g. `0x40...` -> `0x040...`.
-        while len(token_address) < 66:
-            token_address = token_address[:2] + '0' + token_address[2:]
+        token_address = src.helpers.add_leading_zeros(event["data"][0])
         token = self.ADDRESSES_TO_TOKENS[token_address]
         collateral_interest_rate_index = decimal.Decimal(str(int(event["data"][5], base=16))) / decimal.Decimal("1e18")
         debt_interest_rate_index = decimal.Decimal(str(int(event["data"][7], base=16))) / decimal.Decimal("1e18")
