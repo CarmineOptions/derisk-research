@@ -5,7 +5,7 @@ import logging
 import time
 
 import src.settings
-import hashstack_v0
+import src.hashstack_v0
 import src.histogram
 import src.loans_table
 import src.main_chart
