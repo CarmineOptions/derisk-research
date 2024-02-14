@@ -58,21 +58,24 @@ class TokenValues:
             }
 
 
+# TODO: Find a better solution to fix the discrepancies.
+# TODO: Update the values.
+MAX_ROUNDING_ERRORS: TokenValues = TokenValues(
+    values={
+        "ETH": decimal.Decimal("0.5e13"),
+        "wBTC": decimal.Decimal("1e2"),
+        "USDC": decimal.Decimal("1e4"),
+        "DAI": decimal.Decimal("1e16"),
+        "USDT": decimal.Decimal("1e4"),
+        "wstETH": decimal.Decimal("0.5e13"),
+    },
+)
+
+
 class Portfolio(TokenValues):
     """ A class that describes holdings of tokens. """
 
-    # TODO: Find a better solution to fix the discrepancies.
-    # TODO: Update the values.
-    MAX_ROUNDING_ERRORS: TokenValues = TokenValues(
-        values={
-            "ETH": decimal.Decimal("0.5e13"),
-            "wBTC": decimal.Decimal("1e2"),
-            "USDC": decimal.Decimal("1e4"),
-            "DAI": decimal.Decimal("1e16"),
-            "USDT": decimal.Decimal("1e4"),
-            "wstETH": decimal.Decimal("0.5e13"),
-        },
-    )
+    MAX_ROUNDING_ERRORS: TokenValues = MAX_ROUNDING_ERRORS
 
     def __init__(self) -> None:
         super().__init__(init_value=decimal.Decimal("0"))
