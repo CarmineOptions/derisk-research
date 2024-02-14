@@ -46,6 +46,7 @@ class TokenValues:
     def __init__(
         self,
         values: Optional[dict[str, Union[bool, decimal.Decimal]]] = None,
+        # TODO: Only one parameter should be specified..
         init_value: decimal.Decimal = decimal.Decimal("0"),
     ) -> None:
         if values:
