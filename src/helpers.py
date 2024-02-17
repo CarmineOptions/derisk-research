@@ -152,16 +152,6 @@ def get_symbol(address: str) -> str:
     raise KeyError(f"Address = {address} does not exist in the symbol table.")
 
 
-def ztoken_to_token(symbol: str) -> str:
-    if symbol == "zWBTC":
-        # weird exception
-        return "wBTC"
-    if symbol.startswith("z"):
-        return symbol[1:]
-    else:
-        return symbol
-
-
 def upload_file_to_bucket(source_path: str, target_path: str):
     # Initialize the Google Cloud Storage client with the credentials.
     storage_client = google.cloud.storage.Client.from_service_account_json(os.getenv("CREDENTIALS_PATH"))
