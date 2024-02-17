@@ -6,6 +6,7 @@ import time
 
 import src.settings
 import src.hashstack_v0
+import src.hashstack_v1
 import src.histogram
 import src.loans_table
 import src.main_chart
@@ -28,6 +29,7 @@ def update_data(zklend_state):
     logging.info(f"Updating CSV data from {zklend_state.last_block_number}...")
     zklend_events = src.zklend.get_events(start_block_number = zklend_state.last_block_number + 1)
     hashstack_v0_events = src.hashstack_v0.get_events()
+    hashstack_v1_events = src.hashstack_v1.get_events()
     nostra_alpha_events = src.nostra_alpha.get_events()
     nostra_mainnet_events = src.nostra_mainnet.get_events()
     logging.info(f"got events in {time.time() - t0}s")
@@ -42,6 +44,15 @@ def update_data(zklend_state):
     for _, hashstack_v0_event in hashstack_v0_events.iterrows():
         hashstack_v0_state.process_event(event=hashstack_v0_event)
 
+    hashstack_v1_state = src.hashstack_v1.HashstackV1State()
+    for _, hashstack_v1_event in hashstack_v1_events.iterrows():
+        # TODO: Do not crash if there is an unrecognized Hashstack V1 event.
+        try:
+            hashstack_v1_state.process_event(event=hashstack_v1_event)
+        except:
+            logging.error("Failed to process Hashstack event = {}.".format(hashstack_v1_event))
+            continue
+
     nostra_alpha_state = src.nostra_alpha.NostraAlphaState()
     for _, nostra_alpha_event in nostra_alpha_events.iterrows():
         nostra_alpha_state.process_event(event=nostra_alpha_event)
@@ -54,6 +65,7 @@ def update_data(zklend_state):
 
     t_prices = time.time()
     prices = src.swap_amm.Prices()
+    asyncio.run(prices.get_lp_token_prices())
 
     logging.info(f"prices in {time.time() - t_prices}s")
 
@@ -66,7 +78,13 @@ def update_data(zklend_state):
 
     t2 = time.time()
 
-    states = [zklend_state, hashstack_v0_state, nostra_alpha_state, nostra_mainnet_state]
+    states = [
+        zklend_state,
+        hashstack_v0_state, 
+        hashstack_v1_state, 
+        nostra_alpha_state, 
+        nostra_mainnet_state,
+    ]
     for pair, state in itertools.product(src.settings.PAIRS, states):
         # TODO: Decipher `pair` in a smarter way.
         collateral_token, borrowings_token = pair.split("-")
