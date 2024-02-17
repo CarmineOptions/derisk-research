@@ -9,7 +9,17 @@ import pandas
 import src.helpers
 import src.settings
 import src.state
+import src.swap_amm
 
+
+
+R_TOKENS: dict[str, str] = {
+    'ETH': '0x00436d8d078de345c11493bd91512eae60cd2713e05bcaa0bb9f0cba90358c6e',
+    'USDC': '0x03bcecd40212e9b91d92bbe25bb3643ad93f0d230d93237c675f46fac5187e8c',
+    'USDT': '0x05fa6cc6185eab4b0264a4134e2d4e74be11205351c7c91196cb27d5d97f8d21',
+    'DAI': '0x019c981ec23aa9cbac1cc1eb7f92cf09ea2816db9cbd932e251c86a2e8fb725f',
+    'wBTC': '0x01320a9910e78afc18be65e4080b51ecc0ee5c0a8b6cc7ef4e685e02b50e57ef',
+}
 
 
 ADDRESSES_TO_TOKENS: dict[str, str] = {
@@ -244,7 +254,7 @@ MAX_ROUNDING_ERRORS.values.update(
 
 
 
-class HashstackPortfolio(src.helpers.Portfolio):
+class HashstackV1Portfolio(src.helpers.Portfolio):
     """ A class that describes holdings of tokens of Hashstack users. """
 
     MAX_ROUNDING_ERRORS: src.helpers.TokenValues = MAX_ROUNDING_ERRORS
@@ -254,6 +264,22 @@ class HashstackPortfolio(src.helpers.Portfolio):
         self.values.update(
             {
                 token: decimal.Decimal("0")
+                for token in HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS
+            }
+        )
+
+
+class HashstackV1InterestRateModels(src.helpers.TokenValues):
+    """
+    A class that describes the state of the interest rate indices which help transform face amounts into raw amounts. 
+    Raw amount is the amount that would have been accumulated into the face amount if it were deposited at genesis.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(init_value=decimal.Decimal("1"))
+        self.values.update(
+            {
+                token: decimal.Decimal("1")
                 for token in HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS
             }
         )
@@ -301,10 +327,10 @@ class HashstackV1LoanEntity(src.state.LoanEntity):
     def __init__(self, user: str) -> None:
         super().__init__()
         self.user: str = user
-        self.original_collateral: HashstackPortfolio = HashstackPortfolio()
-        self.borrowed_collateral: HashstackPortfolio = HashstackPortfolio()
-        self.collateral: HashstackPortfolio = HashstackPortfolio()
-        self.debt: HashstackPortfolio = HashstackPortfolio()
+        self.original_collateral: HashstackV1Portfolio = HashstackV1Portfolio()
+        self.borrowed_collateral: HashstackV1Portfolio = HashstackV1Portfolio()
+        self.collateral: HashstackV1Portfolio = HashstackV1Portfolio()
+        self.debt: HashstackV1Portfolio = HashstackV1Portfolio()
 
     def compute_health_factor(
         self,
@@ -329,14 +355,8 @@ class HashstackV1LoanEntity(src.state.LoanEntity):
             )
         if standardized:
             # Denominator is the value of (risk-adjusted) collateral at which the loan entity can be liquidated.
-            health_factor_liquidation_threshold = (
-                decimal.Decimal("1.06")
-                if self.debt_category == 1
-                else decimal.Decimal("1.05")
-                if self.debt_category == 2
-                else decimal.Decimal("1.04")
-            )
-            denominator = health_factor_liquidation_threshold * debt_usd
+            # TODO: Does this parameter still hold?
+            denominator = decimal.Decimal("1.04") * debt_usd
         else:
             denominator = debt_usd
         if denominator == decimal.Decimal("0"):
@@ -350,6 +370,7 @@ class HashstackV1LoanEntity(src.state.LoanEntity):
         prices: Optional[src.helpers.TokenValues] = None,
         debt_usd: Optional[decimal.Decimal] = None,
     ) -> decimal.Decimal:
+        # TODO: Has the liquidation mechanism changed? 
         if debt_usd is None:
             debt_usd = self.compute_debt_usd(
                 risk_adjusted = False,
@@ -377,6 +398,10 @@ class HashstackV1State(src.state.State):
             loan_entity_class=HashstackV1LoanEntity,
             verbose_user=verbose_user,
         )
+        # These models reflect the interest rates at which users lend/stake funds.
+        self.collateral_interest_rate_models: HashstackV1InterestRateModels = HashstackV1InterestRateModels()
+        # These models reflect the interest rates at which users borrow funds.
+        self.debt_interest_rate_models: HashstackV1InterestRateModels = HashstackV1InterestRateModels()
 
     # TODO: There appears to be some overlap with HashstackV0State. Can we simplify the code?
     # TODO: Reduce most of the events processing to `rewrite_original_collateral`, `rewrite_borrowed_collateral`, and 
@@ -387,7 +412,6 @@ class HashstackV1State(src.state.State):
         # ``, `current_market`, `current_amount`, ``, `state`, `l3_integration`, `l3_category`, `created_at`, 
         # [`collateral`] `loan_id`, `collateral_token`, `amount`, ``, `created_at`, [`timestamp`] `timestamp`.
         # Example: https://starkscan.co/event/0x00085b80dbb6c3cb161bb2b73ebc8c3b3b806395fc5c9a0f110ae2a1fa04a578_9.
-        logging.info('aaa')
         loan_id = int(event["data"][0], base=16)
         collateral_loan_id = int(event["data"][12], base=16)
         assert loan_id == collateral_loan_id
@@ -401,14 +425,14 @@ class HashstackV1State(src.state.State):
         original_collateral_face_amount = decimal.Decimal(str(int(event["data"][14], base=16)))
 
         self.loan_entities[loan_id] = HashstackV1LoanEntity(user=user)
-        # TODO: Make it possible to initialize HashstackPortfolio with some token amount directly.
-        original_collateral = HashstackPortfolio()
+        # TODO: Make it possible to initialize `HashstackV1Portfolio`` with some token amount directly.
+        original_collateral = HashstackV1Portfolio()
         original_collateral.values[original_collateral_token] = original_collateral_face_amount
         self.loan_entities[loan_id].original_collateral = original_collateral
-        borrowed_collateral = HashstackPortfolio()
+        borrowed_collateral = HashstackV1Portfolio()
         borrowed_collateral.values[borrowed_collateral_token] = borrowed_collateral_face_amount
         self.loan_entities[loan_id].borrowed_collateral = borrowed_collateral
-        # TODO: Make it easier to sum 2 HashstackPortfolio instances.
+        # TODO: Make it easier to sum 2 `HashstackV1Portfolio` instances.
         self.loan_entities[loan_id].collateral.values = {
             token: (
                 self.loan_entities[loan_id].original_collateral.values[token]
@@ -416,7 +440,7 @@ class HashstackV1State(src.state.State):
             )
             for token in TOKEN_SETTINGS
         }
-        debt = HashstackPortfolio()
+        debt = HashstackV1Portfolio()
         debt.values[debt_token] = debt_face_amount
         self.loan_entities[loan_id].debt = debt
         if self.loan_entities[loan_id].user == self.verbose_user:
@@ -443,7 +467,7 @@ class HashstackV1State(src.state.State):
         original_collateral_token = self.ADDRESSES_TO_TOKENS[src.helpers.add_leading_zeros(event["data"][1])]
         original_collateral_face_amount = decimal.Decimal(str(int(event["data"][2], base=16)))
 
-        original_collateral = HashstackPortfolio()
+        original_collateral = HashstackV1Portfolio()
         original_collateral.values[original_collateral_token] = original_collateral_face_amount
         self.loan_entities[loan_id].original_collateral = original_collateral
         self.loan_entities[loan_id].collateral.values = {
@@ -484,7 +508,7 @@ class HashstackV1State(src.state.State):
         new_borrowed_collateral_token = self.ADDRESSES_TO_TOKENS[src.helpers.add_leading_zeros(event["data"][17])]
         new_borrowed_collateral_face_amount = decimal.Decimal(str(int(event["data"][18], base=16)))
 
-        new_borrowed_collateral = HashstackPortfolio()
+        new_borrowed_collateral = HashstackV1Portfolio()
         new_borrowed_collateral.values[new_borrowed_collateral_token] = new_borrowed_collateral_face_amount
         self.loan_entities[new_loan_id].borrowed_collateral = new_borrowed_collateral
         self.loan_entities[new_loan_id].collateral.values = {
@@ -494,7 +518,7 @@ class HashstackV1State(src.state.State):
             )
             for token in TOKEN_SETTINGS
         }
-        new_debt = HashstackPortfolio()
+        new_debt = HashstackV1Portfolio()
         new_debt.values[new_debt_token] = new_debt_face_amount
         # Based on the documentation, it seems that it's only possible to spend the whole amount.
         assert self.loan_entities[old_loan_id].debt.values == new_debt.values
@@ -560,9 +584,9 @@ class HashstackV1State(src.state.State):
         assert new_borrowed_collateral_face_amount == decimal.Decimal("0")
         assert new_original_collateral_face_amount == decimal.Decimal("0")
 
-        new_original_collateral = HashstackPortfolio()
+        new_original_collateral = HashstackV1Portfolio()
         new_original_collateral.values[new_original_collateral_token] = new_original_collateral_face_amount
-        new_borrowed_collateral = HashstackPortfolio()
+        new_borrowed_collateral = HashstackV1Portfolio()
         new_borrowed_collateral.values[new_borrowed_collateral_token] = new_borrowed_collateral_face_amount
         self.loan_entities[new_loan_id].original_collateral = new_original_collateral
         self.loan_entities[new_loan_id].borrowed_collateral = new_borrowed_collateral
@@ -573,7 +597,7 @@ class HashstackV1State(src.state.State):
             )
             for token in TOKEN_SETTINGS
         }
-        new_debt = HashstackPortfolio()
+        new_debt = HashstackV1Portfolio()
         new_debt.values[new_debt_token] = new_debt_face_amount
         self.loan_entities[new_loan_id].debt = new_debt
         if self.loan_entities[new_loan_id].user == self.verbose_user:
@@ -623,16 +647,26 @@ class HashstackV1State(src.state.State):
                 prices=changed_prices, 
                 debt_usd=debt_usd,
             )
-            health_factor_liquidation_threshold = (
-                decimal.Decimal("1.06")
-                if loan_entity.debt_category == 1
-                else decimal.Decimal("1.05")
-                if loan_entity.debt_category == 2
-                else decimal.Decimal("1.04")
-            )
-            if health_factor >= health_factor_liquidation_threshold:
+            # TODO: Does this parameter still hold?
+            if health_factor >= decimal.Decimal("1.04"):
                 continue
 
             # Find out how much of the `debt_token` will be liquidated.
             max_liquidated_amount += loan_entity.compute_debt_to_be_liquidated(debt_usd=debt_usd)
         return max_liquidated_amount
+
+    def compute_number_of_active_users(self) -> int:
+        unique_active_users = {
+            loan_entity.user
+            for loan_entity in self.loan_entities.values() 
+            if loan_entity.has_collateral() or loan_entity.has_debt()
+        }
+        return len(unique_active_users)
+
+    def compute_number_of_active_borrowers(self) -> int:
+        unique_active_borrowers = {
+            loan_entity.user
+            for loan_entity in self.loan_entities.values() 
+            if loan_entity.has_debt()
+        }
+        return len(unique_active_borrowers)
