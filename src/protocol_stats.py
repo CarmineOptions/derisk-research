@@ -5,6 +5,7 @@ import pandas
 
 import src.blockchain_call
 import src.hashstack_v0
+import src.hashstack_v1
 import src.helpers
 import src.protocol_parameters
 import src.settings
@@ -20,7 +21,10 @@ def get_general_stats(
     data = []
     for state in states:
         protocol = src.protocol_parameters.get_protocol(state=state)
-        if isinstance(state, src.hashstack_v0.HashstackV0State):
+        if (
+            isinstance(state, src.hashstack_v0.HashstackV0State)
+            or isinstance(state, src.hashstack_v1.HashstackV1State)
+        ):
             number_of_active_users = state.compute_number_of_active_users()
             number_of_active_borrowers = state.compute_number_of_active_borrowers()
         else:
@@ -64,6 +68,13 @@ def get_supply_stats(
                     src.blockchain_call.balance_of(
                         token_addr = src.settings.TOKEN_SETTINGS[token].address,
                         holder_addr = src.hashstack_v0.ADDRESS,
+                    )
+                )
+            if protocol == 'Hashstack V1':
+                supply = asyncio.run(
+                    src.blockchain_call.balance_of(
+                        token_addr = src.settings.TOKEN_SETTINGS[token].address,
+                        holder_addr = src.hashstack_v1.R_TOKENS[token],
                     )
                 )
             else:

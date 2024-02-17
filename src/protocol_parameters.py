@@ -1,4 +1,5 @@
 import src.hashstack_v0
+import src.hashstack_v1
 import src.nostra_alpha
 import src.nostra_mainnet
 import src.zklend
@@ -12,6 +13,8 @@ def get_directory(state: src.state.State) -> str:
         return "zklend_data"
     if isinstance(state, src.hashstack_v0.HashstackV0State):
         return "hashstack_v0_data"
+    if isinstance(state, src.hashstack_v1.HashstackV1State):
+        return "hashstack_v1_data"
     if isinstance(state, src.nostra_alpha.NostraAlphaState) and not isinstance(state, src.nostra_mainnet.NostraMainnetState):
         return "nostra_alpha_data"
     if isinstance(state, src.nostra_mainnet.NostraMainnetState):
@@ -26,6 +29,8 @@ def get_protocol(state: src.state.State) -> str:
         return "zkLend"
     if isinstance(state, src.hashstack_v0.HashstackV0State):
         return "Hashstack V0"
+    if isinstance(state, src.hashstack_v1.HashstackV1State):
+        return "Hashstack V1"
     if isinstance(state, src.nostra_alpha.NostraAlphaState) and not isinstance(state, src.nostra_mainnet.NostraMainnetState):
         return "Nostra Alpha"
     if isinstance(state, src.nostra_mainnet.NostraMainnetState):
