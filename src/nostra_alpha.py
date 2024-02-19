@@ -22,7 +22,7 @@ ADDRESSES_TO_TOKENS: dict[str, str] = {
     '0x06b59e2a746e141f90ec8b6e88e695265567ab3bdcf27059b4a15c89b0b7bd53': 'wBTC',
     '0x070f8a4fcd75190661ca09a7300b7c93fab93971b67ea712c664d7948a8a54c6': 'ETH',
     '0x029959a546dda754dc823a7b8aa65862c5825faeaaf7938741d8ca6bfdc69e4e': 'USDC',
-    '0x055ba2baf189b98c59f6951a584a3a7d7d6ff2c4ef88639794e739557e1876f0': 'USDT', 
+    '0x055ba2baf189b98c59f6951a584a3a7d7d6ff2c4ef88639794e739557e1876f0': 'USDT',
     '0x01ac55cabf2b79cf39b17ba0b43540a64205781c4b7850e881014aea6f89be58': 'DAI',
     '0x00687b5d9e591844169bc6ad7d7256c4867a10cee6599625b9d78ea17a7caef9': 'wBTC',
     '0x040b091cb020d91f4a4b34396946b4d4e2a450dbd9410432ebdbfe10e55ee5e5': 'ETH',
@@ -41,7 +41,7 @@ ADDRESSES_TO_EVENTS: dict[str, str] = {
     '0x06b59e2a746e141f90ec8b6e88e695265567ab3bdcf27059b4a15c89b0b7bd53': 'non_interest_bearing_collateral',
     '0x070f8a4fcd75190661ca09a7300b7c93fab93971b67ea712c664d7948a8a54c6': 'interest_bearing_collateral',
     '0x029959a546dda754dc823a7b8aa65862c5825faeaaf7938741d8ca6bfdc69e4e': 'interest_bearing_collateral',
-    '0x055ba2baf189b98c59f6951a584a3a7d7d6ff2c4ef88639794e739557e1876f0': 'interest_bearing_collateral', 
+    '0x055ba2baf189b98c59f6951a584a3a7d7d6ff2c4ef88639794e739557e1876f0': 'interest_bearing_collateral',
     '0x01ac55cabf2b79cf39b17ba0b43540a64205781c4b7850e881014aea6f89be58': 'interest_bearing_collateral',
     '0x00687b5d9e591844169bc6ad7d7256c4867a10cee6599625b9d78ea17a7caef9': 'interest_bearing_collateral',
     '0x040b091cb020d91f4a4b34396946b4d4e2a450dbd9410432ebdbfe10e55ee5e5': 'debt',
@@ -116,13 +116,21 @@ NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS: dict[str, NostraAlphaSpecificTokenSettings
         protocol_fee=decimal.Decimal("0.02"),
         protocol_token_address="0x040375d0720245bc0d123aa35dc1c93d14a78f64456eff75f63757d99a0e6a83",
     ),
-    # TODO: Add wstETH.
+    # TODO: These (`wstETH` and `LORDS`) are actually Nostra Mainnet tokens.
     "wstETH": NostraAlphaSpecificTokenSettings(
-        collateral_factor=decimal.Decimal("1"), 
-        debt_factor=decimal.Decimal("1"),
-        liquidator_fee_beta=decimal.Decimal("1"),
-        liquidator_fee_max=decimal.Decimal("0"),
-        protocol_fee=decimal.Decimal("0"),
+        collateral_factor=decimal.Decimal("0.8"), 
+        debt_factor=decimal.Decimal("0.9"),
+        liquidator_fee_beta=decimal.Decimal("999.999"),
+        liquidator_fee_max=decimal.Decimal("0.25"),
+        protocol_fee=decimal.Decimal("0.02"),
+        protocol_token_address="",
+    ),
+    "LORDS": NostraAlphaSpecificTokenSettings(
+        collateral_factor=decimal.Decimal("1"),  # TODO: Not observed yet.
+        debt_factor=decimal.Decimal("0.8"),
+        liquidator_fee_beta=decimal.Decimal("1"),  # TODO: Not observed yet.
+        liquidator_fee_max=decimal.Decimal("0"),  # TODO: Not observed yet.
+        protocol_fee=decimal.Decimal("0"),  # TODO: Not observed yet.
         protocol_token_address="",
     ),
 }

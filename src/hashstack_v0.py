@@ -39,6 +39,11 @@ HASHSTACK_V0_SPECIFIC_TOKEN_SETTINGS: dict[str, HashstackV0SpecificTokenSettings
         collateral_factor=decimal.Decimal("1"),
         debt_factor=decimal.Decimal("1"),
     ),
+    # TODO: Add LORDS.
+    "LORDS": HashstackV0SpecificTokenSettings(
+        collateral_factor=decimal.Decimal("1"),
+        debt_factor=decimal.Decimal("1"),
+    ),
 }
 TOKEN_SETTINGS: dict[str, TokenSettings] = {
     token: TokenSettings(

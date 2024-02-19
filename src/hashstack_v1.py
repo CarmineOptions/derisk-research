@@ -160,6 +160,11 @@ HASHSTACK_V1_SPECIFIC_TOKEN_SETTINGS: dict[str, HashstackV1SpecificTokenSettings
         collateral_factor=decimal.Decimal("1"),
         debt_factor=decimal.Decimal("1"),
     ),
+    # TODO: Add LORDS.
+    "LORDS": HashstackV1SpecificTokenSettings(
+        collateral_factor=decimal.Decimal("1"),
+        debt_factor=decimal.Decimal("1"),
+    ),
     "JediSwap: DAI/ETH Pool": HashstackV1SpecificTokenSettings(
         collateral_factor=decimal.Decimal("1"),
         debt_factor=decimal.Decimal("1"),

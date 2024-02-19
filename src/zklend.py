@@ -68,6 +68,13 @@ ZKLEND_SPECIFIC_TOKEN_SETTINGS: dict[str, ZkLendSpecificTokenSettings] = {
         liquidation_bonus=decimal.Decimal("0.10"),
         protocol_token_address='0x0536aa7e01ecc0235ca3e29da7b5ad5b12cb881e29034d87a4290edbb20b7c28',
     ),
+    # TODO: Add LORDS.
+    "LORDS": ZkLendSpecificTokenSettings(
+        collateral_factor=decimal.Decimal("1"),
+        debt_factor=decimal.Decimal("1"),
+        liquidation_bonus=decimal.Decimal("0"),
+        protocol_token_address='',
+    ),
 }
 TOKEN_SETTINGS: dict[str, TokenSettings] = {
     token: TokenSettings(
