@@ -69,6 +69,7 @@ MAX_ROUNDING_ERRORS: TokenValues = TokenValues(
         "DAI": decimal.Decimal("1e16"),
         "USDT": decimal.Decimal("1e4"),
         "wstETH": decimal.Decimal("0.5e13"),
+        "LORDS": decimal.Decimal("0.5e13"),
     },
 )
 
