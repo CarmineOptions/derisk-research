@@ -259,6 +259,7 @@ class Prices:
             ("dai", "DAI"),
             ("tether", "USDT"),
             ("wrapped-steth", "wstETH"),
+            ("lords", "LORDS"),
        ]
         self.vs_currency = "usd"
         self.prices: src.helpers.TokenValues = src.helpers.TokenValues()
@@ -367,7 +368,7 @@ class Pool(Pair):
 class SwapAmm(Pair):
     async def init(self):
         self.pools = {}
-        # TODO: add wstETH pools
+        # TODO: add wstETH, LORDS pools
         self.add_pool(
             "ETH",
             "USDC",

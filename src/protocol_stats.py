@@ -60,9 +60,15 @@ def get_supply_stats(
         protocol = src.protocol_parameters.get_protocol(state=state)
         token_supplies = {}
         for token in src.settings.TOKEN_SETTINGS:
+            # TODO: Add LORDS.
+            if token == 'LORDS':
+                token_supplies[token] = decimal.Decimal("0")
+                continue
+            # TODO: Add wstETH.
             if token == 'wstETH' and protocol != 'zkLend':
                 token_supplies[token] = decimal.Decimal("0")
                 continue
+
             if protocol == 'Hashstack V0':
                 supply = asyncio.run(
                     src.blockchain_call.balance_of(
@@ -70,7 +76,7 @@ def get_supply_stats(
                         holder_addr = src.hashstack_v0.ADDRESS,
                     )
                 )
-            if protocol == 'Hashstack V1':
+            elif protocol == 'Hashstack V1':
                 supply = asyncio.run(
                     src.blockchain_call.balance_of(
                         token_addr = src.settings.TOKEN_SETTINGS[token].address,
@@ -100,6 +106,7 @@ def get_supply_stats(
                 'DAI supply': token_supplies['DAI'],
                 'USDT supply': token_supplies['USDT'],
                 'wstETH supply': token_supplies['wstETH'],
+                'LORDS supply': token_supplies['LORDS'],
             }
         )
     data = pandas.DataFrame(data)
@@ -123,6 +130,11 @@ def get_collateral_stats(
         protocol = src.protocol_parameters.get_protocol(state=state)
         token_collaterals = {}
         for token in src.settings.TOKEN_SETTINGS:
+            # TODO: Add LORDS.
+            if token == 'LORDS':
+                token_collaterals[token] = decimal.Decimal("0")
+                continue
+            # TODO: Add wstETH.
             if token == 'wstETH' and protocol != 'zkLend':
                 token_collaterals[token] = decimal.Decimal("0")
                 continue
@@ -144,6 +156,7 @@ def get_collateral_stats(
                 'DAI collateral': token_collaterals['DAI'],
                 'USDT collateral': token_collaterals['USDT'],
                 'wstETH collateral': token_collaterals['wstETH'],
+                'LORDS collateral': token_collaterals['LORDS'],
             }
         )
     data = pandas.DataFrame(data)
@@ -162,6 +175,11 @@ def get_debt_stats(
         protocol = src.protocol_parameters.get_protocol(state=state)
         token_debts = {}
         for token in src.settings.TOKEN_SETTINGS:
+            # TODO: Add LORDS.
+            if token == 'LORDS':
+                token_debts[token] = decimal.Decimal("0")
+                continue
+            # TODO: Add wstETH.
             if token == 'wstETH' and protocol != 'zkLend':
                 token_debts[token] = decimal.Decimal("0")
                 continue
@@ -183,6 +201,7 @@ def get_debt_stats(
                 'DAI debt': token_debts['DAI'],
                 'USDT debt': token_debts['USDT'],
                 'wstETH debt': token_debts['wstETH'],
+                'LORDS debt': token_debts['LORDS'],
             }
         )
     data = pandas.DataFrame(data)
@@ -212,6 +231,10 @@ def get_utilization_stats(
             # TODO: hotfix to avoid `InvalidOperation: [<class 'decimal.DivisionUndefined'>]`
             'wstETH utilization': debt_stats['wstETH debt'].astype(float) / (
                 supply_stats['wstETH supply'].astype(float) + debt_stats['wstETH debt'].astype(float)
+            ),
+            # TODO: hotfix to avoid `InvalidOperation: [<class 'decimal.DivisionUndefined'>]`
+            'LORDS utilization': debt_stats['LORDS debt'].astype(float) / (
+                supply_stats['LORDS supply'].astype(float) + debt_stats['LORDS debt'].astype(float)
             ),
         },
     )
