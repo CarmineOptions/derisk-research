@@ -1,5 +1,4 @@
 import decimal
-import os
 
 import pandas
 import plotly.express

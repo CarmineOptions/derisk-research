@@ -1,6 +1,4 @@
 import datetime
-import decimal
-import json
 import logging
 import multiprocessing
 import os
@@ -32,10 +30,15 @@ def main():
         zklend_loans_data,
     ) = src.helpers.load_data(protocol='zkLend')
     (
-        hashstack_main_chart_data,
-        hashstack_histogram_data,
-        hashstack_loans_data,
-    ) = src.helpers.load_data(protocol='Hashstack')
+        hashstack_v0_main_chart_data,
+        hashstack_v0_histogram_data,
+        hashstack_v0_loans_data,
+    ) = src.helpers.load_data(protocol='Hashstack V0')
+    (
+        hashstack_v1_main_chart_data,
+        hashstack_v1_histogram_data,
+        hashstack_v1_loans_data,
+    ) = src.helpers.load_data(protocol='Hashstack V1')
     (
         nostra_alpha_main_chart_data,
         nostra_alpha_histogram_data,
@@ -51,8 +54,8 @@ def main():
     with col1:
         protocols = streamlit.multiselect(
             label="Select protocols",
-            options=["zkLend", "Hashstack", "Nostra Alpha", "Nostra Mainnet"],
-            default=["zkLend", "Hashstack", "Nostra Alpha", "Nostra Mainnet"],
+            options=["zkLend", "Hashstack V0", "Hashstack V1", "Nostra Alpha", "Nostra Mainnet"],
+            default=["zkLend", "Hashstack V0", "Hashstack V1", "Nostra Alpha", "Nostra Mainnet"],
         )
         current_pair = streamlit.selectbox(
             label="Select collateral-loan pair:",
@@ -65,19 +68,22 @@ def main():
     loans_data = pandas.DataFrame()
     protocol_main_chart_data_mapping = {
         'zkLend': zklend_main_chart_data[current_pair],
-        'Hashstack': hashstack_main_chart_data[current_pair],
+        'Hashstack V0': hashstack_v0_main_chart_data[current_pair],
+        'Hashstack V1': hashstack_v1_main_chart_data[current_pair],
         'Nostra Alpha': nostra_alpha_main_chart_data[current_pair],
         'Nostra Mainnet': nostra_mainnet_main_chart_data[current_pair],
     }
     protocol_histogram_data_mapping = {
         'zkLend': zklend_histogram_data,
-        'Hashstack': hashstack_histogram_data,
+        'Hashstack V0': hashstack_v0_histogram_data,
+        'Hashstack V1': hashstack_v1_histogram_data,
         'Nostra Alpha': nostra_alpha_histogram_data,
         'Nostra Mainnet': nostra_mainnet_histogram_data,
     }
     protocol_loans_data_mapping = {
         'zkLend': zklend_loans_data,
-        'Hashstack': hashstack_loans_data,
+        'Hashstack V0': hashstack_v0_loans_data,
+        'Hashstack V1': hashstack_v1_loans_data,
         'Nostra Alpha': nostra_alpha_loans_data,
         'Nostra Mainnet': nostra_mainnet_loans_data,
     }

@@ -29,6 +29,7 @@ LOAN_ENTITY_SPECIFIC_TOKEN_SETTINGS: dict[str, SpecificTokenSettings] = {
     "DAI": SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
     "USDT": SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
     "wstETH": SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
+    "LORDS": SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
 }
 TOKEN_SETTINGS: dict[str, TokenSettings] = {
     token: TokenSettings(
@@ -56,7 +57,7 @@ class LoanEntity(abc.ABC):
     """
     A class that describes and entity which can hold collateral, borrow debt and be liquidable. For example, on 
     Starknet, such an entity is the user in case of zkLend, Nostra Alpha and Nostra Mainnet, or an individual loan in 
-    case od Hashstack.
+    case od Hashstack V0 and Hashstack V1.
     """
 
     TOKEN_SETTINGS: dict[str, TokenSettings] = TOKEN_SETTINGS
@@ -140,8 +141,8 @@ class State(abc.ABC):
         loan_entity_class: LoanEntity,
         verbose_user: Optional[str] = None,
     ) -> None:
-        self.loan_entity_class = loan_entity_class
-        self.verbose_user = verbose_user
+        self.loan_entity_class: LoanEntity = loan_entity_class
+        self.verbose_user: Optional[str] = verbose_user
         self.loan_entities: collections.defaultdict = collections.defaultdict(self.loan_entity_class)
         # These models reflect the interest rates at which users lend/stake funds.
         self.collateral_interest_rate_models: InterestRateModels = InterestRateModels()

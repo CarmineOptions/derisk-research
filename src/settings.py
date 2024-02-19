@@ -43,6 +43,11 @@ TOKEN_SETTINGS: dict[str, TokenSettings] = {
         decimal_factor=decimal.Decimal("1e18"),
         address="0x042b8f0484674ca266ac5d08e4ac6a3fe65bd3129795def2dca5c34ecc5f96d2",
     ),
+    "LORDS": TokenSettings(
+        symbol="LORDS",
+        decimal_factor=decimal.Decimal("1e18"),
+        address="0x0124aeb495b947201f5fac96fd1138e326ad86195b98df6dec9009158a533b49",
+    ),
 }
 
 

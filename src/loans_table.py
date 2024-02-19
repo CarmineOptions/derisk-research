@@ -1,8 +1,7 @@
-import os
-
 import pandas
 
-import src.hashstack
+import src.hashstack_v0
+import src.hashstack_v1
 import src.helpers
 import src.nostra_alpha
 import src.nostra_mainnet
@@ -52,7 +51,10 @@ def get_loans_table_data(
                 risk_adjusted_collateral_usd=risk_adjusted_collateral_usd,
                 risk_adjusted_debt_usd=risk_adjusted_debt_usd,
             )
-        elif isinstance(state, src.hashstack.HashstackState):
+        elif (
+            isinstance(state, src.hashstack_v0.HashstackV0State)
+            or isinstance(state, src.hashstack_v1.HashstackV1State)
+        ):
             health_factor = loan_entity.compute_health_factor(
                 standardized=False,
                 collateral_usd=collateral_usd,
@@ -77,7 +79,13 @@ def get_loans_table_data(
 
         data.append(
             {
-                "User": loan_entity_id if not isinstance(state, src.hashstack.HashstackState) else loan_entity.user,
+                "User": (
+                    loan_entity_id
+                    if not (
+                        isinstance(state, src.hashstack_v0.HashstackV0State)
+                        or isinstance(state, src.hashstack_v1.HashstackV1State)
+                    ) else loan_entity.user
+                ),
                 "Protocol": src.protocol_parameters.get_protocol(state=state),
                 "Collateral (USD)": collateral_usd,
                 "Risk-adjusted collateral (USD)": risk_adjusted_collateral_usd,

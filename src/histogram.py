@@ -20,7 +20,7 @@ def get_histogram_data(
             "token": token,
             "debt": (
                 token_amount 
-                / src.settings.TOKEN_SETTINGS[token].decimal_factor 
+                / loan_entity.TOKEN_SETTINGS[token].decimal_factor 
                 * state.debt_interest_rate_models.values[token] 
                 * prices.values[token]
             ),
@@ -59,6 +59,7 @@ def visualization(data: pandas.DataFrame):
                 "USDC": "green",
                 "wBTC": "orange",
                 "wstETH": "brown",
+                "LORDS": "black",
             },
             title="Distribution of all Token Debt",
             nbins=100,
@@ -84,6 +85,7 @@ def visualization(data: pandas.DataFrame):
                 "USDC": "green",
                 "wBTC": "orange",
                 "wstETH": "brown",
+                "LORDS": "black",
             },
             title="Distribution of all Token Debt (Between 0 and 1)",
             nbins=100,

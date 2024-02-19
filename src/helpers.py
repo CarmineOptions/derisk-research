@@ -46,6 +46,7 @@ class TokenValues:
     def __init__(
         self,
         values: Optional[dict[str, Union[bool, decimal.Decimal]]] = None,
+        # TODO: Only one parameter should be specified..
         init_value: decimal.Decimal = decimal.Decimal("0"),
     ) -> None:
         if values:
@@ -58,21 +59,25 @@ class TokenValues:
             }
 
 
+# TODO: Find a better solution to fix the discrepancies.
+# TODO: Update the values.
+MAX_ROUNDING_ERRORS: TokenValues = TokenValues(
+    values={
+        "ETH": decimal.Decimal("0.5e13"),
+        "wBTC": decimal.Decimal("1e2"),
+        "USDC": decimal.Decimal("1e4"),
+        "DAI": decimal.Decimal("1e16"),
+        "USDT": decimal.Decimal("1e4"),
+        "wstETH": decimal.Decimal("0.5e13"),
+        "LORDS": decimal.Decimal("0.5e13"),
+    },
+)
+
+
 class Portfolio(TokenValues):
     """ A class that describes holdings of tokens. """
 
-    # TODO: Find a better solution to fix the discrepancies.
-    # TODO: Update the values.
-    MAX_ROUNDING_ERRORS: TokenValues = TokenValues(
-        values={
-            "ETH": decimal.Decimal("0.5e13"),
-            "wBTC": decimal.Decimal("1e2"),
-            "USDC": decimal.Decimal("1e4"),
-            "DAI": decimal.Decimal("1e16"),
-            "USDT": decimal.Decimal("1e4"),
-            "wstETH": decimal.Decimal("0.5e13"),
-        },
-    )
+    MAX_ROUNDING_ERRORS: TokenValues = MAX_ROUNDING_ERRORS
 
     def __init__(self) -> None:
         super().__init__(init_value=decimal.Decimal("0"))
@@ -148,16 +153,6 @@ def get_symbol(address: str) -> str:
     raise KeyError(f"Address = {address} does not exist in the symbol table.")
 
 
-def ztoken_to_token(symbol: str) -> str:
-    if symbol == "zWBTC":
-        # weird exception
-        return "wBTC"
-    if symbol.startswith("z"):
-        return symbol[1:]
-    else:
-        return symbol
-
-
 def upload_file_to_bucket(source_path: str, target_path: str):
     # Initialize the Google Cloud Storage client with the credentials.
     storage_client = google.cloud.storage.Client.from_service_account_json(os.getenv("CREDENTIALS_PATH"))
@@ -178,3 +173,11 @@ def save_dataframe(data: pandas.DataFrame, path: str) -> None:
     data.to_parquet(path, index=False, engine = 'fastparquet', compression='gzip')
     src.helpers.upload_file_to_bucket(source_path=path, target_path=path)
     os.remove(path)
+
+
+def add_leading_zeros(hash: str) -> str:
+    '''
+    Converts e.g. `0x436d8d078de345c11493bd91512eae60cd2713e05bcaa0bb9f0cba90358c6e` to  
+    `0x00436d8d078de345c11493bd91512eae60cd2713e05bcaa0bb9f0cba90358c6e`.
+    '''
+    return '0x' + hash[2:].zfill(64)
