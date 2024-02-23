@@ -75,6 +75,13 @@ ZKLEND_SPECIFIC_TOKEN_SETTINGS: dict[str, ZkLendSpecificTokenSettings] = {
         liquidation_bonus=decimal.Decimal("0"),
         protocol_token_address='',
     ),
+    # TODO: Update STRK settings.
+    "STRK": ZkLendSpecificTokenSettings(
+        collateral_factor=decimal.Decimal("1"),
+        debt_factor=decimal.Decimal("1"),
+        liquidation_bonus=decimal.Decimal("0"),
+        protocol_token_address='0x06d8fa671ef84f791b7f601fa79fea8f6ceb70b5fa84189e3159d532162efc21',
+    ),
 }
 TOKEN_SETTINGS: dict[str, TokenSettings] = {
     token: TokenSettings(
@@ -114,7 +121,7 @@ EVENTS_METHODS_MAPPING: dict[str, str] = {
 
 def get_events(start_block_number: int = 0) -> pandas.DataFrame:
     return src.helpers.get_events(
-        adresses = (ADDRESS, ''),
+        addresses = (ADDRESS, ''),
         event_names = tuple(EVENTS_METHODS_MAPPING),
         start_block_number = start_block_number,
     )

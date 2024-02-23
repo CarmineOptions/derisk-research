@@ -116,11 +116,11 @@ NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS: dict[str, NostraAlphaSpecificTokenSettings
         protocol_fee=decimal.Decimal("0.02"),
         protocol_token_address="0x040375d0720245bc0d123aa35dc1c93d14a78f64456eff75f63757d99a0e6a83",
     ),
-    # TODO: These (`wstETH` and `LORDS`) are actually Nostra Mainnet tokens.
+    # TODO: These (`wstETH`,  `LORDS`, and `STRK`) are actually Nostra Mainnet tokens.
     "wstETH": NostraAlphaSpecificTokenSettings(
         collateral_factor=decimal.Decimal("0.8"), 
         debt_factor=decimal.Decimal("0.9"),
-        liquidator_fee_beta=decimal.Decimal("999.999"),
+        liquidator_fee_beta=decimal.Decimal("999999"),
         liquidator_fee_max=decimal.Decimal("0.25"),
         protocol_fee=decimal.Decimal("0.02"),
         protocol_token_address="",
@@ -131,6 +131,14 @@ NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS: dict[str, NostraAlphaSpecificTokenSettings
         liquidator_fee_beta=decimal.Decimal("1"),  # TODO: Not observed yet.
         liquidator_fee_max=decimal.Decimal("0"),  # TODO: Not observed yet.
         protocol_fee=decimal.Decimal("0"),  # TODO: Not observed yet.
+        protocol_token_address="",
+    ),
+    "STRK": NostraAlphaSpecificTokenSettings(
+        collateral_factor=decimal.Decimal("0.6"),
+        debt_factor=decimal.Decimal("0.8"),
+        liquidator_fee_beta=decimal.Decimal("999999"),
+        liquidator_fee_max=decimal.Decimal("0.35"),
+        protocol_fee=decimal.Decimal("0.02"),
         protocol_token_address="",
     ),
 }
@@ -158,10 +166,28 @@ TARGET_HEALTH_FACTOR = decimal.Decimal('1.25')
 EVENTS_METHODS_MAPPING: dict[tuple[str, str], str] = {
     ("non_interest_bearing_collateral", "Mint"): "process_non_interest_bearing_collateral_mint_event",
     ("non_interest_bearing_collateral", "Burn"): "process_non_interest_bearing_collateral_burn_event",
+    (
+        "non_interest_bearing_collateral", 
+        "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Mint",
+    ): "process_non_interest_bearing_collateral_mint_event",
+    (
+        "non_interest_bearing_collateral", 
+        "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Burn",
+    ): "process_non_interest_bearing_collateral_burn_event",
     ("interest_bearing_collateral", "Mint"): "process_interest_bearing_collateral_mint_event",
     ("interest_bearing_collateral", "Burn"): "process_interest_bearing_collateral_burn_event",
+    (
+        "interest_bearing_collateral", 
+        "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Mint",
+    ): "process_interest_bearing_collateral_mint_event",
+    (
+        "interest_bearing_collateral", 
+        "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Burn",
+    ): "process_interest_bearing_collateral_burn_event",
     ("debt", "Mint"): "process_debt_mint_event",
     ("debt", "Burn"): "process_debt_burn_event",
+    ("debt", "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Mint"): "process_debt_mint_event",
+    ("debt", "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Burn"): "process_debt_burn_event",
 }
 
 
@@ -169,12 +195,17 @@ EVENTS_METHODS_MAPPING: dict[tuple[str, str], str] = {
 # TODO: Load and process transfers as well.
 def get_events(start_block_number: int = 0) -> pandas.DataFrame:
     user_events = src.helpers.get_events(
-        adresses = tuple(ADDRESSES_TO_TOKENS),
-        event_names = ('Burn', 'Mint'),
+        addresses = tuple(ADDRESSES_TO_TOKENS),
+        event_names = (
+            'Burn', 
+            'Mint',
+            'nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Burn',
+            'nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Mint',
+        ),
         start_block_number = start_block_number,
     )
     interest_rate_events = src.helpers.get_events(
-        adresses = (INTEREST_RATE_MODEL_ADDRESS, ''),
+        addresses = (INTEREST_RATE_MODEL_ADDRESS, ''),
         event_names = ('InterestStateUpdated', ''),
         start_block_number = start_block_number,
     )

@@ -17,6 +17,7 @@ ADDRESSES_TO_TOKENS: dict[str, str] = {
     '0x036b68238f3a90639d062669fdec08c4d0bdd09826b1b6d24ef49de6d8141eaa': 'wBTC',
     '0x05eb6de9c7461b3270d029f00046c8a10d27d4f4a4c931a4ea9769c72ef4edbb': 'wstETH',
     '0x02530a305dd3d92aad5cf97e373a3d07577f6c859337fb0444b9e851ee4a2dd4': 'LORDS',
+    '0x040f5a6b7a6d3c472c12ca31ae6250b462c6d35bbdae17bd52f6c6ca065e30cf': 'STRK',
     '0x057146f6409deb4c9fa12866915dd952aa07c1eb2752e451d7f3b042086bdeb8': 'ETH',
     '0x05dcd26c25d9d8fd9fc860038dcb6e4d835e524eb8a85213a8cda5b7fff845f6': 'USDC',
     '0x0453c4c996f1047d9370f824d68145bd5e7ce12d00437140ad02181e1d11dc83': 'USDT', 
@@ -24,6 +25,7 @@ ADDRESSES_TO_TOKENS: dict[str, str] = {
     '0x05b7d301fa769274f20e89222169c0fad4d846c366440afc160aafadd6f88f0c': 'wBTC',
     '0x009377fdde350e01e0397820ea83ed3b4f05df30bfb8cf8055d62cafa1b2106a': 'wstETH',
     '0x0739760bce37f89b6c1e6b1198bb8dc7166b8cf21509032894f912c9d5de9cbd': 'LORDS',
+    '0x07c2e1e733f28daa23e78be3a4f6c724c0ab06af65f6a95b5e0545215f1abc1b': 'STRK',
     '0x00ba3037d968790ac486f70acaa9a1cab10cf5843bb85c986624b4d0e5a82e74': 'ETH',
     '0x063d69ae657bd2f40337c39bf35a870ac27ddf91e6623c2f52529db4c1619a51': 'USDC',
     '0x024e9b0d6bc79e111e6872bb1ada2a874c25712cf08dfc5bcf0de008a7cca55f': 'USDT',
@@ -31,6 +33,7 @@ ADDRESSES_TO_TOKENS: dict[str, str] = {
     '0x0491480f21299223b9ce770f23a2c383437f9fbf57abc2ac952e9af8cdb12c97': 'wBTC',
     '0x0348cc417fc877a7868a66510e8e0d0f3f351f5e6b0886a86b652fcb30a3d1fb': 'wstETH',
     '0x035778d24792bbebcf7651146896df5f787641af9e2a3db06480a637fbc9fff8': 'LORDS',
+    '0x001258eae3eae5002125bebf062d611a772e8aea3a1879b64a19f363ebd00947': 'STRK',
 }
 # Source: https://docs.nostra.finance/lend/deployed-contracts/lend-mainnet#asset-contracts.
 ADDRESSES_TO_EVENTS: dict[str, str] = {
@@ -41,6 +44,7 @@ ADDRESSES_TO_EVENTS: dict[str, str] = {
     '0x036b68238f3a90639d062669fdec08c4d0bdd09826b1b6d24ef49de6d8141eaa': 'non_interest_bearing_collateral',
     '0x05eb6de9c7461b3270d029f00046c8a10d27d4f4a4c931a4ea9769c72ef4edbb': 'non_interest_bearing_collateral',
     '0x02530a305dd3d92aad5cf97e373a3d07577f6c859337fb0444b9e851ee4a2dd4': 'non_interest_bearing_collateral',
+    '0x040f5a6b7a6d3c472c12ca31ae6250b462c6d35bbdae17bd52f6c6ca065e30cf': 'non_interest_bearing_collateral',
     '0x057146f6409deb4c9fa12866915dd952aa07c1eb2752e451d7f3b042086bdeb8': 'interest_bearing_collateral',
     '0x05dcd26c25d9d8fd9fc860038dcb6e4d835e524eb8a85213a8cda5b7fff845f6': 'interest_bearing_collateral',
     '0x0453c4c996f1047d9370f824d68145bd5e7ce12d00437140ad02181e1d11dc83': 'interest_bearing_collateral', 
@@ -48,6 +52,7 @@ ADDRESSES_TO_EVENTS: dict[str, str] = {
     '0x05b7d301fa769274f20e89222169c0fad4d846c366440afc160aafadd6f88f0c': 'interest_bearing_collateral',
     '0x009377fdde350e01e0397820ea83ed3b4f05df30bfb8cf8055d62cafa1b2106a': 'interest_bearing_collateral',
     '0x0739760bce37f89b6c1e6b1198bb8dc7166b8cf21509032894f912c9d5de9cbd': 'interest_bearing_collateral',
+    '0x07c2e1e733f28daa23e78be3a4f6c724c0ab06af65f6a95b5e0545215f1abc1b': 'interest_bearing_collateral',
     '0x00ba3037d968790ac486f70acaa9a1cab10cf5843bb85c986624b4d0e5a82e74': 'debt',
     '0x063d69ae657bd2f40337c39bf35a870ac27ddf91e6623c2f52529db4c1619a51': 'debt',
     '0x024e9b0d6bc79e111e6872bb1ada2a874c25712cf08dfc5bcf0de008a7cca55f': 'debt',
@@ -55,6 +60,7 @@ ADDRESSES_TO_EVENTS: dict[str, str] = {
     '0x0491480f21299223b9ce770f23a2c383437f9fbf57abc2ac952e9af8cdb12c97': 'debt',
     '0x0348cc417fc877a7868a66510e8e0d0f3f351f5e6b0886a86b652fcb30a3d1fb': 'debt',
     '0x035778d24792bbebcf7651146896df5f787641af9e2a3db06480a637fbc9fff8': 'debt',
+    '0x001258eae3eae5002125bebf062d611a772e8aea3a1879b64a19f363ebd00947': 'debt',
 }
 
 # Source: https://docs.nostra.finance/lend/deployed-contracts/lend-mainnet#core-contracts.
@@ -93,6 +99,9 @@ NOSTRA_MAINNET_SPECIFIC_TOKEN_SETTINGS: dict[str, NostraMainnetSpecificTokenSett
     "LORDS": NostraMainnetSpecificTokenSettings(
         protocol_token_address="0x000d294e16a8d24c32eed65ea63757adde543d72bad4af3927f4c7c8969ff43d",
     ),
+    "STRK": NostraMainnetSpecificTokenSettings(
+        protocol_token_address="0x07c535ddb7bf3d3cb7c033bd1a4c3aac02927a4832da795606c0f3dbbc6efd17",
+    ),
 }
 TOKEN_SETTINGS: dict[str, TokenSettings] = {
     token: TokenSettings(
@@ -114,12 +123,17 @@ TOKEN_SETTINGS: dict[str, TokenSettings] = {
 
 def get_events(start_block_number: int = 0) -> pandas.DataFrame:
     user_events = src.helpers.get_events(
-        adresses = tuple(ADDRESSES_TO_TOKENS),
-        event_names = ('Burn', 'Mint'),
+        addresses = tuple(ADDRESSES_TO_TOKENS),
+        event_names = (
+            'Burn', 
+            'Mint',
+            'nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Burn',
+            'nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Mint',
+        ),
         start_block_number = start_block_number,
     )
     interest_rate_events = src.helpers.get_events(
-        adresses = (INTEREST_RATE_MODEL_ADDRESS, ''),
+        addresses = (INTEREST_RATE_MODEL_ADDRESS, ''),
         event_names = ('InterestStateUpdated', ''),
         start_block_number = start_block_number,
     )
