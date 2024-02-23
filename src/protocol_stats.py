@@ -60,12 +60,16 @@ def get_supply_stats(
         protocol = src.protocol_parameters.get_protocol(state=state)
         token_supplies = {}
         for token in src.settings.TOKEN_SETTINGS:
-            # TODO: Add LORDS.
-            if token == 'LORDS':
+            # TODO: Add wstETH.
+            if token == 'wstETH' and protocol not in {'zkLend', 'Nostra Mainnet'}:
                 token_supplies[token] = decimal.Decimal("0")
                 continue
-            # TODO: Add wstETH.
-            if token == 'wstETH' and protocol != 'zkLend':
+            # TODO: Add LORDS.
+            if token == 'LORDS' and protocol != 'Nostra Mainnet':
+                token_supplies[token] = decimal.Decimal("0")
+                continue
+            # TODO: Add STRK.
+            if token == 'STRK' and protocol not in {'zkLend', 'Nostra Mainnet'}:
                 token_supplies[token] = decimal.Decimal("0")
                 continue
 
