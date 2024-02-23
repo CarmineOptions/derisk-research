@@ -44,6 +44,11 @@ HASHSTACK_V0_SPECIFIC_TOKEN_SETTINGS: dict[str, HashstackV0SpecificTokenSettings
         collateral_factor=decimal.Decimal("1"),
         debt_factor=decimal.Decimal("1"),
     ),
+    # TODO: Add STRK.
+    "STRK": HashstackV0SpecificTokenSettings(
+        collateral_factor=decimal.Decimal("1"),
+        debt_factor=decimal.Decimal("1"),
+    ),
 }
 TOKEN_SETTINGS: dict[str, TokenSettings] = {
     token: TokenSettings(
@@ -73,7 +78,7 @@ EVENTS_METHODS_MAPPING: dict[str, str] = {
 
 def get_events(start_block_number: int = 0) -> pandas.DataFrame:
     events = src.helpers.get_events(
-        adresses = (ADDRESS, ''),
+        addresses = (ADDRESS, ''),
         event_names = tuple(EVENTS_METHODS_MAPPING),
         start_block_number = start_block_number,
     )

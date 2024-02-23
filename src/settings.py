@@ -48,6 +48,11 @@ TOKEN_SETTINGS: dict[str, TokenSettings] = {
         decimal_factor=decimal.Decimal("1e18"),
         address="0x0124aeb495b947201f5fac96fd1138e326ad86195b98df6dec9009158a533b49",
     ),
+    "STRK": TokenSettings(
+        symbol="STRK",
+        decimal_factor=decimal.Decimal("1e18"),
+        address="0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d",
+    ),
 }
 
 
@@ -59,4 +64,7 @@ PAIRS: list[str] = [
     "wBTC-USDC",
     "wBTC-USDT",
     "wBTC-DAI",
+    "STRK-USDC",
+    "STRK-USDT",
+    "STRK-DAI",
 ]

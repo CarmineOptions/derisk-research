@@ -165,6 +165,11 @@ HASHSTACK_V1_SPECIFIC_TOKEN_SETTINGS: dict[str, HashstackV1SpecificTokenSettings
         collateral_factor=decimal.Decimal("1"),
         debt_factor=decimal.Decimal("1"),
     ),
+    # TODO: Add STRK.
+    "STRK": HashstackV1SpecificTokenSettings(
+        collateral_factor=decimal.Decimal("1"),
+        debt_factor=decimal.Decimal("1"),
+    ),
     "JediSwap: DAI/ETH Pool": HashstackV1SpecificTokenSettings(
         collateral_factor=decimal.Decimal("1"),
         debt_factor=decimal.Decimal("1"),
@@ -292,7 +297,7 @@ class HashstackV1InterestRateModels(src.helpers.TokenValues):
 
 def get_events(start_block_number: int = 0) -> pandas.DataFrame:
     events = src.helpers.get_events(
-        adresses = tuple(ADDRESSES_TO_TOKENS),
+        addresses = tuple(ADDRESSES_TO_TOKENS),
         event_names = tuple(EVENTS_METHODS_MAPPING),
         start_block_number = start_block_number,
     )

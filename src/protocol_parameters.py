@@ -42,6 +42,8 @@ def get_protocol(state: src.state.State) -> str:
 def get_supply_function_call_parameters(protocol: str, token: str) -> tuple[str, str]:
     if protocol == 'zkLend':
         return src.zklend.TOKEN_SETTINGS[token].protocol_token_address, 'felt_total_supply'
-    if protocol in {'Nostra Alpha', 'Nostra Mainnet'}:
+    if protocol == 'Nostra Alpha':
         return src.nostra_alpha.TOKEN_SETTINGS[token].protocol_token_address, 'totalSupply'
+    if protocol == 'Nostra Mainnet':
+        return src.nostra_mainnet.TOKEN_SETTINGS[token].protocol_token_address, 'totalSupply'
     raise ValueError

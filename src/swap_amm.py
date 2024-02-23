@@ -260,6 +260,7 @@ class Prices:
             ("tether", "USDT"),
             ("wrapped-steth", "wstETH"),
             ("lords", "LORDS"),
+            ("starknet", "STRK"),
        ]
         self.vs_currency = "usd"
         self.prices: src.helpers.TokenValues = src.helpers.TokenValues()
@@ -367,8 +368,8 @@ class Pool(Pair):
 
 class SwapAmm(Pair):
     async def init(self):
+        # TODO: Add AVNU
         self.pools = {}
-        # TODO: add wstETH, LORDS pools
         self.add_pool(
             "ETH",
             "USDC",
@@ -460,6 +461,32 @@ class SwapAmm(Pair):
                 "0x041a708cf109737a50baa6cbeb9adf0bf8d97112dc6cc80c7a458cbad35328b0",  # 10kswap
             ],
             5
+        )
+        self.add_pool(
+            "STRK",
+            "USDC",
+            [
+                "0x05726725e9507c3586cc0516449e2c74d9b201ab2747752bb0251aaa263c9a26",  # jediswap
+                "0x00900978e650c11605629fc3eda15447d57e884431894973e4928d8cb4c70c24",  # sithswap
+                "0x066733193503019e4e9472f598ff32f15951a0ddb8fb5001f0beaa8bd1fb6840",  # 10kswap
+            ],
+            None,
+        )
+        self.add_pool(
+            "STRK",
+            "USDT",
+            [
+                "0x0784a8ec64af2b45694b94875fe6adbb57fadf9e196aa1aa1d144d163d0d8c51",  # 10kswap
+            ],
+            None,
+        )
+        self.add_pool(
+            "DAI",
+            "STRK",
+            [
+                "0x048ddb56ceb74777d081a9ce684aaa78e98c286e14fc1badb3a9938e710d6866",  # jediswap
+            ],
+            None,
         )
         await self.get_balance()
 

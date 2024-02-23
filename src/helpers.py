@@ -16,7 +16,7 @@ GS_BUCKET_NAME = "derisk-persistent-state"
 
 
 def get_events(
-    adresses: tuple[str, ...],
+    addresses: tuple[str, ...],
     event_names: tuple[str, ...],
     start_block_number: int = 0,
 ) -> pandas.DataFrame:
@@ -28,7 +28,7 @@ def get_events(
             FROM
                 starkscan_events
             WHERE
-                from_address IN {adresses}
+                from_address IN {addresses}
             AND
                 key_name IN {event_names}
             AND
@@ -70,6 +70,7 @@ MAX_ROUNDING_ERRORS: TokenValues = TokenValues(
         "USDT": decimal.Decimal("1e4"),
         "wstETH": decimal.Decimal("0.5e13"),
         "LORDS": decimal.Decimal("0.5e13"),
+        "STRK": decimal.Decimal("0.5e13"),
     },
 )
 
@@ -113,10 +114,11 @@ def get_collateral_token_range(
     collateral_token: str,
     collateral_token_price: decimal.Decimal,
 ) -> list[decimal.Decimal]:
-    assert collateral_token in {"ETH", "wBTC"}
+    assert collateral_token in {"ETH", "wBTC", "STRK"}
     TOKEN_STEP = {
         "ETH": decimal.Decimal("50"),
-        "wBTC": decimal.Decimal("250"),
+        "wBTC": decimal.Decimal("500"),
+        "STRK": decimal.Decimal("0.05"),
     }
     return get_range(
         start = TOKEN_STEP[collateral_token],
