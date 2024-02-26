@@ -57,7 +57,7 @@ ZKLEND_SPECIFIC_TOKEN_SETTINGS: dict[str, ZkLendSpecificTokenSettings] = {
         protocol_token_address='0x062fa7afe1ca2992f8d8015385a279f49fad36299754fb1e9866f4f052289376',
     ),
     "USDT": ZkLendSpecificTokenSettings(
-        collateral_factor=decimal.Decimal("0.70"),
+        collateral_factor=decimal.Decimal("0.80"),
         debt_factor=decimal.Decimal("1"),
         liquidation_bonus=decimal.Decimal("0.10"),
         protocol_token_address='0x00811d8da5dc8a2206ea7fd0b28627c2d77280a515126e62baa4d78e22714c4a',
@@ -77,9 +77,9 @@ ZKLEND_SPECIFIC_TOKEN_SETTINGS: dict[str, ZkLendSpecificTokenSettings] = {
     ),
     # TODO: Update STRK settings.
     "STRK": ZkLendSpecificTokenSettings(
-        collateral_factor=decimal.Decimal("1"),
+        collateral_factor=decimal.Decimal("0.50"),
         debt_factor=decimal.Decimal("1"),
-        liquidation_bonus=decimal.Decimal("0"),
+        liquidation_bonus=decimal.Decimal("0.15"),
         protocol_token_address='0x06d8fa671ef84f791b7f601fa79fea8f6ceb70b5fa84189e3159d532162efc21',
     ),
 }
