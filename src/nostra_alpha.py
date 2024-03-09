@@ -136,9 +136,9 @@ NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS: dict[str, NostraAlphaSpecificTokenSettings
     "STRK": NostraAlphaSpecificTokenSettings(
         collateral_factor=decimal.Decimal("0.6"),
         debt_factor=decimal.Decimal("0.8"),
-        liquidator_fee_beta=decimal.Decimal("999999"),
-        liquidator_fee_max=decimal.Decimal("0.35"),
-        protocol_fee=decimal.Decimal("0.02"),
+        liquidator_fee_beta=decimal.Decimal("999999"),  # TODO: updated?
+        liquidator_fee_max=decimal.Decimal("0.35"),  # TODO: updated?
+        protocol_fee=decimal.Decimal("0.02"),  # TODO: updated?
         protocol_token_address="",
     ),
 }
