@@ -139,7 +139,7 @@ TOKEN_SETTINGS: dict[str, TokenSettings] = {
 
 def get_events(start_block_number: int = 0) -> pandas.DataFrame:
     user_events = src.helpers.get_events(
-        addresses = tuple(ADDRESSES_TO_TOKENS),
+        addresses = tuple(x for x in ADDRESSES_TO_TOKENS if ADDRESSES_TO_EVENTS[x] != 'interest_bearing_deposit'),
         event_names = (
             'Burn', 
             'Mint',
