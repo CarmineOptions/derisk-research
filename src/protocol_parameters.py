@@ -39,11 +39,35 @@ def get_protocol(state: src.state.State) -> str:
 
 
 # TODO: make this an attribute of the State class?
-def get_supply_function_call_parameters(protocol: str, token: str) -> tuple[str, str]:
+def get_supply_function_call_parameters(protocol: str, token: str) -> tuple[list[str], str]:
     if protocol == 'zkLend':
-        return src.zklend.TOKEN_SETTINGS[token].protocol_token_address, 'felt_total_supply'
+        return [src.zklend.TOKEN_SETTINGS[token].protocol_token_address], 'felt_total_supply'
     if protocol == 'Nostra Alpha':
-        return src.nostra_alpha.TOKEN_SETTINGS[token].protocol_token_address, 'totalSupply'
+        token_addresses = [
+            address
+            for address, nostra_token
+            in src.nostra_alpha.ADDRESSES_TO_TOKENS.items()
+            if (
+                nostra_token == token
+                and src.nostra_alpha.ADDRESSES_TO_EVENTS[address] in {
+                    'interest_bearing_deposit',
+                    'interest_bearing_collateral',
+                }
+            )
+        ]
+        return token_addresses, 'totalSupply'
     if protocol == 'Nostra Mainnet':
-        return src.nostra_mainnet.TOKEN_SETTINGS[token].protocol_token_address, 'totalSupply'
+        token_addresses = [
+            address
+            for address, nostra_token
+            in src.nostra_mainnet.ADDRESSES_TO_TOKENS.items()
+            if (
+                nostra_token == token
+                and src.nostra_mainnet.ADDRESSES_TO_EVENTS[address] in {
+                    'interest_bearing_deposit',
+                    'interest_bearing_collateral',
+                }
+            )
+        ]
+        return token_addresses, 'totalSupply'
     raise ValueError

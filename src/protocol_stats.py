@@ -88,17 +88,19 @@ def get_supply_stats(
                     )
                 )
             else:
-                address, selector = src.protocol_parameters.get_supply_function_call_parameters(
+                addresses, selector = src.protocol_parameters.get_supply_function_call_parameters(
                     protocol=protocol, 
                     token=token,
                 )
-                supply = asyncio.run(
-                    src.blockchain_call.func_call(
-                        addr = int(address, base=16),
-                        selector = selector,
-                        calldata = [],
-                    )
-                )[0]
+                supply = 0
+                for address in addresses:
+                    supply += asyncio.run(
+                        src.blockchain_call.func_call(
+                            addr = int(address, base=16),
+                            selector = selector,
+                            calldata = [],
+                        )
+                    )[0]
             supply = decimal.Decimal(str(supply)) / src.settings.TOKEN_SETTINGS[token].decimal_factor
             token_supplies[token] = round(supply, 4)
         data.append(
@@ -111,6 +113,7 @@ def get_supply_stats(
                 'USDT supply': token_supplies['USDT'],
                 'wstETH supply': token_supplies['wstETH'],
                 'LORDS supply': token_supplies['LORDS'],
+                'STRK supply': token_supplies['STRK'],
             }
         )
     data = pandas.DataFrame(data)
