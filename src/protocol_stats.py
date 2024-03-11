@@ -137,12 +137,16 @@ def get_collateral_stats(
         protocol = src.protocol_parameters.get_protocol(state=state)
         token_collaterals = {}
         for token in src.settings.TOKEN_SETTINGS:
-            # TODO: Add LORDS.
-            if token == 'LORDS':
+            # TODO: Add wstETH.
+            if token == 'wstETH' and protocol not in {'zkLend', 'Nostra Mainnet'}:
                 token_collaterals[token] = decimal.Decimal("0")
                 continue
-            # TODO: Add wstETH.
-            if token == 'wstETH' and protocol != 'zkLend':
+            # TODO: Add LORDS.
+            if token == 'LORDS' and protocol != 'Nostra Mainnet':
+                token_collaterals[token] = decimal.Decimal("0")
+                continue
+            # TODO: Add STRK.
+            if token == 'STRK' and protocol not in {'zkLend', 'Nostra Mainnet'}:
                 token_collaterals[token] = decimal.Decimal("0")
                 continue
             collateral = (
@@ -164,6 +168,7 @@ def get_collateral_stats(
                 'USDT collateral': token_collaterals['USDT'],
                 'wstETH collateral': token_collaterals['wstETH'],
                 'LORDS collateral': token_collaterals['LORDS'],
+                'STRK collateral': token_collaterals['STRK'],
             }
         )
     data = pandas.DataFrame(data)
@@ -182,12 +187,16 @@ def get_debt_stats(
         protocol = src.protocol_parameters.get_protocol(state=state)
         token_debts = {}
         for token in src.settings.TOKEN_SETTINGS:
-            # TODO: Add LORDS.
-            if token == 'LORDS':
+            # TODO: Add wstETH.
+            if token == 'wstETH' and protocol not in {'zkLend', 'Nostra Mainnet'}:
                 token_debts[token] = decimal.Decimal("0")
                 continue
-            # TODO: Add wstETH.
-            if token == 'wstETH' and protocol != 'zkLend':
+            # TODO: Add LORDS.
+            if token == 'LORDS' and protocol != 'Nostra Mainnet':
+                token_debts[token] = decimal.Decimal("0")
+                continue
+            # TODO: Add STRK.
+            if token == 'STRK' and protocol not in {'zkLend', 'Nostra Mainnet'}:
                 token_debts[token] = decimal.Decimal("0")
                 continue
             debt = (
@@ -209,6 +218,7 @@ def get_debt_stats(
                 'USDT debt': token_debts['USDT'],
                 'wstETH debt': token_debts['wstETH'],
                 'LORDS debt': token_debts['LORDS'],
+                'STRK debt': token_debts['STRK'],
             }
         )
     data = pandas.DataFrame(data)
@@ -242,6 +252,10 @@ def get_utilization_stats(
             # TODO: hotfix to avoid `InvalidOperation: [<class 'decimal.DivisionUndefined'>]`
             'LORDS utilization': debt_stats['LORDS debt'].astype(float) / (
                 supply_stats['LORDS supply'].astype(float) + debt_stats['LORDS debt'].astype(float)
+            ),
+            # TODO: hotfix to avoid `InvalidOperation: [<class 'decimal.DivisionUndefined'>]`
+            'STRK utilization': debt_stats['STRK debt'].astype(float) / (
+                supply_stats['STRK supply'].astype(float) + debt_stats['STRK debt'].astype(float)
             ),
         },
     )

@@ -165,33 +165,37 @@ def main():
     collateral_stats = pandas.read_parquet(f"gs://{src.helpers.GS_BUCKET_NAME}/data/collateral_stats.parquet")
     debt_stats = pandas.read_parquet(f"gs://{src.helpers.GS_BUCKET_NAME}/data/debt_stats.parquet")
 
-    columns = streamlit.columns(6)
-    for column, token in zip(columns, src.settings.TOKEN_SETTINGS.keys()):
+    columns = streamlit.columns(4)
+    tokens = list(src.settings.TOKEN_SETTINGS.keys())
+    for column, token_1, token_2 in zip(columns, tokens[:4], tokens[4:]):
         with column:
-            figure = plotly.express.pie(
-                collateral_stats,
-                values=f'{token} collateral',
-                names='Protocol',
-                title=f'{token} collateral',
-                color_discrete_sequence=plotly.express.colors.sequential.Oranges_r,
-            )
-            streamlit.plotly_chart(figure, True)
-            figure = plotly.express.pie(
-                debt_stats,
-                values=f'{token} debt',
-                names='Protocol',
-                title=f'{token} debt',
-                color_discrete_sequence=plotly.express.colors.sequential.Greens_r,
-            )
-            streamlit.plotly_chart(figure, True)
-            figure = plotly.express.pie(
-                supply_stats,
-                values=f'{token} supply',
-                names='Protocol',
-                title=f'{token} supply',
-                color_discrete_sequence=plotly.express.colors.sequential.Blues_r,
-            )
-            streamlit.plotly_chart(figure, True)
+            for token in [token_1, token_2]:
+                figure = plotly.express.pie(
+                    collateral_stats,
+                    values=f'{token} collateral',
+                    names='Protocol',
+                    title=f'{token} collateral',
+                    color_discrete_sequence=plotly.express.colors.sequential.Oranges_r,
+                )
+                streamlit.plotly_chart(figure, True)
+            for token in [token_1, token_2]:
+                figure = plotly.express.pie(
+                    debt_stats,
+                    values=f'{token} debt',
+                    names='Protocol',
+                    title=f'{token} debt',
+                    color_discrete_sequence=plotly.express.colors.sequential.Greens_r,
+                )
+                streamlit.plotly_chart(figure, True)
+            for token in [token_1, token_2]:
+                figure = plotly.express.pie(
+                    supply_stats,
+                    values=f'{token} supply',
+                    names='Protocol',
+                    title=f'{token} supply',
+                    color_discrete_sequence=plotly.express.colors.sequential.Blues_r,
+                )
+                streamlit.plotly_chart(figure, True)
 
     streamlit.header("Loan size distribution")
     src.histogram.visualization(data=histogram_data)
