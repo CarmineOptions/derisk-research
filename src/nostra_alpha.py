@@ -344,6 +344,9 @@ class NostraAlphaState(src.state.State):
         # `lendIndex`, ``, `borrowIndex`, ``.
         # Example: https://starkscan.co/event/0x05e95588e281d7cab6f89aa266057c4c9bcadf3ff0bb85d4feea40a4faa94b09_4.
         token_address = src.helpers.add_leading_zeros(event["data"][0])
+        # TODO: Integrate the UNO token once it's allowed to be borrowed or used as collateral.
+        if token_address == "0x04b036839a8769c04144cc47415c64b083a2b26e4a7daa53c07f6042a0d35792":
+            return
         token = self.ADDRESSES_TO_TOKENS[token_address]
         collateral_interest_rate_index = decimal.Decimal(str(int(event["data"][5], base=16))) / decimal.Decimal("1e18")
         debt_interest_rate_index = decimal.Decimal(str(int(event["data"][7], base=16))) / decimal.Decimal("1e18")
