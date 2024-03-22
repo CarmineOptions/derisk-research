@@ -228,6 +228,9 @@ class ZkLendState(src.state.State):
     def process_accumulators_sync_event(self, event: pandas.Series) -> None:
         # The order of the values in the `data` column is: `token`, `lending_accumulator`, `debt_accumulator`.
         # Example: https://starkscan.co/event/0x029628b89875a98c1c64ae206e7eb65669cb478a24449f3485f5e98aba6204dc_0.
+        # TODO: Integrate the ZEND token once it's allowed to be borrowed or used as collateral.
+        if event["data"][0] == "0x585c32b625999e6e5e78645ff8df7a9001cf5cf3eb6b80ccdd16cb64bd3a34":
+            return
         token = src.helpers.get_symbol(event["data"][0])
         collateral_interest_rate_index = decimal.Decimal(str(int(event["data"][1], base=16))) / decimal.Decimal("1e27")
         debt_interest_rate_index = decimal.Decimal(str(int(event["data"][2], base=16))) / decimal.Decimal("1e27")
@@ -238,6 +241,9 @@ class ZkLendState(src.state.State):
         # The order of the values in the `data` column is: `user`, `token`, `face_amount`.
         # Example: https://starkscan.co/event/0x036185142bb51e2c1f5bfdb1e6cef81f8ea87fd4d777990014249bf5435fd31b_3.
         user = event["data"][0]
+        # TODO: Integrate the ZEND token once it's allowed to be borrowed or used as collateral.
+        if event["data"][1] == "0x585c32b625999e6e5e78645ff8df7a9001cf5cf3eb6b80ccdd16cb64bd3a34":
+            return
         token = src.helpers.get_symbol(event["data"][1])
         face_amount = decimal.Decimal(str(int(event["data"][2], base=16)))
         raw_amount = face_amount / self.collateral_interest_rate_models.values[token]
@@ -290,6 +296,9 @@ class ZkLendState(src.state.State):
         # The order of the values in the `data` column is: `user`, `token`, `face_amount`.
         # Example: https://starkscan.co/event/0x03472cf7511687a55bc7247f8765c4bbd2c18b70e09b2a10a77c61f567bfd2cb_4.
         user = event["data"][0]
+        # TODO: Integrate the ZEND token once it's allowed to be borrowed or used as collateral.
+        if event["data"][1] == "0x585c32b625999e6e5e78645ff8df7a9001cf5cf3eb6b80ccdd16cb64bd3a34":
+            return
         token = src.helpers.get_symbol(event["data"][1])
         face_amount = decimal.Decimal(str(int(event["data"][2], base=16)))
         raw_amount = face_amount / self.collateral_interest_rate_models.values[token]
