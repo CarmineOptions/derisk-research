@@ -7,6 +7,7 @@ import logging
 
 import pandas
 
+import src.blockchain_call
 import src.helpers
 import src.settings
 import src.state
@@ -94,7 +95,9 @@ TOKEN_SETTINGS: dict[str, TokenSettings] = {
         collateral_factor=ZKLEND_SPECIFIC_TOKEN_SETTINGS[token].collateral_factor,
         debt_factor=ZKLEND_SPECIFIC_TOKEN_SETTINGS[token].debt_factor,
         liquidation_bonus=ZKLEND_SPECIFIC_TOKEN_SETTINGS[token].liquidation_bonus,
-        protocol_token_address=ZKLEND_SPECIFIC_TOKEN_SETTINGS[token].protocol_token_address,
+        protocol_token_address=ZKLEND_SPECIFIC_TOKEN_SETTINGS[
+            token
+        ].protocol_token_address,
     )
     for token in src.settings.TOKEN_SETTINGS
 }
@@ -130,7 +133,7 @@ def get_events(start_block_number: int = 0) -> pandas.DataFrame:
 
 
 class CollateralEnabled(collections.defaultdict):
-    """ A class that describes which tokens are eligible to be counted as collateral. """
+    """A class that describes which tokens are eligible to be counted as collateral."""
 
     def __init__(self) -> None:
         super().__init__(lambda: False)
@@ -156,21 +159,21 @@ class ZkLendLoanEntity(src.state.LoanEntity):
     def compute_health_factor(
         self,
         standardized: bool,
-        collateral_interest_rate_models: Optional[src.state.InterestRateModels] = None,
-        debt_interest_rate_models: Optional[src.state.InterestRateModels] = None,
+        collateral_interest_rate_model: Optional[src.state.InterestRateModels] = None,
+        debt_interest_rate_model: Optional[src.state.InterestRateModels] = None,
         prices: Optional[src.helpers.TokenValues] = None,
         risk_adjusted_collateral_usd: Optional[decimal.Decimal] = None,
         debt_usd: Optional[decimal.Decimal] = None,
     ) -> decimal.Decimal:
         if risk_adjusted_collateral_usd is None:
             risk_adjusted_collateral_usd = self.compute_collateral_usd(
-                collateral_interest_rate_models=collateral_interest_rate_models,
+                collateral_interest_rate_model=collateral_interest_rate_model,
                 prices=prices,
                 risk_adjusted=True,
             )
         if debt_usd is None:
             debt_usd = self.compute_debt_usd(
-                debt_interest_rate_models=debt_interest_rate_models,
+                debt_interest_rate_model=debt_interest_rate_model,
                 prices=prices,
                 risk_adjusted=False,
             )
@@ -190,20 +193,20 @@ class ZkLendLoanEntity(src.state.LoanEntity):
         debt_token: str,
         collateral_token: str,
         prices: src.helpers.TokenValues,
-        collateral_interest_rate_models: Optional[src.state.InterestRateModels] = None,
-        debt_interest_rate_models: Optional[src.state.InterestRateModels] = None,
+        collateral_interest_rate_model: Optional[src.state.InterestRateModels] = None,
+        debt_interest_rate_model: Optional[src.state.InterestRateModels] = None,
         risk_adjusted_collateral_usd: Optional[decimal.Decimal] = None,
         debt_usd: Optional[decimal.Decimal] = None,
     ) -> decimal.Decimal:
         if risk_adjusted_collateral_usd is None:
             risk_adjusted_collateral_usd = self.compute_collateral_usd(
-                collateral_interest_rate_models=collateral_interest_rate_models,
+                collateral_interest_rate_model=collateral_interest_rate_model,
                 prices=prices,
                 risk_adjusted=True,
             )
         if debt_usd is None:
             debt_usd = self.compute_debt_usd(
-                debt_interest_rate_models=debt_interest_rate_models,
+                debt_interest_rate_model=debt_interest_rate_model,
                 prices=prices,
                 risk_adjusted=False,
             )
@@ -215,6 +218,22 @@ class ZkLendLoanEntity(src.state.LoanEntity):
             * (1 + self.TOKEN_SETTINGS[collateral_token].liquidation_bonus)
         )
         return numerator / denominator
+
+
+@dataclasses.dataclass
+class ZkLendBaseTokenParameters(src.state.BaseTokenParameters):
+    underlying_address: str
+
+
+@dataclasses.dataclass
+class ZkLendCollateralTokenParameters(ZkLendBaseTokenParameters):
+    collateral_factor: decimal.Decimal
+    liquidation_bonus: decimal.Decimal
+
+
+@dataclasses.dataclass
+class ZkLendDebtTokenParameters(ZkLendBaseTokenParameters):
+    debt_factor: decimal.Decimal
 
 
 class ZkLendState(src.state.State):
@@ -238,7 +257,10 @@ class ZkLendState(src.state.State):
         # The order of the values in the `data` column is: `token`, `lending_accumulator`, `debt_accumulator`.
         # Example: https://starkscan.co/event/0x029628b89875a98c1c64ae206e7eb65669cb478a24449f3485f5e98aba6204dc_0.
         # TODO: Integrate the ZEND token once it's allowed to be borrowed or used as collateral.
-        if event["data"][0] == "0x585c32b625999e6e5e78645ff8df7a9001cf5cf3eb6b80ccdd16cb64bd3a34":
+        if (
+            event["data"][0]
+            == "0x585c32b625999e6e5e78645ff8df7a9001cf5cf3eb6b80ccdd16cb64bd3a34"
+        ):
             return
         token = src.helpers.add_leading_zeros(event["data"][0])
         collateral_interest_rate_index = decimal.Decimal(
@@ -247,19 +269,22 @@ class ZkLendState(src.state.State):
         debt_interest_rate_index = decimal.Decimal(
             str(int(event["data"][2], base=16))
         ) / decimal.Decimal("1e27")
-        self.collateral_interest_rate_models[token] = collateral_interest_rate_index
-        self.debt_interest_rate_models[token] = debt_interest_rate_index
+        self.interest_rate_models.collateral[token] = collateral_interest_rate_index
+        self.interest_rate_models.debt[token] = debt_interest_rate_index
 
     def process_deposit_event(self, event: pandas.Series) -> None:
         # The order of the values in the `data` column is: `user`, `token`, `face_amount`.
         # Example: https://starkscan.co/event/0x036185142bb51e2c1f5bfdb1e6cef81f8ea87fd4d777990014249bf5435fd31b_3.
         user = event["data"][0]
         # TODO: Integrate the ZEND token once it's allowed to be borrowed or used as collateral.
-        if event["data"][1] == "0x585c32b625999e6e5e78645ff8df7a9001cf5cf3eb6b80ccdd16cb64bd3a34":
+        if (
+            event["data"][1]
+            == "0x585c32b625999e6e5e78645ff8df7a9001cf5cf3eb6b80ccdd16cb64bd3a34"
+        ):
             return
         token = src.helpers.add_leading_zeros(event["data"][1])
         face_amount = decimal.Decimal(str(int(event["data"][2], base=16)))
-        raw_amount = face_amount / self.collateral_interest_rate_models[token]
+        raw_amount = face_amount / self.interest_rate_models.collateral[token]
         self.loan_entities[user].deposit.increase_value(token=token, value=raw_amount)
         if self.loan_entities[user].collateral_enabled[token]:
             self.loan_entities[user].collateral.increase_value(
@@ -321,7 +346,7 @@ class ZkLendState(src.state.State):
             return
         token = src.helpers.add_leading_zeros(event["data"][1])
         face_amount = decimal.Decimal(str(int(event["data"][2], base=16)))
-        raw_amount = face_amount / self.collateral_interest_rate_models[token]
+        raw_amount = face_amount / self.interest_rate_models.collateral[token]
         self.loan_entities[user].deposit.increase_value(token=token, value=-raw_amount)
         if self.loan_entities[user].collateral_enabled[token]:
             self.loan_entities[user].collateral.increase_value(
@@ -380,7 +405,7 @@ class ZkLendState(src.state.State):
         collateral_face_amount = decimal.Decimal(str(int(event["data"][6], base=16)))
         collateral_raw_amount = (
             collateral_face_amount
-            / self.collateral_interest_rate_models[collateral_token]
+            / self.interest_rate_models.collateral[collateral_token]
         )
         self.loan_entities[user].debt.increase_value(
             token=debt_token, value=-debt_raw_amount
@@ -402,6 +427,73 @@ class ZkLendState(src.state.State):
                     collateral_raw_amount,
                     collateral_token,
                 )
+            )
+
+    async def collect_token_parameters(self) -> None:
+        # Get the sets of unique collateral and debt tokens.
+        collateral_tokens = {
+            y for x in self.loan_entities.values() for y in x.collateral.keys()
+        }
+        debt_tokens = {
+            y for x in self.loan_entities.values() for y in x.debt.keys()
+        }
+
+        # Get parameters for each collateral and debt token. Under zkLend, the collateral token in the events data is
+        # the underlying token directly.
+        for underlying_collateral_token_address in collateral_tokens:
+            underlying_collateral_token_symbol = await src.helpers._get_symbol(
+                token_address=underlying_collateral_token_address
+            )
+            # The order of the arguments is: `enabled`, `decimals`, `z_token_address`, `interest_rate_model`,
+            # `collateral_factor`, `borrow_factor`, `reserve_factor`, `last_update_timestamp`, `lending_accumulator`,
+            # `debt_accumulator`, `current_lending_rate`, `current_borrowing_rate`, `raw_total_debt`, `flash_loan_fee`,
+            # `liquidation_bonus`, `debt_limit`.
+            reserve_data = await src.blockchain_call.func_call(
+                addr=ZKLEND_MARKET,
+                selector="get_reserve_data",
+                calldata=[underlying_collateral_token_address],
+            )
+            collateral_token_address = src.helpers.add_leading_zeros(
+                hex(reserve_data[2])
+            )
+            collateral_token_symbol = await src.helpers._get_symbol(
+                token_address=collateral_token_address
+            )
+            self.collateral[underlying_collateral_token_address] = (
+                ZkLendCollateralTokenParameters(
+                    address=collateral_token_address,
+                    decimals=int(reserve_data[1]),
+                    symbol=collateral_token_symbol,
+                    underlying_symbol=underlying_collateral_token_symbol,
+                    underlying_address=underlying_collateral_token_address,
+                    collateral_factor=decimal.Decimal(reserve_data[4]),
+                    liquidation_bonus=decimal.Decimal(reserve_data[14]),
+                )
+            )
+        for underlying_debt_token_address in debt_tokens:
+            underlying_debt_token_symbol = await src.helpers._get_symbol(
+                token_address=underlying_debt_token_address
+            )
+            # The order of the arguments is: `enabled`, `decimals`, `z_token_address`, `interest_rate_model`,
+            # `collateral_factor`, `borrow_factor`, `reserve_factor`, `last_update_timestamp`, `lending_accumulator`,
+            # `debt_accumulator`, `current_lending_rate`, `current_borrowing_rate`, `raw_total_debt`, `flash_loan_fee`,
+            # `liquidation_bonus`, `debt_limit`.
+            reserve_data = await src.blockchain_call.func_call(
+                addr=ZKLEND_MARKET,
+                selector="get_reserve_data",
+                calldata=[underlying_debt_token_address],
+            )
+            debt_token_address = src.helpers.add_leading_zeros(hex(reserve_data[2]))
+            debt_token_symbol = await src.helpers._get_symbol(
+                token_address=debt_token_address
+            )
+            self.debt[underlying_debt_token_address] = ZkLendDebtTokenParameters(
+                address=debt_token_address,
+                decimals=int(reserve_data[1]),
+                symbol=debt_token_symbol,
+                underlying_symbol=underlying_debt_token_symbol,
+                underlying_address=underlying_debt_token_address,
+                debt_factor=decimal.Decimal(reserve_data[5]),
             )
 
     def compute_liquidable_debt_at_price(
@@ -427,12 +519,12 @@ class ZkLendState(src.state.State):
             # Filter out entities with health factor below 1.
             risk_adjusted_collateral_usd = loan_entity.compute_collateral_usd(
                 risk_adjusted=True,
-                collateral_interest_rate_models=self.collateral_interest_rate_models,
+                collateral_interest_rate_model=self.interest_rate_models.collateral,
                 prices=changed_prices,
             )
             debt_usd = loan_entity.compute_debt_usd(
                 risk_adjusted=False,
-                debt_interest_rate_models=self.debt_interest_rate_models,
+                debt_interest_rate_model=self.interest_rate_models.debt,
                 prices=changed_prices,
             )
             health_factor = loan_entity.compute_health_factor(
@@ -441,7 +533,9 @@ class ZkLendState(src.state.State):
                 debt_usd=debt_usd,
             )
             # TODO: `health_factor` < 0 should not be possible if the data is right. Should we keep the filter?
-            if health_factor >= decimal.Decimal("1") or health_factor <= decimal.Decimal("0"):
+            if health_factor >= decimal.Decimal(
+                "1"
+            ) or health_factor <= decimal.Decimal("0"):
                 continue
 
             # Find out how much of the `debt_token` will be liquidated.

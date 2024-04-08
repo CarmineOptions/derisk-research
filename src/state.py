@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Optional
 import abc
 import collections
 import dataclasses
@@ -44,14 +44,46 @@ TOKEN_SETTINGS: dict[str, TokenSettings] = {
 }
 
 
-class InterestRateModels(collections.defaultdict):
+class InterestRateModel(collections.defaultdict):
+    """
+    A class that describes the state of the interest rate index which helps transform face amounts into raw amounts. 
+    Raw amount is the amount that would have been accumulated into the face amount if it were deposited at genesis.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(lambda: decimal.Decimal("1"))
+
+
+class InterestRateModels:
     """
     A class that describes the state of the interest rate indices which help transform face amounts into raw amounts. 
     Raw amount is the amount that would have been accumulated into the face amount if it were deposited at genesis.
     """
 
     def __init__(self) -> None:
-        super().__init__(lambda: decimal.Decimal("1"))
+        # These models reflect the interest rates at which users lend/stake funds.
+        self.collateral: InterestRateModel = InterestRateModel()
+        # These models reflect the interest rates at which users borrow funds.
+        self.debt: InterestRateModel = InterestRateModel()
+
+
+@dataclasses.dataclass
+class BaseTokenParameters:
+    address: str
+    decimals: int
+    symbol: str
+    underlying_symbol: str
+
+
+class TokenParameters:
+    """
+    A class that describes the parameters of collateral and debt token. These parameter are e.g. the token address,
+    symbol, decimals, underlying token symbol, etc.
+    """
+
+    def __init__(self) -> None:
+        self.collateral: dict[str, BaseTokenParameters] = {}
+        self.debt: dict[str, BaseTokenParameters] = {}
 
 
 class LoanEntity(abc.ABC):
@@ -70,14 +102,14 @@ class LoanEntity(abc.ABC):
     def compute_collateral_usd(
         self,
         risk_adjusted: bool,
-        collateral_interest_rate_models: InterestRateModels,
+        collateral_interest_rate_model: InterestRateModel,
         prices: src.helpers.TokenValues,
     ) -> decimal.Decimal:
         return sum(
             token_amount
             / self.TOKEN_SETTINGS[token].decimal_factor
             * (self.TOKEN_SETTINGS[token].collateral_factor if risk_adjusted else decimal.Decimal("1"))
-            * collateral_interest_rate_models[token]
+            * collateral_interest_rate_model[token]
             * prices[token]
             for token, token_amount in self.collateral.items()
         )
@@ -85,14 +117,14 @@ class LoanEntity(abc.ABC):
     def compute_debt_usd(
         self, 
         risk_adjusted: bool,
-        debt_interest_rate_models: InterestRateModels,
+        debt_interest_rate_model: InterestRateModel,
         prices: src.helpers.TokenValues,
     ) -> decimal.Decimal:
         return sum(
             token_amount
             / self.TOKEN_SETTINGS[token].decimal_factor
             / (self.TOKEN_SETTINGS[token].debt_factor if risk_adjusted else decimal.Decimal("1"))
-            * debt_interest_rate_models[token]
+            * debt_interest_rate_model[token]
             * prices[token]
             for token, token_amount in self.debt.items()
         )
@@ -105,16 +137,16 @@ class LoanEntity(abc.ABC):
     def compute_debt_to_be_liquidated(self):
         pass
 
-    def get_collateral_str(self, collateral_interest_rate_models: InterestRateModels) -> str:
+    def get_collateral_str(self, collateral_interest_rate_model: InterestRateModel) -> str:
         return ', '.join(
-            f"{token}: {round(token_amount / self.TOKEN_SETTINGS[token].decimal_factor * collateral_interest_rate_models[token], 4)}"
+            f"{token}: {round(token_amount / self.TOKEN_SETTINGS[token].decimal_factor * collateral_interest_rate_model[token], 4)}"
             for token, token_amount in self.collateral.items()
             if token_amount > decimal.Decimal("0")
         )
 
-    def get_debt_str(self, debt_interest_rate_models: InterestRateModels) -> str:
+    def get_debt_str(self, debt_interest_rate_model: InterestRateModel) -> str:
         return ', '.join(
-            f"{token}: {round(token_amount / self.TOKEN_SETTINGS[token].decimal_factor * debt_interest_rate_models[token], 4)}"
+            f"{token}: {round(token_amount / self.TOKEN_SETTINGS[token].decimal_factor * debt_interest_rate_model[token], 4)}"
             for token, token_amount in self.debt.items()
             if token_amount > decimal.Decimal("0")
         )
@@ -145,10 +177,8 @@ class State(abc.ABC):
         self.loan_entity_class: LoanEntity = loan_entity_class
         self.verbose_user: Optional[str] = verbose_user
         self.loan_entities: collections.defaultdict = collections.defaultdict(self.loan_entity_class)
-        # These models reflect the interest rates at which users lend/stake funds.
-        self.collateral_interest_rate_models: InterestRateModels = InterestRateModels()
-        # These models reflect the interest rates at which users borrow funds.
-        self.debt_interest_rate_models: InterestRateModels = InterestRateModels()
+        self.interest_rate_models: InterestRateModels = InterestRateModels()
+        self.token_parameters: TokenParameters = TokenParameters()
         self.last_block_number: int = 0
 
     def process_event(self, event: pandas.Series) -> None:
@@ -156,6 +186,10 @@ class State(abc.ABC):
         assert event["block_number"] >= self.last_block_number
         self.last_block_number = event["block_number"]
         getattr(self, self.EVENTS_METHODS_MAPPING[event["key_name"]])(event=event)
+
+    @abc.abstractmethod
+    def collect_token_parameters(self):
+        pass
 
     @abc.abstractmethod
     def compute_liquidable_debt_at_price(self):
