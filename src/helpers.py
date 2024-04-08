@@ -1,4 +1,5 @@
 from typing import Iterator, Optional, Union
+import collections
 import decimal
 import logging
 import os
@@ -42,7 +43,15 @@ def get_events(
     return events.set_index("id")
 
 
-class TokenValues:
+class Prices(collections.defaultdict):
+    """ A class that describes the prices of tokens. """
+
+    def __init__(self) -> None:
+        super().__init__(lambda: None)
+
+
+class TokenValues(collections.defaultdict):
+
     def __init__(
         self,
         values: Optional[dict[str, Union[bool, decimal.Decimal]]] = None,
@@ -50,35 +59,33 @@ class TokenValues:
         init_value: decimal.Decimal = decimal.Decimal("0"),
     ) -> None:
         if values:
-            assert set(values.keys()) == set(src.settings.TOKEN_SETTINGS.keys())
-            self.values: dict[str, decimal.Decimal] = values
+            super().__init__(decimal.Decimal)
+            for token, value in values.items():
+                self[token] = value
         else:
-            self.values: dict[str, decimal.Decimal] = {
-                token: init_value
-                for token in src.settings.TOKEN_SETTINGS
-            }
+            init_function = lambda: init_value
+            super().__init__(init_function)
 
 
-# TODO: Find a better solution to fix the discrepancies.
-# TODO: Update the values.
-MAX_ROUNDING_ERRORS: TokenValues = TokenValues(
-    values={
-        "ETH": decimal.Decimal("0.5e13"),
+MAX_ROUNDING_ERRORS = collections.defaultdict(
+    lambda: decimal.Decimal("5e12"),
+    **{
+        "ETH": decimal.Decimal("5e12"),
         "wBTC": decimal.Decimal("1e2"),
         "USDC": decimal.Decimal("1e4"),
         "DAI": decimal.Decimal("1e16"),
         "USDT": decimal.Decimal("1e4"),
-        "wstETH": decimal.Decimal("0.5e13"),
-        "LORDS": decimal.Decimal("0.5e13"),
-        "STRK": decimal.Decimal("0.5e13"),
+        "wstETH": decimal.Decimal("5e12"),
+        "LORDS": decimal.Decimal("5e12"),
+        "STRK": decimal.Decimal("5e12"),
     },
 )
 
 
-class Portfolio(TokenValues):
+class Portfolio(collections.defaultdict):
     """ A class that describes holdings of tokens. """
 
-    MAX_ROUNDING_ERRORS: TokenValues = MAX_ROUNDING_ERRORS
+    MAX_ROUNDING_ERRORS: collections.defaultdict = MAX_ROUNDING_ERRORS
 
     def __init__(self, token_values: Optional[dict[str, bool | decimal.Decimal]] = None) -> None:
         if token_values is None:
@@ -97,20 +104,17 @@ class Portfolio(TokenValues):
                 new_portfolio[token] = amount
         return Portfolio(new_portfolio)
 
+    # TODO: Find a better solution to fix the discrepancies.
     def round_small_value_to_zero(self, token: str):
-        if (
-            -self.MAX_ROUNDING_ERRORS.values[token]
-            < self.values[token]
-            < self.MAX_ROUNDING_ERRORS.values[token]
-        ):
-            self.values[token] = decimal.Decimal("0")
+        if abs(self[token]) < self.MAX_ROUNDING_ERRORS[token]:
+            self[token] = decimal.Decimal("0")
 
     def increase_value(self, token: str, value: decimal.Decimal):
-        self.values[token] += value
+        self[token] += value
         self.round_small_value_to_zero(token=token)
 
     def set_value(self, token: str, value: decimal.Decimal):
-        self.values[token] = value
+        self[token] = value
         self.round_small_value_to_zero(token=token)
 
 
