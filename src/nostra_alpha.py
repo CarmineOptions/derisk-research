@@ -350,8 +350,8 @@ class NostraAlphaState(src.state.State):
         token = self.ADDRESSES_TO_TOKENS[token_address]
         collateral_interest_rate_index = decimal.Decimal(str(int(event["data"][5], base=16))) / decimal.Decimal("1e18")
         debt_interest_rate_index = decimal.Decimal(str(int(event["data"][7], base=16))) / decimal.Decimal("1e18")
-        self.collateral_interest_rate_models.values[token] = collateral_interest_rate_index
-        self.debt_interest_rate_models.values[token] = debt_interest_rate_index
+        self.collateral_interest_rate_models[token] = collateral_interest_rate_index
+        self.debt_interest_rate_models[token] = debt_interest_rate_index
 
     def process_non_interest_bearing_collateral_mint_event(self, event: pandas.Series) -> None:
         # The order of the values in the `data` column is: `user`, `amount`, ``.
@@ -361,15 +361,20 @@ class NostraAlphaState(src.state.State):
             return
         token = self.ADDRESSES_TO_TOKENS[event['from_address']]
         face_amount = decimal.Decimal(str(int(event['data'][1], base=16)))
-        raw_amount = face_amount / self.collateral_interest_rate_models.values[token]
+        raw_amount = face_amount / self.collateral_interest_rate_models[token]
         self.loan_entities[user].non_interest_bearing_collateral.increase_value(token=token, value=raw_amount)
-        self.loan_entities[user].collateral.values = {
-            token: (
-                self.loan_entities[user].non_interest_bearing_collateral.values[token]
-                + self.loan_entities[user].interest_bearing_collateral.values[token]
-            )
-            for token in src.settings.TOKEN_SETTINGS
-        }
+        self.loan_entities[user].collateral = src.helpers.Portfolio(
+            **{
+                token: (
+                    self.loan_entities[user].non_interest_bearing_collateral[token]
+                    + self.loan_entities[user].interest_bearing_collateral[token]
+                )
+                for token in set().union(
+                    self.loan_entities[user].non_interest_bearing_collateral,
+                    self.loan_entities[user].interest_bearing_collateral,
+                )
+            }
+        )
         if user == self.verbose_user:
             logging.info(
                 'In block number = {}, non-interest-bearing collateral of raw amount = {} of token = {} was added.'
@@ -388,15 +393,20 @@ class NostraAlphaState(src.state.State):
             return
         token = self.ADDRESSES_TO_TOKENS[event['from_address']]
         face_amount = decimal.Decimal(str(int(event['data'][1], base=16)))
-        raw_amount = face_amount / self.collateral_interest_rate_models.values[token]
+        raw_amount = face_amount / self.collateral_interest_rate_models[token]
         self.loan_entities[user].non_interest_bearing_collateral.increase_value(token=token, value=-raw_amount)
-        self.loan_entities[user].collateral.values = {
-            token: (
-                self.loan_entities[user].non_interest_bearing_collateral.values[token]
-                + self.loan_entities[user].interest_bearing_collateral.values[token]
-            )
-            for token in src.settings.TOKEN_SETTINGS
-        }
+        self.loan_entities[user].collateral = src.helpers.Portfolio(
+            **{
+                token: (
+                    self.loan_entities[user].non_interest_bearing_collateral[token]
+                    + self.loan_entities[user].interest_bearing_collateral[token]
+                )
+                for token in set().union(
+                    self.loan_entities[user].non_interest_bearing_collateral,
+                    self.loan_entities[user].interest_bearing_collateral,
+                )
+            }
+        )
         if user == self.verbose_user:
             logging.info(
                 'In block number = {}, non-interest-bearing collateral of raw amount = {} of token = {} was withdrawn.'
@@ -415,15 +425,20 @@ class NostraAlphaState(src.state.State):
             return
         token = self.ADDRESSES_TO_TOKENS[event['from_address']]
         face_amount = decimal.Decimal(str(int(event['data'][1], base=16)))
-        raw_amount = face_amount / self.collateral_interest_rate_models.values[token]
+        raw_amount = face_amount / self.collateral_interest_rate_models[token]
         self.loan_entities[user].interest_bearing_collateral.increase_value(token=token, value=raw_amount)
-        self.loan_entities[user].collateral.values = {
-            token: (
-                self.loan_entities[user].non_interest_bearing_collateral.values[token]
-                + self.loan_entities[user].interest_bearing_collateral.values[token]
-            )
-            for token in src.settings.TOKEN_SETTINGS
-        }
+        self.loan_entities[user].collateral = src.helpers.Portfolio(
+            **{
+                token: (
+                    self.loan_entities[user].non_interest_bearing_collateral[token]
+                    + self.loan_entities[user].interest_bearing_collateral[token]
+                )
+                for token in set().union(
+                    self.loan_entities[user].non_interest_bearing_collateral,
+                    self.loan_entities[user].interest_bearing_collateral,
+                )
+            }
+        )
         if user == self.verbose_user:
             logging.info(
                 'In block number = {}, interest-bearing collateral of raw amount = {} of token = {} was added.'.format(
@@ -441,15 +456,20 @@ class NostraAlphaState(src.state.State):
             return
         token = self.ADDRESSES_TO_TOKENS[event['from_address']]
         face_amount = decimal.Decimal(str(int(event['data'][1], base=16)))
-        raw_amount = face_amount / self.collateral_interest_rate_models.values[token]
+        raw_amount = face_amount / self.collateral_interest_rate_models[token]
         self.loan_entities[user].interest_bearing_collateral.increase_value(token=token, value=-raw_amount)
-        self.loan_entities[user].collateral.values = {
-            token: (
-                self.loan_entities[user].non_interest_bearing_collateral.values[token]
-                + self.loan_entities[user].interest_bearing_collateral.values[token]
-            )
-            for token in src.settings.TOKEN_SETTINGS
-        }
+        self.loan_entities[user].collateral = src.helpers.Portfolio(
+            **{
+                token: (
+                    self.loan_entities[user].non_interest_bearing_collateral[token]
+                    + self.loan_entities[user].interest_bearing_collateral[token]
+                )
+                for token in set().union(
+                    self.loan_entities[user].non_interest_bearing_collateral,
+                    self.loan_entities[user].interest_bearing_collateral,
+                )
+            }
+        )
         if user == self.verbose_user:
             logging.info(
                 'In block number = {}, interest-bearing collateral of raw amount = {} of token = {} was withdrawn.'
@@ -468,7 +488,7 @@ class NostraAlphaState(src.state.State):
             return
         token = self.ADDRESSES_TO_TOKENS[event['from_address']]
         face_amount = decimal.Decimal(str(int(event['data'][1], base=16)))
-        raw_amount = face_amount / self.debt_interest_rate_models.values[token]
+        raw_amount = face_amount / self.debt_interest_rate_models[token]
         self.loan_entities[user].debt.increase_value(token=token, value=raw_amount)
         if user == self.verbose_user:
             logging.info(
@@ -487,7 +507,7 @@ class NostraAlphaState(src.state.State):
             return
         token = self.ADDRESSES_TO_TOKENS[event['from_address']]
         face_amount = decimal.Decimal(str(int(event['data'][1], base=16)))
-        raw_amount = face_amount / self.debt_interest_rate_models.values[token]
+        raw_amount = face_amount / self.debt_interest_rate_models[token]
         self.loan_entities[user].debt.increase_value(token=token, value=-raw_amount)
         if user == self.verbose_user:
             logging.info(
@@ -507,13 +527,13 @@ class NostraAlphaState(src.state.State):
         debt_token: str,
     ) -> decimal.Decimal:
         changed_prices = copy.deepcopy(prices)
-        changed_prices.values[collateral_token] = collateral_token_price
+        changed_prices[collateral_token] = collateral_token_price
         max_liquidated_amount = decimal.Decimal("0")
         for loan_entity in self.loan_entities.values():
             # Filter out entities who borrowed the token of interest.
             debt_tokens = {
                 token
-                for token, token_amount in loan_entity.debt.values.items()
+                for token, token_amount in loan_entity.debt.items()
                 if token_amount > decimal.Decimal("0")
             }
             if not debt_token in debt_tokens:
@@ -541,14 +561,14 @@ class NostraAlphaState(src.state.State):
             # Find out how much of the `debt_token` will be liquidated.
             collateral_tokens = {
                 token
-                for token, token_amount in loan_entity.collateral.values.items()
+                for token, token_amount in loan_entity.collateral.items()
                 if token_amount > decimal.Decimal("0")
             }
             max_liquidated_amount += loan_entity.compute_debt_to_be_liquidated(
                 debt_token=debt_token,
                 collateral_tokens=collateral_tokens,
                 health_factor=health_factor,
-                debt_token_debt_amount=loan_entity.debt.values[debt_token],
-                debt_token_price=prices.values[debt_token],
+                debt_token_debt_amount=loan_entity.debt[debt_token],
+                debt_token_price=prices[debt_token],
             )
         return max_liquidated_amount

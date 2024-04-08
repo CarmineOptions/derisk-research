@@ -255,7 +255,7 @@ EVENTS_METHODS_MAPPING: dict[str, str] = {
 
 MAX_ROUNDING_ERRORS: src.helpers.TokenValues = src.helpers.MAX_ROUNDING_ERRORS
 # TODO: The additional tokens are not allowed in `src.helpers.TokenValues`, fix this.
-MAX_ROUNDING_ERRORS.values.update(
+MAX_ROUNDING_ERRORS.update(
     {
         token: decimal.Decimal("0.5e13")
         for token in HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS
@@ -271,7 +271,7 @@ class HashstackV1Portfolio(src.helpers.Portfolio):
 
     def __init__(self) -> None:
         super().__init__()
-        self.values.update(
+        self.update(
             {
                 token: decimal.Decimal("0")
                 for token in HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS
@@ -287,7 +287,7 @@ class HashstackV1InterestRateModels(src.helpers.TokenValues):
 
     def __init__(self) -> None:
         super().__init__(init_value=decimal.Decimal("1"))
-        self.values.update(
+        self.update(
             {
                 token: decimal.Decimal("1")
                 for token in HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS
@@ -437,21 +437,26 @@ class HashstackV1State(src.state.State):
         self.loan_entities[loan_id] = HashstackV1LoanEntity(user=user)
         # TODO: Make it possible to initialize `HashstackV1Portfolio`` with some token amount directly.
         original_collateral = HashstackV1Portfolio()
-        original_collateral.values[original_collateral_token] = original_collateral_face_amount
+        original_collateral[original_collateral_token] = original_collateral_face_amount
         self.loan_entities[loan_id].original_collateral = original_collateral
         borrowed_collateral = HashstackV1Portfolio()
-        borrowed_collateral.values[borrowed_collateral_token] = borrowed_collateral_face_amount
+        borrowed_collateral[borrowed_collateral_token] = borrowed_collateral_face_amount
         self.loan_entities[loan_id].borrowed_collateral = borrowed_collateral
         # TODO: Make it easier to sum 2 `HashstackV1Portfolio` instances.
-        self.loan_entities[loan_id].collateral.values = {
-            token: (
-                self.loan_entities[loan_id].original_collateral.values[token]
-                + self.loan_entities[loan_id].borrowed_collateral.values[token]
-            )
-            for token in TOKEN_SETTINGS
-        }
+        self.loan_entities[loan_id].collateral = src.helpers.Portfolio(
+            **{
+                token: (
+                    self.loan_entities[loan_id].original_collateral[token]
+                    + self.loan_entities[loan_id].borrowed_collateral[token]
+                )
+                for token in set().union(
+                    self.loan_entities[loan_id].original_collateral,
+                    self.loan_entities[loan_id].borrowed_collateral,
+                )
+            }
+        )
         debt = HashstackV1Portfolio()
-        debt.values[debt_token] = debt_face_amount
+        debt[debt_token] = debt_face_amount
         self.loan_entities[loan_id].debt = debt
         if self.loan_entities[loan_id].user == self.verbose_user:
             logging.info(
@@ -478,15 +483,20 @@ class HashstackV1State(src.state.State):
         original_collateral_face_amount = decimal.Decimal(str(int(event["data"][2], base=16)))
 
         original_collateral = HashstackV1Portfolio()
-        original_collateral.values[original_collateral_token] = original_collateral_face_amount
+        original_collateral[original_collateral_token] = original_collateral_face_amount
         self.loan_entities[loan_id].original_collateral = original_collateral
-        self.loan_entities[loan_id].collateral.values = {
-            token: (
-                self.loan_entities[loan_id].original_collateral.values[token]
-                + self.loan_entities[loan_id].borrowed_collateral.values[token]
-            )
-            for token in TOKEN_SETTINGS
-        }
+        self.loan_entities[loan_id].collateral = src.helpers.Portfolio(
+            **{
+                token: (
+                    self.loan_entities[loan_id].original_collateral[token]
+                    + self.loan_entities[loan_id].borrowed_collateral[token]
+                )
+                for token in set().union(
+                    self.loan_entities[loan_id].original_collateral,
+                    self.loan_entities[loan_id].borrowed_collateral,
+                )
+            }
+        )
         if self.loan_entities[loan_id].user == self.verbose_user:
             logging.info(
                 'In block number = {}, collateral was added, resulting in collateral of face amount = {} of token = '
@@ -519,19 +529,24 @@ class HashstackV1State(src.state.State):
         new_borrowed_collateral_face_amount = decimal.Decimal(str(int(event["data"][18], base=16)))
 
         new_borrowed_collateral = HashstackV1Portfolio()
-        new_borrowed_collateral.values[new_borrowed_collateral_token] = new_borrowed_collateral_face_amount
+        new_borrowed_collateral[new_borrowed_collateral_token] = new_borrowed_collateral_face_amount
         self.loan_entities[new_loan_id].borrowed_collateral = new_borrowed_collateral
-        self.loan_entities[new_loan_id].collateral.values = {
-            token: (
-                self.loan_entities[new_loan_id].original_collateral.values[token]
-                + self.loan_entities[new_loan_id].borrowed_collateral.values[token]
-            )
-            for token in TOKEN_SETTINGS
-        }
+        self.loan_entities[new_loan_id].collateral = src.helpers.Portfolio(
+            **{
+                token: (
+                    self.loan_entities[new_loan_id].original_collateral[token]
+                    + self.loan_entities[new_loan_id].borrowed_collateral[token]
+                )
+                for token in set().union(
+                    self.loan_entities[new_loan_id].original_collateral,
+                    self.loan_entities[new_loan_id].borrowed_collateral,
+                )
+            }
+        )
         new_debt = HashstackV1Portfolio()
-        new_debt.values[new_debt_token] = new_debt_face_amount
+        new_debt[new_debt_token] = new_debt_face_amount
         # Based on the documentation, it seems that it's only possible to spend the whole amount.
-        assert self.loan_entities[old_loan_id].debt.values == new_debt.values
+        assert self.loan_entities[old_loan_id].debt == new_debt
         self.loan_entities[new_loan_id].debt = new_debt
         if self.loan_entities[new_loan_id].user == self.verbose_user:
             logging.info(
@@ -595,20 +610,25 @@ class HashstackV1State(src.state.State):
         assert new_original_collateral_face_amount == decimal.Decimal("0")
 
         new_original_collateral = HashstackV1Portfolio()
-        new_original_collateral.values[new_original_collateral_token] = new_original_collateral_face_amount
+        new_original_collateral[new_original_collateral_token] = new_original_collateral_face_amount
         new_borrowed_collateral = HashstackV1Portfolio()
-        new_borrowed_collateral.values[new_borrowed_collateral_token] = new_borrowed_collateral_face_amount
+        new_borrowed_collateral[new_borrowed_collateral_token] = new_borrowed_collateral_face_amount
         self.loan_entities[new_loan_id].original_collateral = new_original_collateral
         self.loan_entities[new_loan_id].borrowed_collateral = new_borrowed_collateral
-        self.loan_entities[new_loan_id].collateral.values = {
-            token: (
-                self.loan_entities[new_loan_id].original_collateral.values[token]
-                + self.loan_entities[new_loan_id].borrowed_collateral.values[token]
-            )
-            for token in TOKEN_SETTINGS
-        }
+        self.loan_entities[new_loan_id].collateral = src.helpers.Portfolio(
+            **{
+                token: (
+                    self.loan_entities[new_loan_id].original_collateral[token]
+                    + self.loan_entities[new_loan_id].borrowed_collateral[token]
+                )
+                for token in set().union(
+                    self.loan_entities[new_loan_id].original_collateral,
+                    self.loan_entities[new_loan_id].borrowed_collateral,
+                )
+            }
+        )
         new_debt = HashstackV1Portfolio()
-        new_debt.values[new_debt_token] = new_debt_face_amount
+        new_debt[new_debt_token] = new_debt_face_amount
         self.loan_entities[new_loan_id].debt = new_debt
         if self.loan_entities[new_loan_id].user == self.verbose_user:
             logging.info(
@@ -633,13 +653,13 @@ class HashstackV1State(src.state.State):
         debt_token: str,
     ) -> decimal.Decimal:
         changed_prices = copy.deepcopy(prices)
-        changed_prices.values[collateral_token] = collateral_token_price
+        changed_prices[collateral_token] = collateral_token_price
         max_liquidated_amount = decimal.Decimal("0")
         for loan_entity in self.loan_entities.values():
             # Filter out users who borrowed the token of interest.
             debt_tokens = {
                 token
-                for token, token_amount in loan_entity.debt.values.items()
+                for token, token_amount in loan_entity.debt.items()
                 if token_amount > decimal.Decimal("0")
             }
             if not debt_token in debt_tokens:
