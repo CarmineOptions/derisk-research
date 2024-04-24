@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_HOST_AUTH_METHOD: ${POSTGRES_HOST_AUTH_METHOD}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+        - "5432:5432"
+
+  backend:
+    build: .
+    restart: always
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    expose:
+      - "8000"
+    depends_on:
+      - db
+
+volumes:
+  db_data:
