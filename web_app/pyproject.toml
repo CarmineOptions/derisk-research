@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "derisk"
+version = "0.1.0"
+description = ""
+authors = ["iamnovichek <rungotika@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.110.2"
+uvicorn = "^0.29.0"
+sqlalchemy = {extras = ["async"], version = "^2.0.29"}
+python-dotenv = "^1.0.1"
+psycopg2-binary = "^2.9.9"
+black = "^24.4.0"
+isort = "^5.13.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
