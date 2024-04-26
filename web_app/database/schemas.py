@@ -5,6 +5,17 @@ from utils.values import NotificationValidationValues
 
 
 class Notification(BaseModel):
+    """
+    A notification class that validates data user entered
+
+    :Attributes:
+    email (EmailStr): The email address
+    wallet_id (str): The wallet id
+    telegram_id (str): The telegram id
+    ip_address (str): The IP address
+    health_ration_level (float): The health ration level
+    """
+
     email: EmailStr = Field("", nullable=False)
     wallet_id: str = Field("", nullable=False)
     telegram_id: str = Field(
