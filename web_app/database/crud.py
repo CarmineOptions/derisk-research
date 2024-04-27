@@ -38,7 +38,7 @@ def validate_fields(db: Session = None, obj: Base = None, model: Base = None) ->
     :return: dict
     """
     error_validation_dict = dict()
-    _fields = NotificationValidationValues.validation_fields
+    _fields = NotificationValidationValues.unique_fields
 
     for attr in dir(obj):
         if (attr in _fields) and _exists_in_db(db=db, model=model, attr=attr, obj=obj):
