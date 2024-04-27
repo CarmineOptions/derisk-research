@@ -8,6 +8,10 @@ class NotificationValidationValues:
     telegram_id_max_length: int = 10
     health_ration_level_min_value: float = -1.3
     health_ration_level_max_value: float = 1.3
+    unique_fields: tuple[str, ...] = (
+        "email",
+        "telegram_id",
+    )
     validation_fields: tuple[str, ...] = (
         "email",
         "wallet_id",
