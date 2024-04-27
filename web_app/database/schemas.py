@@ -1,34 +1,60 @@
+from fastapi import Form
 from pydantic import BaseModel, EmailStr, Field
 from pydantic.networks import IPvAnyAddress
 
 from utils.values import NotificationValidationValues
 
 
-class Notification(BaseModel):
+class NotificationForm(BaseModel):
     """
-    A notification class that validates data user entered
+    A notification form class that validates data user entered
 
     :Attributes:
-    email (EmailStr): The email address
-    wallet_id (str): The wallet id
-    telegram_id (str): The telegram id
-    ip_address (str): The IP address
-    health_ration_level (float): The health ration level
+        email (EmailStr): The email address
+        wallet_id (str): The wallet id
+        telegram_id (str): The telegram id
+        health_ration_level (float): The health ration level
+
+    :Methods:
+        as_form(): NotificationForm
     """
 
-    email: EmailStr = Field("", nullable=False)
-    wallet_id: str = Field("", nullable=False)
-    telegram_id: str = Field(
-        "",
+    email: EmailStr = Form(..., nullable=False)
+    wallet_id: str = Form(..., nullable=False)
+    telegram_id: str = Form(
+        ...,
         nullable=False,
         min_length=NotificationValidationValues.telegram_id_min_length,
         max_length=NotificationValidationValues.telegram_id_max_length,
         pattern=NotificationValidationValues.telegram_id_pattern,
     )
     ip_address: IPvAnyAddress = Field("", nullable=False)
-    health_ration_level: float = Field(
-        0,
+    health_ration_level: float = Form(
+        ...,
         nullable=False,
         ge=NotificationValidationValues.health_ration_level_min_value,
         le=NotificationValidationValues.health_ration_level_max_value,
     )
+
+    @classmethod
+    def as_form(
+        cls,
+        email: EmailStr = Form(...),
+        wallet_id: str = Form(...),
+        telegram_id: str = Form(...),
+        health_ration_level: float = Form(...),
+    ) -> "NotificationForm":
+        """
+        Returns a notification form class with form fields defined in
+        :param email: EmailStr = Form(...)
+        :param wallet_id: str = Form(...)
+        :param telegram_id: str = Form(...)
+        :param health_ration_level: float = Form(...)
+        :return: NotificationForm
+        """
+        return cls(
+            email=email,
+            wallet_id=wallet_id,
+            telegram_id=telegram_id,
+            health_ration_level=health_ration_level,
+        )
