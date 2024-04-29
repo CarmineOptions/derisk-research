@@ -27,3 +27,8 @@ class CreateSubscriptionValues:
     create_subscription_description_message: str = (
         "Creates a new subscription to notifications"
     )
+
+
+@dataclass(frozen=True)
+class MiddlewaresValues:
+    rate_limit_exceeded_message: str = "Rate limit exceeded"
