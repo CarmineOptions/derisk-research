@@ -9,12 +9,14 @@ from database.database import Base, engine, get_database
 from database.models import NotificationData
 from database.schemas import NotificationForm
 from utils.fucntools import get_client_ip
+from utils.middlewares import RateLimitMiddleware
 from utils.values import CreateSubscriptionValues, NotificationValidationValues
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
+app.add_middleware(RateLimitMiddleware)
 
 connector = DBConnector()
 templates = Jinja2Templates(directory="templates")
