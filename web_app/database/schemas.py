@@ -29,11 +29,11 @@ class NotificationForm(BaseModel):
         pattern=NotificationValidationValues.telegram_id_pattern,
     )
     ip_address: IPvAnyAddress = Field("", nullable=False)
-    health_ration_level: float = Form(
-        ...,
+    health_ratio_level: float = Field(
+        0,
         nullable=False,
-        ge=NotificationValidationValues.health_ration_level_min_value,
-        le=NotificationValidationValues.health_ration_level_max_value,
+        ge=NotificationValidationValues.health_ratio_level_min_value,
+        le=NotificationValidationValues.health_ratio_level_max_value,
     )
 
     @classmethod
