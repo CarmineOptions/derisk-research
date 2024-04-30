@@ -14,4 +14,5 @@ async def start(message: types.Message, db: Session, command: CommandObject):
     ident = command.args
     stmp = update(NotificationData).where(NotificationData.id == ident).values(telegram_id=message.from_user.id)
     db.execute(stmp)
+    db.commit()
     await message.answer("You are subscribed to notifications.")
