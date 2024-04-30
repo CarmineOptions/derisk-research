@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr, Field
 from pydantic.networks import IPvAnyAddress
 
-from utils.values import NotificationValidationValues
+from utils.values import NotificationValidationValues, ProtocolIDs
 
 
 class Notification(BaseModel):
@@ -32,3 +32,4 @@ class Notification(BaseModel):
         ge=NotificationValidationValues.health_ratio_level_min_value,
         le=NotificationValidationValues.health_ratio_level_max_value,
     )
+    protocol_id: ProtocolIDs = Field("", nullable=False)
