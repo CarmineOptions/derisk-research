@@ -8,7 +8,9 @@ from .bot import bot
 
 async def get_subscription_link(ident: UUID):
     me = await bot.me()
-    return create_deep_link(username=me.username, link_type="start", payload=str(ident), encode=True)
+    return create_deep_link(
+        username=me.username, link_type="start", payload=str(ident), encode=True
+    )
 
 
 class TelegramNotifications:
