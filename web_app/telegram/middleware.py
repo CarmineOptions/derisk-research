@@ -31,7 +31,7 @@ class DatabaseMiddleware(BaseMiddleware):
         """
         data["db"] = self.session_pool()
         try:
-            await handler(event, data)
+            return await handler(event, data)
         finally:
             data["db"].close()
             del data["db"]
