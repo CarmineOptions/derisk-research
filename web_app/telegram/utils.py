@@ -1,6 +1,7 @@
 from asyncio.queues import Queue
 from uuid import UUID
 
+from aiogram import exceptions
 from aiogram.utils.deep_linking import create_deep_link
 
 from .bot import bot
@@ -47,4 +48,9 @@ class TelegramNotifications:
         This method processes the queue of Telegram IDs and sends notifications to each user.
         """
         while ident := await self.__queue_to_send.get():
-            await bot.send_message(chat_id=ident, text="Test message")
+            try:
+                await bot.send_message(chat_id=ident, text="Test message")
+            except exceptions.TelegramRetryAfter as e:
+                await asyncio.sleep(e.retry_after)
+            except exceptions.TelegramAPIError:
+                pass  # skip errors
