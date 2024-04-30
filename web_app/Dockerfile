@@ -19,6 +19,7 @@ RUN apt-get update \
     && poetry install --no-interaction --no-ansi
 
 ENTRYPOINT ["bash", "/app/entrypoint.sh"]
+ENTRYPOINT ["bash", "/app/bot_entrypoint.sh"]
 
 # Expose the port
 EXPOSE 8000
