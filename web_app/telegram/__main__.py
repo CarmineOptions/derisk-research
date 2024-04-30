@@ -1,7 +1,8 @@
+import asyncio
+
+from database.database import SessionLocal
 from . import dp, bot
 from .middleware import DatabaseMiddleware
-import asyncio
-from database.database import SessionLocal
 
 
 async def bot_start_polling():
