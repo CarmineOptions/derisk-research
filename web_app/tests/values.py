@@ -1,11 +1,11 @@
 from dataclasses import dataclass
-from random import uniform
+from random import uniform, choice
 from uuid import uuid4
 
 import exrex
 from faker import Faker
 
-from utils.values import NotificationValidationValues
+from utils.values import NotificationValidationValues, ProtocolIDs
 
 _FAKER = Faker()
 
@@ -38,6 +38,8 @@ class CreateSubscriptionTestValues:
         ),
         2,
     )
+    valid_protocol_id_value: str = choice([item.value for item in ProtocolIDs])
+    invalid_protocol_id_value: str = _FAKER.word()
 
 
 VALID_DATA = {
@@ -46,6 +48,7 @@ VALID_DATA = {
     "telegram_id": CreateSubscriptionTestValues.valid_telegram_id,
     "ip_address": CreateSubscriptionTestValues.valid_ip_v4_address,
     "health_ratio_level": CreateSubscriptionTestValues.valid_health_ratio_level,
+    "protocol_id": CreateSubscriptionTestValues.valid_protocol_id_value,
 }
 
 INVALID_DATA = {
@@ -54,4 +57,5 @@ INVALID_DATA = {
     "telegram_id": CreateSubscriptionTestValues.invalid_telegram_id,
     "ip_address": CreateSubscriptionTestValues.invalid_ip_v4_address,
     "health_ratio_level": CreateSubscriptionTestValues.invalid_health_ratio_level,
+    "protocol_id": CreateSubscriptionTestValues.invalid_protocol_id_value,
 }

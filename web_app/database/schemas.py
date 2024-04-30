@@ -2,7 +2,7 @@ from fastapi import Form
 from pydantic import BaseModel, EmailStr, Field
 from pydantic.networks import IPvAnyAddress
 
-from utils.values import NotificationValidationValues
+from utils.values import NotificationValidationValues, ProtocolIDs
 
 
 class NotificationForm(BaseModel):
@@ -58,3 +58,4 @@ class NotificationForm(BaseModel):
             telegram_id=telegram_id,
             health_ration_level=health_ration_level,
         )
+    protocol_id: ProtocolIDs = Field("", nullable=False)
