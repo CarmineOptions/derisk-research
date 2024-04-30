@@ -11,6 +11,13 @@ base_router = Router()
 
 @base_router.message(CommandStart(deep_link=True, deep_link_encoded=True))
 async def start(message: types.Message, db: Session, command: CommandObject):
+    """
+    Register Telegram ID in the database.
+
+    :param message: The Telegram message, typically a "/start" command.
+    :param db: The database session.
+    :param command: The extracted data from the CommandStart filter.
+    """
     ident = command.args
     stmp = (
         update(NotificationData)
