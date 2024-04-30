@@ -19,5 +19,5 @@ class TelegramNotifications:
         await cls.__queue_to_send.put(telegram_id)
 
     async def __call__(self):
-        while ident := self.__queue_to_send.get():
+        while ident := await self.__queue_to_send.get():
             await bot.send_message(chat_id=ident, text="Test message")
