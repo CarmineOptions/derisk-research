@@ -6,6 +6,10 @@ from .middleware import DatabaseMiddleware
 
 
 async def bot_start_polling():
+    """
+    Start the bot polling loop
+    (added database middleware if is outside Flask Api server)
+    """
     dp.update.middleware(DatabaseMiddleware(SessionLocal))
     await dp.start_polling(bot)
 
