@@ -9,7 +9,8 @@ from database.database import Base, engine, get_database
 from database.models import NotificationData
 from database.schemas import NotificationForm
 from utils.fucntools import get_client_ip
-from utils.values import CreateSubscriptionValues, NotificationValidationValues
+from utils.values import (CreateSubscriptionValues,
+                          NotificationValidationValues, ProtocolIDs)
 
 Base.metadata.create_all(bind=engine)
 
@@ -34,6 +35,9 @@ async def create_subscription(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="notification.html",
+        context={
+            "protocol_ids": [item.value for item in ProtocolIDs],
+        },
     )
 
 
