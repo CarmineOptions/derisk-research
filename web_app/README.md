@@ -35,6 +35,7 @@ DB_USER=#
 DB_PASSWORD=#
 DB_HOST=db
 DB_PORT=#
+IP_INFO_TOKEN=#
 ```
 
 ### 5. Build your docker containers
