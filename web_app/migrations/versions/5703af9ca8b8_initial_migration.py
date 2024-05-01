@@ -1,8 +1,8 @@
-"""initial migration
+"""Initial migration
 
-Revision ID: c62ca8dbda1d
+Revision ID: 5703af9ca8b8
 Revises: 
-Create Date: 2024-04-28 18:12:13.854466
+Create Date: 2024-04-30 18:17:18.120224
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'c62ca8dbda1d'
+revision: str = '5703af9ca8b8'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -34,7 +34,8 @@ def downgrade() -> None:
     sa.Column('wallet_id', sa.VARCHAR(), autoincrement=False, nullable=False),
     sa.Column('telegram_id', sa.VARCHAR(), autoincrement=False, nullable=False),
     sa.Column('ip_address', sa.VARCHAR(length=50), autoincrement=False, nullable=False),
-    sa.Column('health_ration_level', sa.DOUBLE_PRECISION(precision=53), autoincrement=False, nullable=False),
+    sa.Column('health_ratio_level', sa.DOUBLE_PRECISION(precision=53), autoincrement=False, nullable=False),
+    sa.Column('protocol_id', sa.VARCHAR(), autoincrement=False, nullable=False),
     sa.PrimaryKeyConstraint('id', name='notification_pkey'),
     sa.UniqueConstraint('telegram_id', name='notification_telegram_id_key')
     )
