@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from random import uniform, choice
+from random import choice, uniform
 from uuid import uuid4
 
 import exrex
