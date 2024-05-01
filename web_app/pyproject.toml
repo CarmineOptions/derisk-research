@@ -25,6 +25,21 @@ python-multipart = "^0.0.9"
 alembic = "^1.13.1"
 
 
+[tool.black]
+line-length = 88
+target-version = ['py37']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | build
+  | dist
+  | versions
+)/
+'''
+
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
