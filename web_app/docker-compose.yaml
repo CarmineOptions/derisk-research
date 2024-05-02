@@ -26,5 +26,32 @@ services:
     depends_on:
       - db
 
+  celery:
+    build: .
+    command: celery -A derisk_alert.celery_conf worker --loglevel=INFO
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - db
+
+  celery_beat:
+    build: .
+    command: celery -A derisk_alert.celery_conf beat --loglevel=INFO
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - db
+
+  redis:
+    image: redis:latest
+    restart: always
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data:/data
+
 volumes:
   db_data:
+  redis_data:
