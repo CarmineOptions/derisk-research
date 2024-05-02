@@ -36,6 +36,8 @@ DB_PASSWORD=#
 DB_HOST=db
 DB_PORT=#
 IP_INFO_TOKEN=#
+REDIS_HOST=redis
+REDIS_PORT=6379
 ```
 
 ### 5. Build your docker containers
