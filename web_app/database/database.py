@@ -25,7 +25,7 @@ Base = declarative_base()
 
 def get_database() -> SessionLocal:
     """
-    Create the database session
+    Creates the database session
     :return: SessionLocal
     """
     database = SessionLocal()
