@@ -1,16 +1,44 @@
-from fastapi import Body, Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, Request, status
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from database.crud import DBConnector, validate_fields
 from database.database import Base, engine, get_database
 from database.models import NotificationData
-from database.schemas import Notification
-from utils.values import CreateSubscriptionValues, NotificationValidationValues
+from database.schemas import NotificationForm
+from utils.fucntools import get_client_ip
+from utils.values import (CreateSubscriptionValues,
+                          NotificationValidationValues, ProtocolIDs)
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 connector = DBConnector()
+templates = Jinja2Templates(directory="templates")
+
+
+@app.get(
+    path="/create-notifications-subscription",
+    description=CreateSubscriptionValues.create_subscription_description_message,
+    response_class=HTMLResponse,
+)
+async def create_subscription(request: Request):
+    """
+    Returns a subscription for notifications form
+    :param request: Request
+    :return: templates.TemplateResponse
+    """
+    return templates.TemplateResponse(
+        request=request,
+        name="notification.html",
+        context={
+            "protocol_ids": [item.value for item in ProtocolIDs],
+        },
+    )
 
 
 @app.post(
@@ -18,14 +46,20 @@ connector = DBConnector()
     description=CreateSubscriptionValues.create_subscription_description_message,
 )
 async def subscribe_to_notification(
-    data: Notification = Body(...), db: Session = Depends(get_database)
+    request: Request,
+    data: NotificationForm = Depends(NotificationForm.as_form),
+    db: Session = Depends(get_database),
 ):
     """
     Creates a new subscription for notifications
-    :param data: Notification
+    :param request: Request
+    :param data: NotificationForm
     :param db: Session
     :return: dict
     """
+
+    data.ip_address = get_client_ip(request)
+
     if not all(
         [
             value
@@ -33,22 +67,40 @@ async def subscribe_to_notification(
             if key in NotificationValidationValues.validation_fields
         ]
     ):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=CreateSubscriptionValues.create_subscription_exception_message,
+        return templates.TemplateResponse(
+            request=request,
+            name="notification.html",
+            context={
+                "status_code": status.HTTP_400_BAD_REQUEST,
+                "messages": [
+                    CreateSubscriptionValues.create_subscription_exception_message
+                ],
+                "message_type": "error",
+            },
         )
 
     subscription = NotificationData(**data.model_dump())
     validation_errors = validate_fields(db=db, obj=subscription, model=NotificationData)
 
     if validation_errors:
-        return HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=validation_errors
+        return templates.TemplateResponse(
+            request=request,
+            name="notification.html",
+            context={
+                "status_code": status.HTTP_400_BAD_REQUEST,
+                "messages": list(validation_errors.values()),
+                "message_type": "error",
+            },
         )
 
     connector.write_to_db(obj=subscription)
 
-    return {
-        "message": CreateSubscriptionValues.create_subscription_success_message,
-        "status": status.HTTP_201_CREATED,
-    }
+    return templates.TemplateResponse(
+        request=request,
+        name="notification.html",
+        context={
+            "status_code": status.HTTP_201_CREATED,
+            "messages": [CreateSubscriptionValues.create_subscription_success_message],
+            "message_type": "success",
+        },
+    )

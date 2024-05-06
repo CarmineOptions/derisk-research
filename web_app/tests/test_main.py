@@ -1,4 +1,4 @@
-import json
+from urllib.parse import urlencode
 
 from starlette.testclient import TestClient
 
@@ -9,7 +9,10 @@ from .conftest import mock_database_session
 
 client = TestClient(app)
 
-_HEADERS = {"accept": "application/json", "Content-Type": "application/json"}
+_HEADERS = {
+    "accept": "application/json",
+    "Content-Type": "application/x-www-form-urlencoded",
+}
 
 
 def test_create_subscription_to_notifications_with_valid_data(
@@ -18,7 +21,7 @@ def test_create_subscription_to_notifications_with_valid_data(
     response = client.post(
         url="/create-notifications-subscription",
         headers=_HEADERS,
-        data=json.dumps(VALID_DATA),
+        data=urlencode(VALID_DATA),
     )
 
     assert response.status_code == 200
@@ -30,7 +33,7 @@ def test_create_subscription_to_notifications_with_invalid_data(
     response = client.post(
         url="/create-notifications-subscription",
         headers=_HEADERS,
-        data=json.dumps(INVALID_DATA),
+        data=urlencode(INVALID_DATA),
     )
 
     assert response.status_code == 422
