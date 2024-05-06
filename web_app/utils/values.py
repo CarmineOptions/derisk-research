@@ -30,6 +30,15 @@ class CreateSubscriptionValues:
     )
 
 
+@dataclass(frozen=True)
+class MiddlewaresValues:
+    rate_limit_exceeded_message: str = "Rate limit exceeded"
+    denied_access_countries: tuple[str, ...] = ("US",)
+    country_access_denied_message: str = "Country access denied"
+    requests_per_minute_limit: int = 5
+    requests_per_hour_limit: int = 1
+
+
 class ProtocolIDs(Enum):
     HASHSTACK: str = "Hashstack"
     NOSTRA: str = "Nostra"

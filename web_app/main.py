@@ -76,6 +76,7 @@ async def subscribe_to_notification(
                     CreateSubscriptionValues.create_subscription_exception_message
                 ],
                 "message_type": "error",
+                "protocol_ids": [item.value for item in ProtocolIDs],
             },
         )
 

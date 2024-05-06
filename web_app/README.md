@@ -35,7 +35,7 @@ DB_USER=#
 DB_PASSWORD=#
 DB_HOST=db
 DB_PORT=#
-TELEGRAM_TOKEN= # token telegram from botfather
+IP_INFO_TOKEN=#
 ```
 
 ### 5. Build your docker containers
