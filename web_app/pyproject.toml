@@ -21,6 +21,7 @@ faker = "^24.14.0"
 httpx = "^0.27.0"
 exrex = "^0.11.0"
 alembic = "^1.13.1"
+aiogram = "^3.5.0"
 
 
 [build-system]
