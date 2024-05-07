@@ -1,19 +1,37 @@
 from datetime import datetime
 from uuid import uuid4
 
-from sqlalchemy import UUID, Column, DateTime, Float, String
+from sqlalchemy import (
+    UUID,
+    Column,
+    DateTime,
+    Float,
+    String,
+    ForeignKey,
+    Boolean,
+    MetaData,
+)
+from sqlalchemy.orm import DeclarativeBase, Mapped
 from sqlalchemy_utils import IPAddressType
 from sqlalchemy_utils.types.choice import ChoiceType
 
 from utils.values import ProtocolIDs
 
-from .database import Base
+
+class Base(DeclarativeBase):
+    """
+    Base class for ORM models.
+
+    :ivar id: The unique identifier of the entity.
+    """
+
+    id: Mapped[UUID] = Column(UUID, default=uuid4, primary_key=True)
+    metadata = MetaData()
 
 
 class NotificationData(Base):
     __tablename__ = "notification"
 
-    id = Column(UUID, default=uuid4, primary_key=True)
     created_at = Column(DateTime, default=datetime.now())
     email = Column(String, index=True, unique=True, nullable=False)
     wallet_id = Column(String, nullable=False)

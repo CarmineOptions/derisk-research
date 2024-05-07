@@ -1,4 +1,5 @@
 import uuid
+from typing import Type, TypeVar
 
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
@@ -8,33 +9,37 @@ from database.database import SQLALCHEMY_DATABASE_URL
 from database.models import Base
 from utils.values import NotificationValidationValues
 
+ModelType = TypeVar("ModelType", bound=Base)
+
 
 def _exists_in_db(
     db: Session = None,
-    model: Base = None,
+    model: Type[Base] = None,
     attr: str = None,
     obj: Base = None,
 ) -> bool:
     """
     Checks if the given attribute value already exists in the database
     :param db: Session = Depends(get_database)
-    :param model: Base = None
+    :param model: type[Base] = None
     :param attr: str = None
     :param obj: Base = None
     :return: bool
     """
     return (
-        db.query(model).filter(getattr(model, attr) == getattr(obj, attr)).first()
+        db.query(model).filter(getattr(model, attr) == getattr(obj, attr)).first()  # type: ignore
         is not None
     )
 
 
-def validate_fields(db: Session = None, obj: Base = None, model: Base = None) -> dict:
+def validate_fields(
+    db: Session = None, obj: ModelType = None, model: Type[ModelType] = None
+) -> dict:
     """
     Validates all fields in the object and returns a dict with validation errors if they were occured
     :param db: Session = Depends(get_database)
     :param obj: Base = None
-    :param model: Base = None
+    :param model: type[Base] = None
     :return: dict
     """
     error_validation_dict = dict()
@@ -90,10 +95,12 @@ class DBConnector:
         finally:
             db.close()
 
-    def get_object(self, model: Base = None, obj_id: uuid = None) -> Base | None:
+    def get_object(
+        self, model: Type[ModelType] = None, obj_id: uuid = None
+    ) -> ModelType | None:
         """
         Retrieves an object by its ID from the database.
-        :param: model: Base = None
+        :param: model: type[Base] = None
         :param: obj_id: uuid = None
         :return: Base | None
         """
@@ -103,10 +110,10 @@ class DBConnector:
         finally:
             db.close()
 
-    def delete_object(self, model: Base = None, obj_id: uuid = None) -> None:
+    def delete_object(self, model: Type[Base] = None, obj_id: uuid = None) -> None:
         """
         Delete an object by its ID from the database. Rolls back if the operation fails.
-        :param model: Base = None
+        :param model: type[Base] = None
         :param obj_id: uuid = None
         :return: None
         :raise SQLAlchemyError: If the database operation fails
