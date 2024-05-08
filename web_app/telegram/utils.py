@@ -35,7 +35,7 @@ class TelegramNotifications:
     Example:
          from database.crud import DBConnector
 
-         telegram_notifications = TelegramNotifications(conn=DBConnector())
+         telegram_notifications = TelegramNotifications(db_connector=DBConnector())
 
          scheduler.add_job(telegram_notifications, "interval", seconds=0.05)
          # or
@@ -60,10 +60,10 @@ class TelegramNotifications:
         Logs the sending status of a message.
 
         :param notification_id: The UUID identifying the notification data.
-        :param text: The message text being sent.
+        :param text: The message text that was sent.
         :param is_succesfully: A boolean indicating whether the message was sent successfully or not.
         """
-        self.conn.write_to_db(
+        self.db_connector.write_to_db(
             TelegramLog(
                 notification_data_id=notification_id,
                 is_succesfully=is_succesfully,
@@ -71,14 +71,14 @@ class TelegramNotifications:
             )
         )
 
-    def __init__(self, conn: DBConnector, text: str = DEFAULT_MESSAGE_TEMPLATE) -> None:
+    def __init__(self, db_connector: DBConnector, text: str = DEFAULT_MESSAGE_TEMPLATE) -> None:
         """
         Initialize the TelegramNotifier instance.
 
-        :param conn: Instance of DBConnector to handle database operations.
+        :param db_connector: Instance of DBConnector to handle database operations.
         :param text: The text content of the notification (which will be formatted when sent).
         """
-        self.conn = conn
+        self.db_connector = db_connector
         self.text = text
 
     async def __call__(
@@ -98,14 +98,16 @@ class TelegramNotifications:
         """
         while notification_id := await self.__queue_to_send.get():
             # Retrieve notification data from the database based on its ID
-            notification = self.conn.get_object(NotificationData, notification_id)
+            notification = self.db_connector.get_object(NotificationData, notification_id)
+            if notification is None:
+                continue # skip is not valid notification_id
             is_succesfully = False
             # create text message
             text = self.text.format(wallet_id=notification.wallet_id)
 
             try:
                 # Check if the notification has a Telegram ID and send the message
-                if notification and notification.telegram_id:
+                if notification.telegram_id:
                     await bot.send_message(
                         chat_id=notification.telegram_id,
                         text=text,
@@ -114,6 +116,7 @@ class TelegramNotifications:
             except exceptions.TelegramRetryAfter as e:
                 # If Telegram returns a RetryAfter exception, wait for the specified time and then retry
                 await asyncio.sleep(e.retry_after)
+                # Ignore QueueFull exception to prevent it from being raised when the queue is explicitly limited
                 with suppress(QueueFull):
                     self.__queue_to_send.put_nowait(item)
             except exceptions.TelegramAPIError:
