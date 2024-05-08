@@ -25,7 +25,7 @@ def upgrade() -> None:
         "telegram_log",
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("sent_at", sa.DateTime(), nullable=False),
-        sa.Column("notification_data_id", sa.UUID(), nullable=True),
+        sa.Column("notification_data_id", sa.UUID(), nullable=False),
         sa.Column("is_succesfully", sa.Boolean(), nullable=False),
         sa.Column("message", sa.String(), server_default="", nullable=False),
         sa.ForeignKeyConstraint(
