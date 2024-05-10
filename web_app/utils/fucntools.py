@@ -3,8 +3,10 @@ import pandas as pd
 from fastapi import Request
 
 from utils.state import InterestRateModels
-from utils.values import GS_BUCKET_NAME, GS_BUCKET_URL, ProtocolIDCodeNames
+from utils.values import GS_BUCKET_NAME, GS_BUCKET_URL, ProtocolIDCodeNames, USER_COLUMN_NAME, DEBT_USD_COLUMN_NAME, \
+    RISK_ADJUSTED_COLLATERAL_USD_COLUMN_NAME
 from utils.zklend import ZkLendLoanEntity, ZkLendState
+from utils.exceptions import ProtocolExistenceError
 
 
 def get_client_ip(request: Request) -> str:
@@ -32,7 +34,8 @@ def download_parquet_file(
     :param protocol_name: Protocol name
     :return: None
     """
-    assert protocol_name in [item.value for item in ProtocolIDCodeNames]
+    if protocol_name not in [item.value for item in ProtocolIDCodeNames]:
+        raise ProtocolExistenceError(protocol=protocol_name)
 
     data = dd.read_parquet(
         GS_BUCKET_URL.format(protocol_name=protocol_name, bucket_name=bucket_name)
@@ -50,7 +53,7 @@ def fetch_user_loans(user_id: str = None, protcol_name: str = None) -> pd.DataFr
     data = pd.read_parquet(
         path=f"loans/{protcol_name}_data/part.0.parquet",
     )
-    user = data[data["User"] == user_id]
+    user = data[data[USER_COLUMN_NAME] == user_id]
     return user.to_dict()
 
 
@@ -62,7 +65,7 @@ def get_user_row_number(user: dict[str, dict[int, str]] = None) -> int:
     :param user: dict[str, dict[int, str]]
     :return: int
     """
-    return list(user["User"].keys())[0]
+    return next(iter(user[USER_COLUMN_NAME].keys()))
 
 
 def get_debt_usd(
@@ -74,11 +77,12 @@ def get_debt_usd(
     :param user_row_number: int = None
     :return: float | None
     """
-    try:
-        return user_data.get("Debt (USD)", "").get(user_row_number, None)
+    collateral_data = user_data.get(DEBT_USD_COLUMN_NAME, None)
 
-    except AttributeError:
-        return
+    if collateral_data:
+        return collateral_data.get(user_row_number, None)
+
+    return None
 
 
 def get_risk_adjusted_collateral_usd(
@@ -90,13 +94,12 @@ def get_risk_adjusted_collateral_usd(
     :param user_row_number: int = None
     :return: float | None
     """
-    try:
-        return user_data.get("Risk-adjusted collateral (USD)", "").get(
-            user_row_number, None
-        )
+    collateral_data = user_data.get(RISK_ADJUSTED_COLLATERAL_USD_COLUMN_NAME, None)
 
-    except AttributeError:
-        return
+    if collateral_data:
+        return collateral_data.get(user_row_number, None)
+
+    return None
 
 
 def compute_health_ratio_level(user_id: str = None, protocol_name: str = None) -> float:

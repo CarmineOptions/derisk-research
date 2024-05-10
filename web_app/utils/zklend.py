@@ -163,15 +163,10 @@ class ZkLendLoanEntity(LoanEntity):
                 risk_adjusted=False,
             )
 
-        if standardized:
-            denominator = debt_usd
-        else:
-            denominator = debt_usd
-
-        if denominator == Decimal("0"):
+        if debt_usd == Decimal("0"):
             return Decimal("Inf")
 
-        return risk_adjusted_collateral_usd / denominator
+        return risk_adjusted_collateral_usd / debt_usd
 
 
 class ZkLendState(State):

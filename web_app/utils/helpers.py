@@ -7,6 +7,7 @@ import google.cloud.storage
 import pandas as pd
 
 from utils.settings import TOKEN_SETTINGS
+from utils.exceptions import TokenValidationError
 
 
 class TokenValues:
@@ -18,12 +19,22 @@ class TokenValues:
         init_value: Decimal = Decimal("0"),
     ) -> None:
         if values:
-            assert set(values.keys()) == set(TOKEN_SETTINGS.keys())
+            self._validate_token_values(values)
             self.values: dict[str, Decimal] = values
         else:
             self.values: dict[str, Decimal] = {
                 token: init_value for token in TOKEN_SETTINGS
             }
+
+    @staticmethod
+    def _validate_token_values(token_values: dict[str, Union[bool, Decimal]]) -> None:
+        """
+        Validate's token_values keys
+        :param token_values: dict[str, Union[bool, Decimal]]
+        :return: None
+        """
+        if set(token_values.keys()) != set(TOKEN_SETTINGS.keys()):
+            raise TokenValidationError("Token values keys do not match with TOKEN_SETTINGS keys")
 
 
 MAX_ROUNDING_ERRORS: TokenValues = TokenValues(
@@ -55,14 +66,10 @@ def get_symbol(address: str) -> str:
     :param address: the address of the symbol
     :return: str
     """
-    n = int(address, base=16)
-    symbol_address_map = {
-        token: token_settings.address
-        for token, token_settings in TOKEN_SETTINGS.items()
-    }
+    address_int = int(address, base=16)
 
-    for symbol, addr in symbol_address_map.items():
-        if int(addr, base=16) == n:
+    for symbol, settings in TOKEN_SETTINGS.items():
+        if int(settings.address, base=16) == address_int:
             return symbol
 
     raise KeyError(f"Address = {address} does not exist in the symbol table.")

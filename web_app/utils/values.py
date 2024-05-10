@@ -9,6 +9,10 @@ load_dotenv()
 GS_BUCKET_NAME = os.environ.get("GS_BUCKET_NAME", "")
 GS_BUCKET_URL = os.environ.get("GS_BUCKET_URL", "")
 
+DEBT_USD_COLUMN_NAME = "Debt (USD)"
+USER_COLUMN_NAME = "User"
+RISK_ADJUSTED_COLLATERAL_USD_COLUMN_NAME = "Risk-adjusted collateral (USD)"
+
 
 @dataclass(frozen=True)
 class NotificationValidationValues:
