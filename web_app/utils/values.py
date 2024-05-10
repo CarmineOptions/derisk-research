@@ -1,5 +1,13 @@
+import os
 from dataclasses import dataclass
 from enum import Enum
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+GS_BUCKET_NAME = os.environ.get("GS_BUCKET_NAME", "")
+GS_BUCKET_URL = os.environ.get("GS_BUCKET_URL", "")
 
 
 @dataclass(frozen=True)
@@ -43,3 +51,9 @@ class ProtocolIDs(Enum):
     HASHSTACK: str = "Hashstack"
     NOSTRA: str = "Nostra"
     ZKLEND: str = "zkLend"
+
+
+class ProtocolIDCodeNames(Enum):
+    HASHSTACK: str = "hashstack_v1"
+    NOSTRA: str = "nostra_mainnet"
+    ZKLEND: str = "zklend"
