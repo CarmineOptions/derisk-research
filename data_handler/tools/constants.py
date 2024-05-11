@@ -7,6 +7,7 @@ class BlockchainAddresses:
     """
     This class contains the addresses of the contracts that are used
     """
+
     ZKLEND_MARKET_ADDRESSES: Set[str] = field(
         default_factory=lambda: {
             "0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05"
