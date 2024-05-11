@@ -54,3 +54,22 @@ docker-compose up -d --build
 docker-compose down
 ```
 
+## Data migrations
+In this project is using `alembic` for data migrations.
+For generating new migration use this command:
+
+```bash
+alembic revision --autogenerate -m "your message"
+```
+
+After generating new migration, you need to apply it:
+
+```bash
+alembic upgrade head
+```
+
+For downgrading migration:
+
+```bash
+alembic downgrade -1
+```
