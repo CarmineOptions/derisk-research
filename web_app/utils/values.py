@@ -57,6 +57,8 @@ class ProtocolIDCodeNames(Enum):
     ZKLEND: str = "zklend"
 
 
+
 CURRENTLY_AVAILABLE_PROTOCOLS: tuple[str, ...] = ("zklend",)
 CURRENTLY_AVAILABLE_PROTOCOLS_IDS: tuple[str, ...] = ("zkLend",)
 HEALTH_RATIO_LEVEL_ALERT_VALUE: float = 0.1
+
