@@ -36,6 +36,12 @@ DB_PASSWORD=#
 DB_HOST=db
 DB_PORT=#
 IP_INFO_TOKEN=#
+TELEGRAM_TOKEN= # token telegram from botfather
+GS_BUCKET_NAME=#
+GS_BUCKET_URL=#
+REDIS_HOST=redis
+REDIS_PORT=6379
+CHECK_DATA_CHANGES_PERIOD=# in seconds
 ```
 
 ### 5. Build your docker containers
