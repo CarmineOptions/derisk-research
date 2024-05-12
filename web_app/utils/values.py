@@ -16,19 +16,13 @@ RISK_ADJUSTED_COLLATERAL_USD_COLUMN_NAME = "Risk-adjusted collateral (USD)"
 
 @dataclass(frozen=True)
 class NotificationValidationValues:
-    telegram_id_pattern: str = r"^\d{9,10}$"
     telegram_id_min_length: int = 9
-    telegram_id_max_length: int = 10
     health_ratio_level_min_value: float = 0
     health_ratio_level_max_value: float = 10
-    unique_fields: tuple[str, ...] = (
-        "email",
-        "telegram_id",
-    )
+    unique_fields: tuple[str, ...] = ("email",)
     validation_fields: tuple[str, ...] = (
         "email",
         "wallet_id",
-        "telegram_id",
         "ip_address",
     )
 
@@ -61,3 +55,8 @@ class ProtocolIDCodeNames(Enum):
     HASHSTACK: str = "hashstack_v1"
     NOSTRA: str = "nostra_mainnet"
     ZKLEND: str = "zklend"
+
+
+CURRENTLY_AVAILABLE_PROTOCOLS: tuple[str, ...] = ("zklend",)
+CURRENTLY_AVAILABLE_PROTOCOLS_IDS: tuple[str, ...] = ("zkLend",)
+HEALTH_RATIO_LEVEL_ALERT_VALUE: float = 0.1
