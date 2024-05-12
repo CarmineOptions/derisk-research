@@ -35,7 +35,7 @@ class NotificationData(Base):
     created_at = Column(DateTime, default=datetime.now())
     email = Column(String, index=True, unique=True, nullable=False)
     wallet_id = Column(String, nullable=False)
-    telegram_id = Column(String, unique=True, nullable=False)
+    telegram_id = Column(String, unique=False, nullable=False)
     ip_address = Column(IPAddressType, nullable=False)
     health_ratio_level = Column(Float, nullable=False)
     protocol_id = Column(ChoiceType(ProtocolIDs, impl=String()), nullable=False)

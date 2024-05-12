@@ -22,11 +22,8 @@ class NotificationForm(BaseModel):
     email: EmailStr = Form(..., nullable=False)
     wallet_id: str = Form(..., nullable=False)
     telegram_id: str = Form(
-        ...,
+        "",
         nullable=False,
-        min_length=NotificationValidationValues.telegram_id_min_length,
-        max_length=NotificationValidationValues.telegram_id_max_length,
-        pattern=NotificationValidationValues.telegram_id_pattern,
     )
     ip_address: IPvAnyAddress = Field("", nullable=False)
     health_ratio_level: float = Field(
@@ -42,7 +39,7 @@ class NotificationForm(BaseModel):
         cls,
         email: EmailStr = Form(...),
         wallet_id: str = Form(...),
-        telegram_id: str = Form(...),
+        telegram_id: str = Form(""),
         health_ratio_level: float = Form(...),
         protocol_id: ProtocolIDs = Form(...),
     ) -> "NotificationForm":
