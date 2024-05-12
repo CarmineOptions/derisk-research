@@ -11,6 +11,7 @@ from database.schemas import NotificationForm
 from utils.fucntools import get_client_ip
 from utils.values import (CreateSubscriptionValues,
                           NotificationValidationValues, ProtocolIDs)
+from telegram import get_subscription_link
 
 Base.metadata.create_all(bind=engine)
 
@@ -91,10 +92,13 @@ async def subscribe_to_notification(
                 "status_code": status.HTTP_400_BAD_REQUEST,
                 "messages": list(validation_errors.values()),
                 "message_type": "error",
+                "protocol_ids": [item.value for item in ProtocolIDs],
             },
         )
 
-    connector.write_to_db(obj=subscription)
+    subscription_id = connector.write_to_db(obj=subscription)
+
+    activation_link = await get_subscription_link(ident=subscription_id)
 
     return templates.TemplateResponse(
         request=request,
@@ -103,5 +107,6 @@ async def subscribe_to_notification(
             "status_code": status.HTTP_201_CREATED,
             "messages": [CreateSubscriptionValues.create_subscription_success_message],
             "message_type": "success",
+            "activation_link": activation_link,
         },
     )
