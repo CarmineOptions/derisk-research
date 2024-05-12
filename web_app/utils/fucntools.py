@@ -1,12 +1,21 @@
+import os
+import shutil
+from threading import Thread
+from typing import Callable
+
 import dask.dataframe as dd
 import pandas as pd
 from fastapi import Request
 
-from utils.state import InterestRateModels
-from utils.values import GS_BUCKET_NAME, GS_BUCKET_URL, ProtocolIDCodeNames, USER_COLUMN_NAME, DEBT_USD_COLUMN_NAME, \
-    RISK_ADJUSTED_COLLATERAL_USD_COLUMN_NAME
-from utils.zklend import ZkLendLoanEntity, ZkLendState
+from database.crud import DBConnector
+from database.models import NotificationData
 from utils.exceptions import ProtocolExistenceError
+from utils.state import InterestRateModels
+from utils.values import (CURRENTLY_AVAILABLE_PROTOCOLS, DEBT_USD_COLUMN_NAME,
+                          GS_BUCKET_NAME, GS_BUCKET_URL,
+                          RISK_ADJUSTED_COLLATERAL_USD_COLUMN_NAME,
+                          USER_COLUMN_NAME, ProtocolIDCodeNames)
+from utils.zklend import ZkLendLoanEntity, ZkLendState
 
 
 def get_client_ip(request: Request) -> str:
@@ -26,12 +35,13 @@ def get_client_ip(request: Request) -> str:
 
 
 def download_parquet_file(
-    bucket_name: str | None = GS_BUCKET_NAME, protocol_name: str = None
+    protocol_name: str = None,
+    bucket_name: str | None = GS_BUCKET_NAME,
 ) -> None:
     """
     Downloads parquet file to local storage from Google Cloud Storage
-    :param bucket_name: Google Cloud Storage bucket name
     :param protocol_name: Protocol name
+    :param bucket_name: Google Cloud Storage bucket name
     :return: None
     """
     if protocol_name not in [item.value for item in ProtocolIDCodeNames]:
@@ -40,7 +50,32 @@ def download_parquet_file(
     data = dd.read_parquet(
         GS_BUCKET_URL.format(protocol_name=protocol_name, bucket_name=bucket_name)
     )
-    dd.to_parquet(df=data, path=f"loans/{protocol_name}_data/")
+    dd.to_parquet(df=data, path=f"utils/loans/{protocol_name}_data/")
+
+
+def delete_parquet_file(protocol_name: str = None) -> None:
+    """
+    Deletes parquet file from local storage
+    :param protocol_name: str = None
+    :return: None
+    """
+    shutil.rmtree(f"utils/loans/{protocol_name}_data/")
+
+
+def update_data(protocol_names: str = CURRENTLY_AVAILABLE_PROTOCOLS) -> None:
+    """
+    Updates loans data from Google Cloud Storage
+    :param protocol_names: str = None
+    :return: None
+    """
+    for name in protocol_names:
+        if f"{name}_data" in os.listdir("utils/loans/"):
+            delete_parquet_file(name)
+
+        os.mkdir(f"utils/loans/{name}_data/")
+
+    for protocol in CURRENTLY_AVAILABLE_PROTOCOLS:
+        download_parquet_file(protocol_name=protocol)
 
 
 def fetch_user_loans(user_id: str = None, protcol_name: str = None) -> pd.DataFrame:
@@ -51,7 +86,7 @@ def fetch_user_loans(user_id: str = None, protcol_name: str = None) -> pd.DataFr
     :return: pd.DataFrame
     """
     data = pd.read_parquet(
-        path=f"loans/{protcol_name}_data/part.0.parquet",
+        path=f"utils/loans/{protcol_name}_data/part.0.parquet",
     )
     user = data[data[USER_COLUMN_NAME] == user_id]
     return user.to_dict()
@@ -102,6 +137,24 @@ def get_risk_adjusted_collateral_usd(
     return None
 
 
+def get_all_activated_subscribers_from_db() -> list[NotificationData]:
+    """
+    Returns all activated subscribers from database
+    :return: list[NotificationData]
+    """
+    return list(DBConnector().get_all_activated_subscribers(model=NotificationData))
+
+
+def calculate_difference(a: float = None, b: float = None) -> float:
+    """
+    Calculates difference between two numbers
+    """
+    if a >= b:
+        return a - b
+    else:
+        return b - a
+
+
 def compute_health_ratio_level(user_id: str = None, protocol_name: str = None) -> float:
     """
     Computes health ratio level based on user wallet ID and protocol name
@@ -109,9 +162,6 @@ def compute_health_ratio_level(user_id: str = None, protocol_name: str = None) -
     :param protocol_name: Protocol name
     :return: float
     """
-    # TODO Downloading `.parquet` file directly inside this function is a temporary
-    #  solution that will be adjusted in upcoming PR
-    download_parquet_file(protocol_name=protocol_name)
 
     # Get only needed User from the whole file
     user_data = fetch_user_loans(user_id=user_id, protcol_name=protocol_name)
