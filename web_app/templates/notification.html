@@ -8,12 +8,20 @@
     <link rel="stylesheet" href="{{ url_for('static', path='/notification.css') }}">
 </head>
 <body>
+    <div class="alert alert-warning">
+        Currently, we update our data once every 30 minutes. Very soon, we will switch to more frequent updates.
+    </div>
     {% if messages %}
         {% for message in messages %}
             <div class="alert alert-{% if message_type == 'error' %}danger{% elif message_type == 'success' %}success{% endif %}">
                 {{ message }}
             </div>
         {% endfor %}
+    {% endif %}
+    {% if activation_link %}
+        <div class="alert alert-info">
+            Your activation link: <a href="{{activation_link}}">Click here!</a>
+        </div>
     {% endif %}
     <div class="container">
         <div class="form">
@@ -33,12 +41,6 @@
                 </div>
                 <div class="input-data">
                     <input type="text" id="wallet_id" name="wallet_id" required>
-                </div>
-                <div>
-                    <label for="telegram_id">Telegram ID:</label>
-                </div>
-                <div class="input-data">
-                    <input type="text" maxlength="10" minlength="9" id="telegram_id" name="telegram_id" required>
                 </div>
                 <div>
                     <label for="health_ratio_level">Health ratio level:</label>

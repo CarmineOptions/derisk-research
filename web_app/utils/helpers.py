@@ -6,8 +6,8 @@ from typing import Iterator, Union
 import google.cloud.storage
 import pandas as pd
 
-from utils.settings import TOKEN_SETTINGS
 from utils.exceptions import TokenValidationError
+from utils.settings import TOKEN_SETTINGS
 
 
 class TokenValues:
@@ -34,7 +34,9 @@ class TokenValues:
         :return: None
         """
         if set(token_values.keys()) != set(TOKEN_SETTINGS.keys()):
-            raise TokenValidationError("Token values keys do not match with TOKEN_SETTINGS keys")
+            raise TokenValidationError(
+                "Token values keys do not match with TOKEN_SETTINGS keys"
+            )
 
 
 MAX_ROUNDING_ERRORS: TokenValues = TokenValues(
