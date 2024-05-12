@@ -4,7 +4,7 @@ class ProtocolExistenceError(Exception):
         self.protocol = protocol
 
     def __str__(self):
-        return f"\"{self.protocol}\" is not in a valid protocol!"
+        return f'"{self.protocol}" is not in a valid protocol!'
 
 
 class TokenValidationError(Exception):
