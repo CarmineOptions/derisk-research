@@ -8,10 +8,10 @@ from database.crud import DBConnector, validate_fields
 from database.database import Base, engine, get_database
 from database.models import NotificationData
 from database.schemas import NotificationForm
+from telegram import get_subscription_link
 from utils.fucntools import get_client_ip
 from utils.values import (CreateSubscriptionValues,
                           NotificationValidationValues, ProtocolIDs)
-from telegram import get_subscription_link
 
 Base.metadata.create_all(bind=engine)
 

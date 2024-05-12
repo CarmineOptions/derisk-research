@@ -1,16 +1,8 @@
 from datetime import datetime
 from uuid import uuid4
 
-from sqlalchemy import (
-    UUID,
-    Column,
-    DateTime,
-    Float,
-    String,
-    ForeignKey,
-    Boolean,
-    MetaData,
-)
+from sqlalchemy import (UUID, Boolean, Column, DateTime, Float, ForeignKey,
+                        MetaData, String)
 from sqlalchemy.orm import DeclarativeBase, Mapped
 from sqlalchemy_utils import IPAddressType
 from sqlalchemy_utils.types.choice import ChoiceType
