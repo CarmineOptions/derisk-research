@@ -32,8 +32,8 @@ class ZkLendLoanStateComputation(LoanStateComputationBase):
         )
         return self.api_connector.get_data(
             from_address=form_address,
-            min_block_number=630000, #self.last_block,
-            max_block_number=631000, #min_block + self.PAGINATION_SIZE,
+            min_block_number=self.last_block,
+            max_block_number=min_block + self.PAGINATION_SIZE,
         )
 
     def process_data(self, data: list[dict]) -> pd.DataFrame:

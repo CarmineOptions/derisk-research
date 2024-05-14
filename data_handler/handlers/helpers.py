@@ -5,7 +5,7 @@ from typing import Iterator, Optional, Union
 import google.cloud.storage
 import pandas
 
-from data_handler.handlers.settings import TOKEN_SETTINGS
+from data_handler.handlers.settings import TOKEN_SETTINGS, PAIRS
 
 GS_BUCKET_NAME = "derisk-persistent-state"
 
@@ -108,7 +108,7 @@ def load_data(
 ) -> tuple[dict[str, pandas.DataFrame], pandas.DataFrame, pandas.DataFrame]:
     directory = f"{protocol.lower().replace(' ', '_')}_data"
     main_chart_data = {}
-    for pair in src.settings.PAIRS:
+    for pair in PAIRS:
         main_chart_data[pair] = pandas.read_parquet(
             f"gs://{GS_BUCKET_NAME}/{directory}/{pair}.parquet"
         )
