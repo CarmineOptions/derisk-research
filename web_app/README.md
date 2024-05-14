@@ -1,5 +1,12 @@
 # DeRisk Alert
 
+# How it works:
+![A diagram that ilustrates how this app works](docs/how-it-works.drawio.png)
+### `Here is a demo video how it works` [Click](https://drive.google.com/file/d/1TYwEx6PWvPerrJSfiePQzZEtbj53Yn_g/view?usp=sharing)
+
+# Database ordering:
+![A diagram that ilustrates the ordering of the DB](docs/db-ordering.png)
+
 ## Requirements
  - python3.11 
  - poetry
