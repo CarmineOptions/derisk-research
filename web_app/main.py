@@ -1,10 +1,11 @@
+import logging
+
 from fastapi import Depends, FastAPI, Request, status
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
-from __logger__ import logger
 from database.crud import DBConnector, validate_fields
 from database.database import Base, engine, get_database
 from database.models import NotificationData
@@ -13,6 +14,16 @@ from telegram import get_subscription_link
 from utils.fucntools import get_client_ip
 from utils.values import (CreateSubscriptionValues,
                           NotificationValidationValues, ProtocolIDs)
+
+logging.basicConfig(
+    filename="derisk.log",
+    filemode="a",
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+
+logger = logging.getLogger(__name__)
 
 Base.metadata.create_all(bind=engine)
 
