@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
+from __logger__ import logger
 from database.crud import DBConnector, validate_fields
 from database.database import Base, engine, get_database
 from database.models import NotificationData
@@ -33,6 +34,7 @@ async def create_subscription(request: Request):
     :param request: Request
     :return: templates.TemplateResponse
     """
+    logger.info(f"User with {get_client_ip(request)} IP is accessing the page")
     return templates.TemplateResponse(
         request=request,
         name="notification.html",
@@ -68,6 +70,9 @@ async def subscribe_to_notification(
             if key in NotificationValidationValues.validation_fields
         ]
     ):
+        logger.error(
+            f"User with {get_client_ip(request)} IP submits with a lack of all required fields"
+        )
         return templates.TemplateResponse(
             request=request,
             name="notification.html",
@@ -85,6 +90,7 @@ async def subscribe_to_notification(
     validation_errors = validate_fields(db=db, obj=subscription, model=NotificationData)
 
     if validation_errors:
+        logger.error(f"User with {get_client_ip(request)} IP submits with invalid data")
         return templates.TemplateResponse(
             request=request,
             name="notification.html",
@@ -99,7 +105,9 @@ async def subscribe_to_notification(
     subscription_id = connector.write_to_db(obj=subscription)
 
     activation_link = await get_subscription_link(ident=subscription_id)
+    logger.info(f"Activation link for user with {get_client_ip(request)} IP is sent")
 
+    logger.info(f"User with {get_client_ip(request)} IP submitted successfully")
     return templates.TemplateResponse(
         request=request,
         name="notification.html",
@@ -108,5 +116,6 @@ async def subscribe_to_notification(
             "messages": [CreateSubscriptionValues.create_subscription_success_message],
             "message_type": "success",
             "activation_link": activation_link,
+            "protocol_ids": [item.value for item in ProtocolIDs],
         },
     )
