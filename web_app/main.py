@@ -16,7 +16,7 @@ from utils.values import (CreateSubscriptionValues,
                           NotificationValidationValues, ProtocolIDs)
 
 logging.basicConfig(
-    filename="derisk.log",
+    filename=f"{__name__}.log",
     filemode="a",
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
