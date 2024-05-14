@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 class NostraMainnetStateComputation(LoanStateComputationBase):
     """
-    A class that computes the loan states for the zkLend protocol.
+    A class that computes the loan states for the Nostra Mainnet protocol.
     """
 
     PROTOCOL_TYPE = ProtocolIDs.NOSTRA_MAINNET.value
@@ -56,50 +56,29 @@ class NostraMainnetStateComputation(LoanStateComputationBase):
             method_name = events_mapping.get(row["key_name"], "") or ""
             self.process_event(nostra_mainnet_state, method_name, row)
 
-        loan_entities = nostra_mainnet_state.loan_entities
-        loan_entities_values = loan_entities.values()
-        # Create a DataFrame with the loan state
-        result_df = pd.DataFrame(
-            {
-                "protocol": [self.PROTOCOL_TYPE for _ in loan_entities.keys()],
-                "user": [user for user in loan_entities],
-                "collateral": [
-                    {
-                        token: float(amount)
-                        for token, amount in loan.collateral.values.items()
-                    }
-                    for loan in loan_entities.values()
-                ],
-                "block": [entity.extra_info.block for entity in loan_entities_values],
-                "timestamp": [
-                    entity.extra_info.timestamp for entity in loan_entities_values
-                ],
-                "debt": [
-                    {token: float(amount) for token, amount in loan.debt.values.items()}
-                    for loan in loan_entities_values
-                ],
-            }
-        )
-
+        result_df = self.get_result_df(nostra_mainnet_state.loan_entities)
         return result_df
 
     def run(self) -> None:
         """
-        Runs the loan state computation for the zkLend protocol.
+        Runs the loan state computation for the Nostra Mainnet protocol.
         """
+        retry = 0
+        max_retries = 5
         for protocol_address in self.PROTOCOL_ADDRESSES:
-            # while True:
-            data = self.get_data(protocol_address, self.last_block)
-            if not data:
+            while True:
+                data = self.get_data(protocol_address, self.last_block)
+                if not data and retry < max_retries:
+                    self.last_block += self.PAGINATION_SIZE
+                    retry += 1
+                    continue
+                elif retry == max_retries:
+                    break
+
+                processed_data = self.process_data(data)
+                self.save_data(processed_data)
                 self.last_block += self.PAGINATION_SIZE
-                continue
-            # if not data:
-            #     break
-            processed_data = self.process_data(data)
-            self.save_data(processed_data)
-            self.last_block += self.PAGINATION_SIZE
-            logger.info(f"Processed data up to block {self.last_block}")
-            break
+                logger.info(f"Processed data up to block {self.last_block}")
 
 
 def run_loan_states_computation_for_nostra_mainnet() -> None:
