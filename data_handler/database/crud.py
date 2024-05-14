@@ -1,12 +1,12 @@
 import uuid
-from typing import Optional, Type, TypeVar
+from typing import List, Optional, Type, TypeVar
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import scoped_session, sessionmaker
 
-from database.database import SQLALCHEMY_DATABASE_URL
-from database.models import Base
+from data_handler.database.database import SQLALCHEMY_DATABASE_URL
+from data_handler.database.models import Base, LoanState
 
 ModelType = TypeVar("ModelType", bound=Base)
 
@@ -121,5 +121,34 @@ class DBConnector:
                 query = query.filter(model.timestamp <= end_datetime)
 
             return query.all()
+        finally:
+            db.close()
+
+    def get_last_block(self) -> int:
+        """
+        Retrieves the last (highest) block number from the database.
+
+        :return: The highest block number as an integer. Returns 0 if no blocks are found.
+        """
+        db = self.Session()
+        try:
+            max_block = db.query(func.max(LoanState.block)).scalar()
+            return max_block or 0
+        finally:
+            db.close()
+
+    def write_batch_to_db(self, objects: List[Base]) -> None:
+        """
+        Writes a batch of objects to the database efficiently.
+        :param objects: List[Base] - A list of SQLAlchemy Base instances to write.
+        :raise SQLAlchemyError: If the database operation fails.
+        """
+        db = self.Session()
+        try:
+            db.bulk_save_objects(objects)
+            db.commit()
+        except SQLAlchemyError as e:
+            db.rollback()
+            raise e
         finally:
             db.close()
