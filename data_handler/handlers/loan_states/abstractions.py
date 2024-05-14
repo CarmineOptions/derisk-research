@@ -33,7 +33,6 @@ class LoanStateComputationBase(ABC):
         self.db_connector = DBConnector()
         self.last_block = self.db_connector.get_last_block()
 
-    @abstractmethod
     def get_data(self, form_address: str, min_block: int) -> dict:
         """
         Fetches data from the DeRisk API endpoint using the defined protocol address.
@@ -44,7 +43,14 @@ class LoanStateComputationBase(ABC):
         :param min_block: The minimum block number from which to retrieve events.
         :type min_block: int
         """
-        pass
+        logger.info(
+            f"Fetching data from {self.last_block} to {min_block + self.PAGINATION_SIZE} for address {form_address}"
+        )
+        return self.api_connector.get_data(
+            from_address=form_address,
+            min_block_number=self.last_block,
+            max_block_number=min_block + self.PAGINATION_SIZE,
+        )
 
     @abstractmethod
     def process_data(self, data: list[dict]) -> pd.DataFrame:
@@ -107,6 +113,37 @@ class LoanStateComputationBase(ABC):
                     )
         except Exception as e:
             logger.exception(f"Failed to process event due to an error: {e}")
+
+    def get_result_df(self, loan_entities: dict) -> pd.DataFrame:
+        """
+        Creates a DataFrame with the loan state based on the loan entities.
+        :param loan_entities: dictionary of loan entities
+        :return: dataframe with loan state
+        """
+        # Create a DataFrame with the loan state
+        loan_entities_values = loan_entities.values()
+        result_df = pd.DataFrame(
+            {
+                "protocol": [self.PROTOCOL_TYPE for _ in loan_entities.keys()],
+                "user": [user for user in loan_entities],
+                "collateral": [
+                    {
+                        token: float(amount)
+                        for token, amount in loan.collateral.values.items()
+                    }
+                    for loan in loan_entities.values()
+                ],
+                "block": [entity.extra_info.block for entity in loan_entities_values],
+                "timestamp": [
+                    entity.extra_info.timestamp for entity in loan_entities_values
+                ],
+                "debt": [
+                    {token: float(amount) for token, amount in loan.debt.values.items()}
+                    for loan in loan_entities_values
+                ],
+            }
+        )
+        return result_df
 
     @abstractmethod
     def run(self) -> None:
