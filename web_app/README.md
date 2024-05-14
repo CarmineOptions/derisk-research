@@ -4,6 +4,11 @@
 ![A diagram that ilustrates how this app works](docs/how-it-works.drawio.png)
 ### `Here is a demo video how it works` [Click](https://drive.google.com/file/d/1TYwEx6PWvPerrJSfiePQzZEtbj53Yn_g/view?usp=sharing)
 
+### When the `health ratio` is appropriate to the value you 
+### have set you will be notified via `Telegram`
+
+![An image that ilustrates a notification](docs/notification.png)
+
 # Database ordering:
 ![A diagram that ilustrates the ordering of the DB](docs/db-ordering.png)
 
