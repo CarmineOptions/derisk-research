@@ -71,7 +71,9 @@ class ZkLendLoanStateComputation(LoanStateComputationBase):
                     for loan in loan_entities.values()
                 ],
                 "block": [entity.extra_info.block for entity in loan_entities_values],
-                "timestamp": [entity.extra_info.timestamp for entity in loan_entities_values],
+                "timestamp": [
+                    entity.extra_info.timestamp for entity in loan_entities_values
+                ],
                 "debt": [
                     {token: float(amount) for token, amount in loan.debt.values.items()}
                     for loan in loan_entities_values
@@ -110,4 +112,7 @@ def run_loan_states_computation_for_zklend() -> None:
     computation = ZkLendLoanStateComputation()
     computation.run()
 
-    logger.info("Finished zkLend loan state computation, Time taken: %s seconds", monotonic() - start)
+    logger.info(
+        "Finished zkLend loan state computation, Time taken: %s seconds",
+        monotonic() - start,
+    )
