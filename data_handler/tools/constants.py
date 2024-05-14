@@ -1,9 +1,27 @@
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Set
 
 
+class ProtocolIDs(Enum):
+    """
+    This class contains the protocol IDs that are used in the system.
+    """
+
+    # hashstack protocols
+    HASHSTACK_V0: str = "Hashstack_v0"
+    HASHSTACK_V1: str = "Hashstack_v1"
+    HASHSTACK_V1_R: str = "Hashstack_v1_r"
+    HASHSTACK_V1_D: str = "Hashstack_v1_d"
+    # nostra protocols
+    NOSTRA_ALPHA: str = "Nostra_alpha"
+    NOSTRA_MAINNET: str = "Nostra_mainnet"
+    # zkLend protocol
+    ZKLEND: str = "zkLend"
+
+
 @dataclass(frozen=True)
-class BlockchainAddresses:
+class ProtocolAddresses:
     """
     This class contains the addresses of the contracts that are used
     """
