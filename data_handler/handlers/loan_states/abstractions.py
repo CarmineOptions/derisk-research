@@ -63,6 +63,10 @@ class LoanStateComputationBase(ABC):
         Saves the processed data to the database.
         Ex
         """
+        if df.empty:
+            logger.info("No data to save.")
+            return
+
         objects_to_write = []
         for index, item in df.iterrows():
             loan = LoanState(
