@@ -62,7 +62,6 @@ class HashtackV0StateComputation(LoanStateComputationBase):
                 logger.info(f"Processed data up to block {self.last_block}")
 
 
-
 def run_loan_states_computation_for_hashtack_v0() -> None:
     """
     Runs the HashstackV0 loan state computation.

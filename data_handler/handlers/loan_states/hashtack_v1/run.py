@@ -11,30 +11,11 @@ logger = logging.getLogger(__name__)
 
 class HashtackV1StateComputation(LoanStateComputationBase):
     """
-    A class that computes the loan states for the zkLend protocol.
+    A class that computes the loan states for the HashtackV1 protocol.
     """
 
     PROTOCOL_TYPE = ProtocolIDs.HASHSTACK_V1.value
     PROTOCOL_ADDRESSES = ProtocolAddresses().HASHSTACK_V1_D_TOKENS_ADDRESSES
-
-    def get_data(self, form_address: str, min_block: int) -> dict:
-        """
-        Fetches data from the DeRisk API endpoint using the defined protocol address.
-        This method must be implemented by subclasses to specify how data is retrieved from the API.
-
-        :param form_address: The address of the contract from which to retrieve events.
-        :type form_address: str
-        :param min_block: The minimum block number from which to retrieve events.
-        :type min_block: int
-        """
-        logger.info(
-            f"Fetching data from {self.last_block} to {min_block + self.PAGINATION_SIZE} for address {form_address}"
-        )
-        return self.api_connector.get_data(
-            from_address=form_address,
-            min_block_number=self.last_block,
-            max_block_number=min_block + self.PAGINATION_SIZE,
-        )
 
     def process_data(self, data: list[dict]) -> pd.DataFrame:
         """
@@ -61,7 +42,7 @@ class HashtackV1StateComputation(LoanStateComputationBase):
 
     def run(self) -> None:
         """
-        Runs the loan state computation for the HashstackV1 protocol.
+        Runs the loan state computation for the HashtackV1 protocol.
         """
         retry = 0
         max_retries = 5
