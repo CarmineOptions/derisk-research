@@ -2,7 +2,7 @@ from fastapi import Form
 from pydantic import BaseModel, EmailStr, Field
 from pydantic.networks import IPvAnyAddress
 
-from utils.values import NotificationValidationValues, ProtocolIDs
+from utils.values import ProtocolIDs
 
 
 class NotificationForm(BaseModel):
@@ -29,8 +29,6 @@ class NotificationForm(BaseModel):
     health_ratio_level: float = Field(
         0,
         nullable=False,
-        ge=NotificationValidationValues.health_ratio_level_min_value,
-        le=NotificationValidationValues.health_ratio_level_max_value,
     )
     protocol_id: ProtocolIDs = Field("", nullable=False)
 
