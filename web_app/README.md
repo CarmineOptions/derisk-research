@@ -15,6 +15,23 @@
 ## Requirements
  - python3.11 
  - poetry
+ - docker
+ - docker-compose
+
+## How to get Telegram Token:
+
+### 1. To get a token and create a chatbot, you need to find a bot named BotFather in the Telegram messenger.
+![An image that shows how to find bot father in telegram](docs/find-bot-father.jpg)
+
+### 2. In the BotFather bot, you need to write the command `/newbot`. After that, BotFather will prompt you to enter:
+- the name of your bot that users will see;
+- uri of the bot, i.e. the link to the bot that will be added to the link https://t.me/{youruri}.
+![An image that shows how to create a new bot](docs/newbot-botfather.jpg)
+
+### 3. After the data is entered and it has passed validation, BotFather will respond with a message that will contain the API token of the created bot.
+![An image that shows how to get a created token](docs/get-token.jpg)
+
+### 4. Done! At this moment, the bot has already been created, and it is possible to subscribe to it by finding it in Telegram search or by following the link. 
 
 # Setup
 
