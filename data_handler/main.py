@@ -5,7 +5,7 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.middleware import SlowAPIMiddleware
 
-from database.shemas import LoanStateResponse
+from database.schemas import LoanStateResponse
 from database.models import LoanState
 from database.database import Base, engine, get_database
 
