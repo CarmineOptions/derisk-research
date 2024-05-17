@@ -45,10 +45,16 @@ class HashtackV0StateComputation(LoanStateComputationBase):
         Runs the loan state computation for the HashstackV0 protocol.
         """
         retry = 0
-        max_retries = 5
+        max_retries = float("inf")  # FIXME - This should be a constant
+        default_last_block = self.last_block
         for protocol_address in self.PROTOCOL_ADDRESSES:
+            self.last_block = default_last_block
             while True:
                 data = self.get_data(protocol_address, self.last_block)
+                if data:
+                    print()
+                if not data: # FIXME - remove it
+                    logger.info(f"No data found for address {protocol_address}: {self.last_block}")
                 if not data and retry < max_retries:
                     self.last_block += self.PAGINATION_SIZE
                     retry += 1
@@ -62,7 +68,7 @@ class HashtackV0StateComputation(LoanStateComputationBase):
                 logger.info(f"Processed data up to block {self.last_block}")
 
 
-def run_loan_states_computation_for_hashtack_v0() -> None:
+def run_loan_states_computation_for_hashstack_v0() -> None:
     """
     Runs the HashstackV0 loan state computation.
     """
@@ -80,4 +86,4 @@ def run_loan_states_computation_for_hashtack_v0() -> None:
 
 
 if __name__ == "__main__":
-    run_loan_states_computation_for_hashtack_v0()
+    run_loan_states_computation_for_hashstack_v0()

@@ -454,9 +454,9 @@ class HashstackV0State(State):
         original_collateral = Portfolio()
         original_collateral.values[original_collateral_token] = original_collateral_face_amount
         # add additional info block and timestamp
+        # FIXME test it with Lukas
         self.loan_entities[loan_id].extra_info.block = event["block_number"]
         self.loan_entities[loan_id].extra_info.timestamp = event["timestamp"]
-
         self.loan_entities[loan_id].original_collateral = original_collateral
         self.loan_entities[loan_id].collateral.values = {
             token: (

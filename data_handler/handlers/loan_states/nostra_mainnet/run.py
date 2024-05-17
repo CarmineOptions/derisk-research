@@ -45,7 +45,7 @@ class NostraMainnetStateComputation(LoanStateComputationBase):
         Runs the loan state computation for the Nostra Mainnet protocol.
         """
         retry = 0
-        max_retries = 5
+        max_retries = float("inf")
         for protocol_address in self.PROTOCOL_ADDRESSES:
             while True:
                 data = self.get_data(protocol_address, self.last_block)

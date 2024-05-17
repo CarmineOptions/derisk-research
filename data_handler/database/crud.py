@@ -7,6 +7,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 
 from data_handler.database.database import SQLALCHEMY_DATABASE_URL
 from data_handler.database.models import Base, LoanState
+from tools.constants import ProtocolIDs
 
 ModelType = TypeVar("ModelType", bound=Base)
 
@@ -124,16 +125,18 @@ class DBConnector:
         finally:
             db.close()
 
-    def get_last_block(self) -> int:
+    def get_last_block(self, protocol_id: ProtocolIDs) -> int:
         """
-        Retrieves the last (highest) block number from the database.
+        Retrieves the last (highest) block number from the database filtered by protocol_id.
 
+        :param protocol_id: ProtocolIDs - The protocol ID to filter by.
         :return: The highest block number as an integer. Returns 0 if no blocks are found.
         """
         db = self.Session()
         try:
-            max_block = db.query(func.max(LoanState.block)).scalar()
-            return max_block or 0
+            max_block = db.query(func.max(LoanState.block)).filter(LoanState.protocol_id == protocol_id).scalar()
+            #return max_block or 0
+            return 0
         finally:
             db.close()
 

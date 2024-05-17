@@ -115,3 +115,11 @@ class ProtocolAddresses:
             "0x0292be6baee291a148006db984f200dbdb34b12fb2136c70bfe88649c12d934b",
         }
     )
+
+
+@dataclass
+class FirstConfig:
+    hashtack_v0_last_block = 21000 # old data which raised errors
+    hashtack_v1_last_block = 268068 # doesn't have event to handle
+    # Existing events: (dict_keys(['new_loan', 'collateral_added', 'loan_spent', 'loan_transferred', 'loan_repaid']) what we have
+    #  Result of data: `updated_debt_token_price`

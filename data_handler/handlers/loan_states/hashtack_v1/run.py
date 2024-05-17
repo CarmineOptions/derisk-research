@@ -15,7 +15,7 @@ class HashtackV1StateComputation(LoanStateComputationBase):
     """
 
     PROTOCOL_TYPE = ProtocolIDs.HASHSTACK_V1.value
-    PROTOCOL_ADDRESSES = ProtocolAddresses().HASHSTACK_V1_D_TOKENS_ADDRESSES
+    PROTOCOL_ADDRESSES = ProtocolAddresses().HASHSTACK_V1_R_TOKENS | ProtocolAddresses().HASHSTACK_V1_D_TOKENS
 
     def process_data(self, data: list[dict]) -> pd.DataFrame:
         """
@@ -45,10 +45,16 @@ class HashtackV1StateComputation(LoanStateComputationBase):
         Runs the loan state computation for the HashtackV1 protocol.
         """
         retry = 0
-        max_retries = 5
+        max_retries = float("inf")  # FIXME - This should be a constant
+        default_last_block = 268068 #self.last_block
         for protocol_address in self.PROTOCOL_ADDRESSES:
+            self.last_block = default_last_block
             while True:
                 data = self.get_data(protocol_address, self.last_block)
+                if data:
+                    print()
+                if not data:  # FIXME - remove it
+                    logger.info(f"No data found for address {protocol_address}: {self.last_block}")
                 if not data and retry < max_retries:
                     self.last_block += self.PAGINATION_SIZE
                     retry += 1
@@ -62,22 +68,22 @@ class HashtackV1StateComputation(LoanStateComputationBase):
                 logger.info(f"Processed data up to block {self.last_block}")
 
 
-def run_loan_states_computation_for_hashtack_v1() -> None:
+def run_loan_states_computation_for_hashstack_v1() -> None:
     """
-    Runs the HashstackV1 loan state computation.
+    Runs the Hashstack loan state computation.
     """
     start = monotonic()
     logging.basicConfig(level=logging.INFO)
 
-    logger.info("Starting Hashtack v1 loan state computation")
+    logger.info("Starting Hashstack v1 loan state computation")
     computation = HashtackV1StateComputation()
     computation.run()
 
     logger.info(
-        "Finished Hashtack v1 loan state computation, Time taken: %s seconds",
+        "Finished Hashstack v1 loan state computation, Time taken: %s seconds",
         monotonic() - start,
     )
 
 
 if __name__ == "__main__":
-    run_loan_states_computation_for_hashtack_v1()
+    run_loan_states_computation_for_hashstack_v1()

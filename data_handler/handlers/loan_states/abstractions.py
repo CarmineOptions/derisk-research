@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, Optional
 
 import pandas as pd
-from shared.constans import ProtocolIDs
+from tools.constants import ProtocolIDs
 
 from data_handler.database.crud import DBConnector
 from data_handler.database.models import LoanState
@@ -31,7 +31,7 @@ class LoanStateComputationBase(ABC):
         """
         self.api_connector = DeRiskAPIConnector()
         self.db_connector = DBConnector()
-        self.last_block = self.db_connector.get_last_block()
+        self.last_block = self.db_connector.get_last_block(self.PROTOCOL_TYPE)
 
     def get_data(self, form_address: str, min_block: int) -> dict:
         """

@@ -66,7 +66,7 @@ class HashstackV1SpecificTokenSettings:
 
 
 @dataclasses.dataclass
-class TokenSettings(HashstackV1SpecificTokenSettings, TokenSettings):
+class CustomTokenSettings(HashstackV1SpecificTokenSettings, TokenSettings):
     pass
 
 
@@ -147,7 +147,7 @@ HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS: dict[str, TokenSettings] = {
         address="0x025b392609604c75d62dde3d6ae98e124a31b49123b8366d7ce0066ccb94f696",
     ), 
 }
-HASHSTACK_V1_SPECIFIC_TOKEN_SETTINGS: dict[str, HashstackV1SpecificTokenSettings] = {
+HASHSTACK_V1_SPECIFIC_TOKEN_SETTINGS: dict[str, TokenSettings] = {
     "ETH": HashstackV1SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
     "wBTC": HashstackV1SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
     "USDC": HashstackV1SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
@@ -229,8 +229,8 @@ HASHSTACK_V1_SPECIFIC_TOKEN_SETTINGS: dict[str, HashstackV1SpecificTokenSettings
         debt_factor=decimal.Decimal("1"),
     ),
 }
-TOKEN_SETTINGS: dict[str, TokenSettings] = {
-    token: TokenSettings(
+TOKEN_SETTINGS: dict[str, CustomTokenSettings] = {
+    token: CustomTokenSettings(
         symbol=token_settings.symbol,
         decimal_factor=token_settings.decimal_factor,
         address=token_settings.address,
@@ -349,7 +349,7 @@ class HashstackV1LoanEntity(LoanEntity):
 
     def compute_debt_to_be_liquidated(
         self,
-        debt_interest_rate_models: Optional[nterestRateModels] = None,
+        debt_interest_rate_models: Optional[InterestRateModels] = None,
         prices: Optional[TokenValues] = None,
         debt_usd: Optional[decimal.Decimal] = None,
     ) -> decimal.Decimal:
@@ -412,6 +412,10 @@ class HashstackV1State(State):
         original_collateral = HashstackV1Portfolio()
         original_collateral.values[original_collateral_token] = original_collateral_face_amount
         self.loan_entities[loan_id].original_collateral = original_collateral
+        # add additional info block and timestamp
+        self.loan_entities[loan_id].extra_info.block = event["block_number"]
+        self.loan_entities[loan_id].extra_info.timestamp = event["timestamp"]
+
         borrowed_collateral = HashstackV1Portfolio()
         borrowed_collateral.values[borrowed_collateral_token] = borrowed_collateral_face_amount
         self.loan_entities[loan_id].borrowed_collateral = borrowed_collateral
@@ -506,6 +510,10 @@ class HashstackV1State(State):
         # Based on the documentation, it seems that it's only possible to spend the whole amount.
         assert self.loan_entities[old_loan_id].debt.values == new_debt.values
         self.loan_entities[new_loan_id].debt = new_debt
+        # add additional info block and timestamp
+        self.loan_entities[new_loan_id].extra_info.block = event["block_number"]
+        self.loan_entities[new_loan_id].extra_info.timestamp = event["timestamp"]
+
         if self.loan_entities[new_loan_id].user == self.verbose_user:
             logging.info(
                 'In block number = {}, loan was swapped, resulting in debt of face amount = {} of token = {} and '
@@ -527,6 +535,10 @@ class HashstackV1State(State):
         assert self.loan_entities[loan_id].user == old_user
         new_user = event["data"][2]
         self.loan_entities[loan_id].user = new_user
+        # add additional info block and timestamp
+        self.loan_entities[loan_id].extra_info.block = event["block_number"]
+        self.loan_entities[loan_id].extra_info.timestamp = event["timestamp"]
+
         if self.verbose_user in {old_user, self.loan_entities[loan_id].user}:
             logging.info(
                 'In block number = {}, loan was transferred from user = {} to user = {}.'.format(
@@ -573,6 +585,10 @@ class HashstackV1State(State):
         new_borrowed_collateral.values[new_borrowed_collateral_token] = new_borrowed_collateral_face_amount
         self.loan_entities[new_loan_id].original_collateral = new_original_collateral
         self.loan_entities[new_loan_id].borrowed_collateral = new_borrowed_collateral
+        # add additional info block and timestamp
+        self.loan_entities[new_loan_id].extra_info.block = event["block_number"]
+        self.loan_entities[new_loan_id].extra_info.timestamp = event["timestamp"]
+
         self.loan_entities[new_loan_id].collateral.values = {
             token: (
                 self.loan_entities[new_loan_id].original_collateral.values[token]
@@ -583,6 +599,10 @@ class HashstackV1State(State):
         new_debt = HashstackV1Portfolio()
         new_debt.values[new_debt_token] = new_debt_face_amount
         self.loan_entities[new_loan_id].debt = new_debt
+        # add additional info block and timestamp
+        self.loan_entities[new_loan_id].extra_info.block = event["block_number"]
+        self.loan_entities[new_loan_id].extra_info.timestamp = event["timestamp"]
+
         if self.loan_entities[new_loan_id].user == self.verbose_user:
             logging.info(
                 'In block number = {}, loan was repaid, resulting in debt of face amount = {} of token = {} and '

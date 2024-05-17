@@ -45,10 +45,12 @@ class NostraAlphaStateComputation(LoanStateComputationBase):
         Runs the loan state computation for the NOSTRA_ALPHA protocol.
         """
         retry = 0
-        max_retries = 5
+        max_retries = float("inf")
         for protocol_address in self.PROTOCOL_ADDRESSES:
             while True:
                 data = self.get_data(protocol_address, self.last_block)
+                if not data:
+                    logger.info(f"No data found for address {protocol_address}: {self.last_block}")
                 if not data and retry < max_retries:
                     self.last_block += self.PAGINATION_SIZE
                     retry += 1
