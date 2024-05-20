@@ -1,22 +1,28 @@
+import os
 from dataclasses import dataclass
 from enum import Enum
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+GS_BUCKET_NAME = os.environ.get("GS_BUCKET_NAME", "")
+GS_BUCKET_URL = os.environ.get("GS_BUCKET_URL", "")
+
+DEBT_USD_COLUMN_NAME = "Debt (USD)"
+USER_COLUMN_NAME = "User"
+RISK_ADJUSTED_COLLATERAL_USD_COLUMN_NAME = "Risk-adjusted collateral (USD)"
 
 
 @dataclass(frozen=True)
 class NotificationValidationValues:
-    telegram_id_pattern: str = r"^\d{9,10}$"
     telegram_id_min_length: int = 9
-    telegram_id_max_length: int = 10
     health_ratio_level_min_value: float = 0
     health_ratio_level_max_value: float = 10
-    unique_fields: tuple[str, ...] = (
-        "email",
-        "telegram_id",
-    )
+    unique_fields: tuple[str, ...] = ("email",)
     validation_fields: tuple[str, ...] = (
         "email",
         "wallet_id",
-        "telegram_id",
         "ip_address",
     )
 
@@ -43,3 +49,16 @@ class ProtocolIDs(Enum):
     HASHSTACK: str = "Hashstack"
     NOSTRA: str = "Nostra"
     ZKLEND: str = "zkLend"
+
+
+class ProtocolIDCodeNames(Enum):
+    HASHSTACK: str = "hashstack_v1"
+    NOSTRA: str = "nostra_mainnet"
+    ZKLEND: str = "zklend"
+
+
+
+CURRENTLY_AVAILABLE_PROTOCOLS: tuple[str, ...] = ("zklend",)
+CURRENTLY_AVAILABLE_PROTOCOLS_IDS: tuple[str, ...] = ("zkLend",)
+HEALTH_RATIO_LEVEL_ALERT_VALUE: float = 0.1
+

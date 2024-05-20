@@ -1,13 +1,14 @@
 import uuid
 from typing import Type, TypeVar
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, scoped_session, sessionmaker
 
 from database.database import SQLALCHEMY_DATABASE_URL
 from database.models import Base
-from utils.values import NotificationValidationValues
+from utils.values import (CURRENTLY_AVAILABLE_PROTOCOLS_IDS,
+                          NotificationValidationValues)
 
 ModelType = TypeVar("ModelType", bound=Base)
 
@@ -76,12 +77,12 @@ class DBConnector:
         self.session_factory = sessionmaker(bind=self.engine)
         self.Session = scoped_session(self.session_factory)
 
-    def write_to_db(self, obj: Base = None) -> None:
+    def write_to_db(self, obj: Base = None) -> str:
         """
         Writes an object to the database. Rolls back transaction if there's an error.
         :param obj: Base = None
         :raise SQLAlchemyError: If the database operation fails.
-        :return: None
+        :return: str
         """
         db = self.Session()
         try:
@@ -93,7 +94,10 @@ class DBConnector:
             raise e
 
         finally:
+            object_id = getattr(obj, "id", "")
             db.close()
+
+            return object_id
 
     def get_object(
         self, model: Type[ModelType] = None, obj_id: uuid = None
@@ -107,6 +111,23 @@ class DBConnector:
         db = self.Session()
         try:
             return db.query(model).filter(model.id == obj_id).first()
+        finally:
+            db.close()
+
+    def get_all_activated_subscribers(
+        self, model: Type[Base] = None
+    ) -> ModelType | None:
+        db = self.Session()
+        try:
+            return (
+                db.query(model)
+                .filter(
+                    func.char_length(model.telegram_id)
+                    >= NotificationValidationValues.telegram_id_min_length,
+                    model.protocol_id in CURRENTLY_AVAILABLE_PROTOCOLS_IDS,
+                )
+                .all()
+            )
         finally:
             db.close()
 
