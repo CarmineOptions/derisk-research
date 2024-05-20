@@ -123,3 +123,26 @@ class FirstConfig:
     hashtack_v1_last_block = 268068 # doesn't have event to handle
     # Existing events: (dict_keys(['new_loan', 'collateral_added', 'loan_spent', 'loan_transferred', 'loan_repaid']) what we have
     #  Result of data: `updated_debt_token_price`
+    nostra_alpha_last_block = 0
+    nostra_mainnet_last_block = 0
+    zkLend_last_block = 630000
+
+    @classmethod
+    def get_last_block_by_protocol_id(cls, protocol_id: str) -> int:
+        """
+        Returns the last block processed for the given protocol ID.
+        :param protocol_id: Protocol ID
+        :return: Value of the last block processed for the given protocol ID
+        """
+        if protocol_id == ProtocolIDs.HASHSTACK_V0.value:
+            return cls.hashtack_v0_last_block
+        elif protocol_id == ProtocolIDs.HASHSTACK_V1.value:
+            return cls.hashtack_v1_last_block
+        elif protocol_id == ProtocolIDs.NOSTRA_ALPHA.value:
+            return cls.nostra_alpha_last_block
+        elif protocol_id == ProtocolIDs.NOSTRA_MAINNET.value:
+            return cls.nostra_mainnet_last_block
+        elif protocol_id == ProtocolIDs.ZKLEND.value:
+            return cls.zkLend_last_block
+        else:
+            return 0
