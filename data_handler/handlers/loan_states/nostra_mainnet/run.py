@@ -44,12 +44,18 @@ class NostraMainnetStateComputation(LoanStateComputationBase):
         """
         Runs the loan state computation for the Nostra Mainnet protocol.
         """
-        retry = 0
-        max_retries = float("inf")
+        max_retries = 5
+        default_last_block = self.last_block
         for protocol_address in self.PROTOCOL_ADDRESSES:
-            while True:
+            retry = 0
+            self.last_block = default_last_block
+            for _ in range(max_retries):
                 data = self.get_data(protocol_address, self.last_block)
-                if not data and retry < max_retries:
+
+                if not data:
+                    logger.info(f"No data found for address {protocol_address}: {self.last_block}")
+
+                if not data:
                     self.last_block += self.PAGINATION_SIZE
                     retry += 1
                     continue
