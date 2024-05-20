@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, scoped_session, sessionmaker
 from database.database import SQLALCHEMY_DATABASE_URL
 from database.models import Base
 from utils.values import (CURRENTLY_AVAILABLE_PROTOCOLS_IDS,
+                          CreateSubscriptionValues,
                           NotificationValidationValues)
 
 ModelType = TypeVar("ModelType", bound=Base)
@@ -33,6 +34,33 @@ def _exists_in_db(
     )
 
 
+def health_ratio_is_valid(health_ratio: float) -> bool:
+    """
+    Checks if the given health ratio level value is valid
+    :param health_ratio: float
+    :return: bool
+    """
+    return (
+        NotificationValidationValues.health_ratio_level_min_value
+        <= health_ratio
+        <= NotificationValidationValues.health_ratio_level_max_value
+    )
+
+
+def validate_health_ratio(health_ratio: float = None) -> dict[str, str] | None:
+    """
+    Validates the health ratio level
+    :param health_ratio: float
+    :return: dict[str, str]
+    """
+    if not health_ratio_is_valid(health_ratio):
+        return {
+            "health_ratio_level": CreateSubscriptionValues.health_ratio_level_validation_message
+        }
+
+    return None
+
+
 def validate_fields(
     db: Session = None, obj: ModelType = None, model: Type[ModelType] = None
 ) -> dict:
@@ -52,6 +80,9 @@ def validate_fields(
             error_validation_dict.update(
                 {f"{attr}": f"Current {field_name} is already taken"}
             )
+
+    if health_ratio_validation_message := validate_health_ratio(obj.health_ratio_level):
+        error_validation_dict.update(health_ratio_validation_message)
 
     return error_validation_dict
 
