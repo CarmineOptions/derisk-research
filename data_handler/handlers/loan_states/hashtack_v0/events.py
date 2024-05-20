@@ -239,10 +239,6 @@ class HashstackV0State(State):
         original_collateral_face_amount = decimal.Decimal(str(int(event["data"][3], base=16)))
         original_collateral = Portfolio()
         original_collateral.values[original_collateral_token] = original_collateral_face_amount
-        # add additional info block and timestamp
-        self.loan_entities[loan_id].extra_info.block = event["block_number"]
-        self.loan_entities[loan_id].extra_info.timestamp = event["timestamp"]
-
         self.loan_entities[loan_id].original_collateral = original_collateral
         self.loan_entities[loan_id].collateral.values = {
             token: (
@@ -251,6 +247,9 @@ class HashstackV0State(State):
             )
             for token in TOKEN_SETTINGS
         }
+        # add additional info block and timestamp
+        self.loan_entities[loan_id].extra_info.block = event["block_number"]
+        self.loan_entities[loan_id].extra_info.timestamp = event["timestamp"]
         if self.loan_entities[loan_id].user == self.verbose_user:
             logging.info(
                 'In block number = {}, collateral was added, resulting in collateral of face amount = {} of token = '
@@ -271,10 +270,9 @@ class HashstackV0State(State):
         original_collateral_face_amount = decimal.Decimal(str(int(event["data"][3], base=16)))
         original_collateral = Portfolio()
         original_collateral.values[original_collateral_token] = original_collateral_face_amount
-        # add additional info block and timestamp
+        #  add additional info block and timestamp
         self.loan_entities[loan_id].extra_info.block = event["block_number"]
         self.loan_entities[loan_id].extra_info.timestamp = event["timestamp"]
-
         self.loan_entities[loan_id].original_collateral = original_collateral
         self.loan_entities[loan_id].collateral.values = {
             token: (
@@ -301,7 +299,16 @@ class HashstackV0State(State):
         loan_id = int(event["data"][0], base = 16)
         user = event["data"][1]
         # TODO: Is this assert needed?
-        assert self.loan_entities[loan_id].user == user
+        try:
+            if self.loan_entities.get(loan_id) and self.loan_entities[loan_id].user != user:
+                logging.error(
+                    'In block number = {}, loan was withdrawn, but the user is different from the one in the loan entity.'
+                    .format(event["block_number"])
+                )
+                return
+        except TypeError:
+            print()
+
 
         # add additional info block and timestamp
         self.loan_entities[loan_id].extra_info.block = event["block_number"]
@@ -314,9 +321,6 @@ class HashstackV0State(State):
 
         borrowed_collateral = Portfolio()
         borrowed_collateral.values[borrowed_collateral_token] = borrowed_collateral_face_amount
-        # add additional info block and timestamp
-        self.loan_entities[user].extra_info.block = event["block_number"]
-        self.loan_entities[user].extra_info.timestamp = event["timestamp"]
         self.loan_entities[loan_id].borrowed_collateral = borrowed_collateral
         self.loan_entities[loan_id].collateral.values = {
             token: (
@@ -397,7 +401,13 @@ class HashstackV0State(State):
         # Example: https://starkscan.co/event/0x00ad0b6b00ce68a1d7f5b79cd550d7f4a15b1708b632b88985a4f6faeb42d5b1_7.
         old_loan_id = int(event["data"][0], base = 16)
         old_user = event["data"][1]
-        assert self.loan_entities[old_loan_id].user == old_user
+        if self.loan_entities.get(old_loan_id) and self.loan_entities[old_loan_id].user != old_user:
+            logging.error(
+                'In block number = {}, loan was swapped, but the user is different from the one in the loan entity.'
+                .format(event["block_number"])
+            )
+            return
+
         new_loan_id = int(event["data"][14], base=16)
         new_user = event["data"][15]
         # TODO: Does this always have to hold?
@@ -427,7 +437,11 @@ class HashstackV0State(State):
         new_debt = Portfolio()
         new_debt.values[new_debt_token] = new_debt_face_amount
         # Based on the documentation, it seems that it's only possible to swap the whole amount.
-        assert self.loan_entities[old_loan_id].debt.values == new_debt.values
+        if self.loan_entities[old_loan_id].debt.values == new_debt.values:
+            logging.error(
+                'In block number = {}, loan was swapped, but the debt stayed the same.'.format(event["block_number"])
+            )
+            return
         self.loan_entities[new_loan_id].debt = new_debt
         self.loan_entities[new_loan_id].debt_category = new_debt_category
         if self.loan_entities[new_loan_id].user == self.verbose_user:
@@ -453,10 +467,6 @@ class HashstackV0State(State):
         original_collateral_face_amount = decimal.Decimal(str(int(event["data"][3], base=16)))
         original_collateral = Portfolio()
         original_collateral.values[original_collateral_token] = original_collateral_face_amount
-        # add additional info block and timestamp
-        # FIXME test it with Lukas
-        self.loan_entities[loan_id].extra_info.block = event["block_number"]
-        self.loan_entities[loan_id].extra_info.timestamp = event["timestamp"]
         self.loan_entities[loan_id].original_collateral = original_collateral
         self.loan_entities[loan_id].collateral.values = {
             token: (
@@ -465,6 +475,9 @@ class HashstackV0State(State):
             )
             for token in TOKEN_SETTINGS
         }
+        # add additional info block and timestamp
+        self.loan_entities[loan_id].extra_info.block = event["block_number"]
+        self.loan_entities[loan_id].extra_info.timestamp = event["timestamp"]
         if self.loan_entities[loan_id].user == self.verbose_user:
             logging.info(
                 'In block number = {}, loan interest was deducted, resulting in collateral of face amount = {} of '
