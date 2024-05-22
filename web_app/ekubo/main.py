@@ -2,6 +2,8 @@ from decimal import Decimal, getcontext
 import pandas as pd
 from dataclasses import dataclass
 from web_app.ekubo.api_connector import EkuboAPIConnector
+from web_app.database.crud import DBConnector
+
 
 getcontext().prec = 18
 
