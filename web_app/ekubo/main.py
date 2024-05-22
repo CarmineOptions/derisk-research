@@ -2,6 +2,9 @@ from decimal import Decimal, getcontext
 import pandas as pd
 from dataclasses import dataclass
 from web_app.ekubo.api_connector import EkuboAPIConnector
+from web_app.database.crud import DBConnector
+from web_app.database.models import OrderBookModel
+
 
 getcontext().prec = 18
 
@@ -40,11 +43,11 @@ TOKEN_MAPPING = {
         name="ZEND", decimals=18
     ),
     # FIXME: Placeholder address
-    "0x0000000000000000000000000000000000000000000000000000000000000002": TokenConfig(
+    "0x07e2c010c0b381f347926d5a203da0335ef17aefee75a89292ef2b0f94924864": TokenConfig(
         name="wstETH", decimals=18
     ),
     # FIXME: Placeholder address
-    "0x0000000000000000000000000000000000000000000000000000000000000003": TokenConfig(
+    "0x4c4fb1ab068f6039d5780c68dd0fa2f8742cceb3426d19667778ca7f3518a9": TokenConfig(
         name="LORDS", decimals=18
     ),
 }
@@ -91,7 +94,8 @@ class EkuboOrderBook:
                 liquidity_data["data"], current_price, sqrt_ratio
             )
 
-    def calculate_price_range(self, current_price: Decimal) -> tuple:
+    @staticmethod
+    def calculate_price_range(current_price: Decimal) -> tuple:
         """
         Calculate the minimum and maximum price based on the current price.
         :param current_price: Current price of the pair.
@@ -107,40 +111,18 @@ class EkuboOrderBook:
         for data in liquidity_data:
             tick = Decimal(data["tick"])
             tick_price = self.tick_to_price(tick)
-            effective_price = current_price + tick_price
-
-            if min_price <= effective_price <= max_price:
+            if min_price <= tick_price <= max_price:
                 liquidity_delta_diff = Decimal(data["net_liquidity_delta_diff"])
-
                 self.total_liquidity += liquidity_delta_diff
-
-                if tick > 0:
-                    self.asks.append(
-                        (effective_price, liquidity_delta_diff * sqrt_ratio)
-                    )
+                if tick_price > current_price:
+                    self.asks.append((tick_price, self.total_liquidity / sqrt_ratio))
                 else:
-                    self.bids.append(
-                        (effective_price, liquidity_delta_diff * sqrt_ratio)
-                    )
+                    self.bids.append((tick_price, self.total_liquidity / sqrt_ratio))
 
     def tick_to_price(self, tick: Decimal) -> Decimal:
-        """
-        Convert a tick to the corresponding price using the Uniswap V3 formula.
-
-        :param tick: Decimal - The tick value to convert to a price.
-        :return: Decimal - The price corresponding to the given tick.
-        """
-        # Calculate the price from the tick using the Uniswap V3 formula
-        multiply_factor = self.token_b_decimal - self.token_a_decimal
-        adjustment_factor = Decimal("10") ** Decimal(multiply_factor)
-        tick_value = Decimal("1.0001") ** (tick * adjustment_factor)
-        return tick_value
-
-    # TODO alternative to calculate price from tick
-    # def tick_to_price(self, tick: int, sqrt_ratio_test) -> Decimal:
-    #     sqrt_ratio = (Decimal('1.000001').sqrt() ** tick) * (Decimal(2) ** 128)
-    #     price = sqrt_ratio ** 2 / (Decimal(2) ** 256)
-    #     return price
+        sqrt_ratio = (Decimal('1.000001').sqrt() ** tick) * (Decimal(2) ** 128)
+        price = ((sqrt_ratio / (Decimal(2) ** 128)) ** 2) * 10 ** (self.token_a_decimal - self.token_b_decimal)
+        return price
 
     def hex_to_decimal(self, hex_str: str) -> Decimal:
         """
@@ -158,8 +140,8 @@ class EkuboOrderBook:
             "timestamp": self.timestamp,
             "block": self.block,
             "dex": self.dex,
-            "asks": self.asks,
-            "bids": self.bids,
+            "asks": sorted(self.asks, key=lambda x: x[0]),
+            "bids": sorted(self.bids, key=lambda x: x[0]),
         }
 
 
@@ -171,8 +153,12 @@ if __name__ == "__main__":
     token_b = (
         "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"  # USDC
     )
+    # db_connector = DBConnector()
 
     pool_states = EkuboAPIConnector().get_pools()
     order_book = EkuboOrderBook(token_a, token_b, "Ekubo")
     order_book.fetch_price_and_liquidity()
-    print(order_book.get_order_book(), "\n")
+    # Write to db
+    # order_book_obj = OrderBookModel(**order_book.get_order_book())
+    # db_connector.write_to_db(order_book_obj)
+    print(order_book.get_order_book(), "\n") # FIXME remove debug print
