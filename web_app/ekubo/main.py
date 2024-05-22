@@ -2,8 +2,6 @@ from decimal import Decimal, getcontext
 import pandas as pd
 from dataclasses import dataclass
 from web_app.ekubo.api_connector import EkuboAPIConnector
-from web_app.database.crud import DBConnector
-from web_app.database.models import OrderBookModel
 
 
 getcontext().prec = 18
@@ -34,19 +32,15 @@ TOKEN_MAPPING = {
     "0x07514ee6fa12f300ce293c60d60ecce0704314defdb137301dae78a7e5abbdd7": TokenConfig(
         name="STRK", decimals=18
     ),
-    # FIXME: Placeholder address
-    "0x0000000000000000000000000000000000000000000000000000000000000000": TokenConfig(
+    "0x0719b5092403233201aa822ce928bd4b551d0cdb071a724edd7dc5e5f57b7f34": TokenConfig(
         name="UNO", decimals=18
     ),
-    # FIXME: Placeholder address
-    "0x0000000000000000000000000000000000000000000000000000000000000001": TokenConfig(
+    "0x00585c32b625999e6e5e78645ff8df7a9001cf5cf3eb6b80ccdd16cb64bd3a34": TokenConfig(
         name="ZEND", decimals=18
     ),
-    # FIXME: Placeholder address
     "0x07e2c010c0b381f347926d5a203da0335ef17aefee75a89292ef2b0f94924864": TokenConfig(
         name="wstETH", decimals=18
     ),
-    # FIXME: Placeholder address
     "0x4c4fb1ab068f6039d5780c68dd0fa2f8742cceb3426d19667778ca7f3518a9": TokenConfig(
         name="LORDS", decimals=18
     ),
@@ -153,12 +147,7 @@ if __name__ == "__main__":
     token_b = (
         "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"  # USDC
     )
-    # db_connector = DBConnector()
-
     pool_states = EkuboAPIConnector().get_pools()
     order_book = EkuboOrderBook(token_a, token_b, "Ekubo")
     order_book.fetch_price_and_liquidity()
-    # Write to db
-    # order_book_obj = OrderBookModel(**order_book.get_order_book())
-    # db_connector.write_to_db(order_book_obj)
     print(order_book.get_order_book(), "\n") # FIXME remove debug print
