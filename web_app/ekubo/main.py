@@ -49,6 +49,12 @@ TOKEN_MAPPING = {
 
 class EkuboOrderBook:
     def __init__(self, token_a: str, token_b: str, dex: str):
+        """
+        Initialize the EkuboOrderBook object.
+        :param token_a: BaseToken contract address
+        :param token_b: QuoteToken contract address
+        :param dex: The DEX name
+        """
         self.token_a = token_a
         self.token_b = token_b
         self.dex = dex
@@ -56,6 +62,7 @@ class EkuboOrderBook:
         self.bids = []  # List of tuples (price, quantity)
         self.timestamp = None
         self.block = None
+        self.current_price = 0
         self.token_a_decimal = TOKEN_MAPPING.get(token_a).decimals
         self.token_b_decimal = TOKEN_MAPPING.get(token_b).decimals
         self.total_liquidity = Decimal("0")
@@ -104,21 +111,44 @@ class EkuboOrderBook:
 
         for data in liquidity_data:
             tick = Decimal(data["tick"])
+            # calculate price based on tick
             tick_price = self.tick_to_price(tick)
             if min_price <= tick_price <= max_price:
                 liquidity_delta_diff = Decimal(data["net_liquidity_delta_diff"])
+                # update total liquidity
                 self.total_liquidity += liquidity_delta_diff
+                # update order book
+
+                liquidity_amount = self.calculate_liquidity_amount(sqrt_ratio)
                 if tick_price > current_price:
-                    self.asks.append((tick_price, self.total_liquidity / sqrt_ratio))
+                    self.asks.append((tick_price, liquidity_amount))
                 else:
-                    self.bids.append((tick_price, self.total_liquidity / sqrt_ratio))
+                    self.bids.append((tick_price, liquidity_amount))
+
+    def calculate_liquidity_amount(self, sqrt_ratio: Decimal) -> Decimal:
+        """
+        Calculate the liquidity amount based on the liquidity delta and sqrt ratio.
+        :param sqrt_ratio: Decimal - The sqrt ratio.
+        :return: Decimal - The liquidity amount.
+        """
+        liquidity_delta = self.total_liquidity / sqrt_ratio
+        liquidity_amount = liquidity_delta / Decimal('10') ** self.token_a_decimal
+        return liquidity_amount
 
     def tick_to_price(self, tick: Decimal) -> Decimal:
+        """
+        Convert tick to price.
+        :param tick: tick value
+        :return: price by tick
+        """
+        # calculate sqrt ratio by formula sqrt_ratio = (1.000001 ** tick) * (2 ** 128)
         sqrt_ratio = (Decimal('1.000001').sqrt() ** tick) * (Decimal(2) ** 128)
+        # calculate price by formula price = (sqrt_ratio / (2 ** 128)) ** 2 * 10 ** (token_a_decimal - token_b_decimal)
         price = ((sqrt_ratio / (Decimal(2) ** 128)) ** 2) * 10 ** (self.token_a_decimal - self.token_b_decimal)
         return price
 
-    def hex_to_decimal(self, hex_str: str) -> Decimal:
+    @staticmethod
+    def hex_to_decimal(hex_str: str) -> Decimal:
         """
         Convert a hex string to a decimal number.
         :param hex_str: str - The hex string to convert.
@@ -138,11 +168,29 @@ class EkuboOrderBook:
             "bids": sorted(self.bids, key=lambda x: x[0]),
         }
 
+    def calculate_price_change(self, sell_amount: Decimal) -> tuple:
+        remaining_sell_amount = sell_amount
+        total_cost = Decimal("0")
+        total_tokens = Decimal("0")
+
+        for price, quantity in sorted(self.bids, key=lambda x: x[0], reverse=True):
+            if remaining_sell_amount <= quantity:
+                total_cost += remaining_sell_amount * price
+                total_tokens += remaining_sell_amount
+                break
+            else:
+                total_cost += quantity * price
+                total_tokens += quantity
+                remaining_sell_amount -= quantity
+
+        new_price = price if remaining_sell_amount <= quantity else (self.bids[-1][0] if self.bids else Decimal("0"))
+        average_price = total_cost / total_tokens if total_tokens != 0 else Decimal("0")
+
+        return new_price, average_price
+
 
 if __name__ == "__main__":
     # FIXME this code is not production, it's for testing purpose only
-    eth_decimals = 18
-    usdc_decimals = 6
     token_a = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"  # ETH
     token_b = (
         "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"  # USDC
@@ -151,3 +199,4 @@ if __name__ == "__main__":
     order_book = EkuboOrderBook(token_a, token_b, "Ekubo")
     order_book.fetch_price_and_liquidity()
     print(order_book.get_order_book(), "\n") # FIXME remove debug print
+    print(f"Price change: {order_book.calculate_price_change(Decimal('100'))}, current price: {order_book.current_price}") # FIXME remove debug print
