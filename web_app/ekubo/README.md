@@ -7,3 +7,10 @@ This folder contains all interaction with [Ekubo API](https://docs.ekubo.org/int
 - [Get Pools](docs/pools.md) - Detailed information about various pools.
 - [Get Token Prices](docs/token_prices.md) - Information on how to retrieve current token prices.
 - [Get List of Tokens](docs/token_lists.md) - List of tokens with detailed information.
+
+
+# How to run 
+In this folder: `ekubo` run next command
+```bash
+python main.py
+```
