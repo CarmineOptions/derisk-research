@@ -1,5 +1,5 @@
 from fastapi import Form
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 from pydantic.networks import IPvAnyAddress
 
 from utils.values import ProtocolIDs
@@ -19,7 +19,7 @@ class NotificationForm(BaseModel):
         as_form(): NotificationForm
     """
 
-    email: EmailStr = Form(..., nullable=False)
+    email: str = Form(nullable=True)
     wallet_id: str = Form(..., nullable=False)
     telegram_id: str = Form(
         "",
@@ -35,7 +35,7 @@ class NotificationForm(BaseModel):
     @classmethod
     def as_form(
         cls,
-        email: EmailStr = Form(...),
+        email: str = Form(""),
         wallet_id: str = Form(...),
         telegram_id: str = Form(""),
         health_ratio_level: float = Form(...),
