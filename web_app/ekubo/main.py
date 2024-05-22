@@ -31,22 +31,22 @@ TOKEN_MAPPING = {
     "0x07514ee6fa12f300ce293c60d60ecce0704314defdb137301dae78a7e5abbdd7": TokenConfig(
         name="STRK", decimals=18
     ),
+    # FIXME: Placeholder address
     "0x0000000000000000000000000000000000000000000000000000000000000000": TokenConfig(
         name="UNO", decimals=18
     ),
-    # Placeholder address
+    # FIXME: Placeholder address
     "0x0000000000000000000000000000000000000000000000000000000000000001": TokenConfig(
         name="ZEND", decimals=18
     ),
-    # Placeholder address
+    # FIXME: Placeholder address
     "0x0000000000000000000000000000000000000000000000000000000000000002": TokenConfig(
         name="wstETH", decimals=18
     ),
-    # Placeholder address
+    # FIXME: Placeholder address
     "0x0000000000000000000000000000000000000000000000000000000000000003": TokenConfig(
         name="LORDS", decimals=18
     ),
-    # Placeholder address
 }
 
 
