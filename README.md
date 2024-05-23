@@ -1,20 +1,20 @@
-### Connect to the VM
+# DeRisk Starknet
 
-Ask the admin to add your `ssh` public key and get your `NAME` and `VM_IP_ADDRESS`. Then run:
+Monorepo with components required for the implementation of DeRisk on Starknet.
+
+## Contributor guidelines
+
+See [our contributor guidelines](https://github.com/CarmineOptions/derisk-research/blob/master/CONTRIBUTING.md).
+
+## Install dependencies
+
+Python dependencies are managed with `poetry`, install them with this command:
 
 ```
-ssh [NAME]@[VM_IP_ADDRESS]
+poetry install
 ```
 
-### Install dependencies
-
-Python dependencies are listed in the `requirements.txt` file, install them with this command:
-
-```
-pip install -r requirements.txt
-```
-
-### Start Jupyter notebook
+## Start Jupyter notebook
 
 Command to start Jupyter notebook is in the `makefile`, simply run:
 
@@ -22,7 +22,7 @@ Command to start Jupyter notebook is in the `makefile`, simply run:
 make notebook
 ```
 
-### Start Streamlit app
+## Start Streamlit app
 
 If you have all requirements installed, just run:
 
@@ -30,12 +30,10 @@ If you have all requirements installed, just run:
 make app
 ```
 
-### Update Persistent State
+## Update data
 
-*Streamlit* uses state stored in a *pickle* file to speed up initial loading process. The pickle file is stored in a GCP bucket, to create new persistent state file and upload it to the GCP bucket, run the following command:
+The Streamlit app runs a process for updating all necessary data shown on the frontend in the background. The process saves the outputs to a GCP storage from which the Streamlit app loads and visualizes the outputs. To run the data-updating process manually, without running the Streamlit app, use the following command:
 
 ```
-python3 persistent_state.py N
+python3 update_data.py
 ```
-
-Where `N` is the block number that the state should be stored up to. Check the current latest block on [Starkscan/blocks](https://starkscan.co/blocks) and make sure not to use `N` higher than the last block!
