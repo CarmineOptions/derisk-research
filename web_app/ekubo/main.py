@@ -2,6 +2,7 @@ from decimal import Decimal, getcontext
 import pandas as pd
 from dataclasses import dataclass
 from web_app.ekubo.api_connector import EkuboAPIConnector
+from functools import partial
 
 
 getcontext().prec = 18
@@ -64,11 +65,16 @@ class EkuboOrderBook:
         self.bids = []  # List of tuples (price, quantity)
         self.timestamp = None
         self.block = None
-        self.current_price = 0
+        self.tick_current_price = 0
         self.token_a_decimal = TOKEN_MAPPING.get(token_a).decimals
         self.token_b_decimal = TOKEN_MAPPING.get(token_b).decimals
         self.total_liquidity = Decimal("0")
         self.connector = EkuboAPIConnector()
+
+    @property
+    def current_price(self):
+        price_data = self.connector.get_pair_price(self.token_a, self.token_b)
+        return price_data.get("price", "0")
 
     def fetch_price_and_liquidity(self) -> None:
         """
@@ -92,25 +98,47 @@ class EkuboOrderBook:
                 liquidity_data["data"],
                 sqrt_ratio,
                 pool_liquidity,
-                row["tick"]  # This is the current tick = current price
+                row["tick"],  # This is the current tick = current price
             )
 
-    def _calculate_order_book(self, liquidity_data: list, sqrt_ratio: Decimal, pool_liquidity, current_tick):
+    def _calculate_order_book(
+        self,
+        liquidity_data: list,
+        sqrt_ratio: int,
+        pool_liquidity: int,
+        current_tick: int,
+    ):
         # Get current price
         self.set_current_price(current_tick)
+        min_price, max_price = self.calculate_price_range()
+        process_liquidity = partial(
+            self.process_liquidity, sqrt_ratio, pool_liquidity, min_price, max_price
+        )
 
         sorted_liquidity_data = sorted(liquidity_data, key=lambda x: x["tick"])
-        asks, bids = self.sort_ticks_by_asks_and_bids(sorted_liquidity_data, current_tick)
+        asks, bids = self.sort_ticks_by_asks_and_bids(
+            sorted_liquidity_data, current_tick
+        )
 
-        self.process_liquidity(asks, pool_liquidity, sqrt_ratio)
-        self.process_liquidity(bids, pool_liquidity, sqrt_ratio, is_ask=False)
+        process_liquidity(asks, is_ask=True)
+        process_liquidity(bids, is_ask=False)
 
-    def process_liquidity(self, ticks: list, liquidity_pool: Decimal, sqrt_ratio: Decimal, is_ask=True) -> None:
+    def process_liquidity(
+        self,
+        sqrt_ratio: int,
+        liquidity_pool: Decimal,
+        min_price: Decimal,
+        max_price: Decimal,
+        ticks: list,
+        is_ask=True,
+    ) -> None:
         """
         Process liquidity data
         :param ticks: Ticks data
         :param liquidity_pool: Liquidity pool data
         :param sqrt_ratio: Sqrt ratio data
+        :param min_price: Minimum price
+        :param max_price: Maximum price
         :param is_ask: Boolean - True if ask, False if bid
         :return: None
         """
@@ -118,20 +146,25 @@ class EkuboOrderBook:
         adding_list = self.asks if is_ask else self.bids
         for tick in data_list:
             tick_price = self.tick_to_price(tick["tick"])
-            liquidity_delta_diff = Decimal(tick["net_liquidity_delta_diff"])
-            liquidity_pool += liquidity_delta_diff
-            liquidity_amount = self.calculate_liquidity_amount(sqrt_ratio, liquidity_pool)
-            adding_list.append((tick_price, liquidity_amount))
+            if min_price < tick_price < max_price:
+                liquidity_delta_diff = Decimal(tick["net_liquidity_delta_diff"])
+                liquidity_pool += liquidity_delta_diff
+                liquidity_amount = self.calculate_liquidity_amount(
+                    sqrt_ratio, liquidity_pool
+                )
+                adding_list.append((tick_price, liquidity_amount))
 
     def set_current_price(self, current_tick: int) -> None:
         """
         Set the current price based on the current tick.
         :param current_tick: Int - Current tick
         """
-        self.current_price = self.tick_to_price(current_tick)
+        self.tick_current_price = self.tick_to_price(current_tick)
 
     @staticmethod
-    def sort_ticks_by_asks_and_bids(sorted_liquidity_data: list, current_tick: int) -> tuple[list, list]:
+    def sort_ticks_by_asks_and_bids(
+        sorted_liquidity_data: list, current_tick: int
+    ) -> tuple[list, list]:
         """
         Sort tick by ask and bid
         :param sorted_liquidity_data: list - List of sorted liquidity data
@@ -152,11 +185,13 @@ class EkuboOrderBook:
         Calculate the minimum and maximum price based on the current price.
         :return: tuple - The minimum and maximum price range.
         """
-        min_price = self.current_price * self.MIN_PRICE_RANGE
-        max_price = self.current_price * self.MAX_PRICE_RANGE
+        min_price = self.tick_current_price * self.MIN_PRICE_RANGE
+        max_price = self.tick_current_price * self.MAX_PRICE_RANGE
         return min_price, max_price
 
-    def calculate_liquidity_amount(self, sqrt_ratio: Decimal, liquidity_pair_total: Decimal) -> Decimal:
+    def calculate_liquidity_amount(
+        self, sqrt_ratio: Decimal, liquidity_pair_total: Decimal
+    ) -> Decimal:
         """
         Calculate the liquidity amount based on the liquidity delta and sqrt ratio.
         :param sqrt_ratio: Decimal - The sqrt ratio.
@@ -173,9 +208,11 @@ class EkuboOrderBook:
         :return: price by tick
         """
         # calculate sqrt ratio by formula sqrt_ratio = (1.000001 ** tick) * (2 ** 128)
-        sqrt_ratio = (Decimal('1.000001').sqrt() ** tick) * (Decimal(2) ** 128)
+        sqrt_ratio = (Decimal("1.000001").sqrt() ** tick) * (Decimal(2) ** 128)
         # calculate price by formula price = (sqrt_ratio / (2 ** 128)) ** 2 * 10 ** (token_a_decimal - token_b_decimal)
-        price = ((sqrt_ratio / (Decimal(2) ** 128)) ** 2) * 10 ** (self.token_a_decimal - self.token_b_decimal)
+        price = ((sqrt_ratio / (Decimal(2) ** 128)) ** 2) * 10 ** (
+            self.token_a_decimal - self.token_b_decimal
+        )
         return price
 
     def get_order_book(self) -> dict:
@@ -193,8 +230,11 @@ class EkuboOrderBook:
         remaining_sell_amount = sell_amount
         total_cost = Decimal("0")
         total_tokens = Decimal("0")
-        df = pd.DataFrame(sorted(self.bids, key=lambda x: x[0], reverse=True), columns=["price", "quantity"])
-        df_filtered = df.loc[df["price"] < self.current_price]
+        df = pd.DataFrame(
+            sorted(self.bids, key=lambda x: x[0], reverse=True),
+            columns=["price", "quantity"],
+        )
+        df_filtered = df.loc[df["price"] < self.tick_current_price]
         for price, quantity in df_filtered.itertuples(index=False):
             if remaining_sell_amount <= quantity:
                 total_cost += remaining_sell_amount * price
@@ -220,5 +260,7 @@ if __name__ == "__main__":
     order_book = EkuboOrderBook(token_a, token_b)
     order_book.fetch_price_and_liquidity()
     r = order_book.get_order_book()
-    print(order_book.get_order_book(), "\n") # FIXME remove debug print
-    print(f"Avarage change: {order_book.calculate_price_change(Decimal('100'))}, current price: {order_book.current_price}") # FIXME remove debug print
+    print(order_book.get_order_book(), "\n")  # FIXME remove debug print
+    print(
+        f"Avarage change: {order_book.calculate_price_change(Decimal('100'))}, current price: {order_book.tick_current_price}"
+    )  # FIXME remove debug print
