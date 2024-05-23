@@ -81,6 +81,7 @@ class EkuboOrderBook:
         pool_df = df.loc[
             (df["token0"] == self.token_a) & (df["token1"] == self.token_b)
         ]
+        # row = pool_df.iloc[0]
         for index, row in pool_df.iterrows():
             key_hash = row["key_hash"]
             sqrt_ratio = int(row["sqrt_ratio"], base=16)
@@ -92,26 +93,65 @@ class EkuboOrderBook:
                 liquidity_data["data"], sqrt_ratio, pool_liquidity
             )
 
+    def sort_tick_by_asks_and_bids(self, sorted_liquidity_data: list) -> tuple:
+        """
+        Sort tick by ask and bid
+        :param sorted_liquidity_data: list - List of sorted liquidity data
+        :return: list - List of sorted liquidity data
+        """
+        sorted_liquidity_data = sorted(sorted_liquidity_data, key=lambda x: x["tick_price"])
+        ask_data = []
+        bid_data = []
+        for sorted_data in sorted_liquidity_data:
+            tick_price = sorted_data["tick_price"]
+            if tick_price > self.current_price:
+                ask_data.append(sorted_data)
+            else:
+                bid_data.append(sorted_data)
+        return ask_data, bid_data
+
     def _calculate_order_book(self, liquidity_data, sqrt_ratio, pool_liquidity):
         # Get current price
         self.set_current_price()
         min_price, max_price = self.calculate_price_range()
-        liquidity_pair_total = pool_liquidity
-
+        liquidity_pool_total = pool_liquidity
+        new_liquidity_data = []
         for data in liquidity_data:
-            tick = Decimal(data["tick"])
-            # calculate price based on tick
-            tick_price = self.tick_to_price(tick)
-            if min_price <= tick_price <= max_price:
-                liquidity_delta_diff = Decimal(data["net_liquidity_delta_diff"])
-                # update total liquidity
-                # liquidity_pair_total += liquidity_delta_diff
-                # update order book
-                liquidity_amount = self.calculate_liquidity_amount(sqrt_ratio, pool_liquidity + liquidity_delta_diff)
-                if tick_price > self.current_price:
-                    self.asks.append((tick_price, liquidity_amount))
-                else:
-                    self.bids.append((tick_price, liquidity_amount))
+            tick_price = self.tick_to_price(data["tick"])
+            new_liquidity_data.append({"tick_price": tick_price, "net_liquidity_delta_diff": data["net_liquidity_delta_diff"]})
+
+        sorted_liquidity_data = sorted(new_liquidity_data, key=lambda x: x["tick_price"])
+        asks, bids = self.sort_tick_by_asks_and_bids(sorted_liquidity_data)
+        ask_liquidity_pool = pool_liquidity
+        for ask in asks:
+            tick_price = ask["tick_price"]
+            liquidity_delta_diff = Decimal(ask["net_liquidity_delta_diff"])
+            ask_liquidity_pool += liquidity_delta_diff
+            liquidity_amount = self.calculate_liquidity_amount(sqrt_ratio, ask_liquidity_pool)
+            self.asks.append((tick_price, liquidity_amount))
+
+        bids_liquidity_pool = pool_liquidity
+        for bid in bids[::-1]:
+            tick_price = bid["tick_price"]
+            liquidity_delta_diff = Decimal(bid["net_liquidity_delta_diff"])
+            bids_liquidity_pool += liquidity_delta_diff
+            liquidity_amount = self.calculate_liquidity_amount(sqrt_ratio, bids_liquidity_pool)
+            self.bids.append((tick_price, liquidity_amount))
+
+        # for sorted_data in sorted_liquidity_data:
+        #     tick_price = sorted_data["tick_price"]
+        #     # calculate price based on tick
+        #     # add sorting and filtering by asks(up) and bids (down)
+        #     if min_price <= tick_price <= max_price:
+        #         liquidity_delta_diff = Decimal(sorted_data["net_liquidity_delta_diff"])
+        #         # update total liquidity
+        #         # liquidity_pair_total += liquidity_delta_diff
+        #         # update order book
+        #         liquidity_amount = self.calculate_liquidity_amount(sqrt_ratio, liquidity_pool_total + liquidity_delta_diff)
+        #         if tick_price > self.current_price:
+        #             self.asks.append((tick_price, liquidity_amount))
+        #         else:
+        #             self.bids.append((tick_price, liquidity_amount))
 
     def calculate_price_range(self) -> tuple:
         """
@@ -137,7 +177,7 @@ class EkuboOrderBook:
         """
         liquidity_delta = liquidity_pair_total / sqrt_ratio
         liquidity_amount = liquidity_delta / Decimal('10') ** self.token_a_decimal
-        return liquidity_amount
+        return liquidity_delta
 
     def tick_to_price(self, tick: Decimal) -> Decimal:
         """
@@ -192,5 +232,6 @@ if __name__ == "__main__":
     pool_states = EkuboAPIConnector().get_pools()
     order_book = EkuboOrderBook(token_a, token_b)
     order_book.fetch_price_and_liquidity()
+    r = order_book.get_order_book()
     print(order_book.get_order_book(), "\n") # FIXME remove debug print
-    print(f"Price change: {order_book.calculate_price_change(Decimal('100'))}, current price: {order_book.current_price}") # FIXME remove debug print
+    print(f"Avarage change: {order_book.calculate_price_change(Decimal('10'))}, current price: {order_book.current_price}") # FIXME remove debug print
