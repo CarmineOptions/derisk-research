@@ -105,9 +105,9 @@ class EkuboOrderBook:
             if min_price <= tick_price <= max_price:
                 liquidity_delta_diff = Decimal(data["net_liquidity_delta_diff"])
                 # update total liquidity
-                liquidity_pair_total += liquidity_delta_diff
+                # liquidity_pair_total += liquidity_delta_diff
                 # update order book
-                liquidity_amount = self.calculate_liquidity_amount(sqrt_ratio, liquidity_pair_total)
+                liquidity_amount = self.calculate_liquidity_amount(sqrt_ratio, pool_liquidity + liquidity_delta_diff)
                 if tick_price > self.current_price:
                     self.asks.append((tick_price, liquidity_amount))
                 else:
@@ -193,4 +193,4 @@ if __name__ == "__main__":
     order_book = EkuboOrderBook(token_a, token_b)
     order_book.fetch_price_and_liquidity()
     print(order_book.get_order_book(), "\n") # FIXME remove debug print
-    #print(f"Price change: {order_book.calculate_price_change(Decimal('200'))}, current price: {order_book.current_price}") # FIXME remove debug print
+    print(f"Price change: {order_book.calculate_price_change(Decimal('100'))}, current price: {order_book.current_price}") # FIXME remove debug print
