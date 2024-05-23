@@ -14,6 +14,7 @@ starknet-py = "^0.22.0"
 plotly = "^5.22.0"
 fastparquet = "^2024.5.0"
 google-cloud-storage = "^2.16.0"
+psycopg2-binary = "^2.9.9"
 
 
 [build-system]
