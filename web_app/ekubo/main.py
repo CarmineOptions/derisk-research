@@ -89,6 +89,7 @@ class EkuboOrderBook:
             key_hash = row["key_hash"]
             sqrt_ratio = self.hex_to_decimal(row["sqrt_ratio"])
             # Fetch pool liquidity data
+            self.total_liquidity = int(row["liquidity"])
             liquidity_data = connector.get_pool_liquidity(key_hash)
             self.block = row["lastUpdate"]["event_id"]
             self._calculate_order_book(
@@ -199,4 +200,4 @@ if __name__ == "__main__":
     order_book = EkuboOrderBook(token_a, token_b, "Ekubo")
     order_book.fetch_price_and_liquidity()
     print(order_book.get_order_book(), "\n") # FIXME remove debug print
-    print(f"Price change: {order_book.calculate_price_change(Decimal('100'))}, current price: {order_book.current_price}") # FIXME remove debug print
+    print(f"Price change: {order_book.calculate_price_change(Decimal('1000'))}, current price: {order_book.current_price}") # FIXME remove debug print
