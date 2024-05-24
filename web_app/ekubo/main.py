@@ -2,6 +2,9 @@ from decimal import Decimal, getcontext
 import pandas as pd
 from dataclasses import dataclass
 from web_app.ekubo.api_connector import EkuboAPIConnector
+from web_app.database.crud import DBConnector
+from web_app.database.models import OrderBookModel
+
 
 
 getcontext().prec = 18
@@ -81,7 +84,6 @@ class EkuboOrderBook:
         pool_df = df.loc[
             (df["token0"] == self.token_a) & (df["token1"] == self.token_b)
         ]
-        # row = pool_df.iloc[0]
         for index, row in pool_df.iterrows():
             key_hash = row["key_hash"]
             sqrt_ratio = int(row["sqrt_ratio"], base=16)
@@ -229,9 +231,12 @@ if __name__ == "__main__":
     token_b = (
         "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"  # USDC
     )
+    db_connector = DBConnector()
+
     pool_states = EkuboAPIConnector().get_pools()
     order_book = EkuboOrderBook(token_a, token_b)
     order_book.fetch_price_and_liquidity()
-    r = order_book.get_order_book()
+    # Write to db
+    order_book_obj = OrderBookModel(**order_book.get_order_book())
+    db_connector.write_to_db(order_book_obj)
     print(order_book.get_order_book(), "\n") # FIXME remove debug print
-    print(f"Avarage change: {order_book.calculate_price_change(Decimal('10'))}, current price: {order_book.current_price}") # FIXME remove debug print
