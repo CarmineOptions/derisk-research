@@ -19,9 +19,8 @@ class NotificationValidationValues:
     telegram_id_min_length: int = 9
     health_ratio_level_min_value: float = 0
     health_ratio_level_max_value: float = 10
-    unique_fields: tuple[str, ...] = ("email",)
+    unique_fields: tuple = tuple()
     validation_fields: tuple[str, ...] = (
-        "email",
         "wallet_id",
         "ip_address",
     )
@@ -29,6 +28,9 @@ class NotificationValidationValues:
 
 @dataclass(frozen=True)
 class CreateSubscriptionValues:
+    health_ratio_level_validation_message: str = (
+        f"Your health ratio level must be between {NotificationValidationValues.health_ratio_level_min_value} and {NotificationValidationValues.health_ratio_level_max_value}"
+    )
     create_subscription_success_message: str = "Subscription created successfully"
     create_subscription_exception_message: str = "Please provide all needed data"
     create_subscription_description_message: str = (

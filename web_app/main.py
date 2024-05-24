@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import Depends, FastAPI, Request, status
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -12,6 +14,16 @@ from telegram import get_subscription_link
 from utils.fucntools import get_client_ip
 from utils.values import (CreateSubscriptionValues,
                           NotificationValidationValues, ProtocolIDs)
+
+logging.basicConfig(
+    filename=f"{__name__}.log",
+    filemode="a",
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+
+logger = logging.getLogger(__name__)
 
 Base.metadata.create_all(bind=engine)
 
@@ -33,6 +45,7 @@ async def create_subscription(request: Request):
     :param request: Request
     :return: templates.TemplateResponse
     """
+    logger.info(f"User with {get_client_ip(request)} IP is accessing the page")
     return templates.TemplateResponse(
         request=request,
         name="notification.html",
@@ -68,6 +81,9 @@ async def subscribe_to_notification(
             if key in NotificationValidationValues.validation_fields
         ]
     ):
+        logger.error(
+            f"User with {get_client_ip(request)} IP submits with a lack of all required fields"
+        )
         return templates.TemplateResponse(
             request=request,
             name="notification.html",
@@ -85,6 +101,7 @@ async def subscribe_to_notification(
     validation_errors = validate_fields(db=db, obj=subscription, model=NotificationData)
 
     if validation_errors:
+        logger.error(f"User with {get_client_ip(request)} IP submits with invalid data")
         return templates.TemplateResponse(
             request=request,
             name="notification.html",
@@ -99,7 +116,9 @@ async def subscribe_to_notification(
     subscription_id = connector.write_to_db(obj=subscription)
 
     activation_link = await get_subscription_link(ident=subscription_id)
+    logger.info(f"Activation link for user with {get_client_ip(request)} IP is sent")
 
+    logger.info(f"User with {get_client_ip(request)} IP submitted successfully")
     return templates.TemplateResponse(
         request=request,
         name="notification.html",
@@ -108,5 +127,6 @@ async def subscribe_to_notification(
             "messages": [CreateSubscriptionValues.create_subscription_success_message],
             "message_type": "success",
             "activation_link": activation_link,
+            "protocol_ids": [item.value for item in ProtocolIDs],
         },
     )

@@ -14,3 +14,9 @@ In this folder: `ekubo` run next command
 ```bash
 python main.py
 ```
+
+# How to check quality of data
+In this folder: `ekubo` run next command to see the histogram of the data
+```bash
+python manage.py histogram
+```
