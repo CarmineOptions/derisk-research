@@ -56,5 +56,12 @@ if __name__ == "__main__":
     ax.set_title("Order Book")
     ax.legend()
 
+    # add a box with the total ask quantity
+    total_ask_quantity = round(sum(ask_quantities),4)
+    textstr = f'Total Asks Quantity: {total_ask_quantity}'
+    props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+    ax.text(0.95, 1.05, textstr, transform=ax.transAxes, fontsize=10,
+            verticalalignment='top', horizontalalignment='right', bbox=props)
+
     # Show the plot
     plt.show()
