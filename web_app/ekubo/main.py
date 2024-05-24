@@ -65,7 +65,7 @@ class EkuboOrderBook:
         self.bids = []  # List of tuples (price, quantity)
         self.timestamp = None
         self.block = None
-        self.tick_current_price = 0
+        self.tick_current_price = Decimal("0")
         self.token_a_decimal = TOKEN_MAPPING.get(token_a).decimals
         self.token_b_decimal = TOKEN_MAPPING.get(token_b).decimals
         self.total_liquidity = Decimal("0")
@@ -89,14 +89,12 @@ class EkuboOrderBook:
 
         for index, row in list(pool_df.iterrows())[:1]:
             key_hash = row["key_hash"]
-            sqrt_ratio = int(row["sqrt_ratio"], base=16)
             # Fetch pool liquidity data
             pool_liquidity = int(row["liquidity"])
             liquidity_data = self.connector.get_pool_liquidity(key_hash)
             self.block = row["lastUpdate"]["event_id"]
             self._calculate_order_book(
                 liquidity_data["data"],
-                sqrt_ratio,
                 pool_liquidity,
                 row["tick"],  # This is the current tick = current price
             )
@@ -104,15 +102,20 @@ class EkuboOrderBook:
     def _calculate_order_book(
         self,
         liquidity_data: list,
-        sqrt_ratio: int,
         pool_liquidity: int,
         current_tick: int,
-    ):
+    ) -> None:
+        """
+        Calculate the order book based on the liquidity data.
+        :param liquidity_data: list - List of liquidity data
+        :param pool_liquidity: pool liquidity
+        :param current_tick: current tick
+        """
         # Get current price
         self.set_current_price(current_tick)
         min_price, max_price = self.calculate_price_range()
         process_liquidity = partial(
-            self.process_liquidity, sqrt_ratio, pool_liquidity, min_price, max_price
+            self.process_liquidity, pool_liquidity, min_price, max_price
         )
 
         sorted_liquidity_data = sorted(liquidity_data, key=lambda x: x["tick"])
@@ -125,7 +128,6 @@ class EkuboOrderBook:
 
     def process_liquidity(
         self,
-        sqrt_ratio: int,
         liquidity_pool: Decimal,
         min_price: Decimal,
         max_price: Decimal,
@@ -136,7 +138,6 @@ class EkuboOrderBook:
         Process liquidity data
         :param ticks: Ticks data
         :param liquidity_pool: Liquidity pool data
-        :param sqrt_ratio: Sqrt ratio data
         :param min_price: Minimum price
         :param max_price: Maximum price
         :param is_ask: Boolean - True if ask, False if bid
@@ -150,7 +151,7 @@ class EkuboOrderBook:
                 liquidity_delta_diff = Decimal(tick["net_liquidity_delta_diff"])
                 liquidity_pool += liquidity_delta_diff
                 liquidity_amount = self.calculate_liquidity_amount(
-                    sqrt_ratio, liquidity_pool
+                    tick["tick"], liquidity_pool
                 )
                 adding_list.append((tick_price, liquidity_amount))
 
@@ -190,16 +191,25 @@ class EkuboOrderBook:
         return min_price, max_price
 
     def calculate_liquidity_amount(
-        self, sqrt_ratio: Decimal, liquidity_pair_total: Decimal
+        self, tick: Decimal, liquidity_pair_total: Decimal
     ) -> Decimal:
         """
         Calculate the liquidity amount based on the liquidity delta and sqrt ratio.
-        :param sqrt_ratio: Decimal - The sqrt ratio.
+        :param tick: Decimal - The sqrt ratio.
         :param liquidity_pair_total: Decimal - The liquidity pair total.
         :return: Decimal - The liquidity amount.
         """
+        sqrt_ratio = self.get_sqrt_ratio(tick)
         liquidity_delta = liquidity_pair_total / (sqrt_ratio / Decimal(2**128))
         return liquidity_delta / 10**self.token_a_decimal
+
+    def get_sqrt_ratio(self, tick: Decimal) -> Decimal:
+        """
+        Get the square root ratio based on the tick.
+        :param tick: tick value
+        :return: square root ratio
+        """
+        return (Decimal("1.000001").sqrt() ** tick) * (Decimal(2) ** 128)
 
     def tick_to_price(self, tick: Decimal) -> Decimal:
         """
@@ -207,8 +217,7 @@ class EkuboOrderBook:
         :param tick: tick value
         :return: price by tick
         """
-        # calculate sqrt ratio by formula sqrt_ratio = (1.000001 ** tick) * (2 ** 128)
-        sqrt_ratio = (Decimal("1.000001").sqrt() ** tick) * (Decimal(2) ** 128)
+        sqrt_ratio = self.get_sqrt_ratio(tick)
         # calculate price by formula price = (sqrt_ratio / (2 ** 128)) ** 2 * 10 ** (token_a_decimal - token_b_decimal)
         price = ((sqrt_ratio / (Decimal(2) ** 128)) ** 2) * 10 ** (
             self.token_a_decimal - self.token_b_decimal
@@ -257,6 +266,7 @@ if __name__ == "__main__":
         "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"  # USDC
     )
     pool_states = EkuboAPIConnector().get_pools()
+    pair_states = EkuboAPIConnector().get_pair_states(token_a, token_b)
     order_book = EkuboOrderBook(token_a, token_b)
     order_book.fetch_price_and_liquidity()
     r = order_book.get_order_book()
