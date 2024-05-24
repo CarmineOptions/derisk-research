@@ -27,7 +27,7 @@ class NotificationData(Base):
     __tablename__ = "notification"
 
     created_at = Column(DateTime, default=datetime.now())
-    email = Column(String, index=True, unique=True, nullable=False)
+    email = Column(String, index=True, nullable=True)
     wallet_id = Column(String, nullable=False)
     telegram_id = Column(String, unique=False, nullable=False)
     ip_address = Column(IPAddressType, nullable=False)
