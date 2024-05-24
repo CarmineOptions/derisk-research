@@ -1,6 +1,7 @@
 from decimal import Decimal
 from abc import ABC, abstractmethod
-from order_books.constants import TOKEN_MAPPING
+
+from web_app.order_books.constants import TOKEN_MAPPING
 
 
 class OrderBookBase(ABC):

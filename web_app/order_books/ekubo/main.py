@@ -1,6 +1,6 @@
 from decimal import Decimal, getcontext
 import pandas as pd
-from order_books.abstractions import OrderBookBase
+from web_app.order_books.abstractions import OrderBookBase
 from web_app.order_books.ekubo.api_connector import EkuboAPIConnector
 from functools import partial
 
