@@ -11,7 +11,7 @@ getcontext().prec = 18
 class EkuboOrderBook(OrderBookBase):
     DEX = "Ekubo"
 
-    def __init__(self, token_a: str, token_b: str):
+    def __init__(self, token_a: str, token_b: str) -> None:
         """
         Initialize the EkuboOrderBook object.
         :param token_a: BaseToken contract address
@@ -21,7 +21,11 @@ class EkuboOrderBook(OrderBookBase):
         self.connector = EkuboAPIConnector()
 
     @property
-    def current_price(self):
+    def current_price(self) -> str:
+        """
+        Get the current price of the pair.
+        :return: str - The current price of the pair.
+        """
         price_data = self.connector.get_pair_price(self.token_a, self.token_b)
         return price_data.get("price", "0")
 
@@ -32,6 +36,7 @@ class EkuboOrderBook(OrderBookBase):
         # Get pool liquidity
         pools = self.connector.get_pools()
         df = pd.DataFrame(pools)
+        # filter pool data by token_a and token_b
         pool_df = df.loc[
             (df["token0"] == self.token_a) & (df["token1"] == self.token_b)
         ]
@@ -40,8 +45,9 @@ class EkuboOrderBook(OrderBookBase):
             key_hash = row["key_hash"]
             # Fetch pool liquidity data
             pool_liquidity = int(row["liquidity"])
-            liquidity_data = self.connector.get_pool_liquidity(key_hash)
             self.block = row["lastUpdate"]["event_id"]
+
+            liquidity_data = self.connector.get_pool_liquidity(key_hash)
             self._calculate_order_book(
                 liquidity_data["data"],
                 pool_liquidity,
@@ -60,7 +66,7 @@ class EkuboOrderBook(OrderBookBase):
         :param pool_liquidity: pool liquidity
         :param current_tick: current tick
         """
-        # Get current price
+        # Set current price
         self.set_current_price(current_tick)
         min_price, max_price = self.calculate_price_range()
         process_liquidity = partial(
@@ -94,6 +100,7 @@ class EkuboOrderBook(OrderBookBase):
         """
         data_list = ticks if is_ask else reversed(ticks)
         adding_list = self.asks if is_ask else self.bids
+
         for tick in data_list:
             tick_price = self.tick_to_price(tick["tick"])
             if min_price < tick_price < max_price:
@@ -156,29 +163,6 @@ class EkuboOrderBook(OrderBookBase):
         )
         return price
 
-    def calculate_price_change(self, sell_amount: Decimal) -> tuple:
-        remaining_sell_amount = sell_amount
-        total_cost = Decimal("0")
-        total_tokens = Decimal("0")
-        df = pd.DataFrame(
-            sorted(self.bids, key=lambda x: x[0], reverse=True),
-            columns=["price", "quantity"],
-        )
-        df_filtered = df.loc[df["price"] < self.tick_current_price]
-        for price, quantity in df_filtered.itertuples(index=False):
-            if remaining_sell_amount <= quantity:
-                total_cost += remaining_sell_amount * price
-                total_tokens += remaining_sell_amount
-                break
-            else:
-                total_cost += quantity * price
-                total_tokens += quantity
-                remaining_sell_amount -= quantity
-
-        average_price = total_cost / total_tokens if total_tokens != 0 else Decimal("0")
-
-        return average_price
-
 
 if __name__ == "__main__":
     # FIXME this code is not production, it's for testing purpose only
@@ -186,12 +170,13 @@ if __name__ == "__main__":
     token_b = (
         "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"  # USDC
     )
-    pool_states = EkuboAPIConnector().get_pools()
-    pair_states = EkuboAPIConnector().get_pair_states(token_a, token_b)
+    # TODO uncomment once the amount of liquidity data will be more accurate
+    # pool_states = EkuboAPIConnector().get_pools()
+    # for pool_state in pool_states:
+    # token_a = pool_state['token0']
+    # token_b = pool_state['token1']
     order_book = EkuboOrderBook(token_a, token_b)
+
     order_book.fetch_price_and_liquidity()
     r = order_book.get_order_book()
-    print(order_book.get_order_book(), "\n")  # FIXME remove debug print
-    print(
-        f"Avarage change: {order_book.calculate_price_change(Decimal('100'))}, current price: {order_book.tick_current_price}"
-    )  # FIXME remove debug print
+    print(order_book.get_order_book(), "\n")
