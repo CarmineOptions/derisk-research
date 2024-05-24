@@ -1,15 +1,20 @@
-from aiogram import types
-from aiogram.dispatcher.router import Router
-from aiogram.filters import CommandStart, CommandObject
+from aiogram import Router, types
+from aiogram.filters import CommandStart, CommandObject, Command
+from sqlalchemy import update
 from sqlalchemy.orm import Session
-from sqlalchemy.sql import update
 
 from database.models import NotificationData
+from .utils import kb
 
-base_router = Router()
+cmd_router = Router()
 
 
-@base_router.message(CommandStart(deep_link=True, deep_link_encoded=True))
+@cmd_router.message(Command("menu"))
+async def menu(message: types.Message):
+    await message.answer("Menu:", reply_markup=kb.menu())
+
+
+@cmd_router.message(CommandStart(deep_link=True, deep_link_encoded=True))
 async def start(message: types.Message, db: Session, command: CommandObject):
     """
     Register Telegram ID in the database.
@@ -26,4 +31,6 @@ async def start(message: types.Message, db: Session, command: CommandObject):
     )
     db.execute(stmp)
     db.commit()
-    await message.answer("You are subscribed to notifications.")
+    await message.answer(
+        "You are subscribed to notifications.", reply_markup=kb.go_menu()
+    )
