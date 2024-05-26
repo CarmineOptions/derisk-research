@@ -2,8 +2,8 @@ import asyncio
 
 from aiogram.types import BotCommand, BotCommandScopeDefault
 
-from database.database import SessionLocal
 from . import dp, bot
+from .crud import get_async_sessionmaker
 from .middleware import DatabaseMiddleware
 
 
@@ -16,7 +16,10 @@ async def bot_start_polling():
         [BotCommand(command="menu", description="Show bot menu")],
         scope=BotCommandScopeDefault(),
     )
-    dp.update.middleware(DatabaseMiddleware(SessionLocal))
+
+    async_sessionmaker = get_async_sessionmaker()
+    dp.update.middleware(DatabaseMiddleware(async_sessionmaker))
+
     await dp.start_polling(bot)
 
 

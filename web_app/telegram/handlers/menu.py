@@ -1,15 +1,14 @@
-from aiogram import Router, types, Bot, F
-from sqlalchemy import select, delete
-from sqlalchemy.orm import Session
+from aiogram import Router, types, F
 
 from database.models import NotificationData
+from telegram.crud import TelegramCrud
 from .utils import kb
 
 menu_router = Router()
 
 
 @menu_router.callback_query(F.data == "go_menu")
-async def menu(callback: types.CallbackQuery, db: Session, bot: Bot):
+async def menu(callback: types.CallbackQuery):
     """
     This function is called when the user clicks the "go_menu" button in Telegram.
     It sends the user a message "Menu:" and displays a menu with buttons.
@@ -18,7 +17,7 @@ async def menu(callback: types.CallbackQuery, db: Session, bot: Bot):
 
 
 @menu_router.callback_query(F.data.startswith("notification_delete_confirm_"))
-async def delete_notification_confirm(callback: types.CallbackQuery, db: Session):
+async def delete_notification_confirm(callback: types.CallbackQuery, crud: TelegramCrud):
     """
     This function is called when the user confirms the deletion of a notification.
     It deletes the notification from the database and sends the user a message about successful deletion.
@@ -26,9 +25,7 @@ async def delete_notification_confirm(callback: types.CallbackQuery, db: Session
     # get the notification identifier
     ident = callback.data.removeprefix("notification_delete_confirm_")
     # delete the notification
-    stmp = delete(NotificationData).where(NotificationData.id == ident)
-    db.execute(stmp)
-    db.commit()
+    await crud.delete_object(NotificationData, ident)
     # send a message about successful deletion
     await callback.message.edit_text("Notification deleted.", reply_markup=kb.menu())
     return callback.answer("Deleted notification.")
@@ -62,7 +59,7 @@ async def delete_notification(callback: types.CallbackQuery):
 
 @menu_router.callback_query(F.data == "show_notifications")
 @menu_router.callback_query(F.data.startswith("notifications_"))
-async def show_notifications(callback: types.CallbackQuery, db: Session):
+async def show_notifications(callback: types.CallbackQuery, crud: TelegramCrud):
     """
     This function is called when the user wants to view their notifications.
     It retrieves the notifications from the database and displays them to the user.
@@ -73,13 +70,7 @@ async def show_notifications(callback: types.CallbackQuery, db: Session):
     if callback.data.startswith("notifications_"):
         page = int(callback.data.removeprefix("notifications_"))
     # get the current page of notifications
-    stmp = (
-        select(NotificationData)
-        .where(NotificationData.telegram_id == str(callback.from_user.id))
-        .offset(page)
-        .limit(1)
-    )
-    obj = db.scalar(stmp)
+    obj = await crud.get_objects_by_filter(NotificationData, page, 1, telegram_id=str(callback.from_user.id))
     # handle callback answer (from pagination)
     if not obj and callback.data.startswith("notifications_"):
         return callback.answer("Not more notifications", show_alert=True)
@@ -98,13 +89,9 @@ async def show_notifications(callback: types.CallbackQuery, db: Session):
 
 
 @menu_router.callback_query(F.data == "all_unsubscribe_confirm")
-async def all_unsubscribe_confirm(callback: types.CallbackQuery, db: Session):
+async def all_unsubscribe_confirm(callback: types.CallbackQuery, crud: TelegramCrud):
     # delete all notifications for the user
-    stmp = delete(NotificationData).where(
-        NotificationData.telegram_id == str(callback.from_user.id)
-    )
-    db.execute(stmp)
-    db.commit()
+    await crud.delete_objects_by_filter(NotificationData, telegram_id=str(callback.from_user.id))
     # send a confirmation message
     await callback.message.edit_text(
         "You are unsubscribed from all notifications.", reply_markup=kb.menu()
@@ -118,7 +105,7 @@ async def all_unsubscribe(callback: types.CallbackQuery):
     This function is called when the user wants to unsubscribe from all notifications.
     It prompts the user to confirm the action by displaying a confirmation button.
     """
-    await callback.message.answer(
+    await callback.message.edit_text(
         "Are you sure you want to unsubscribe from all notifications?",
         reply_markup=kb.confirm_all_unsubscribe(),
     )
