@@ -9,7 +9,7 @@ from handlers.loan_states.nostra_alpha.run import NostraAlphaStateComputation
 from handlers.loan_states.nostra_mainnet.run import NostraMainnetStateComputation
 
 
-# @shared_task
+#@app.task(name="run_loan_states_computation_for_hashtack_v0")
 # def run_loan_states_computation_for_hashtack_v0():
 #     start = monotonic()
 #     logging.basicConfig(level=logging.INFO)
@@ -24,7 +24,7 @@ from handlers.loan_states.nostra_mainnet.run import NostraMainnetStateComputatio
 #     )
 
 
-# @shared_task
+#@app.task(name="run_loan_states_computation_for_hashtack_v1")
 # def run_loan_states_computation_for_hashtack_v1():
 #     start = monotonic()
 #     logging.basicConfig(level=logging.INFO)
@@ -54,7 +54,7 @@ def run_loan_states_computation_for_zklend():
     )
 
 
-# @shared_task
+#@app.task(name="run_loan_states_computation_for_nostra_alpha")
 # def run_loan_states_computation_for_nostra_alpha():
 #     start = monotonic()
 #     logging.basicConfig(level=logging.INFO)
@@ -69,7 +69,7 @@ def run_loan_states_computation_for_zklend():
 #     )
 
 
-# @shared_task
+#@app.task(name="run_loan_states_computation_for_nostra_mainnet")
 # def run_loan_states_computation_for_nostra_mainnet():
 #     start = monotonic()
 #     logging.basicConfig(level=logging.INFO)
