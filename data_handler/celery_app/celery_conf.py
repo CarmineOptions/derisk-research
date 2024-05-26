@@ -20,26 +20,26 @@ app = Celery(
 CRONTAB_TIME = os.environ.get("CRONTAB_TIME", "5")
 
 app.conf.beat_schedule = {
-    f'run_loan_states_computation_for_hashtack_v0_every_{CRONTAB_TIME}_mins': {
-        'task': 'run_loan_states_computation_for_hashtack_v0',
-        'schedule': crontab(minute=f'*/{CRONTAB_TIME}'),
-    },
-    f'run_loan_states_computation_for_hashtack_v1_every_{CRONTAB_TIME}_mins': {
-        'task': 'run_loan_states_computation_for_hashtack_v1',
-        'schedule': crontab(minute=f'*/{CRONTAB_TIME}'),
-    },
+    # f'run_loan_states_computation_for_hashtack_v0_every_{CRONTAB_TIME}_mins': {
+    #     'task': 'run_loan_states_computation_for_hashtack_v0',
+    #     'schedule': crontab(minute=f'*/{CRONTAB_TIME}'),
+    # },
+    # f'run_loan_states_computation_for_hashtack_v1_every_{CRONTAB_TIME}_mins': {
+    #     'task': 'run_loan_states_computation_for_hashtack_v1',
+    #     'schedule': crontab(minute=f'*/{CRONTAB_TIME}'),
+    # },
     f'run_loan_states_computation_for_zklend_every_{CRONTAB_TIME}_mins': {
         'task': 'run_loan_states_computation_for_zklend',
         'schedule': crontab(minute=f'*/{CRONTAB_TIME}'),
     },
-    f'run_loan_states_computation_for_nostra_alpha_every_{CRONTAB_TIME}_mins': {
-        'task': 'run_loan_states_computation_for_nostra_alpha',
-        'schedule': crontab(minute=f'*/{CRONTAB_TIME}'),
-    },
-    f'run_loan_states_computation_for_nostra_mainnet_every_{CRONTAB_TIME}_mins': {
-        'task': 'run_loan_states_computation_for_nostra_mainnet',
-        'schedule': crontab(minute=f'*/{CRONTAB_TIME}'),
-    },
+    # f'run_loan_states_computation_for_nostra_alpha_every_{CRONTAB_TIME}_mins': {
+    #     'task': 'run_loan_states_computation_for_nostra_alpha',
+    #     'schedule': crontab(minute=f'*/{CRONTAB_TIME}'),
+    # },
+    # f'run_loan_states_computation_for_nostra_mainnet_every_{CRONTAB_TIME}_mins': {
+    #     'task': 'run_loan_states_computation_for_nostra_mainnet',
+    #     'schedule': crontab(minute=f'*/{CRONTAB_TIME}'),
+    # },
 }
 
 from celery_app.tasks import (
