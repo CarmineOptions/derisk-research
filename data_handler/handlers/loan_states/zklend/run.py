@@ -48,7 +48,7 @@ class ZkLendLoanStateComputation(LoanStateComputationBase):
         default_last_block = self.last_block
         for protocol_address in self.PROTOCOL_ADDRESSES:
             retry = 0
-            print(f'Default last block: {default_last_block}')
+            logger.info(f'Default last block: {default_last_block}')
             self.last_block = default_last_block
             for _ in range(max_retries):
                 data = self.get_data(protocol_address, self.last_block)
