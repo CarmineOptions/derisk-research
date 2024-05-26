@@ -41,15 +41,15 @@ app.conf.beat_schedule = {
     #     'schedule': crontab(minute=f'*/{CRONTAB_TIME}'),
     # },
 }
+from celery_app.tasks import (
+    # run_loan_states_computation_for_hashtack_v0,
+    # run_loan_states_computation_for_hashtack_v1,
+    # run_loan_states_computation_for_nostra_alpha,
+    # run_loan_states_computation_for_nostra_mainnet,
+    run_loan_states_computation_for_zklend,
+)
 
 app.autodiscover_tasks(["celery_app.tasks"])
 
-from celery_app.tasks import (
-    run_loan_states_computation_for_hashtack_v0,
-    run_loan_states_computation_for_hashtack_v1,
-    run_loan_states_computation_for_nostra_alpha,
-    run_loan_states_computation_for_nostra_mainnet,
-    run_loan_states_computation_for_zklend,
-)
 
 
