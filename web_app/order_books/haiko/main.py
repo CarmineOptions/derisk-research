@@ -82,11 +82,15 @@ class HaikoOrderBook(OrderBookBase):
         latest_block_info = self.blast_connector.get_block_info()
         if latest_block_info.get("error"):
             raise RuntimeError(f"Blast-api returned an error: {latest_block_info}")
-        if not tokens_markets:
-            raise RuntimeError("Markets for this pair isn't available for now")
 
         self.block = latest_block_info["result"]["block_number"]
         self.timestamp = latest_block_info["result"]["timestamp"]
+
+        if not tokens_markets:
+            message = "Markets for this pair isn't available for now"
+            self.logger.critical(f"Pair of tokens: {self.token_a}-{self.token_b}")
+            self.logger.critical(f"{message}\n")
+            return
 
         for market in tokens_markets:
             market_id = market["marketId"]
