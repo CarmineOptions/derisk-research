@@ -20,18 +20,17 @@ def confirm_delete_subscribe(uuid: UUID):
     """
     Takes a UUID object as an argument.
     Builds an InlineKeyboardMarkup with the following buttons:
-    - Four buttons labeled "Menu" with the callback data "go_menu".
+    - One button labeled "No" with the callback data "go_menu".
     - One button labeled "Delete" with the callback data "notification_delete_confirm_{uuid}",
       where {uuid} is the provided UUID.
     The buttons are arranged in a specific layout using the InlineKeyboardBuilder.
     Returns the constructed InlineKeyboardMarkup.
     """
     markup = InlineKeyboardBuilder()
-    for _ in range(4):
-        markup.add(InlineKeyboardButton(text="Menu", callback_data="go_menu"))
+    markup.add(InlineKeyboardButton(text="No", callback_data="go_menu"))
     markup.add(
         InlineKeyboardButton(
-            text="Delete", callback_data=f"notification_delete_confirm_{uuid}"
+            text="Yes (delete)", callback_data=f"notification_delete_confirm_{uuid}"
         )
     )
     markup.adjust(1, repeat=True)
@@ -41,17 +40,16 @@ def confirm_delete_subscribe(uuid: UUID):
 def confirm_all_unsubscribe():
     """
     Builds an InlineKeyboardMarkup with the following buttons:
-    - Four buttons labeled "Menu" with the callback data "go_menu".
+    - One button labeled "No" with the callback data "go_menu".
     - One button labeled "Unsubscribe all" with the callback data "all_unsubscribe_confirm".
     The buttons are arranged in a specific layout using the InlineKeyboardBuilder.
     Returns the constructed InlineKeyboardMarkup.
     """
     markup = InlineKeyboardBuilder()
-    for _ in range(4):
-        markup.add(InlineKeyboardButton(text="Menu", callback_data="go_menu"))
+    markup.add(InlineKeyboardButton(text="No", callback_data="go_menu"))
     markup.add(
         InlineKeyboardButton(
-            text="Unsubscribe all", callback_data="all_unsubscribe_confirm"
+            text="Yes(Unsubscribe all)", callback_data="all_unsubscribe_confirm"
         )
     )
     markup.adjust(1, repeat=True)
@@ -97,7 +95,8 @@ def pagination_notifications(curent_uuid: UUID, page: int):
     markup.button(text="Delete", callback_data=f"notification_delete_{curent_uuid}")
     markup.button(text=">", callback_data=f"notifications_{page + 1}")
     markup.button(text="Adjust", callback_data=f"notification_adjust_{curent_uuid}")
-    markup.adjust(3, 1)
+    markup.button(text="Go to menu", callback_data="go_menu")
+    markup.adjust(3, 1, 1)
     if page == 0:
-        markup.adjust(2, 1)
+        markup.adjust(2, 1, 1)
     return markup.as_markup()
