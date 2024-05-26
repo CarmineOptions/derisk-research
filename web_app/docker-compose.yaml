@@ -1,5 +1,9 @@
 version: '3.8'
 
+networks:
+  app_network:
+    driver: bridge
+
 services:
   db:
     image: postgres
@@ -12,7 +16,9 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
     ports:
-        - "5432:5432"
+      - "5432:5432"
+    networks:
+      - app_network
 
   backend:
     build: .
@@ -25,6 +31,8 @@ services:
       - "8000"
     depends_on:
       - db
+    networks:
+      - app_network
 
   celery:
     build: .
@@ -34,6 +42,8 @@ services:
     depends_on:
       - redis
       - db
+    networks:
+      - app_network
 
   celery_beat:
     build: .
@@ -43,14 +53,35 @@ services:
     depends_on:
       - redis
       - db
+    networks:
+      - app_network
 
   redis:
     image: redis:latest
     restart: always
     ports:
-      - "127.0.0.1:6379:6379"
+      - "6379:6379"
     volumes:
       - redis_data:/data
+    networks:
+      - app_network
+
+  nginx:
+    restart: unless-stopped
+    image: nginx
+    container_name: nginx
+    build:
+      context: ./nginx
+      dockerfile: ./Dockerfile
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx:/etc/nginx/user_conf.d:ro
+      - .:/app
+    depends_on:
+      - backend
+    networks:
+      - app_network
 
 volumes:
   db_data:

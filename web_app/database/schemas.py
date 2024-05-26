@@ -1,6 +1,8 @@
 from fastapi import Form
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 from pydantic.networks import IPvAnyAddress
+from typing import List, Dict, Any
+from datetime import datetime
 
 from utils.values import ProtocolIDs
 
@@ -19,7 +21,7 @@ class NotificationForm(BaseModel):
         as_form(): NotificationForm
     """
 
-    email: EmailStr = Form(..., nullable=False)
+    email: str = Form(nullable=True)
     wallet_id: str = Form(..., nullable=False)
     telegram_id: str = Form(
         "",
@@ -35,7 +37,7 @@ class NotificationForm(BaseModel):
     @classmethod
     def as_form(
         cls,
-        email: EmailStr = Form(...),
+        email: str = Form(""),
         wallet_id: str = Form(...),
         telegram_id: str = Form(""),
         health_ratio_level: float = Form(...),
@@ -57,3 +59,16 @@ class NotificationForm(BaseModel):
             health_ratio_level=health_ratio_level,
             protocol_id=protocol_id,
         )
+
+
+class OrderBookModel(BaseModel):
+    """
+    A data model class that validates data user entered
+    """
+    token_a: str
+    token_b: str
+    timestamp: datetime
+    block: int
+    dex: str
+    asks: List[Dict[str, Any]]
+    bids: List[Dict[str, Any]]
