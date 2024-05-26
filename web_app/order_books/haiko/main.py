@@ -5,10 +5,13 @@ from itertools import zip_longest
 
 from src.blockchain_call import func_call
 from web_app.order_books.abstractions import OrderBookBase
-from web_app.order_books.haiko.api_connector import HaikoAPIConnector, HaikoBlastAPIConnector
+from web_app.order_books.haiko.api_connector import (
+    HaikoAPIConnector,
+    HaikoBlastAPIConnector,
+)
 from web_app.order_books.haiko.logger import get_logger
 
-HAIKO_MARKET_MANAGER_ADDRESS = "0x0038925b0bcf4dce081042ca26a96300d9e181b910328db54a6c89e5451503f5"
+HAIKO_MARKET_MANAGER_ADDRESS = ("0x0038925b0bcf4dce081042ca26a96300d9e181b910328db54a6c89e5451503f5")
 HAIKO_MAX_TICK = 7906205
 
 
@@ -29,7 +32,9 @@ class HaikoOrderBook(OrderBookBase):
         if isinstance(supported_tokens, dict) and supported_tokens.get("error"):
             raise RuntimeError(f"Unexpected error from API: {supported_tokens}")
         supported_tokens_filtered = [
-            token for token in supported_tokens if token["address"] in (self.token_a, self.token_b)
+            token
+            for token in supported_tokens
+            if token["address"] in (self.token_a, self.token_b)
         ]
         if len(supported_tokens_filtered) != 2:
             raise ValueError("One of tokens isn't supported by Haiko")
@@ -40,21 +45,24 @@ class HaikoOrderBook(OrderBookBase):
         :param all_markets_data: all supported markets provided bt Haiko
         :return: list of markets data for actual token pair
         """
-        return list(filter(
-            lambda market: market["baseToken"]["address"] == self.token_a and
-            market["quoteToken"]["address"] == self.token_b,
-            all_markets_data
-        ))
+        return list(
+            filter(
+                lambda market: market["baseToken"]["address"] == self.token_a
+                and market["quoteToken"]["address"] == self.token_b,
+                all_markets_data,
+            )
+        )
 
-    async def get_market_ticks_liquidity(self, market_id) -> list: # noqa
+    async def get_market_ticks_liquidity(self, market_id) -> list:
         """
         Get information about ticks from market manager contract.
         :param market_id: ID of the market for which ticks will be fetched.
         :return list of ticks in form: [count of ticks, tick1, price1, sign1, liquidity_delta1, sign_delta1, tick2...]
         """
-        # TODO: return ticks grouped
         try:
-            return await func_call(HAIKO_MARKET_MANAGER_ADDRESS, "depth", [market_id])
+            ticks_info = await func_call(HAIKO_MARKET_MANAGER_ADDRESS, "depth", [market_id])
+            items_in_group = (len(ticks_info) - 1) // ticks_info[0]
+            return self.group_ticks_info(ticks_info[1:], items_in_group)
         except Exception as e:
             self.logger.critical(f"Pair of tokens: {self.token_a}-{self.token_b}")
             self.logger.critical(f"Failed to get ticks for market: {market_id}")
@@ -108,27 +116,22 @@ class HaikoOrderBook(OrderBookBase):
         self.current_price = max(tokens_markets, key=lambda x: Decimal(x["tvl"]))["currPrice"]
 
     def _calculate_order_book(
-            self,
-            market_ticks_liquidity: list,
-            liquidity: Decimal,
-            current_tick: Decimal
+        self, market_ticks_liquidity: list, liquidity: Decimal, current_tick: Decimal
     ) -> None:
         self.set_current_price(current_tick)
         min_price, max_price = self.calculate_price_range()
-        items_in_group = (len(market_ticks_liquidity) - 1) // market_ticks_liquidity[0]
-        ticks_info = HaikoOrderBook.group_ticks_info(market_ticks_liquidity[1:], items_in_group)
         process_ticks = partial(self.process_ticks, liquidity, min_price, max_price)
-        asks, bids = self.divide_ticks_on_bids_asks(ticks_info)
+        asks, bids = self.divide_ticks_on_bids_asks(market_ticks_liquidity)
         process_ticks(asks, is_ask=True)
         process_ticks(bids, is_ask=False)
 
     def process_ticks(
-            self,
-            market_liquidity: Decimal,
-            min_price: Decimal,
-            max_price: Decimal,
-            ticks: tuple,
-            is_ask=True
+        self,
+        market_liquidity: Decimal,
+        min_price: Decimal,
+        max_price: Decimal,
+        ticks: tuple,
+        is_ask=True,
     ) -> None:
         """
         Process ticks and add info about price and liquidity to correct list.
@@ -171,8 +174,8 @@ class HaikoOrderBook(OrderBookBase):
 
     def calculate_liquidity_amount(self, tick, liquidity_pair_total) -> Decimal:
         sqrt_ratio = self.get_sqrt_ratio(tick)
-        liquidity_delta = liquidity_pair_total / (sqrt_ratio / Decimal(2 ** 128))
-        return liquidity_delta / 10 ** self.token_a_decimal
+        liquidity_delta = liquidity_pair_total / (sqrt_ratio / Decimal(2**128))
+        return liquidity_delta / 10**self.token_a_decimal
 
     def tick_to_price(self, tick: Decimal) -> Decimal:
         return Decimal("1.00001") ** tick * (10 ** (self.token_a_decimal - self.token_b_decimal))
@@ -191,7 +194,7 @@ class HaikoOrderBook(OrderBookBase):
         return list(zip_longest(*args, fillvalue=0))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     token_0 = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"  # ETH
     token_1 = "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"  # USDC
     order_book = HaikoOrderBook(token_0, token_1)

@@ -3,9 +3,14 @@ import json
 from datetime import datetime
 from pathlib import Path
 
+from web_app.order_books.constants import TOKEN_MAPPING
 from web_app.order_books.haiko.main import HaikoOrderBook
 
-from web_app.order_books.constants import TOKEN_MAPPING
+
+def filter_logs(logs_path: Path) -> None:
+    for file in logs_path.iterdir():
+        if file.stat().st_size == 0:
+            file.unlink()
 
 
 def serialize_asks_bids(order_book: dict) -> None:
@@ -23,7 +28,7 @@ def get_report():
             try:
                 order_book = HaikoOrderBook(base_token, quote_token)
             except ValueError:
-                print(f"Pair of tokens: {base_token}-{quote_token}")  # TODO: create logger for reports
+                print(f"Pair of tokens: {base_token}-{quote_token}")
                 print("One of the tokens isn't supported by Haiko")
                 continue
 
@@ -65,4 +70,5 @@ if __name__ == "__main__":
     reports_dir = Path("./reports")
     reports_dir.mkdir(parents=True, exist_ok=True)
     report_path = reports_dir / datetime.now().strftime("report_%Y%m%d_%H%M%S.json")
+    filter_logs(reports_dir)
     write_report(report_data, report_path)
