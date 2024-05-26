@@ -125,7 +125,7 @@ class FirstConfig:
     #  Result of data: `updated_debt_token_price`
     nostra_alpha_last_block = 0
     nostra_mainnet_last_block = 0
-    zkLend_last_block = 630000
+    zkLend_last_block = 48668
 
     @classmethod
     def get_last_block_by_protocol_id(cls, protocol_id: str) -> int:
