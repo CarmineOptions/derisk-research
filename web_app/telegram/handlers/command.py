@@ -11,6 +11,10 @@ cmd_router = Router()
 
 @cmd_router.message(Command("menu"))
 async def menu(message: types.Message):
+    """
+    This function is triggered when the user sends the "/menu" command to the bot.
+    It sends the user a message "Menu:" along with a reply markup containing a menu with buttons.
+    """
     await message.answer("Menu:", reply_markup=kb.menu())
 
 
