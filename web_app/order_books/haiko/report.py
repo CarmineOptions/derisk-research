@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 from datetime import datetime
 from pathlib import Path
 
@@ -52,8 +53,8 @@ def get_report() -> dict:
             try:
                 order_book = HaikoOrderBook(base_token, quote_token)
             except ValueError:
-                print(f"Pair of tokens: {base_token}-{quote_token}")
-                print("One of the tokens isn't supported by Haiko")
+                logging.log(logging.ERROR, f"Pair of tokens: {base_token}-{quote_token}")
+                logging.log(logging.ERROR, "One of the tokens isn't supported by Haiko")
                 continue
 
             try:
