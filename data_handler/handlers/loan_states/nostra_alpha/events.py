@@ -5,9 +5,9 @@ import logging
 
 import pandas as pd
 
-from data_handler.handlers.helpers import Portfolio, TokenValues, add_leading_zeros
-from data_handler.handlers.settings import TOKEN_SETTINGS, TokenSettings
-from data_handler.handlers.state import LoanEntity, InterestRateModels, State
+from handlers.helpers import Portfolio, TokenValues, add_leading_zeros
+from handlers.settings import TOKEN_SETTINGS, TokenSettings
+from handlers.state import LoanEntity, InterestRateModels, State
 
 LIQUIDATION_HEALTH_FACTOR_THRESHOLD = decimal.Decimal("1")
 TARGET_HEALTH_FACTOR = decimal.Decimal("1.25")

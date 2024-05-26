@@ -5,9 +5,9 @@ from typing import Dict, Optional
 import pandas as pd
 from tools.constants import ProtocolIDs
 
-from data_handler.database.crud import DBConnector
-from data_handler.database.models import LoanState
-from data_handler.tools.api_connector import DeRiskAPIConnector
+from database.crud import DBConnector
+from database.models import LoanState
+from tools.api_connector import DeRiskAPIConnector
 
 logger = logging.getLogger(__name__)
 
