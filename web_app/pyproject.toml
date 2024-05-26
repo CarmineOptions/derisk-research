@@ -30,7 +30,7 @@ dask = {extras = ["dataframe"], version = "^2024.5.0"}
 gcsfs = "^2024.3.1"
 redis = "^5.0.4"
 celery = "^5.4.0"
-matplotlib = "^3.9.0"
+asyncpg = "^0.29.0"
 
 
 [tool.black]

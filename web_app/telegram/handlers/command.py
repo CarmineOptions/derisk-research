@@ -22,7 +22,7 @@ async def start(message: types.Message, crud: TelegramCrud, command: CommandObje
     """
     Register Telegram ID in the database.
     """
-    await crud.update_values(NotificationData, command.args, telegram_id=str(message.from_user.id))
+    await crud.update_values(NotificationData, command.args, telegram_id=message.from_user.id)
 
     await message.answer(
         "You are subscribed to notifications.", reply_markup=kb.go_menu()
