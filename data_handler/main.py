@@ -33,7 +33,7 @@ async def read_loan_states(
 ) -> List[LoanStateResponse]:
     """
     Fetch loan states from the database with optional filtering.
-
+    Max response size is limited to 1000 records.
     Args:
         request (Request): The request object.
         protocol (Optional[str]): The protocol ID to filter by.
@@ -65,7 +65,7 @@ async def read_loan_states(
     if user is not None:
         query = query.filter(LoanState.user == user)
 
-    results = query.all()
+    results = query.limit(1000).all()  # Limit the results to 1000 records
     if not results:
         raise HTTPException(status_code=404, detail="Loan states not found")
 
