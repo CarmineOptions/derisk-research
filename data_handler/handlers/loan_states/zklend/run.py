@@ -50,7 +50,7 @@ class ZkLendLoanStateComputation(LoanStateComputationBase):
             retry = 0
             logger.info(f'Default last block: {default_last_block}')
             self.last_block = default_last_block
-            for _ in range(max_retries):
+            while True:
                 data = self.get_data(protocol_address, self.last_block)
 
                 if not data:
@@ -84,7 +84,3 @@ def run_loan_states_computation_for_zklend() -> None:
         "Finished zkLend loan state computation, Time taken: %s seconds",
         monotonic() - start,
     )
-
-
-if __name__ == "__main__":
-    run_loan_states_computation_for_zklend()
