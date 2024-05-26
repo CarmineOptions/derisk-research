@@ -5,6 +5,10 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 
 def go_menu():
+    """
+    Returns an InlineKeyboardMarkup with a single button labeled "Go to menu".
+    The callback data for this button is "go_menu".
+    """
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text="Go to menu", callback_data="go_menu")]
@@ -13,6 +17,15 @@ def go_menu():
 
 
 def confirm_delete_subscribe(uuid: UUID):
+    """
+    Takes a UUID object as an argument.
+    Builds an InlineKeyboardMarkup with the following buttons:
+    - Four buttons labeled "Menu" with the callback data "go_menu".
+    - One button labeled "Delete" with the callback data "notification_delete_confirm_{uuid}",
+      where {uuid} is the provided UUID.
+    The buttons are arranged in a specific layout using the InlineKeyboardBuilder.
+    Returns the constructed InlineKeyboardMarkup.
+    """
     markup = InlineKeyboardBuilder()
     for _ in range(4):
         markup.add(InlineKeyboardButton(text="Menu", callback_data="go_menu"))
@@ -26,6 +39,13 @@ def confirm_delete_subscribe(uuid: UUID):
 
 
 def confirm_all_unsubscribe():
+    """
+    Builds an InlineKeyboardMarkup with the following buttons:
+    - Four buttons labeled "Menu" with the callback data "go_menu".
+    - One button labeled "Unsubscribe all" with the callback data "all_unsubscribe_confirm".
+    The buttons are arranged in a specific layout using the InlineKeyboardBuilder.
+    Returns the constructed InlineKeyboardMarkup.
+    """
     markup = InlineKeyboardBuilder()
     for _ in range(4):
         markup.add(InlineKeyboardButton(text="Menu", callback_data="go_menu"))
@@ -39,6 +59,11 @@ def confirm_all_unsubscribe():
 
 
 def menu():
+    """
+    Returns an InlineKeyboardMarkup with two buttons:
+    - A button labeled "Shows notifications" with the callback data "show_notifications".
+    - A button labeled "Unsubscribe all" with the callback data "all_unsubscribe".
+    """
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
@@ -56,6 +81,16 @@ def menu():
 
 
 def pagination_notifications(curent_uuid: UUID, page: int):
+    """
+    Takes a UUID object and an integer representing the current page as arguments.
+    Builds an InlineKeyboardMarkup with the following buttons:
+    - A button labeled "<" with the callback data "notifications_{page - 1}" (if the current page is not 0).
+    - A button labeled "Delete" with the callback data "notification_delete_{curent_uuid}".
+    - A button labeled ">" with the callback data "notifications_{page + 1}".
+    - A button labeled "Adjust" with the callback data "notification_adjust_{curent_uuid}".
+    The buttons are arranged in a specific layout using the InlineKeyboardBuilder.
+    Returns the constructed InlineKeyboardMarkup.
+    """
     markup = InlineKeyboardBuilder()
     if page > 0:
         markup.button(text="<", callback_data=f"notifications_{page - 1}")
