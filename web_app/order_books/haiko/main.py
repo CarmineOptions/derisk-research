@@ -6,6 +6,7 @@ from itertools import zip_longest
 from src.blockchain_call import func_call
 from web_app.order_books.abstractions import OrderBookBase
 from web_app.order_books.haiko.api_connector import HaikoAPIConnector, HaikoBlastAPIConnector
+from web_app.order_books.haiko.logger import get_logger
 
 HAIKO_MARKET_MANAGER_ADDRESS = "0x0038925b0bcf4dce081042ca26a96300d9e181b910328db54a6c89e5451503f5"
 HAIKO_MAX_TICK = 7906205
@@ -19,6 +20,7 @@ class HaikoOrderBook(OrderBookBase):
         self.current_price = Decimal("0")
         self.haiko_connector = HaikoAPIConnector()
         self.blast_connector = HaikoBlastAPIConnector()
+        self.logger = get_logger("./logs", echo=True)
         self._check_tokens_supported()
 
     def _check_tokens_supported(self) -> None:
@@ -54,7 +56,9 @@ class HaikoOrderBook(OrderBookBase):
         try:
             return await func_call(HAIKO_MARKET_MANAGER_ADDRESS, "depth", [market_id])
         except Exception as e:
-            print(f"Failed for market ID: {market_id}")  # TODO: add resolve for contract fail
+            self.logger.critical(f"Pair of tokens: {self.token_a}-{self.token_b}")
+            self.logger.critical(f"Failed to get ticks for market: {market_id}")
+            self.logger.critical(f"Error: {e}\n")
             return []
 
     def set_current_price(self, current_tick: Decimal) -> None:
