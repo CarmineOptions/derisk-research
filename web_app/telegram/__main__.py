@@ -14,7 +14,7 @@ async def bot_start_polling():
     """
     await bot.set_my_commands(
         [BotCommand(command="menu", description="Show bot menu")],
-        scope=BotCommandScopeDefault,
+        scope=BotCommandScopeDefault(),
     )
     dp.update.middleware(DatabaseMiddleware(SessionLocal))
     await dp.start_polling(bot)
