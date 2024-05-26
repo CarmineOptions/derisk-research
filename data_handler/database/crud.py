@@ -6,7 +6,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import scoped_session, sessionmaker
 
 from database.database import SQLALCHEMY_DATABASE_URL
-from models import Base, LoanState
+from database.models import Base, LoanState
 from tools.constants import ProtocolIDs, FirstConfig
 
 ModelType = TypeVar("ModelType", bound=Base)

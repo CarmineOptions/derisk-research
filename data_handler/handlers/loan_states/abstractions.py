@@ -6,7 +6,7 @@ import pandas as pd
 from tools.constants import ProtocolIDs
 
 from database.crud import DBConnector
-from models import LoanState
+from database.models import LoanState
 from tools.api_connector import DeRiskAPIConnector
 
 logger = logging.getLogger(__name__)
