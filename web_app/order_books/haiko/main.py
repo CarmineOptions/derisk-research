@@ -11,7 +11,7 @@ from web_app.order_books.haiko.api_connector import (
 )
 from web_app.order_books.haiko.logger import get_logger
 
-HAIKO_MARKET_MANAGER_ADDRESS = ("0x0038925b0bcf4dce081042ca26a96300d9e181b910328db54a6c89e5451503f5")
+HAIKO_MARKET_MANAGER_ADDRESS = "0x0038925b0bcf4dce081042ca26a96300d9e181b910328db54a6c89e5451503f5"
 HAIKO_MAX_TICK = 7906205
 
 
@@ -53,11 +53,11 @@ class HaikoOrderBook(OrderBookBase):
             )
         )
 
-    async def get_market_ticks_liquidity(self, market_id) -> list:
+    async def get_market_ticks_liquidity(self, market_id: str) -> list[list]:
         """
         Get information about ticks from market manager contract.
-        :param market_id: ID of the market for which ticks will be fetched.
-        :return list of ticks in form: [count of ticks, tick1, price1, sign1, liquidity_delta1, sign_delta1, tick2...]
+        :param market_id: ID of the market in hexadecimal format for which ticks will be fetched.
+        :return list of grouped ticks in form: [[tick1, price1, sign1, liquidity_delta1, sign_delta1], [tick2...], ...]
         """
         try:
             ticks_info = await func_call(HAIKO_MARKET_MANAGER_ADDRESS, "depth", [market_id])
@@ -76,7 +76,7 @@ class HaikoOrderBook(OrderBookBase):
         """
         self.tick_current_price = self.tick_to_price(current_tick)
 
-    def sort_asks_bids(self):
+    def sort_asks_bids(self) -> None:
         """Sort bids and asks data in correct order."""
         self.asks.sort(key=lambda ask: ask[0])
         self.bids.sort(key=lambda bid: bid[0], reverse=True)

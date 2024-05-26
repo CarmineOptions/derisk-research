@@ -8,17 +8,41 @@ from web_app.order_books.haiko.main import HaikoOrderBook
 
 
 def filter_logs(logs_path: Path) -> None:
+    """
+    Remove empty log files.
+    :param logs_path: Path to the directory with log files.
+    """
     for file in logs_path.iterdir():
         if file.stat().st_size == 0:
             file.unlink()
 
 
 def serialize_asks_bids(order_book: dict) -> None:
+    """
+    Convert asks and bids to serializable format.
+    :param order_book: Order book data.
+    """
     order_book["asks"] = [[float(ask[0]), float(ask[1])] for ask in order_book["asks"]]
     order_book["bids"] = [[float(bid[0]), float(bid[1])] for bid in order_book["bids"]]
 
 
-def get_report():
+def get_report() -> dict:
+    """
+    Get report for all token pairs.
+    :return: Report with order books data.
+    The report structure is as follows:
+    {
+        "empty_pairs": [STRK-ETH, ...],
+        "ETH-USDC": {
+            "is_empty": False,
+            "order_book": {
+                "asks": [[price1, amount1], [price2, amount2], ...],
+                "bids": [[price1, amount1], [price2, amount2], ...]
+            }
+        },
+        ...
+    }
+    """
     report = {"empty_pairs": []}
     all_tokens = set(TOKEN_MAPPING.keys())
 
@@ -57,7 +81,12 @@ def get_report():
     return report
 
 
-def write_report(report: dict, path: str | Path):
+def write_report(report: dict, path: str | Path) -> None:
+    """
+    Write report to a json file.
+    :param report: Report data.
+    :param path: Path to the file.
+    """
     try:
         with open(path, mode="w", encoding="UTF-8") as file:
             json.dump(report, file, indent=4)
