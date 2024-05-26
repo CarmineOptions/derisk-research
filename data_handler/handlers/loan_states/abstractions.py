@@ -145,11 +145,32 @@ class LoanStateComputationBase(ABC):
         )
         return result_df
 
-    @abstractmethod
     def run(self) -> None:
         """
-        Executes the computation steps: data retrieval, processing, and saving.
-
-        This method orchestrates the whole computation process and must be implemented by subclasses.
+        Runs the loan state computation for the specific protocol.
         """
-        pass
+        max_retries = 5
+        default_last_block = self.last_block
+        for protocol_address in self.PROTOCOL_ADDRESSES:
+            retry = 0
+            logger.info(f'Default last block: {default_last_block}')
+            self.last_block = default_last_block
+
+            while retry < max_retries:
+                data = self.get_data(protocol_address, self.last_block)
+
+                if not data:
+                    logger.info(f"No data found for address {protocol_address} at block {self.last_block}")
+                    self.last_block += self.PAGINATION_SIZE
+                    retry += 1
+                    continue
+
+                processed_data = self.process_data(data)
+                self.save_data(processed_data)
+                self.last_block += self.PAGINATION_SIZE
+                logger.info(f"Processed data up to block {self.last_block}")
+                retry = 0  # Reset retry counter if data is found and processed
+
+            if retry == max_retries:
+                logger.info(f"Reached max retries for address {protocol_address}")
+
