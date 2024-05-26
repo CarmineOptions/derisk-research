@@ -50,23 +50,24 @@ class ZkLendLoanStateComputation(LoanStateComputationBase):
             retry = 0
             logger.info(f'Default last block: {default_last_block}')
             self.last_block = default_last_block
-            while True:
+
+            while retry < max_retries:
                 data = self.get_data(protocol_address, self.last_block)
 
                 if not data:
-                    logger.info(f"No data found for address {protocol_address}: {self.last_block}")
-
-                if not data:
+                    logger.info(f"No data found for address {protocol_address} at block {self.last_block}")
                     self.last_block += self.PAGINATION_SIZE
                     retry += 1
                     continue
-                elif retry == max_retries:
-                    break
 
                 processed_data = self.process_data(data)
                 self.save_data(processed_data)
                 self.last_block += self.PAGINATION_SIZE
                 logger.info(f"Processed data up to block {self.last_block}")
+                retry = 0  # Reset retry counter if data is found and processed
+
+            if retry == max_retries:
+                logger.info(f"Reached max retries for address {protocol_address}")
 
 
 def run_loan_states_computation_for_zklend() -> None:
