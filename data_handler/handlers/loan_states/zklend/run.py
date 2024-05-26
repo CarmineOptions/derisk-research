@@ -48,6 +48,7 @@ class ZkLendLoanStateComputation(LoanStateComputationBase):
         default_last_block = self.last_block
         for protocol_address in self.PROTOCOL_ADDRESSES:
             retry = 0
+            print(f'Default last block: {default_last_block}')
             self.last_block = default_last_block
             for _ in range(max_retries):
                 data = self.get_data(protocol_address, self.last_block)
@@ -83,3 +84,7 @@ def run_loan_states_computation_for_zklend() -> None:
         "Finished zkLend loan state computation, Time taken: %s seconds",
         monotonic() - start,
     )
+
+
+if __name__ == "__main__":
+    run_loan_states_computation_for_zklend()
