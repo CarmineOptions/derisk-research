@@ -31,7 +31,6 @@ gcsfs = "^2024.3.1"
 redis = "^5.0.4"
 celery = "^5.4.0"
 matplotlib = "^3.9.0"
-starknet-py = "0.16.1"
 
 
 [tool.black]
