@@ -42,7 +42,7 @@ app.conf.beat_schedule = {
     },
 }
 
-from data_handler.celery_app.tasks import (
+from celery_app.tasks import (
     run_loan_states_computation_for_hashtack_v0,
     run_loan_states_computation_for_hashtack_v1,
     run_loan_states_computation_for_nostra_alpha,

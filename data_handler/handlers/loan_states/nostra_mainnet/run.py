@@ -2,9 +2,9 @@ import logging
 
 import pandas as pd
 from time import monotonic
-from data_handler.handlers.loan_states.abstractions import LoanStateComputationBase
-from data_handler.handlers.loan_states.nostra_alpha.events import NostraAlphaState
-from data_handler.tools.constants import ProtocolAddresses, ProtocolIDs
+from handlers.loan_states.abstractions import LoanStateComputationBase
+from handlers.loan_states.nostra_alpha.events import NostraAlphaState
+from tools.constants import ProtocolAddresses, ProtocolIDs
 
 logger = logging.getLogger(__name__)
 

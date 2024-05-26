@@ -6,8 +6,8 @@ from typing import Optional
 
 import pandas
 
-from data_handler.handlers.helpers import Portfolio, TokenValues, ExtraInfo
-from data_handler.handlers.settings import TOKEN_SETTINGS, TokenSettings
+from handlers.helpers import Portfolio, TokenValues, ExtraInfo
+from handlers.settings import TOKEN_SETTINGS, TokenSettings
 
 
 @dataclasses.dataclass

@@ -1,7 +1,7 @@
 import decimal
 from dataclasses import dataclass
 
-from data_handler.handlers.settings import TOKEN_SETTINGS, TokenSettings
+from handlers.settings import TOKEN_SETTINGS, TokenSettings
 
 
 @dataclass
