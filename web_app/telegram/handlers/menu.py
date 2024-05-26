@@ -42,7 +42,8 @@ async def delete_notification(callback: types.CallbackQuery):
     """
     # get the notification identifier
     ident = callback.data.removeprefix("notification_delete_")
-    await callback.message.edit_reply_markup(
+    await callback.message.edit_text(
+        "Are you sure you want to delete this notification? \n\n" + callback.message.text,
         reply_markup=kb.confirm_delete_subscribe(ident)
     )
     return callback.answer()
