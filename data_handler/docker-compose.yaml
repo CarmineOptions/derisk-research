@@ -27,7 +27,7 @@ services:
       - db
   celery:
     build: .
-    command: celery -A data_handler.celery_conf worker --loglevel=INFO
+    command: celery -A celery_app.celery_conf worker --loglevel=INFO
     volumes:
       - .:/app
     depends_on:
@@ -36,7 +36,7 @@ services:
 
   celery_beat:
     build: .
-    command: celery -A data_handler.celery_conf beat --loglevel=INFO
+    command: celery -A celery_app.celery_conf beat --loglevel=INFO
     volumes:
       - .:/app
     depends_on:

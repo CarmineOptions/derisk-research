@@ -6,9 +6,9 @@ import logging
 
 import pandas
 
-from data_handler.handlers.helpers import Portfolio, TokenValues, get_symbol
-from data_handler.handlers.settings import TOKEN_SETTINGS, TokenSettings
-from data_handler.handlers.state import LoanEntity, InterestRateModels, State
+from handlers.helpers import Portfolio, TokenValues, get_symbol
+from handlers.settings import TOKEN_SETTINGS, TokenSettings
+from handlers.state import LoanEntity, InterestRateModels, State
 
 
 

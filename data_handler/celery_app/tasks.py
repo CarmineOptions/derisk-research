@@ -1,11 +1,11 @@
 from celery import shared_task
 import logging
 from time import monotonic
-from data_handler.handlers.loan_states.hashtack_v0.run import HashtackV0StateComputation
-from data_handler.handlers.loan_states.hashtack_v1.run import HashtackV1StateComputation
-from data_handler.handlers.loan_states.zklend.run import ZkLendLoanStateComputation
-from data_handler.handlers.loan_states.nostra_alpha.run import NostraAlphaStateComputation
-from data_handler.handlers.loan_states.nostra_mainnet.run import NostraMainnetStateComputation
+from handlers.loan_states.hashtack_v0.run import HashtackV0StateComputation
+from handlers.loan_states.hashtack_v1.run import HashtackV1StateComputation
+from handlers.loan_states.zklend.run import ZkLendLoanStateComputation
+from handlers.loan_states.nostra_alpha.run import NostraAlphaStateComputation
+from handlers.loan_states.nostra_mainnet.run import NostraMainnetStateComputation
 
 
 @shared_task
