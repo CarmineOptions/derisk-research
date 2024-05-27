@@ -5,8 +5,9 @@ from typing import Dict, Optional
 import pandas as pd
 from tools.constants import ProtocolIDs
 
-from database.crud import DBConnector
-from database.models import LoanState
+from data_handler.database.database import engine
+from data_handler.database.crud import DBConnector
+from data_handler.database.models import LoanState
 from tools.constants import FIRST_RUNNING_MAPPING
 from tools.api_connector import DeRiskAPIConnector
 
@@ -154,20 +155,25 @@ class LoanStateComputationBase(ABC):
         default_last_block = self.last_block
         for protocol_address in self.PROTOCOL_ADDRESSES:
             retry = 0
-            logger.info(f'Default last block: {default_last_block}')
-            self.last_block = FIRST_RUNNING_MAPPING.get(protocol_address, 10800)# default_last_block
+            logger.info(f"Default last block: {default_last_block}")
+            self.last_block = FIRST_RUNNING_MAPPING.get(
+                protocol_address, 10800
+            )  # default_last_block
 
             while retry < max_retries:
                 data = self.get_data(protocol_address, self.last_block)
 
                 if not data:
-                    logger.info(f"No data found for address {protocol_address} at block {self.last_block}")
+                    logger.info(
+                        f"No data found for address {protocol_address} at block {self.last_block}"
+                    )
                     self.last_block += self.PAGINATION_SIZE
                     retry += 1
                     continue
 
                 processed_data = self.process_data(data)
-                self.save_data(processed_data)
+                filtered_data = self._filter_by_changed_event_values(processed_data)
+                self.save_data(filtered_data)
                 self.last_block += self.PAGINATION_SIZE
                 logger.info(f"Processed data up to block {self.last_block}")
                 retry = 0  # Reset retry counter if data is found and processed
@@ -175,3 +181,40 @@ class LoanStateComputationBase(ABC):
             if retry == max_retries:
                 logger.info(f"Reached max retries for address {protocol_address}")
 
+    def _filter_by_changed_event_values(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Filters the DataFrame to only include rows where the event values have changed.
+        :param df: The DataFrame to filter.
+        :return: The filtered DataFrame.
+        """
+        renamed_df = df.rename(columns={"protocol": "protocol_id"})
+
+        users = renamed_df["user"].to_list()
+
+        # Get existing records
+        existing_records = self.db_connector.get_existed_records(
+            LoanState, users, self.PROTOCOL_TYPE
+        )
+        existing_df = pd.DataFrame(existing_records)
+        # If there are no existing records, return the incoming DataFrame
+        if existing_df.empty:
+            return df
+
+        # Merge the incoming DataFrame with the existing records DataFrame on 'user' and 'block'
+        merged_df = renamed_df.merge(
+            existing_df,
+            on=["user", "block", "protocol_id"],
+            suffixes=("", "_existing"),
+            how="left",
+        )
+
+        # Filter rows where 'debt' or 'collateral' values have changed or do not exist in the existing records
+        changed_or_new_df = merged_df[
+            (merged_df["debt"] != merged_df["debt_existing"])
+            | (merged_df["collateral"] != merged_df["collateral_existing"])
+        ]
+
+        # Keep only the columns from the original DataFrame
+        filtered_df = changed_or_new_df[renamed_df.columns]
+
+        return filtered_df
