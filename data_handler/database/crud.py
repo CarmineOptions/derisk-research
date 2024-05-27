@@ -1,9 +1,10 @@
 import uuid
+import pandas as pd
 from typing import List, Optional, Type, TypeVar
 
-from sqlalchemy import create_engine, func, select
+from sqlalchemy import create_engine, func
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import scoped_session, sessionmaker, Session
+from sqlalchemy.orm import scoped_session, sessionmaker
 
 from database.database import SQLALCHEMY_DATABASE_URL
 from database.models import Base, LoanState
@@ -143,46 +144,43 @@ class DBConnector:
         finally:
             db.close()
 
-    def write_batch_to_db(self, objects: List[LoanState]) -> None:
+    def write_batch_to_db(self, objects: List[Base]) -> None:
         """
         Writes a batch of objects to the database efficiently.
-        :param objects: List[LoanState] - A list of LoanState instances to write.
+        :param objects: List[Base] - A list of SQLAlchemy Base instances to write.
         :raise SQLAlchemyError: If the database operation fails.
         """
-        db: Session = self.Session()
+        db = self.Session()
         try:
-            # Fetch existing objects from the database based on protocol_id and user pair
-            existing_objects = {
-                (obj.protocol_id, obj.user): obj
-                for obj in db.execute(
-                    select(LoanState).where(
-                        (LoanState.protocol_id.in_([o.protocol_id for o in objects]))
-                        & (LoanState.user.in_([o.user for o in objects]))
-                    )
-                ).scalars()
-            }
-
-            # Prepare list of objects to save
-            objects_to_save = []
-            for obj in objects:
-                existing_obj = existing_objects.get((obj.protocol_id, obj.user))
-                if existing_obj:
-                    if (
-                        obj.user != existing_obj.user
-                        or obj.collateral != existing_obj.collateral
-                        or obj.debt != existing_obj.debt
-                        or obj.protocol_id != existing_obj.protocol_id
-                    ):
-                        objects_to_save.append(obj)
-                else:
-                    objects_to_save.append(obj)
-
-            # Save the filtered objects
-            if objects_to_save:
-                db.bulk_save_objects(objects_to_save)
-                db.commit()
+            db.bulk_save_objects(objects)
+            db.commit()
         except SQLAlchemyError as e:
             db.rollback()
             raise e
+        finally:
+            db.close()
+
+    def get_existed_records(
+        self, model: Type[Base], users: list[str], protocol_id: ProtocolIDs
+    ) -> List[dict]:
+        """
+        Retrieves the existed records from the database filtered by protocol_id, blocks and user
+        :param model: Type[Base] - The model to filter by.
+        :param users: list[str] - The list of users to filter by.
+        :param protocol_id: ProtocolIDs - The protocol ID to filter by.
+        :return: List[dict] - A list of dictionaries representing the existing records.
+        """
+        db = self.Session()
+        try:
+            result = (
+                db.query(model)
+                .filter(model.protocol_id == protocol_id, model.user.in_(users))
+                .all()
+            )
+            # Convert the list of SQLAlchemy objects to a list of dictionaries
+            result_df = pd.DataFrame([record.__dict__ for record in result])
+            # Remove the '_sa_instance_state' key which is not needed
+            clear_df = result_df.drop("_sa_instance_state", axis=1, errors="ignore")
+            return clear_df
         finally:
             db.close()
