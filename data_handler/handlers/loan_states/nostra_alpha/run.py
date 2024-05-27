@@ -14,7 +14,7 @@ class NostraAlphaStateComputation(LoanStateComputationBase):
     A class that computes the loan states for the NOSTRA_ALPHA protocol.
     """
 
-    PROTOCOL_TYPE = ProtocolIDs.NOSTRA_ALPHA.value
+    PROTOCOL_TYPE = ProtocolIDs.NOSTRA_ALPHA
     PROTOCOL_ADDRESSES = ProtocolAddresses().NOSTRA_ALPHA_ADDRESSES
 
     def process_data(self, data: list[dict]) -> pd.DataFrame:

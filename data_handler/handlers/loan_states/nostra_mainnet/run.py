@@ -14,7 +14,7 @@ class NostraMainnetStateComputation(LoanStateComputationBase):
     A class that computes the loan states for the Nostra Mainnet protocol.
     """
 
-    PROTOCOL_TYPE = ProtocolIDs.NOSTRA_MAINNET.value
+    PROTOCOL_TYPE = ProtocolIDs.NOSTRA_MAINNET
     PROTOCOL_ADDRESSES = ProtocolAddresses().NOSTRA_MAINNET_ADDRESSES
 
     def process_data(self, data: list[dict]) -> pd.DataFrame:

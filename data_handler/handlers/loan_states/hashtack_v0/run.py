@@ -14,7 +14,7 @@ class HashtackV0StateComputation(LoanStateComputationBase):
     A class that computes the loan states for the HashstackV0 protocol.
     """
 
-    PROTOCOL_TYPE = ProtocolIDs.HASHSTACK_V0.value
+    PROTOCOL_TYPE = ProtocolIDs.HASHSTACK_V0
     PROTOCOL_ADDRESSES = ProtocolAddresses().HASHSTACK_V0_ADDRESSES
 
     def process_data(self, data: list[dict]) -> pd.DataFrame:
