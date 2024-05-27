@@ -28,7 +28,10 @@ class NostraAlphaStateComputation(LoanStateComputationBase):
         :return: pd.DataFrame
         """
         nostra_alpha_state = NostraAlphaState()
-        events_mapping = nostra_alpha_state.EVENTS_METHODS_MAPPING
+        events_mapping = {
+            "Mint": "process_debt_mint_event",
+            "Burn": "process_debt_burn_event",
+        }
         # Init DataFrame
         df = pd.DataFrame(data)
         # Filter out events that are not in the mapping
@@ -39,33 +42,6 @@ class NostraAlphaStateComputation(LoanStateComputationBase):
 
         result_df = self.get_result_df(nostra_alpha_state.loan_entities)
         return result_df
-
-    def run(self) -> None:
-        """
-        Runs the loan state computation for the NOSTRA_ALPHA protocol.
-        """
-        max_retries = 5
-        default_last_block = self.last_block
-        for protocol_address in self.PROTOCOL_ADDRESSES:
-            retry = 0
-            self.last_block = default_last_block
-            for _ in range(max_retries):
-                data = self.get_data(protocol_address, self.last_block)
-
-                if not data:
-                    logger.info(f"No data found for address {protocol_address}: {self.last_block}")
-
-                if not data:
-                    self.last_block += self.PAGINATION_SIZE
-                    retry += 1
-                    continue
-                elif retry == max_retries:
-                    break
-
-                processed_data = self.process_data(data)
-                self.save_data(processed_data)
-                self.last_block += self.PAGINATION_SIZE
-                logger.info(f"Processed data up to block {self.last_block}")
 
 
 def run_loan_states_computation_for_nostra_alpha() -> None:

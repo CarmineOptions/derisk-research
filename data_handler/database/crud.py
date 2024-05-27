@@ -1,13 +1,13 @@
 import uuid
 from typing import List, Optional, Type, TypeVar
 
-from sqlalchemy import create_engine, func
+from sqlalchemy import create_engine, func, select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy.orm import scoped_session, sessionmaker, Session
 
 from database.database import SQLALCHEMY_DATABASE_URL
 from database.models import Base, LoanState
-from tools.constants import ProtocolIDs, FirstConfig
+from tools.constants import ProtocolIDs
 
 ModelType = TypeVar("ModelType", bound=Base)
 
@@ -134,21 +134,53 @@ class DBConnector:
         """
         db = self.Session()
         try:
-            max_block = db.query(func.max(LoanState.block)).filter(LoanState.protocol_id == protocol_id).scalar()
-            return max_block or FirstConfig.get_last_block_by_protocol_id(protocol_id)
+            max_block = (
+                db.query(func.max(LoanState.block))
+                .filter(LoanState.protocol_id == protocol_id)
+                .scalar()
+            )
+            return max_block or 0
         finally:
             db.close()
 
-    def write_batch_to_db(self, objects: List[Base]) -> None:
+    def write_batch_to_db(self, objects: List[LoanState]) -> None:
         """
         Writes a batch of objects to the database efficiently.
-        :param objects: List[Base] - A list of SQLAlchemy Base instances to write.
+        :param objects: List[LoanState] - A list of LoanState instances to write.
         :raise SQLAlchemyError: If the database operation fails.
         """
-        db = self.Session()
+        db: Session = self.Session()
         try:
-            db.bulk_save_objects(objects)
-            db.commit()
+            # Fetch existing objects from the database based on protocol_id and user pair
+            existing_objects = {
+                (obj.protocol_id, obj.user): obj
+                for obj in db.execute(
+                    select(LoanState).where(
+                        (LoanState.protocol_id.in_([o.protocol_id for o in objects]))
+                        & (LoanState.user.in_([o.user for o in objects]))
+                    )
+                ).scalars()
+            }
+
+            # Prepare list of objects to save
+            objects_to_save = []
+            for obj in objects:
+                existing_obj = existing_objects.get((obj.protocol_id, obj.user))
+                if existing_obj:
+                    if (
+                        obj.user != existing_obj.user
+                        or obj.collateral != existing_obj.collateral
+                        or obj.debt != existing_obj.debt
+                        or obj.protocol_id != existing_obj.protocol_id
+                    ):
+                        objects_to_save.append(obj)
+                else:
+                    objects_to_save.append(obj)
+
+            # Save the filtered objects
+            if objects_to_save:
+                db.bulk_save_objects(objects_to_save)
+                db.commit()
         except SQLAlchemyError as e:
             db.rollback()
             raise e
