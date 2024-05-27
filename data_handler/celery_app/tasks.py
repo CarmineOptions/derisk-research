@@ -2,11 +2,11 @@ from celery import shared_task
 import logging
 from time import monotonic
 from .celery_conf import app
-from handlers.loan_states.hashtack_v0.run import HashtackV0StateComputation
-from handlers.loan_states.hashtack_v1.run import HashtackV1StateComputation
-from handlers.loan_states.zklend.run import ZkLendLoanStateComputation
+# from handlers.loan_states.hashtack_v0.run import HashtackV0StateComputation
+# from handlers.loan_states.hashtack_v1.run import HashtackV1StateComputation
+# from handlers.loan_states.zklend.run import ZkLendLoanStateComputation
 from handlers.loan_states.nostra_alpha.run import NostraAlphaStateComputation
-from handlers.loan_states.nostra_mainnet.run import NostraMainnetStateComputation
+# from handlers.loan_states.nostra_mainnet.run import NostraMainnetStateComputation
 
 
 #@app.task(name="run_loan_states_computation_for_hashtack_v0")
@@ -39,34 +39,34 @@ from handlers.loan_states.nostra_mainnet.run import NostraMainnetStateComputatio
 #     )
 
 
-@app.task(name="run_loan_states_computation_for_zklend")
-def run_loan_states_computation_for_zklend():
-    start = monotonic()
-    logging.basicConfig(level=logging.INFO)
-
-    logging.info("Starting zkLend loan state computation")
-    computation = ZkLendLoanStateComputation()
-    computation.run()
-
-    logging.info(
-        "Finished zkLend loan state computation, Time taken: %s seconds",
-        monotonic() - start,
-    )
-
-
-#@app.task(name="run_loan_states_computation_for_nostra_alpha")
-# def run_loan_states_computation_for_nostra_alpha():
+# @app.task(name="run_loan_states_computation_for_zklend")
+# def run_loan_states_computation_for_zklend():
 #     start = monotonic()
 #     logging.basicConfig(level=logging.INFO)
 #
-#     logging.info("Starting Nostra Alpha loan state computation")
-#     computation = NostraAlphaStateComputation()
+#     logging.info("Starting zkLend loan state computation")
+#     computation = ZkLendLoanStateComputation()
 #     computation.run()
 #
 #     logging.info(
-#         "Finished Nostra Alpha loan state computation, Time taken: %s seconds",
+#         "Finished zkLend loan state computation, Time taken: %s seconds",
 #         monotonic() - start,
 #     )
+
+
+@app.task(name="run_loan_states_computation_for_nostra_alpha")
+def run_loan_states_computation_for_nostra_alpha():
+    start = monotonic()
+    logging.basicConfig(level=logging.INFO)
+
+    logging.info("Starting Nostra Alpha loan state computation")
+    computation = NostraAlphaStateComputation()
+    computation.run()
+
+    logging.info(
+        "Finished Nostra Alpha loan state computation, Time taken: %s seconds",
+        monotonic() - start,
+    )
 
 
 #@app.task(name="run_loan_states_computation_for_nostra_mainnet")
