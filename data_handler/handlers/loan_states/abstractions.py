@@ -5,9 +5,8 @@ from typing import Dict, Optional
 import pandas as pd
 from tools.constants import ProtocolIDs
 
-from data_handler.database.database import engine
-from data_handler.database.crud import DBConnector
-from data_handler.database.models import LoanState
+from database.crud import DBConnector
+from database.models import LoanState
 from tools.constants import FIRST_RUNNING_MAPPING
 from tools.api_connector import DeRiskAPIConnector
 
