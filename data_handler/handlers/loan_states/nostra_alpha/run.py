@@ -28,7 +28,10 @@ class NostraAlphaStateComputation(LoanStateComputationBase):
         :return: pd.DataFrame
         """
         nostra_alpha_state = NostraAlphaState()
-        events_mapping = nostra_alpha_state.EVENTS_METHODS_MAPPING
+        events_mapping = {
+            "Mint": "process_debt_mint_event",
+            "Burn": "process_debt_burn_event",
+        }
         # Init DataFrame
         df = pd.DataFrame(data)
         # Filter out events that are not in the mapping
