@@ -14,7 +14,7 @@ class ZkLendLoanStateComputation(LoanStateComputationBase):
     A class that computes the loan states for the zkLend protocol.
     """
 
-    PROTOCOL_TYPE = ProtocolIDs.ZKLEND.value
+    PROTOCOL_TYPE = ProtocolIDs.ZKLEND
     PROTOCOL_ADDRESSES = ProtocolAddresses().ZKLEND_MARKET_ADDRESSES
 
     def process_data(self, data: list[dict]) -> pd.DataFrame:
@@ -56,3 +56,7 @@ def run_loan_states_computation_for_zklend() -> None:
         "Finished zkLend loan state computation, Time taken: %s seconds",
         monotonic() - start,
     )
+
+
+if __name__ == "__main__":
+    run_loan_states_computation_for_zklend()
