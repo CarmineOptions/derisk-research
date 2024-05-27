@@ -40,33 +40,6 @@ class ZkLendLoanStateComputation(LoanStateComputationBase):
         result_df = self.get_result_df(zklend_state.loan_entities)
         return result_df
 
-    def run(self) -> None:
-        """
-        Runs the loan state computation for the zkLend protocol.
-        """
-        max_retries = 5
-        default_last_block = self.last_block
-        for protocol_address in self.PROTOCOL_ADDRESSES:
-            retry = 0
-            self.last_block = default_last_block
-            for _ in range(max_retries):
-                data = self.get_data(protocol_address, self.last_block)
-
-                if not data:
-                    logger.info(f"No data found for address {protocol_address}: {self.last_block}")
-
-                if not data:
-                    self.last_block += self.PAGINATION_SIZE
-                    retry += 1
-                    continue
-                elif retry == max_retries:
-                    break
-
-                processed_data = self.process_data(data)
-                self.save_data(processed_data)
-                self.last_block += self.PAGINATION_SIZE
-                logger.info(f"Processed data up to block {self.last_block}")
-
 
 def run_loan_states_computation_for_zklend() -> None:
     """
