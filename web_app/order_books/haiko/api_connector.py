@@ -5,7 +5,8 @@ class HaikoAPIConnector(AbstractionAPIConnector):
     API_URL = "https://app.haiko.xyz/api/v1"
 
     @classmethod
-    def get_token_markets(cls) -> list[dict]:
+    def get_all_markets(cls) -> list[dict]:
+        # TODO: Delete method
         """
         Get all Haiko markets.
         :return: List of all Haiko markets.
@@ -71,6 +72,18 @@ class HaikoAPIConnector(AbstractionAPIConnector):
         endpoint = f"/tokens?network=mainnet&existingOnly={existing_only}"
         return cls.send_get_request(endpoint)  # type: ignore
 
+    @classmethod
+    def get_market_depth(cls, market_id: str) -> list[dict]:
+        # TODO: Add docstring
+        endpoint = f"/depth?network=mainnet&id={market_id}"
+        return cls.send_get_request(endpoint)  # type: ignore
+
+    @classmethod
+    def get_pair_markets(cls, token0: str, token1: str) -> list[dict]:
+        # TODO: Add docstring
+        endpoint = f"/markets-by-pair?network=mainnet&token0={token0}&token1={token1}"
+        return cls.send_get_request(endpoint)  # type: ignore
+
 
 class HaikoBlastAPIConnector(AbstractionAPIConnector):
     API_URL = "https://starknet-mainnet.blastapi.io"
@@ -85,7 +98,7 @@ class HaikoBlastAPIConnector(AbstractionAPIConnector):
         :return: Response from BlastAPI.
         """
         if not isinstance(call_method, str) or not isinstance(params, dict):
-            raise ValueError("Call method must be a string and params must be a dict")
+            raise ValueError("Call method must be a string and params must be a dict.")
         body = {"jsonrpc": "2.0", "method": call_method, "params": params, "id": 0}
         endpoint = f"/{cls.PROJECT_ID}"
         return cls.send_post_request(endpoint, json=body)
