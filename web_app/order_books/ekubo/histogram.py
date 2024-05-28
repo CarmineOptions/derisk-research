@@ -1,4 +1,7 @@
+import argparse
 import matplotlib.pyplot as plt
+from typing import List
+
 from web_app.order_books.ekubo.main import EkuboOrderBook
 
 TOKEN_A = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"  # ETH
@@ -17,51 +20,121 @@ def fetch_order_book_and_current_price(token_a: str, token_b: str) -> tuple:
     return order_book.get_order_book(), order_book.current_price
 
 
+class Histogram:
+    """
+    A class to create and display histograms for order book data.
+
+    Attributes:
+        fig (plt.Figure): The matplotlib figure object.
+        ax (plt.Axes): The matplotlib axes object.
+        ask_prices (List[float]): List of ask prices.
+        ask_quantities (List[float]): List of ask quantities.
+        bid_prices (List[float]): List of bid prices.
+        bid_quantities (List[float]): List of bid quantities.
+        current_price (float): The current market price.
+    """
+
+    def __init__(self):
+        """Initialize the Histogram with an empty plot and collect order book data."""
+        self.fig, self.ax = plt.subplots()
+        self._collect_data()
+
+    def add_label(self, quantity_name: str, price_name: str) -> None:
+        """
+        Add labels to the histogram.
+
+        Args:
+            quantity_name (str): The name of the quantity.
+            price_name (str): The name of the price.
+        """
+        self.ax.set_xlabel(f"Quantity ({quantity_name})")
+        self.ax.set_ylabel(f"Price ({price_name})")
+        self.ax.legend()
+
+    def _collect_data(self) -> None:
+        """Collect order book data and convert to float."""
+        data, current_price = fetch_order_book_and_current_price(TOKEN_A, TOKEN_B)
+
+        ask_prices, ask_quantities = zip(*data["asks"])
+        bid_prices, bid_quantities = zip(*data["bids"])
+
+        self.ask_prices = [float(price) for price in ask_prices]
+        self.ask_quantities = [float(quantity) for quantity in ask_quantities]
+        self.bid_prices = [float(price) for price in bid_prices]
+        self.bid_quantities = [float(quantity) for quantity in bid_quantities]
+
+        self.current_price = float(current_price)
+
+    def add_current_price_line(self, max_quantity: float = 0) -> None:
+        """
+        Add a line representing the current price to the histogram.
+
+        Args:
+            max_quantity (float): The maximum quantity to set the width of the line. Defaults to 0.
+        """
+        self.ax.barh(
+            [self.current_price],
+            max_quantity,
+            color="black",
+            height=20,
+            label="Current Price",
+        )
+        min_price = min(min(self.bid_prices), min(self.ask_prices), self.current_price)
+        max_price = max(max(self.bid_prices), max(self.ask_prices), self.current_price)
+        self.ax.set_ylim(min_price - 100, max_price + 100)  # Adding some buffer
+
+    def add_asks(self) -> None:
+        """Add ask prices and quantities to the histogram."""
+        self.ax.barh(self.ask_prices, self.ask_quantities, color="red", label="Asks", height=15)
+
+    def add_bids(self) -> None:
+        """Add bid prices and quantities to the histogram."""
+        self.ax.barh(self.bid_prices, self.bid_quantities, color="green", label="Bids", height=15)
+
+    def add_total_box_quantity(self, quantities_name: str, sum_quantities: float) -> None:
+        """
+        Add a text box displaying the total quantity.
+
+        Args:
+            quantities_name (str): The name of the quantities.
+            sum_quantities (float): The sum of the quantities.
+        """
+        total_quantity = round(sum_quantities, 4)
+        textstr = f'Total {quantities_name} Quantity: {total_quantity}'
+        props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+        self.ax.text(0.95, 1.05, textstr, transform=self.ax.transAxes, fontsize=10,
+                     verticalalignment='top', horizontalalignment='right', bbox=props)
+
+    def show_asks(self) -> None:
+        """Display the asks histogram with the current price line and total quantity."""
+        self.add_current_price_line(max(self.ask_quantities))
+        self.add_asks()
+        self.add_label("ETH", "USDC")
+        self.add_total_box_quantity("ETH", sum(self.ask_quantities))
+        plt.show()
+
+    def show_bids(self) -> None:
+        """Display the bids histogram with the current price line and total quantity."""
+        self.add_current_price_line(max(self.bid_quantities))
+        self.add_bids()
+        self.add_label("USDC", "ETH")
+        self.add_total_box_quantity("USDC", sum(self.bid_quantities))
+        plt.show()
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Display order book histograms.")
+    parser.add_argument('--type', choices=['asks', 'bids'], required=True,
+                        help="Type of histogram to display: 'asks' or 'bids'.")
+
+    args = parser.parse_args()
+
+    histogram = Histogram()
+    if args.type == 'asks':
+        histogram.show_asks()
+    elif args.type == 'bids':
+        histogram.show_bids()
+
+
 if __name__ == "__main__":
-    data, current_price = fetch_order_book_and_current_price(TOKEN_A, TOKEN_B)
-    # Extract data for plotting and convert to float
-    ask_prices, ask_quantities = zip(*data["asks"])
-    bid_prices, bid_quantities = zip(*data["bids"])
-
-    ask_prices = [float(price) for price in ask_prices]
-    ask_quantities = [float(quantity) for quantity in ask_quantities]
-    bid_prices = [float(price) for price in bid_prices]
-    bid_quantities = [float(quantity) for quantity in bid_quantities]
-
-    # Convert current_price to float
-    current_price = float(current_price)
-
-    fig, ax = plt.subplots()
-    # Add current price line
-    ax.barh(
-        [current_price],
-        max((max(bid_quantities), max(ask_quantities))),
-        color="black",
-        height=20,
-        label="Current Price",
-    )
-
-    # Plot asks and bids
-    ax.barh(ask_prices, ask_quantities, color="red", label="Asks", height=5)
-    ax.barh(bid_prices, bid_quantities, color="green", label="Bids", height=5)
-
-    # Set y-axis limits to include current_price
-    min_price = min(min(bid_prices), min(ask_prices), current_price)
-    max_price = max(max(bid_prices), max(ask_prices), current_price)
-    ax.set_ylim(min_price - 100, max_price + 100)  # Adding some buffer
-
-    # Labels and title
-    ax.set_xlabel("Quantity (ETH)")
-    ax.set_ylabel("Price (USDC)")
-    ax.set_title("Order Book")
-    ax.legend()
-
-    # add a box with the total ask quantity
-    total_ask_quantity = round(sum(ask_quantities), 4)
-    textstr = f'Total Asks Quantity: {total_ask_quantity}'
-    props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-    ax.text(0.95, 1.05, textstr, transform=ax.transAxes, fontsize=10,
-            verticalalignment='top', horizontalalignment='right', bbox=props)
-
-    # Show the plot
-    plt.show()
+    main()
