@@ -15,6 +15,12 @@ alembic = "^1.13.1"
 psycopg2 = "^2.9.9"
 psycopg2-binary = "^2.9.9"
 pymysql = "^1.1.0"
+pandas = "^2.2.2"
+gcloud = "^0.18.3"
+google-cloud-storage = "^2.16.0"
+celery = "^5.4.0"
+redis = "^5.0.4"
+slowapi = "^0.1.9"
 
 
 [tool.poetry.group.dev.dependencies]

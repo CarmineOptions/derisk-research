@@ -1,9 +1,27 @@
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Set
 
 
+class ProtocolIDs(Enum):
+    """
+    This class contains the protocol IDs that are used in the system.
+    """
+
+    # hashstack protocols
+    HASHSTACK_V0: str = "Hashstack_v0"
+    HASHSTACK_V1: str = "Hashstack_v1"
+    HASHSTACK_V1_R: str = "Hashstack_v1_r"
+    HASHSTACK_V1_D: str = "Hashstack_v1_d"
+    # nostra protocols
+    NOSTRA_ALPHA: str = "Nostra_alpha"
+    NOSTRA_MAINNET: str = "Nostra_mainnet"
+    # zkLend protocol
+    ZKLEND: str = "zkLend"
+
+
 @dataclass(frozen=True)
-class BlockchainAddresses:
+class ProtocolAddresses:
     """
     This class contains the addresses of the contracts that are used
     """
@@ -97,3 +115,34 @@ class BlockchainAddresses:
             "0x0292be6baee291a148006db984f200dbdb34b12fb2136c70bfe88649c12d934b",
         }
     )
+
+
+@dataclass
+class FirstConfig:
+    hashtack_v0_last_block = 21000 # old data which raised errors
+    hashtack_v1_last_block = 268068 # doesn't have event to handle
+    # Existing events: (dict_keys(['new_loan', 'collateral_added', 'loan_spent', 'loan_transferred', 'loan_repaid']) what we have
+    #  Result of data: `updated_debt_token_price`
+    nostra_alpha_last_block = 0
+    nostra_mainnet_last_block = 0
+    zkLend_last_block = 630000
+
+    @classmethod
+    def get_last_block_by_protocol_id(cls, protocol_id: str) -> int:
+        """
+        Returns the last block processed for the given protocol ID.
+        :param protocol_id: Protocol ID
+        :return: Value of the last block processed for the given protocol ID
+        """
+        if protocol_id == ProtocolIDs.HASHSTACK_V0.value:
+            return cls.hashtack_v0_last_block
+        elif protocol_id == ProtocolIDs.HASHSTACK_V1.value:
+            return cls.hashtack_v1_last_block
+        elif protocol_id == ProtocolIDs.NOSTRA_ALPHA.value:
+            return cls.nostra_alpha_last_block
+        elif protocol_id == ProtocolIDs.NOSTRA_MAINNET.value:
+            return cls.nostra_mainnet_last_block
+        elif protocol_id == ProtocolIDs.ZKLEND.value:
+            return cls.zkLend_last_block
+        else:
+            return 0

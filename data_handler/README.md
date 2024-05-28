@@ -39,7 +39,7 @@ DB_USER=#
 DB_PASSWORD=#
 DB_HOST=db
 DB_PORT=#
-DERISK_API_ENDPOINT=#
+DERISK_API_URL=#
 ```
 
 ### 5. Build your docker containers

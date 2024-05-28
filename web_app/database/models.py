@@ -1,8 +1,10 @@
 from datetime import datetime
 from uuid import uuid4
 
-from sqlalchemy import (UUID, Boolean, Column, DateTime, Float, ForeignKey,
-                        MetaData, String)
+from sqlalchemy import (
+    UUID, Boolean, Column, DateTime, Float, ForeignKey,
+    MetaData, String, JSON, Integer
+)
 from sqlalchemy.orm import DeclarativeBase, Mapped
 from sqlalchemy_utils import IPAddressType
 from sqlalchemy_utils.types.choice import ChoiceType
@@ -25,7 +27,7 @@ class NotificationData(Base):
     __tablename__ = "notification"
 
     created_at = Column(DateTime, default=datetime.now())
-    email = Column(String, index=True, unique=True, nullable=False)
+    email = Column(String, index=True, nullable=True)
     wallet_id = Column(String, nullable=False)
     telegram_id = Column(String, unique=False, nullable=False)
     ip_address = Column(IPAddressType, nullable=False)
@@ -49,3 +51,18 @@ class TelegramLog(Base):
     notification_data_id = Column(ForeignKey(NotificationData.id), nullable=False)
     is_succesfully = Column(Boolean, nullable=False)
     message = Column(String, server_default="", default="", nullable=False)
+
+
+class OrderBookModel(Base):
+    """
+    Represents an order book entry in the database.
+    """
+    __tablename__ = "orderbook"
+
+    token_a = Column(String, nullable=False, index=True)
+    token_b = Column(String, nullable=False, index=True)
+    timestamp = Column(DateTime, nullable=False)
+    block = Column(Integer, nullable=False)
+    dex = Column(String, nullable=False, index=True)
+    asks = Column(JSON, nullable=True)
+    bids = Column(JSON, nullable=True)
