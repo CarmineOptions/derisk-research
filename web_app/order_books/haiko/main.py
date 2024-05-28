@@ -74,7 +74,10 @@ class HaikoOrderBook(OrderBookBase):
             if not market_depth_list:
                 self.logger.info(f"Market depth for market {market_id} is empty.")
                 continue
-            self._calculate_order_book(market_depth_list, Decimal(market["currLimit"]))
+            liquidity = asyncio.run(func_call(HAIKO_MARKET_MANAGER_ADDRESS, "liquidity", [market_id]))
+            self._calculate_order_book(Decimal(liquidity[0]), market_depth_list, Decimal(market["currLimit"]))
+            r = sum(info[1] for info in self.asks)
+            print()
 
         self.sort_asks_bids()
         self.filter_asks_bids()
@@ -86,15 +89,13 @@ class HaikoOrderBook(OrderBookBase):
         self.bids = list(filter(lambda bid: bid[0] < min_ask_price, self.bids))
 
     def _calculate_order_book(
-        self, market_ticks_liquidity: list, current_tick: Decimal
+        self, liquidity: Decimal, market_ticks_liquidity: list, current_tick: Decimal
     ) -> None:
         tvl = Decimal("0")
         self.set_current_price(current_tick)
         min_price, max_price = self.calculate_price_range()
         process_ticks = partial(self.process_ticks, min_price, max_price)
-        asks, bids = self.divide_ticks_on_bids_asks(market_ticks_liquidity)
-        for group in asks:
-            tvl += (Decimal(group[1]) * self.tick_current_price)
+        asks, bids = self.divide_ticks_on_bids_asks(liquidity, market_ticks_liquidity)
         process_ticks(asks, is_ask=True)
         process_ticks(bids, is_ask=False)
 
@@ -124,7 +125,7 @@ class HaikoOrderBook(OrderBookBase):
             if min_price <= price <= max_price:
                 adding_list.append((price, liquidity_amount))
 
-    def divide_ticks_on_bids_asks(self, total_depth: list[dict]) -> tuple[list, list]:
+    def divide_ticks_on_bids_asks(self, liquidity: Decimal, total_depth: list[dict]) -> tuple[list, list]:
         """
         Dividing ticks on asks and bids for further processing.
         :param total_depth: List of all ungrouped ticks
@@ -134,12 +135,12 @@ class HaikoOrderBook(OrderBookBase):
         asks_data, bids_data = [], []
         for current_depth in total_depth:
             price = Decimal(current_depth["price"])
-            liquidity = Decimal(current_depth["liquidityCumulative"])
-            grouped_info = (price, liquidity)
             if price > current_price_formatted:
-                asks_data.append(grouped_info)
+                liquidity -= Decimal(current_depth["liquidityCumulative"])
+                asks_data.append((price, liquidity))
             else:
-                bids_data.append(grouped_info)
+                liquidity += Decimal(current_depth["liquidityCumulative"])
+                bids_data.append((price, liquidity))
         return asks_data, bids_data
 
     def calculate_liquidity_amount(self, tick, liquidity_pair_total) -> Decimal:
@@ -156,35 +157,25 @@ if __name__ == "__main__":
     token_1 = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"  # USDC
     order_book = HaikoOrderBook(token_0, token_1)
     asyncio.run(order_book.fetch_price_and_liquidity())
-    # print(order_book.get_order_book(), "\n")
+
     data = order_book.get_order_book()
-    # data["asks"] = [[float(ask[0]), float(ask[1]) * 10 ** 5] for ask in data["asks"]]
-    # data["bids"] = [[float(bid[0]), float(bid[1]) * 10 ** 5] for bid in data["bids"]]
     print()
     bid_prices, bid_amounts = zip(*data["bids"])
     ask_prices, ask_amounts = zip(*data["asks"])
 
-    # Define the range for the x-axis
-
-    # Create figure and axis
     fig, ax = plt.subplots()
 
-    # Plot bids
     ax.bar(bid_prices, bid_amounts, width=0.000001, color='green', label='Bids')
 
-    # Plot asks
     ax.bar(ask_prices, ask_amounts, width=0.000001, color='red', label='Asks')
 
-    # Highlight the spread zone
     spread_start = max(bid_prices)
     spread_end = min(ask_prices)
     ax.axvspan(spread_start, spread_end, color='grey', alpha=0.5)
     ax.set_yscale('log')
-    # Labels and title
     ax.set_xlabel('Price')
     ax.set_ylabel('Liquidity Amount')
     ax.set_title('Order Book Histogram')
     ax.legend()
 
-    # Display the plot
     plt.show()
