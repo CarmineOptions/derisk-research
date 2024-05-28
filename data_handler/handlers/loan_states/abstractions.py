@@ -5,9 +5,10 @@ from typing import Dict, Optional
 import pandas as pd
 from tools.constants import ProtocolIDs
 
-from data_handler.database.crud import DBConnector
-from data_handler.database.models import LoanState
-from data_handler.tools.api_connector import DeRiskAPIConnector
+from database.crud import DBConnector
+from database.models import LoanState
+from tools.constants import FIRST_RUNNING_MAPPING
+from tools.api_connector import DeRiskAPIConnector
 
 logger = logging.getLogger(__name__)
 
@@ -145,11 +146,32 @@ class LoanStateComputationBase(ABC):
         )
         return result_df
 
-    @abstractmethod
     def run(self) -> None:
         """
-        Executes the computation steps: data retrieval, processing, and saving.
-
-        This method orchestrates the whole computation process and must be implemented by subclasses.
+        Runs the loan state computation for the specific protocol.
         """
-        pass
+        max_retries = 5
+        default_last_block = self.last_block
+        for protocol_address in self.PROTOCOL_ADDRESSES:
+            retry = 0
+            logger.info(f'Default last block: {default_last_block}')
+            self.last_block = FIRST_RUNNING_MAPPING.get(protocol_address, 10800)# default_last_block
+
+            while retry < max_retries:
+                data = self.get_data(protocol_address, self.last_block)
+
+                if not data:
+                    logger.info(f"No data found for address {protocol_address} at block {self.last_block}")
+                    self.last_block += self.PAGINATION_SIZE
+                    retry += 1
+                    continue
+
+                processed_data = self.process_data(data)
+                self.save_data(processed_data)
+                self.last_block += self.PAGINATION_SIZE
+                logger.info(f"Processed data up to block {self.last_block}")
+                retry = 0  # Reset retry counter if data is found and processed
+
+            if retry == max_retries:
+                logger.info(f"Reached max retries for address {protocol_address}")
+

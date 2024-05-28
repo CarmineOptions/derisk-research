@@ -5,7 +5,7 @@ from typing import Iterator, Optional, Union
 import google.cloud.storage
 import pandas
 
-from data_handler.handlers.settings import TOKEN_SETTINGS, PAIRS
+from handlers.settings import TOKEN_SETTINGS, PAIRS
 
 GS_BUCKET_NAME = "derisk-persistent-state"
 

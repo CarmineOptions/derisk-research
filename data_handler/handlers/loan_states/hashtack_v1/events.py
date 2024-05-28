@@ -6,9 +6,9 @@ import logging
 
 import pandas as pd
 
-from data_handler.handlers.helpers import Portfolio, MAX_ROUNDING_ERRORS, TokenValues, add_leading_zeros, get_symbol
-from data_handler.handlers.settings import TokenSettings, TOKEN_SETTINGS
-from data_handler.handlers.state import LoanEntity, InterestRateModels, State
+from handlers.helpers import Portfolio, MAX_ROUNDING_ERRORS, TokenValues, add_leading_zeros, get_symbol
+from handlers.settings import TokenSettings, TOKEN_SETTINGS
+from handlers.state import LoanEntity, InterestRateModels, State
 
 
 R_TOKENS: dict[str, str] = {

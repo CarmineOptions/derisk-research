@@ -5,9 +5,9 @@ from typing import Optional
 
 import pandas as pd
 
-from data_handler.handlers.helpers import Portfolio, TokenValues, get_symbol
-from data_handler.handlers.loan_states.zklend import TOKEN_SETTINGS, TokenSettings
-from data_handler.handlers.state import InterestRateModels, LoanEntity, State
+from handlers.helpers import Portfolio, TokenValues, get_symbol
+from handlers.loan_states.zklend import TOKEN_SETTINGS, TokenSettings
+from handlers.state import InterestRateModels, LoanEntity, State
 
 ADDRESS: str = "0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05"
 EVENTS_METHODS_MAPPING: dict[str, str] = {
