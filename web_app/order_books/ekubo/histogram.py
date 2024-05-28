@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from web_app.ekubo.main import EkuboOrderBook
+from web_app.order_books.ekubo.main import EkuboOrderBook
 
 TOKEN_A = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"  # ETH
 TOKEN_B = "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"  # USDC
@@ -57,7 +57,7 @@ if __name__ == "__main__":
     ax.legend()
 
     # add a box with the total ask quantity
-    total_ask_quantity = round(sum(ask_quantities),4)
+    total_ask_quantity = round(sum(ask_quantities), 4)
     textstr = f'Total Asks Quantity: {total_ask_quantity}'
     props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
     ax.text(0.95, 1.05, textstr, transform=ax.transAxes, fontsize=10,
