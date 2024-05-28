@@ -1,16 +1,25 @@
 import asyncio
 
-from database.database import SessionLocal
+from aiogram.types import BotCommand, BotCommandScopeDefault
+
 from . import dp, bot
+from .crud import get_async_sessionmaker
 from .middleware import DatabaseMiddleware
 
 
 async def bot_start_polling():
     """
     Start the bot polling loop
-    (added database middleware if is outside Flask Api server)
+    (added database middleware and bot commands if is outside Flask Api server)
     """
-    dp.update.middleware(DatabaseMiddleware(SessionLocal))
+    await bot.set_my_commands(
+        [BotCommand(command="menu", description="Show bot menu")],
+        scope=BotCommandScopeDefault(),
+    )
+
+    async_sessionmaker = get_async_sessionmaker()
+    dp.update.middleware(DatabaseMiddleware(async_sessionmaker))
+
     await dp.start_polling(bot)
 
 

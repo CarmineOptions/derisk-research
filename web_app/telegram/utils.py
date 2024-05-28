@@ -71,7 +71,9 @@ class TelegramNotifications:
             )
         )
 
-    def __init__(self, db_connector: DBConnector, text: str = DEFAULT_MESSAGE_TEMPLATE) -> None:
+    def __init__(
+        self, db_connector: DBConnector, text: str = DEFAULT_MESSAGE_TEMPLATE
+    ) -> None:
         """
         Initialize the TelegramNotifier instance.
 
@@ -98,9 +100,11 @@ class TelegramNotifications:
         """
         while notification_id := await self.__queue_to_send.get():
             # Retrieve notification data from the database based on its ID
-            notification = self.db_connector.get_object(NotificationData, notification_id)
+            notification = self.db_connector.get_object(
+                NotificationData, notification_id
+            )
             if notification is None:
-                continue # skip is not valid notification_id
+                continue  # skip is not valid notification_id
             is_succesfully = False
             # create text message
             text = self.text.format(wallet_id=notification.wallet_id)
