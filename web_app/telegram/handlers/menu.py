@@ -47,16 +47,6 @@ async def delete_notification(callback: types.CallbackQuery):
     return callback.answer()
 
 
-@menu_router.callback_query(F.data.startswith("notification_adjust_"))
-async def delete_notification(callback: types.CallbackQuery):
-    """
-    This function is called when the user wants to adjust a notification.
-    It is not implemented yet, and it sends a message to the user that the feature is not ready.
-    """
-    ident = callback.data.removeprefix("notification_adjust_")
-    return callback.answer("Sorry, not ready yet. Stay tuned!")
-
-
 @menu_router.callback_query(F.data == "show_notifications")
 @menu_router.callback_query(F.data.startswith("notifications_"))
 async def show_notifications(callback: types.CallbackQuery, crud: TelegramCrud):
