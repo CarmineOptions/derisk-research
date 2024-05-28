@@ -85,7 +85,6 @@ def pagination_notifications(curent_uuid: UUID, page: int):
     - A button labeled "<" with the callback data "notifications_{page - 1}" (if the current page is not 0).
     - A button labeled "Delete" with the callback data "notification_delete_{curent_uuid}".
     - A button labeled ">" with the callback data "notifications_{page + 1}".
-    - A button labeled "Adjust" with the callback data "notification_adjust_{curent_uuid}".
     The buttons are arranged in a specific layout using the InlineKeyboardBuilder.
     Returns the constructed InlineKeyboardMarkup.
     """
@@ -94,7 +93,6 @@ def pagination_notifications(curent_uuid: UUID, page: int):
         markup.button(text="<", callback_data=f"notifications_{page - 1}")
     markup.button(text="Delete", callback_data=f"notification_delete_{curent_uuid}")
     markup.button(text=">", callback_data=f"notifications_{page + 1}")
-    markup.button(text="Adjust", callback_data=f"notification_adjust_{curent_uuid}")
     markup.button(text="Go to menu", callback_data="go_menu")
     markup.adjust(3, 1, 1)
     if page == 0:
