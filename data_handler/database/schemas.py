@@ -9,6 +9,7 @@ class LoanStateBase(BaseModel):
     user: Optional[str]
     collateral: Optional[Dict]
     debt: Optional[Dict]
+    deposit: Optional[Dict]
 
     class Config:
         orm_mode = True
