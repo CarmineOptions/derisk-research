@@ -38,11 +38,6 @@ class EkuboOrderBook(OrderBookBase):
         pool_df = df.loc[
             (df["token0"] == self.token_a) & (df["token1"] == self.token_b)
         ]
-        pool_df = pool_df[
-            (pool_df['fee'].apply(lambda x: int(x, 0)) == 170141183460469235273462165868118016)
-            &
-            (pool_df['tick_spacing'].apply(lambda x: int(x)) == 1000)
-            ]
 
         # set current price
         self.set_current_price()
@@ -54,7 +49,8 @@ class EkuboOrderBook(OrderBookBase):
 
             liquidity_response = self.connector.get_pool_liquidity(key_hash)
             liquidity_data = liquidity_response["data"]
-            liquidity_data = sorted(liquidity_data, key=lambda x: x['tick'])
+            liquidity_data = sorted(liquidity_data, key=lambda x: x["tick"])
+
             self._calculate_order_book(
                 liquidity_data,
                 pool_liquidity,
@@ -74,67 +70,105 @@ class EkuboOrderBook(OrderBookBase):
         :param row: pd.Series - Pool data
         """
         min_price, max_price = self.calculate_price_range()
+        if not liquidity_data:
+            return
+
         self.add_asks(liquidity_data, row)
         self.add_bids(liquidity_data, row)
-        # filter price by min and max price
-        self.asks = [(price, supply) for price, supply in self.asks if min_price < price < max_price]
-        self.bids = [(price, supply) for price, supply in self.bids if min_price < price < max_price]
+
+        # Filter asks and bids by price range
+        self.asks = [
+            (price, supply)
+            for price, supply in self.asks
+            if min_price < price < max_price
+        ]
+        self.bids = [
+            (price, supply)
+            for price, supply in self.bids
+            if min_price < price < max_price
+        ]
 
     def add_asks(self, liquidity_data: list[dict], row: pd.Series) -> None:
-        ask_ticks = [i for i in liquidity_data if i['tick'] >= row['tick']]
-        glob_liq = Decimal(row['liquidity'])
+        """
+        Add `asks` to the order book.
+        :param liquidity_data: list of dict with tick and net_liquidity_delta_diff
+        :param row: pool row data
+        """
+        ask_ticks = [i for i in liquidity_data if i["tick"] >= row["tick"]]
+        if not ask_ticks:
+            return
+
+        glob_liq = Decimal(row["liquidity"])
 
         # Calculate for current tick (loops start with the next one)
-        next_tick = ask_ticks[0]['tick']
-        prev_tick = next_tick - row['tick_spacing']
+        next_tick = ask_ticks[0]["tick"]
+        prev_tick = next_tick - row["tick_spacing"]
 
         prev_sqrt = self._get_pure_sqrt_ratio(prev_tick)
         next_sqrt = self._get_pure_sqrt_ratio(next_tick)
 
-        supply = abs(((glob_liq / prev_sqrt) - (glob_liq / next_sqrt)) / 10 ** self.token_a_decimal)
+        supply = abs(
+            ((glob_liq / prev_sqrt) - (glob_liq / next_sqrt)) / 10**self.token_a_decimal
+        )
         price = self.tick_to_price(prev_tick)
         self.asks.append((price, supply))
 
         for index, tick in enumerate(ask_ticks):
             if index == 0:
                 continue
-            glob_liq += Decimal(ask_ticks[index - 1]['net_liquidity_delta_diff'])
-            prev_tick = Decimal(ask_ticks[index - 1]['tick'])
+            glob_liq += Decimal(ask_ticks[index - 1]["net_liquidity_delta_diff"])
+            prev_tick = Decimal(ask_ticks[index - 1]["tick"])
 
-            curr_tick = Decimal(tick['tick'])
+            curr_tick = Decimal(tick["tick"])
 
             prev_sqrt = self._get_pure_sqrt_ratio(prev_tick)
             next_sqrt = self._get_pure_sqrt_ratio(curr_tick)
 
-            supply = abs(((glob_liq / prev_sqrt) - (glob_liq / next_sqrt)) / 10 ** self.token_a_decimal)
+            supply = abs(
+                ((glob_liq / prev_sqrt) - (glob_liq / next_sqrt))
+                / 10**self.token_a_decimal
+            )
             price = self.tick_to_price(prev_tick)
             self.asks.append((price, supply))
 
     def add_bids(self, liquidity_data: list[dict], row: pd.Series) -> None:
-        bid_ticks = [i for i in liquidity_data if i['tick'] <= row['tick']][::-1]
-        glob_liq = Decimal(row['liquidity'])
+        """
+        Add `bids` to the order book.
+        :param liquidity_data: liquidity data list of dict with tick and net_liquidity_delta_diff
+        :param row: pool row data
+        """
+        bid_ticks = [i for i in liquidity_data if i["tick"] <= row["tick"]][::-1]
+        if not bid_ticks:
+            return
 
-        next_tick = bid_ticks[0]['tick']
-        prev_tick = next_tick + row['tick_spacing']
+        glob_liq = Decimal(row["liquidity"])
+
+        next_tick = bid_ticks[0]["tick"]
+        prev_tick = next_tick + row["tick_spacing"]
 
         prev_sqrt = self._get_pure_sqrt_ratio(prev_tick)
         next_sqrt = self._get_pure_sqrt_ratio(next_tick)
 
-        supply = abs(((glob_liq * prev_sqrt) - (glob_liq * next_sqrt)) / 10 ** self.token_a_decimal)
+        supply = abs(
+            ((glob_liq * prev_sqrt) - (glob_liq * next_sqrt)) / 10**self.token_b_decimal
+        )
         price = self.tick_to_price(prev_tick)
         self.bids.append((price, supply))
 
         for index, tick in enumerate(bid_ticks):
             if index == 0:
                 continue
-            glob_liq -= Decimal(bid_ticks[index - 1]['net_liquidity_delta_diff'])
-            prev_tick = Decimal(bid_ticks[index - 1]['tick'])
-            curr_tick = Decimal(tick['tick'])
+            glob_liq -= Decimal(bid_ticks[index - 1]["net_liquidity_delta_diff"])
+            prev_tick = Decimal(bid_ticks[index - 1]["tick"])
+            curr_tick = Decimal(tick["tick"])
 
             prev_sqrt = self._get_pure_sqrt_ratio(prev_tick)
             next_sqrt = self._get_pure_sqrt_ratio(curr_tick)
 
-            supply = abs(((glob_liq * prev_sqrt) - (glob_liq * next_sqrt))) / 10 ** self.token_a_decimal
+            supply = (
+                abs(((glob_liq * prev_sqrt) - (glob_liq * next_sqrt)))
+                / 10**self.token_b_decimal
+            )
             price = self.tick_to_price(prev_tick)
             self.bids.append((price, supply))
 
