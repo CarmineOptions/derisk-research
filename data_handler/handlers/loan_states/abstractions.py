@@ -134,13 +134,6 @@ class LoanStateComputationBase(ABC):
                     }
                     for loan in loan_entities.values()
                 ],
-                "deposit": [
-                    {
-                        token: float(amount)
-                        for token, amount in loan.deposit.values.items()
-                    }
-                    for loan in loan_entities.values()
-                ],
                 "block": [entity.extra_info.block for entity in loan_entities_values],
                 "timestamp": [
                     entity.extra_info.timestamp for entity in loan_entities_values
