@@ -1,3 +1,4 @@
+import time
 from web_app.utils.abstractions import AbstractionAPIConnector
 
 
@@ -143,7 +144,12 @@ class EkuboAPIConnector(AbstractionAPIConnector):
         ]
         """
         endpoint = "/pools"
-        return self.send_get_request(endpoint)
+        response = self.send_get_request(endpoint)
+        if isinstance(response, dict) and response.get("error"):
+            # handling too many requests
+            time.sleep(2)
+            response = self.send_get_request(endpoint)
+        return response
 
     def get_pool_states(self) -> list:
         """
