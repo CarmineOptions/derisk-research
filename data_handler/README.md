@@ -43,7 +43,7 @@ DERISK_API_URL=#
 REDIS_HOST=redis
 ```
 
-### 5. Build your docker containers
+### 5. Build your docker containers on prod
 
 ```bash
 docker-compose up -d --build
@@ -54,6 +54,16 @@ docker-compose up -d --build
 ```bash
 docker-compose down
 ```
+#### For development
+
+```bash
+docker-compose -f docker-compose-dev.yml up -d --build
+```
+or 
+```bash
+docker-compose -f docker-compose-dev.yml down
+```
+
 
 ## Data migrations
 In this project is using `alembic` for data migrations.
