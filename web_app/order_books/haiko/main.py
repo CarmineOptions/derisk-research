@@ -99,12 +99,17 @@ class HaikoOrderBook(OrderBookBase):
         for tick_info in market_ticks_liquidity:
             if Decimal(tick_info["price"]) == 0:
                 continue
-            tick = self.price_to_tick(Decimal(tick_info["price"]))
+            tick = round(self.price_to_tick(Decimal(tick_info["price"])))
             tick_info["tick"] = tick
             if tick >= current_tick:
                 asks.append(tick_info)
             else:
                 bids.append(tick_info)
+        # ticks = [
+        #     round(self.price_to_tick(Decimal(i["price"]))) + HAIKO_MAX_TICK
+        #     for i in market_ticks_liquidity
+        #     if Decimal(i["price"]) != 0
+        # ]
 
         self.add_asks(asks, liquidity, current_tick, tick_spacing)
         self.add_bids(bids, liquidity, current_tick, tick_spacing)
@@ -119,10 +124,6 @@ class HaikoOrderBook(OrderBookBase):
             for price, supply in self.bids
             if min_price < price < max_price
         ]
-        # process_ticks = partial(self.process_ticks, min_price, max_price)
-        # asks, bids = self.divide_ticks_on_bids_asks(liquidity, market_ticks_liquidity)
-        # process_ticks(asks, is_ask=True)
-        # process_ticks(bids, is_ask=False)
 
     def add_asks(
             self, liquidity_data: list[dict], liquidity: Decimal, current_tick: Decimal, tick_spacing: Decimal
@@ -136,9 +137,8 @@ class HaikoOrderBook(OrderBookBase):
         if not liquidity_data:
             return
 
-        glob_liq = Decimal(liquidity_data[0]["liquidityCumulative"])
+        glob_liq = liquidity
 
-        # Calculate for current tick (loops start with the next one)
         next_tick = liquidity_data[0]["tick"]
         prev_tick = next_tick - tick_spacing
 
@@ -154,20 +154,19 @@ class HaikoOrderBook(OrderBookBase):
         for index, tick in enumerate(liquidity_data):
             if index == 0:
                 continue
-            # glob_liq += Decimal(liquidity_data[index - 1]["liquidityCumulative"])
-            glob_liq = Decimal(liquidity_data[index - 1]["liquidityCumulative"])
+            glob_liq += Decimal(liquidity_data[index - 1]["liquidityCumulative"])
             prev_tick = Decimal(liquidity_data[index - 1]["tick"])
             curr_tick = Decimal(tick["tick"])
-
+            liq = Decimal(tick["liquidityCumulative"]) - Decimal(liquidity_data[index - 1]["liquidityCumulative"])
             prev_sqrt = self._get_sqrt_ratio(prev_tick)
             next_sqrt = self._get_sqrt_ratio(curr_tick)
-
+            glob_liq += liq
             supply = abs(
                 ((glob_liq / prev_sqrt) - (glob_liq / next_sqrt))
                 / 10 ** self.token_a_decimal
             )
             price = self.tick_to_price(prev_tick)
-            self.asks.append((price, supply))
+            self.asks.append((Decimal(tick["price"]), supply))
 
     def add_bids(
             self, liquidity_data: list[dict], liquidity: Decimal, current_tick: Decimal, tick_spacing: Decimal
@@ -181,7 +180,7 @@ class HaikoOrderBook(OrderBookBase):
         # if not bid_ticks:
         #     return
 
-        glob_liq = Decimal(liquidity_data[0]["liquidityCumulative"])
+        glob_liq = liquidity
 
         next_tick = liquidity_data[0]["tick"]
         prev_tick = next_tick + tick_spacing
@@ -198,70 +197,25 @@ class HaikoOrderBook(OrderBookBase):
         for index, tick in enumerate(liquidity_data):
             if index == 0:
                 continue
-            glob_liq -= Decimal(liquidity_data[index - 1]["liquidityCumulative"])
+            glob_liq -= (Decimal(liquidity_data[index - 1]["liquidityCumulative"]))
             # glob_liq = Decimal(liquidity_data[index - 1]["liquidityCumulative"])
             prev_tick = Decimal(liquidity_data[index - 1]["tick"])
             curr_tick = Decimal(tick["tick"])
 
             prev_sqrt = self._get_sqrt_ratio(prev_tick)
             next_sqrt = self._get_sqrt_ratio(curr_tick)
-
             supply = (
                 abs(((glob_liq * prev_sqrt) - (glob_liq * next_sqrt)))
                 / 10**self.token_b_decimal
             )
-            price = self.tick_to_price(prev_tick)
-            self.bids.append((price, supply))
 
-    def process_ticks(
-        self,
-        min_price: Decimal,
-        max_price: Decimal,
-        depth: list[tuple[Decimal, Decimal]],
-        is_ask=True,
-    ) -> None:
-        """
-        Process ticks and add info about price and liquidity to correct list.
-        :param min_price: minimal acceptable price
-        :param max_price: maximal acceptable price
-        :param depth: market depth information
-        :param is_ask: marks if asks or bids provided as ticks. Defines list to write info.
-        """
-        adding_list = self.asks if is_ask else self.bids
-        for depth_entry in depth:
-            price = Decimal(depth_entry[0])
-            if price == 0:
-                continue
-            base_log = math.log(1.00001)
-            base_price_log = math.log(price / 10 ** Decimal(self.token_a_decimal - self.token_b_decimal))
-            tick = round(base_price_log / base_log)
-            liquidity_amount = self.calculate_liquidity_amount(tick, Decimal(depth_entry[1]))
-            if min_price <= price <= max_price:
-                adding_list.append((price, liquidity_amount))
+            self.bids.append((Decimal(tick["price"]), supply))
 
     def _get_sqrt_ratio(self, tick: Decimal) -> Decimal:
         return Decimal("1.00001").sqrt() ** tick
 
     def price_to_tick(self, price: Decimal) -> Decimal:
         return Decimal(math.log(price / (10 ** (self.token_a_decimal - self.token_b_decimal))) / math.log(1.00001))
-
-    def divide_ticks_on_bids_asks(self, liquidity: Decimal, total_depth: list[dict]) -> tuple[list, list]:
-        """
-        Dividing ticks on asks and bids for further processing.
-        :param total_depth: List of all ungrouped ticks
-        :return: tuple, containing list of asks as first element and list of bids as second
-        """
-        current_price_formatted = self.tick_current_price
-        asks_data, bids_data = [], []
-        for current_depth in total_depth:
-            price = Decimal(current_depth["price"])
-            if price > current_price_formatted:
-                liquidity += Decimal(current_depth["liquidityCumulative"])
-                asks_data.append((price, liquidity))
-            else:
-                liquidity -= Decimal(current_depth["liquidityCumulative"])
-                bids_data.append((price, liquidity))
-        return asks_data, bids_data
 
     def calculate_liquidity_amount(self, tick, liquidity_pair_total) -> Decimal:
         sqrt_ratio = self.get_sqrt_ratio(tick)
@@ -272,14 +226,14 @@ class HaikoOrderBook(OrderBookBase):
         return Decimal("1.00001") ** tick * (10 ** (self.token_a_decimal - self.token_b_decimal))
 
 
-
-
 if __name__ == "__main__":
     token_0 = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"  # ETH
     token_1 = "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"  # USDC
     order_book = HaikoOrderBook(token_0, token_1)
     asyncio.run(order_book.fetch_price_and_liquidity())
-
+    s = sum([i[1] for i in order_book.bids])
+    s1 = sum([i[1] for i in order_book.asks])
+    print()
     # data = order_book.get_order_book()
     # print()
     # bid_prices, bid_amounts = zip(*data["bids"])
