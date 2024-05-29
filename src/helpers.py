@@ -83,6 +83,17 @@ class Portfolio(TokenValues):
     def __init__(self) -> None:
         super().__init__(init_value=decimal.Decimal("0"))
 
+    def __add__(self, second_portfolio):
+        if not isinstance(second_portfolio, Portfolio):
+            raise TypeError(f"Cannot add Portfolio with {type(second_portfolio)}")
+        added_tokens_values = self.values.copy()
+        for token, amount in second_portfolio.values.items():
+            if token in added_tokens_values:
+                added_tokens_values[token] += amount
+            else:
+                added_tokens_values[token] = amount
+        return Portfolio(added_tokens_values)
+
     def round_small_value_to_zero(self, token: str):
         if (
             -self.MAX_ROUNDING_ERRORS.values[token]
