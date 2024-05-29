@@ -83,6 +83,7 @@ class LoanStateComputationBase(ABC):
                 debt=item["debt"],
                 block=item["block"],
                 timestamp=item["timestamp"],
+                deposit=item.get('deposit')
             )
             objects_to_write.append(loan)
         self.db_connector.write_batch_to_db(objects_to_write)
