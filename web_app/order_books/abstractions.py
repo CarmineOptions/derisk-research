@@ -1,6 +1,8 @@
+from datetime import datetime, timezone
 from decimal import Decimal
 from abc import ABC, abstractmethod
 from order_books.constants import TOKEN_MAPPING
+from database.schemas import OrderBookModel
 
 
 class OrderBookBase(ABC):
@@ -16,9 +18,19 @@ class OrderBookBase(ABC):
         self.timestamp = None
         self.block = None
         self.current_price = Decimal("0")
-        self.token_a_decimal = TOKEN_MAPPING.get(token_a).decimals
-        self.token_b_decimal = TOKEN_MAPPING.get(token_b).decimals
+        self.token_a_decimal = self.get_token_decimals(token_a)
+        self.token_b_decimal = self.get_token_decimals(token_b)
         self.total_liquidity = Decimal("0")
+
+    def get_token_decimals(self, token: str) -> Decimal:
+        """
+        Get the token decimals
+        :return: tuple - The token decimals
+        """
+        token_config = TOKEN_MAPPING.get(token)
+        if token_config:
+            return token_config.decimals
+        return Decimal("0")
 
     @abstractmethod
     def fetch_price_and_liquidity(self) -> None:
@@ -71,13 +83,22 @@ class OrderBookBase(ABC):
         Returns the order book data
         :return: dict - The order book data
         """
+        dt_now = datetime.now(timezone.utc)
+
         return {
             "token_a": self.token_a,
             "token_b": self.token_b,
-            "timestamp": self.timestamp,
+            "timestamp": int(dt_now.replace(tzinfo=timezone.utc).timestamp()),
             "block": self.block,
             "dex": self.DEX,
             "asks": sorted(self.asks, key=lambda x: x[0]),
             "bids": sorted(self.bids, key=lambda x: x[0]),
         }
 
+    def serialize(self) -> OrderBookModel:
+        """
+        Serialize the order book data
+        :return: dict - The serialized order book data
+        """
+        order_book_data = self.get_order_book()
+        return OrderBookModel(**order_book_data)
