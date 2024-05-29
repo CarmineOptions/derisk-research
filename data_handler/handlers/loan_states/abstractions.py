@@ -155,7 +155,7 @@ class LoanStateComputationBase(ABC):
         for protocol_address in self.PROTOCOL_ADDRESSES:
             retry = 0
             logger.info(f'Default last block: {default_last_block}')
-            self.last_block = FIRST_RUNNING_MAPPING.get(protocol_address, 10800)# default_last_block
+            self.last_block = default_last_block # FIRST_RUNNING_MAPPING.get(protocol_address, 10800)
 
             while retry < max_retries:
                 data = self.get_data(protocol_address, self.last_block)
