@@ -74,7 +74,19 @@ class HaikoAPIConnector(AbstractionAPIConnector):
 
     @classmethod
     def get_market_depth(cls, market_id: str) -> list[dict]:
-        # TODO: Add docstring
+        """
+        Get the market depth for a specific market.
+        :param market_id: The market ID in hexadecimal.
+        :return: List of market depth.
+        The response list structure is as follows:
+        [
+            {
+                "price": "1.2072265814306946",
+                "liquidityCumulative": "4231256547876"
+            },
+            ...
+        ]
+        """
         endpoint = f"/depth?network=mainnet&id={market_id}"
         return cls.send_get_request(endpoint)  # type: ignore
 
