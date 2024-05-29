@@ -1,6 +1,6 @@
 from decimal import Decimal, getcontext
 import pandas as pd
-from web_app.order_books.abstractions import OrderBookBase
+from order_books.abstractions import OrderBookBase
 from web_app.order_books.ekubo.api_connector import EkuboAPIConnector
 
 
@@ -232,13 +232,6 @@ if __name__ == "__main__":
     token_b = (
         "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"  # USDC
     )
-    # TODO uncomment once the amount of liquidity data will be more accurate
-    # pool_states = EkuboAPIConnector().get_pools()
-    # for pool_state in pool_states:
-    # token_a = pool_state['token0']
-    # token_b = pool_state['token1']
     order_book = EkuboOrderBook(token_a, token_b)
-
     order_book.fetch_price_and_liquidity()
-    r = order_book.get_order_book()
     print(order_book.get_order_book(), "\n")
