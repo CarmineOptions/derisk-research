@@ -1,6 +1,8 @@
+import logging
 from decimal import Decimal, getcontext
 import pandas as pd
 from order_books.abstractions import OrderBookBase
+from order_books.constants import TOKEN_MAPPING
 from web_app.order_books.ekubo.api_connector import EkuboAPIConnector
 
 
@@ -226,19 +228,14 @@ class EkuboOrderBook(OrderBookBase):
         return price
 
 
-if __name__ == "__main__":
-    # FIXME this code is not production, it's for testing purpose only
+def debug_code() -> None:
+    """
+    This function is used to test the EkuboOrderBook class.
+    """
     token_a = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"  # ETH
     token_b = (
         "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"  # USDC
     )
-    # TODO uncomment once the amount of liquidity data will be more accurate
-    # pool_states = EkuboAPIConnector().get_pools()
-    # for pool_state in pool_states:
-    # token_a = pool_state['token0']
-    # token_b = pool_state['token1']
     order_book = EkuboOrderBook(token_a, token_b)
-
     order_book.fetch_price_and_liquidity()
-    r = order_book.get_order_book()
     print(order_book.get_order_book(), "\n")
