@@ -5,21 +5,6 @@ networks:
     driver: bridge
 
 services:
-  db:
-    image: postgres
-    restart: always
-    environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_HOST_AUTH_METHOD: md5
-    volumes:
-      - db_data:/var/lib/postgresql/data
-    ports:
-        - "5432:5432"
-    networks:
-      - data_handler_network
-
   backend:
     build: .
     restart: always
@@ -84,5 +69,4 @@ services:
 
 
 volumes:
-  db_data:
   redis_data:
