@@ -2,7 +2,6 @@ from decimal import Decimal, getcontext
 import pandas as pd
 from order_books.abstractions import OrderBookBase
 from web_app.order_books.ekubo.api_connector import EkuboAPIConnector
-from functools import partial
 
 
 getcontext().prec = 18
@@ -20,14 +19,13 @@ class EkuboOrderBook(OrderBookBase):
         super().__init__(token_a, token_b)
         self.connector = EkuboAPIConnector()
 
-    @property
-    def current_price(self) -> str:
+    def set_current_price(self) -> str:
         """
         Get the current price of the pair.
         :return: str - The current price of the pair.
         """
         price_data = self.connector.get_pair_price(self.token_a, self.token_b)
-        return price_data.get("price", "0")
+        self.current_price = Decimal(price_data.get("price", "0"))
 
     def fetch_price_and_liquidity(self) -> None:
         """
@@ -41,82 +39,146 @@ class EkuboOrderBook(OrderBookBase):
             (df["token0"] == self.token_a) & (df["token1"] == self.token_b)
         ]
 
-        for index, row in list(pool_df.iterrows())[:1]:
+        # set current price
+        self.set_current_price()
+        for index, row in list(pool_df.iterrows()):
             key_hash = row["key_hash"]
             # Fetch pool liquidity data
             pool_liquidity = int(row["liquidity"])
             self.block = row["lastUpdate"]["event_id"]
 
-            liquidity_data = self.connector.get_pool_liquidity(key_hash)
+            liquidity_response = self.connector.get_pool_liquidity(key_hash)
+            liquidity_data = liquidity_response["data"]
+            liquidity_data = sorted(liquidity_data, key=lambda x: x["tick"])
+
             self._calculate_order_book(
-                liquidity_data["data"],
+                liquidity_data,
                 pool_liquidity,
-                row["tick"],  # This is the current tick = current price
+                row,
             )
 
     def _calculate_order_book(
         self,
         liquidity_data: list,
         pool_liquidity: int,
-        current_tick: int,
+        row: pd.Series,
     ) -> None:
         """
         Calculate the order book based on the liquidity data.
         :param liquidity_data: list - List of liquidity data
         :param pool_liquidity: pool liquidity
-        :param current_tick: current tick
+        :param row: pd.Series - Pool data
         """
-        # Set current price
-        self.set_current_price(current_tick)
         min_price, max_price = self.calculate_price_range()
-        process_liquidity = partial(
-            self.process_liquidity, pool_liquidity, min_price, max_price
+        if not liquidity_data:
+            return
+
+        self.add_asks(liquidity_data, row)
+        self.add_bids(liquidity_data, row)
+
+        # Filter asks and bids by price range
+        self.asks = [
+            (price, supply)
+            for price, supply in self.asks
+            if min_price < price < max_price
+        ]
+        self.bids = [
+            (price, supply)
+            for price, supply in self.bids
+            if min_price < price < max_price
+        ]
+
+    def add_asks(self, liquidity_data: list[dict], row: pd.Series) -> None:
+        """
+        Add `asks` to the order book.
+        :param liquidity_data: list of dict with tick and net_liquidity_delta_diff
+        :param row: pool row data
+        """
+        ask_ticks = [i for i in liquidity_data if i["tick"] >= row["tick"]]
+        if not ask_ticks:
+            return
+
+        glob_liq = Decimal(row["liquidity"])
+
+        # Calculate for current tick (loops start with the next one)
+        next_tick = ask_ticks[0]["tick"]
+        prev_tick = next_tick - row["tick_spacing"]
+
+        prev_sqrt = self._get_pure_sqrt_ratio(prev_tick)
+        next_sqrt = self._get_pure_sqrt_ratio(next_tick)
+
+        supply = abs(
+            ((glob_liq / prev_sqrt) - (glob_liq / next_sqrt)) / 10**self.token_a_decimal
         )
+        price = self.tick_to_price(prev_tick)
+        self.asks.append((price, supply))
 
-        sorted_liquidity_data = sorted(liquidity_data, key=lambda x: x["tick"])
-        asks, bids = self.sort_ticks_by_asks_and_bids(
-            sorted_liquidity_data, current_tick
+        for index, tick in enumerate(ask_ticks):
+            if index == 0:
+                continue
+            glob_liq += Decimal(ask_ticks[index - 1]["net_liquidity_delta_diff"])
+            prev_tick = Decimal(ask_ticks[index - 1]["tick"])
+
+            curr_tick = Decimal(tick["tick"])
+
+            prev_sqrt = self._get_pure_sqrt_ratio(prev_tick)
+            next_sqrt = self._get_pure_sqrt_ratio(curr_tick)
+
+            supply = abs(
+                ((glob_liq / prev_sqrt) - (glob_liq / next_sqrt))
+                / 10**self.token_a_decimal
+            )
+            price = self.tick_to_price(prev_tick)
+            self.asks.append((price, supply))
+
+    def add_bids(self, liquidity_data: list[dict], row: pd.Series) -> None:
+        """
+        Add `bids` to the order book.
+        :param liquidity_data: liquidity data list of dict with tick and net_liquidity_delta_diff
+        :param row: pool row data
+        """
+        bid_ticks = [i for i in liquidity_data if i["tick"] <= row["tick"]][::-1]
+        if not bid_ticks:
+            return
+
+        glob_liq = Decimal(row["liquidity"])
+
+        next_tick = bid_ticks[0]["tick"]
+        prev_tick = next_tick + row["tick_spacing"]
+
+        prev_sqrt = self._get_pure_sqrt_ratio(prev_tick)
+        next_sqrt = self._get_pure_sqrt_ratio(next_tick)
+
+        supply = abs(
+            ((glob_liq * prev_sqrt) - (glob_liq * next_sqrt)) / 10**self.token_b_decimal
         )
+        price = self.tick_to_price(prev_tick)
+        self.bids.append((price, supply))
 
-        process_liquidity(asks, is_ask=True)
-        process_liquidity(bids, is_ask=False)
+        for index, tick in enumerate(bid_ticks):
+            if index == 0:
+                continue
+            glob_liq -= Decimal(bid_ticks[index - 1]["net_liquidity_delta_diff"])
+            prev_tick = Decimal(bid_ticks[index - 1]["tick"])
+            curr_tick = Decimal(tick["tick"])
 
-    def process_liquidity(
-        self,
-        liquidity_pool: Decimal,
-        min_price: Decimal,
-        max_price: Decimal,
-        ticks: list,
-        is_ask=True,
-    ) -> None:
-        """
-        Process liquidity data
-        :param ticks: Ticks data
-        :param liquidity_pool: Liquidity pool data
-        :param min_price: Minimum price
-        :param max_price: Maximum price
-        :param is_ask: Boolean - True if ask, False if bid
-        :return: None
-        """
-        data_list = ticks if is_ask else reversed(ticks)
-        adding_list = self.asks if is_ask else self.bids
+            prev_sqrt = self._get_pure_sqrt_ratio(prev_tick)
+            next_sqrt = self._get_pure_sqrt_ratio(curr_tick)
 
-        for tick in data_list:
-            tick_price = self.tick_to_price(tick["tick"])
-            if min_price < tick_price < max_price:
-                liquidity_delta_diff = Decimal(tick["net_liquidity_delta_diff"])
-                liquidity_pool += liquidity_delta_diff
-                liquidity_amount = self.calculate_liquidity_amount(
-                    tick["tick"], liquidity_pool
-                )
-                adding_list.append((tick_price, liquidity_amount))
+            supply = (
+                abs(((glob_liq * prev_sqrt) - (glob_liq * next_sqrt)))
+                / 10**self.token_b_decimal
+            )
+            price = self.tick_to_price(prev_tick)
+            self.bids.append((price, supply))
 
-    def set_current_price(self, current_tick: int) -> None:
+    def _get_pure_sqrt_ratio(self, tick: Decimal) -> Decimal:
         """
-        Set the current price based on the current tick.
-        :param current_tick: Int - Current tick
+        Get the square root ratio based on the tick.
+        :param tick: tick value
+        :return: square root ratio
         """
-        self.tick_current_price = self.tick_to_price(current_tick)
+        return Decimal("1.000001").sqrt() ** tick
 
     @staticmethod
     def sort_ticks_by_asks_and_bids(

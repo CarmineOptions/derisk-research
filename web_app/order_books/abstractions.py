@@ -15,7 +15,7 @@ class OrderBookBase(ABC):
         self.bids = []  # List of tuples (price, quantity)
         self.timestamp = None
         self.block = None
-        self.tick_current_price = Decimal("0")
+        self.current_price = Decimal("0")
         self.token_a_decimal = TOKEN_MAPPING.get(token_a).decimals
         self.token_b_decimal = TOKEN_MAPPING.get(token_b).decimals
         self.total_liquidity = Decimal("0")
@@ -39,8 +39,8 @@ class OrderBookBase(ABC):
         Calculate the minimum and maximum price based on the current price.
         :return: tuple - The minimum and maximum price range.
         """
-        min_price = self.tick_current_price * self.MIN_PRICE_RANGE
-        max_price = self.tick_current_price * self.MAX_PRICE_RANGE
+        min_price = self.current_price * self.MIN_PRICE_RANGE
+        max_price = self.current_price * self.MAX_PRICE_RANGE
         return min_price, max_price
 
     @abstractmethod
