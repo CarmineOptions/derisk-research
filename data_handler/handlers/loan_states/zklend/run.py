@@ -30,7 +30,12 @@ class ZkLendLoanStateComputation(LoanStateComputationBase):
         zklend_state = ZkLendState()
         events_mapping = zklend_state.EVENTS_METHODS_MAPPING
         # Init DataFrame
-        df = pd.DataFrame(data)
+        try:
+            df = pd.DataFrame(data)
+        except ValueError:
+            logger.error("No data to process")
+            return pd.DataFrame()
+
         # Filter out events that are not in the mapping
         df_filtered = df[df["key_name"].isin(events_mapping.keys())]
         for index, row in df_filtered.iterrows():
