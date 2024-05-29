@@ -38,12 +38,9 @@ class ZkLendLoanStateComputation(LoanStateComputationBase):
             self.process_event(zklend_state, method_name, row)
 
         result_df = self.get_result_df(zklend_state.loan_entities)
-        result_df['deposit'] = [
-                    {
-                        token: float(amount)
-                        for token, amount in loan.deposit.values.items()
-                    }
-                    for loan in zklend_state.loan_entities.values()
+        result_df["deposit"] = [
+            {token: float(amount) for token, amount in loan.deposit.values.items()}
+            for loan in zklend_state.loan_entities.values()
         ]
         return result_df
 
