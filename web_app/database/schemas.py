@@ -1,7 +1,9 @@
+import decimal
+
 from fastapi import Form
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from pydantic.networks import IPvAnyAddress
-from typing import List, Dict, Any
+from typing import List
 from datetime import datetime
 
 from utils.values import ProtocolIDs
@@ -65,10 +67,22 @@ class OrderBookModel(BaseModel):
     """
     A data model class that validates data user entered
     """
+
     token_a: str
     token_b: str
-    timestamp: datetime
     block: int
+    timestamp: int
     dex: str
-    asks: List[Dict[str, Any]]
-    bids: List[Dict[str, Any]]
+    asks: List[tuple[float, float]]
+    bids: List[tuple[float, float]]
+
+    @field_validator("asks", "bids")
+    def convert_decimals_to_floats(
+        cls, value: List[tuple[decimal.Decimal, decimal.Decimal]]
+    ) -> List[tuple[float, float]]:
+        """
+        Convert decimal values to floats
+        :param value: list of tuples of decimal values
+        :return: list of tuples of float values
+        """
+        return [(float(a), float(b)) for a, b in value]
