@@ -3,7 +3,7 @@ from uuid import uuid4
 
 from sqlalchemy import (
     UUID, Boolean, Column, DateTime, Float, ForeignKey,
-    MetaData, String, JSON, Integer
+    MetaData, String, JSON, BigInteger
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped
 from sqlalchemy_utils import IPAddressType
@@ -61,8 +61,8 @@ class OrderBookModel(Base):
 
     token_a = Column(String, nullable=False, index=True)
     token_b = Column(String, nullable=False, index=True)
-    timestamp = Column(DateTime, nullable=False)
-    block = Column(Integer, nullable=False)
+    timestamp = Column(BigInteger, nullable=False)
+    block = Column(BigInteger, nullable=False)
     dex = Column(String, nullable=False, index=True)
     asks = Column(JSON, nullable=True)
     bids = Column(JSON, nullable=True)
