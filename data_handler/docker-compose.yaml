@@ -33,27 +33,27 @@ services:
       - db
     networks:
       - data_handler_network
-#  celery:
-#    build: .
-#    command: celery -A celery_app.celery_conf worker --loglevel=INFO
-#    volumes:
-#      - .:/app
-#    depends_on:
-#      - redis
-#      - db
-#    networks:
-#      - data_handler_network
-#
-#  celery_beat:
-#    build: .
-#    command: celery -A celery_app.celery_conf beat --loglevel=INFO
-#    volumes:
-#      - .:/app
-#    depends_on:
-#      - redis
-#      - db
-#    networks:
-#      - data_handler_network
+  celery:
+    build: .
+    command: celery -A celery_app.celery_conf worker --loglevel=INFO
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - db
+    networks:
+      - data_handler_network
+
+  celery_beat:
+    build: .
+    command: celery -A celery_app.celery_conf beat --loglevel=INFO
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - db
+    networks:
+      - data_handler_network
 
   redis:
     image: redis:latest
