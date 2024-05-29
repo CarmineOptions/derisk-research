@@ -14,8 +14,6 @@ services:
       - .env
     expose:
       - "8000"
-    depends_on:
-      - db
     networks:
       - data_handler_network
 #  celery:
