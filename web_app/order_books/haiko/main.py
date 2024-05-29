@@ -12,6 +12,7 @@ from web_app.order_books.haiko.api_connector import (
     HaikoBlastAPIConnector,
 )
 from web_app.order_books.haiko.logger import get_logger
+from web_app.order_books.haiko.histogram import Histogram
 
 HAIKO_MARKET_MANAGER_ADDRESS = "0x0038925b0bcf4dce081042ca26a96300d9e181b910328db54a6c89e5451503f5"
 HAIKO_MAX_TICK = 7906205
@@ -70,6 +71,7 @@ class HaikoOrderBook(OrderBookBase):
 
         for market in tokens_markets:
             market_id = market["marketId"]
+            current_tick = round(self.price_to_tick(Decimal(market["currPrice"])))
             market_depth_list = self.haiko_connector.get_market_depth(market_id)
             if not market_depth_list:
                 self.logger.info(f"Market depth for market {market_id} is empty.")
@@ -105,14 +107,9 @@ class HaikoOrderBook(OrderBookBase):
                 asks.append(tick_info)
             else:
                 bids.append(tick_info)
-        # ticks = [
-        #     round(self.price_to_tick(Decimal(i["price"]))) + HAIKO_MAX_TICK
-        #     for i in market_ticks_liquidity
-        #     if Decimal(i["price"]) != 0
-        # ]
 
-        self.add_asks(asks, liquidity, current_tick, tick_spacing)
-        self.add_bids(bids, liquidity, current_tick, tick_spacing)
+        self.add_asks(asks, liquidity, tick_spacing)
+        self.add_bids(bids, liquidity, tick_spacing)
 
         self.asks = [
             (price, supply)
@@ -126,14 +123,13 @@ class HaikoOrderBook(OrderBookBase):
         ]
 
     def add_asks(
-            self, liquidity_data: list[dict], liquidity: Decimal, current_tick: Decimal, tick_spacing: Decimal
+            self, liquidity_data: list[dict], liquidity: Decimal, tick_spacing: Decimal
     ) -> None:
         """
         Add `asks` to the order book.
         :param liquidity_data: list of dict with tick and net_liquidity_delta_diff
         :param row: pool row data
         """
-        # ask_ticks = [i for i in liquidity_data if i["tick"] >= current_tick]
         if not liquidity_data:
             return
 
@@ -154,7 +150,8 @@ class HaikoOrderBook(OrderBookBase):
         for index, tick in enumerate(liquidity_data):
             if index == 0:
                 continue
-            glob_liq += Decimal(liquidity_data[index - 1]["liquidityCumulative"])
+            # glob_liq += Decimal(liquidity_data[index - 1]["liquidityCumulative"]) result is bigger than needed
+            glob_liq = Decimal(liquidity_data[index - 1]["liquidityCumulative"])  # result is less than needed
             prev_tick = Decimal(liquidity_data[index - 1]["tick"])
             curr_tick = Decimal(tick["tick"])
             liq = Decimal(tick["liquidityCumulative"]) - Decimal(liquidity_data[index - 1]["liquidityCumulative"])
@@ -165,21 +162,16 @@ class HaikoOrderBook(OrderBookBase):
                 ((glob_liq / prev_sqrt) - (glob_liq / next_sqrt))
                 / 10 ** self.token_a_decimal
             )
-            price = self.tick_to_price(prev_tick)
             self.asks.append((Decimal(tick["price"]), supply))
 
     def add_bids(
-            self, liquidity_data: list[dict], liquidity: Decimal, current_tick: Decimal, tick_spacing: Decimal
+            self, liquidity_data: list[dict], liquidity: Decimal, tick_spacing: Decimal
     ) -> None:
         """
         Add `bids` to the order book.
         :param liquidity_data: liquidity data list of dict with tick and net_liquidity_delta_diff
         :param row: pool row data
         """
-        # bid_ticks = [i for i in liquidity_data if i["tick"] <= row["tick"]][::-1]
-        # if not bid_ticks:
-        #     return
-
         glob_liq = liquidity
 
         next_tick = liquidity_data[0]["tick"]
@@ -197,8 +189,8 @@ class HaikoOrderBook(OrderBookBase):
         for index, tick in enumerate(liquidity_data):
             if index == 0:
                 continue
-            glob_liq -= (Decimal(liquidity_data[index - 1]["liquidityCumulative"]))
-            # glob_liq = Decimal(liquidity_data[index - 1]["liquidityCumulative"])
+            # glob_liq -= (Decimal(liquidity_data[index - 1]["liquidityCumulative"])) result is bigger than needed
+            glob_liq = Decimal(liquidity_data[index - 1]["liquidityCumulative"])  # result is less than needed
             prev_tick = Decimal(liquidity_data[index - 1]["tick"])
             curr_tick = Decimal(tick["tick"])
 
@@ -231,31 +223,8 @@ if __name__ == "__main__":
     token_1 = "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"  # USDC
     order_book = HaikoOrderBook(token_0, token_1)
     asyncio.run(order_book.fetch_price_and_liquidity())
-    s = sum([i[1] for i in order_book.bids])
-    s1 = sum([i[1] for i in order_book.asks])
+    histogram = Histogram(order_book)
+    # histogram.show_asks()
+    histogram.show_bids()
     print()
-    # data = order_book.get_order_book()
-    # print()
-    # bid_prices, bid_amounts = zip(*data["bids"])
-    # ask_prices, ask_amounts = zip(*data["asks"])
-    #
-    # fig, ax = plt.subplots()
-    #
-    # # ax.bar(bid_prices, bid_amounts, width=10, color='green', label='Bids')
-    #
-    # ax.bar(ask_prices, ask_amounts, width=10, color='red', label='Asks')
-    #
-    # spread_start = max(bid_prices)
-    # spread_end = min(ask_prices)
-    # ax.axvspan(spread_start, spread_end, color='grey', alpha=0.5)
-    # # ax.set_yscale('log')
-    # ax.set_xlabel('Price')
-    # ax.set_ylabel('Liquidity Amount')
-    # ax.set_title('Order Book Histogram')
-    # ax.legend()
-    #
-    # plt.show()
 
-    # histogram = Histogram()
-    # # histogram.show_asks()
-    # histogram.show_bids()
