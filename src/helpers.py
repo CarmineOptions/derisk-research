@@ -80,8 +80,11 @@ class Portfolio(TokenValues):
 
     MAX_ROUNDING_ERRORS: TokenValues = MAX_ROUNDING_ERRORS
 
-    def __init__(self) -> None:
-        super().__init__(init_value=decimal.Decimal("0"))
+    def __init__(self, token_values=None) -> None:
+        if token_values is None:
+            super().__init__(init_value=decimal.Decimal("0"))
+        else:
+            super().__init__(values=token_values)
 
     def __add__(self, second_portfolio):
         if not isinstance(second_portfolio, Portfolio):
