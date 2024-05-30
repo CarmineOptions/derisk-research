@@ -1,4 +1,5 @@
 import decimal
+import src.blockchain_call
 from dataclasses import dataclass
 
 from handlers.settings import TOKEN_SETTINGS, TokenSettings
@@ -19,6 +20,24 @@ class ZkLendSpecificTokenSettings:
 class TokenSettings(ZkLendSpecificTokenSettings, TokenSettings):
     pass
 
+
+
+async def getValue(address, method):
+    src.blockchain_call.func_call(
+        addr = int(address, base=16),
+        selector = method,
+        calldata = [],
+        )
+
+async def fetchZkLendTokenSettings():
+    for symbol,zkLend_specific_token_setting in ZKLEND_SPECIFIC_TOKEN_SETTINGS.items():
+        # collateral_factor 
+        zkLend_specific_token_setting.collateral_factor = getValue(zkLend_specific_token_setting.protocol_token_address,'getCollateralFactor')
+        # debt_factor
+        zkLend_specific_token_setting.debt_factor = getValue(zkLend_specific_token_setting.debt_factor,'getDebtFactor')
+        # liquidation_bonus
+        zkLend_specific_token_setting.liquidation_bonus = getValue(zkLend_specific_token_setting.liquidation_bonus,'getLiquidationBonus')
+    
 
 ZKLEND_SPECIFIC_TOKEN_SETTINGS: dict[str, ZkLendSpecificTokenSettings] = {
     "ETH": ZkLendSpecificTokenSettings(
