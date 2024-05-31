@@ -38,13 +38,15 @@ def get_async_sessionmaker(engine: AsyncEngine = None) -> async_sessionmaker:
 class TelegramCrud:
     def __init__(self, sessionmaker: async_sessionmaker):
         """
-         Initialize a TelegramCrud instance with an asynchronous SQLAlchemy session maker.
-         Args:
-             sessionmaker (async_sessionmaker): An asynchronous SQLAlchemy session maker instance.
+        Initialize a TelegramCrud instance with an asynchronous SQLAlchemy session maker.
+        Args:
+            sessionmaker (async_sessionmaker): An asynchronous SQLAlchemy session maker instance.
         """
         self.Session = sessionmaker
 
-    async def delete_object(self, model: type[Base] = None, obj_id: UUID | str = None) -> None:
+    async def delete_object(
+        self, model: type[Base] = None, obj_id: UUID | str = None
+    ) -> None:
         """
         Delete an object from the database based on its ID.
 
@@ -70,7 +72,9 @@ class TelegramCrud:
             await db.execute(stmp)
             await db.commit()
 
-    async def update_values(self, model: type[Base], obj_id: UUID | str, /, **values) -> None:
+    async def update_values(
+        self, model: type[Base], obj_id: UUID | str, /, **values
+    ) -> None:
         """
         Update values of an object in the database based on its ID.
 
@@ -84,8 +88,9 @@ class TelegramCrud:
             await db.execute(stmp)
             await db.commit()
 
-    async def get_objects_by_filter(self, model: type[ModelType], offset: int, limit: int, /,
-                                    **filters) -> Sequence[ModelType] | ModelType | None:
+    async def get_objects_by_filter(
+        self, model: type[ModelType], offset: int, limit: int, /, **filters
+    ) -> Sequence[ModelType] | ModelType | None:
         """
         Get objects from the database based on a filter, with offset and limit.
 
