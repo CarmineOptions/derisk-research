@@ -39,5 +39,5 @@ app.conf.beat_schedule = {
 from .tasks import (
     check_health_ratio_level_changes,
     ekubo_order_book,
-    haiko_order_book,
+    haiko_order_book
 )

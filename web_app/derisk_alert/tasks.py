@@ -16,6 +16,7 @@ from web_app.order_books.constants import TOKEN_MAPPING
 from web_app.order_books.ekubo.main import EkuboOrderBook
 from web_app.order_books.haiko.main import HaikoOrderBook
 
+
 from .celery_conf import app
 
 logger = logging.getLogger(__name__)
