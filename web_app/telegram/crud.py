@@ -37,6 +37,11 @@ def get_async_sessionmaker(engine: AsyncEngine = None) -> async_sessionmaker:
 
 class TelegramCrud:
     def __init__(self, sessionmaker: async_sessionmaker):
+        """
+         Initialize a TelegramCrud instance with an asynchronous SQLAlchemy session maker.
+         Args:
+             sessionmaker (async_sessionmaker): An asynchronous SQLAlchemy session maker instance.
+        """
         self.Session = sessionmaker
 
     async def delete_object(self, model: type[Base] = None, obj_id: UUID | str = None) -> None:
