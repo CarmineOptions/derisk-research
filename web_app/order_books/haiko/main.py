@@ -1,23 +1,24 @@
 import asyncio
 from decimal import Decimal
-from functools import partial
 
 from web_app.order_books.abstractions import OrderBookBase
 from web_app.order_books.constants import TOKEN_MAPPING
-from web_app.order_books.haiko.api_connector import (
-    HaikoAPIConnector,
-    HaikoBlastAPIConnector,
-)
-from web_app.order_books.haiko.logger import get_logger
+from web_app.order_books.haiko.api_connector import HaikoAPIConnector, HaikoBlastAPIConnector
 from web_app.order_books.haiko.histogram import Histogram
+from web_app.order_books.haiko.logger import get_logger
 
 
 class HaikoOrderBook(OrderBookBase):
     DEX = "Haiko"
 
     def __init__(self, token_a, token_b, apply_filtering: bool = False):
+        """
+        Initialize the HaikoOrderBook object.
+        :param token_a: baseToken hexadecimal address
+        :param token_b: quoteToken hexadecimal address
+        :param apply_filtering: bool - If True apply min and max price filtering to the order book data
+        """
         super().__init__(token_a, token_b)
-        # self.current_price = Decimal("0")
         self.haiko_connector = HaikoAPIConnector()
         self.blast_connector = HaikoBlastAPIConnector()
         self.apply_filtering = apply_filtering
@@ -33,6 +34,7 @@ class HaikoOrderBook(OrderBookBase):
         self._set_usd_prices()
 
     def _set_usd_prices(self) -> None:
+        """Set USD prices for tokens based on Haiko API."""
         prices = self.haiko_connector.get_usd_prices(self.token_a_name, self.token_b_name)
         self.token_a_price = Decimal(prices.get(self.token_a_name, 0))
         self.token_b_price = Decimal(prices.get(self.token_b_name, 0))
@@ -65,8 +67,9 @@ class HaikoOrderBook(OrderBookBase):
         self.bids.sort(key=lambda bid: bid[0], reverse=True)
 
     async def fetch_price_and_liquidity(self) -> None:
-        tokens_markets = self.haiko_connector.get_pair_markets(self.token_a, self.token_b)
-        tokens_markets = self._filter_markets_data(tokens_markets)
+        tokens_markets = self._filter_markets_data(
+            self.haiko_connector.get_pair_markets(self.token_a, self.token_b)
+        )
         latest_block_info = self.blast_connector.get_block_info()
         if latest_block_info.get("error"):
             raise RuntimeError(f"Blast-api returned an error: {latest_block_info}")
@@ -90,19 +93,6 @@ class HaikoOrderBook(OrderBookBase):
 
         self.sort_asks_bids()
         self.tick_current_price = max(tokens_markets, key=lambda x: Decimal(x["tvl"]))["currPrice"]
-
-    def _filter_asks_bids(self, asks: list, bids, min_price: Decimal, max_price: Decimal) -> tuple:
-        """
-        Filter asks and bids from the market liquidity data.
-        :param asks: list - List of asks data
-        :param bids: list - List of bids data
-        :param min_price: Decimal - Minimal acceptable price
-        :param max_price: Decimal - Maximal acceptable price
-        :return: tuple - Tuple of filtered asks and bids
-        """
-        asks = [tick for tick in asks if min_price < tick["price"] < max_price]
-        bids = [tick for tick in bids if min_price < tick["price"] < max_price]
-        return asks, bids
 
     def _calculate_order_book(
         self, market_ticks_liquidity: list, current_price: Decimal
@@ -164,8 +154,8 @@ class HaikoOrderBook(OrderBookBase):
     ) -> None:
         """
         Add `bids` to the order book.
-        :param price_range: tuple of Decimal - minimal and maximal acceptable prices
         :param market_bids: list of dictionaries with price and liquidityCumulative
+        :param price_range: tuple of Decimal - minimal and maximal acceptable prices
         """
         if not market_bids:
             return
@@ -203,15 +193,15 @@ class HaikoOrderBook(OrderBookBase):
         :param current_sqrt: Decimal - Current square root of a price
         :param next_sqrt: Decimal - Next square root of a price
         :param is_ask: bool - True if an ask data
+        :return: Decimal - token amount
         """
+        if is_ask and (current_sqrt == 0 or next_sqrt == 0):
+            raise ValueError("Square root of prices for asks can't be zero.")
         if is_ask:
             amount = abs(current_liq / next_sqrt - current_liq / current_sqrt)
         else:
             amount = abs(current_liq * next_sqrt - current_liq * current_sqrt)
         return amount / self._decimals_diff
-
-    def _get_sqrt_ratio(self, tick: Decimal) -> Decimal:
-        return Decimal("1.00001").sqrt() ** tick
 
     def calculate_liquidity_amount(self, tick, liquidity_pair_total) -> Decimal:
         sqrt_ratio = self.get_sqrt_ratio(tick)

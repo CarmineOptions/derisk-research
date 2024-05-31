@@ -5,51 +5,6 @@ class HaikoAPIConnector(AbstractionAPIConnector):
     API_URL = "https://app.haiko.xyz/api/v1"
 
     @classmethod
-    def get_all_markets(cls) -> list[dict]:
-        # TODO: Delete method
-        """
-        Get all Haiko markets.
-        :return: List of all Haiko markets.
-        The response list structure is as follows:
-        [
-            {
-                "marketId": "0x581defc9a9b4e77fcb3ec274983e18ea30115727f7647f2eb1d23858292d873",
-                "baseToken": {
-                    "address": "0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d",
-                    "name": "Starknet Token",
-                    "symbol": "STRK",
-                    "decimals": 18,
-                    "rank": 10
-                },
-                "quoteToken": {
-                    "address": "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8",
-                    "name": "USD Coin",
-                    "symbol": "USDC",
-                    "decimals": 6,
-                    "rank": 2
-                },
-                "width": 200,
-                "strategy": {
-                    "address": "0x0",
-                    "name": null,
-                    "symbol": null,
-                    "version": null
-                },
-                "swapFeeRate": 100,
-                "feeController": "0x0",
-                "controller": "0x0",
-                "currLimit": -2744284,
-                "currSqrtPrice": "1.0987386319915646",
-                "currPrice": "1.2072265814306946",
-                "tvl": "580.7339",
-                "feeApy": 0.05661423233103435
-            }
-        ]
-        """
-        endpoint = "/markets?network=mainnet"
-        return cls.send_get_request(endpoint)  # type: ignore
-
-    @classmethod
     def get_supported_tokens(cls, existing_only: bool = True) -> list[dict]:
         """
         Get all tokens supported by Haiko.
@@ -92,12 +47,59 @@ class HaikoAPIConnector(AbstractionAPIConnector):
 
     @classmethod
     def get_pair_markets(cls, token0: str, token1: str) -> list[dict]:
-        # TODO: Add docstring
+        """
+        Get Haiko markets for provided token pair.
+        :return: List of Haiko markets for a token pair.
+        The response list structure is as follows:
+        [
+            {
+                "marketId": "0x581defc9a9b4e77fcb3ec274983e18ea30115727f7647f2eb1d23858292d873",
+                "baseToken": {
+                    "address": "0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d",
+                    "name": "Starknet Token",
+                    "symbol": "STRK",
+                    "decimals": 18,
+                    "rank": 10
+                },
+                "quoteToken": {
+                    "address": "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8",
+                    "name": "USD Coin",
+                    "symbol": "USDC",
+                    "decimals": 6,
+                    "rank": 2
+                },
+                "width": 200,
+                "strategy": {
+                    "address": "0x0",
+                    "name": null,
+                    "symbol": null,
+                    "version": null
+                },
+                "swapFeeRate": 100,
+                "feeController": "0x0",
+                "controller": "0x0",
+                "currLimit": -2744284,
+                "currSqrtPrice": "1.0987386319915646",
+                "currPrice": "1.2072265814306946",
+                "tvl": "580.7339",
+                "feeApy": 0.05661423233103435
+            }
+        ]
+        """
         endpoint = f"/markets-by-pair?network=mainnet&token0={token0}&token1={token1}"
         return cls.send_get_request(endpoint)  # type: ignore
 
     @classmethod
     def get_usd_prices(cls, token_a_name, token_b_name) -> dict:
+        """
+        Get USD prices for the provided token pair.
+        :return: USD prices for the provided token pair.
+        The response dictionary structure is as follows:
+        {
+            "ETH": 3761.71,
+            "USDC": 0.999003
+        }
+        """
         endpoint = f"/usd-prices?network=mainnet&tokens={token_a_name},{token_b_name}"
         return cls.send_get_request(endpoint)  # type: ignore
 
