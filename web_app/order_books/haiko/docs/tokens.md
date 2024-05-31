@@ -17,6 +17,10 @@ This endpoint provides a list of tokens with detailed information. Each entry in
 - **rank**: The rank of the token on the market.
   - Type: `int`
 
+### Return
+The method returns a list of dictionaries, each containing detailed information about a token.
+
+### Example of Returned Data
 ```json
 [
   {

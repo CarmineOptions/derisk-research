@@ -41,6 +41,12 @@ This endpoint retrieves a list of dictionaries, each containing details about a 
 - **tvl**: The total value locked in the market.
   - Type: `str`
 
+### Parameters
+- **token0**: The address of the base token in the hexadecimal format.
+  - Type: `str`
+- **token1**: The address of the quote token in the hexadecimal format.
+  - Type: `str`
+
 ### Return
 - The method returns a list of dictionaries. Each dictionary provides detailed information about a specific market.
 
