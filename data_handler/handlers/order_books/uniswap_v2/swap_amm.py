@@ -1,8 +1,129 @@
-from typing import Optional
-from decimal import Decimal
 from dataclasses import dataclass
-from handlers.blockchain_call import get_myswap_pool, balance_of
+from decimal import Decimal
+from typing import Optional
+
+from handlers.blockchain_call import get_myswap_pool, balance_of, func_call
 from handlers.settings import TOKEN_SETTINGS, TokenSettings
+from handlers.helpers import TokenValues, add_leading_zeros, get_symbol
+
+
+@dataclass
+class MySwapPoolSettings:
+    symbol: str
+    address: str
+    myswap_id: int
+    token_1: str
+    token_2: str
+
+
+
+class Pair:
+    @staticmethod
+    def tokens_to_id(t1, t2):
+        (first, second) = tuple(sorted((t1, t2)))
+        return f"{first}/{second}"
+
+class Pool(Pair):
+    def __init__(self, symbol1, symbol2, addresses, myswap_id):
+        self.id = self.tokens_to_id(symbol1, symbol2)
+        self.addresses = addresses
+        t1 = SwapAmmToken(
+            symbol=TOKEN_SETTINGS[symbol1].symbol,
+            decimal_factor=TOKEN_SETTINGS[symbol1].decimal_factor,
+            address=TOKEN_SETTINGS[symbol1].address,
+        )
+        t2 = SwapAmmToken(
+            symbol=TOKEN_SETTINGS[symbol2].symbol,
+            decimal_factor=TOKEN_SETTINGS[symbol2].decimal_factor,
+            address=TOKEN_SETTINGS[symbol2].address,
+        )
+        setattr(self, symbol1, t1)
+        setattr(self, symbol2, t2)
+        self.tokens = [t1, t2]
+        self.myswap_id = myswap_id
+
+    async def get_balance(self):
+        if self.myswap_id is not None:
+            myswap_pool = await get_myswap_pool(self.myswap_id)
+        for token in self.tokens:
+            balance = 0
+            for address in self.addresses:
+                balance += await balance_of(token.address, address)
+            if self.myswap_id is not None:
+                balance += myswap_pool[token.symbol.upper()]
+            token.balance_base = balance
+            token.balance_converted = Decimal(balance) / token.decimal_factor
+
+    def update_converted_balance(self):
+        for token in self.tokens:
+            token.balance_converted = Decimal(token.balance_base) / token.decimal_factor
+
+    def buy_tokens(self, symbol, amount):
+        # assuming constant product function
+        buy = None
+        sell = None
+        if self.tokens[0].symbol == symbol:
+            buy = self.tokens[0]
+            sell = self.tokens[1]
+        elif self.tokens[1].symbol == symbol:
+            buy = self.tokens[1]
+            sell = self.tokens[0]
+        else:
+            raise Exception(f"Could not buy {symbol}")
+        const = Decimal(buy.balance_base) * \
+                Decimal(sell.balance_base)
+        new_buy = buy.balance_base - amount
+        new_sell = const / Decimal(new_buy)
+        tokens_paid = round(new_sell - sell.balance_base)
+        buy.balance_base = new_buy
+        sell.balance_base = new_sell
+        self.update_converted_balance()
+        return tokens_paid
+
+    def supply_at_price(self, initial_price: Decimal):
+        # assuming constant product function
+        constant = self.tokens[0].balance_converted * self.tokens[1].balance_converted
+        return (initial_price * constant) ** Decimal("0.5") * (
+                Decimal("1") -
+                Decimal("0.95") ** Decimal("0.5")
+        )
+
+
+
+class MySwapPool(Pool):
+    """
+    This class implements MySwap pools where Hashstack V1 users can spend their debt. To properly account for their
+    token holdings, we collect the total supply of LP tokens and the amounts of both tokens in the pool.
+    """
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+
+        self.total_lp_supply: Optional[Decimal] = None
+        self.token_amounts: Optional[TokenValues] = None
+
+    async def get_data(self) -> None:
+        self.total_lp_supply = Decimal(
+            (
+                await func_call(
+                    addr=self.addresses[-1],
+                    selector="get_total_shares",
+                    calldata=[self.myswap_id],
+                )
+            )[0]
+        )
+        self.token_amounts = TokenValues()
+        # The order of the values returned is: `name`, `token_a_address`, `token_a_reserves`, ``, `token_b_address`,
+        # `token_b_reserves`, ``, `fee_percentage`, `cfmm_type`, `liq_token`.
+        pool = await func_call(
+            addr=self.addresses[-1],
+            selector="get_pool",
+            calldata=[self.myswap_id],
+        )
+        assert self.tokens[0].address == add_leading_zeros(hex(pool[1]))
+        assert self.tokens[1].address == add_leading_zeros(hex(pool[4]))
+        self.token_amounts.values[self.tokens[0].symbol] = Decimal(pool[2])
+        self.token_amounts.values[self.tokens[1].symbol] = Decimal(pool[5])
 
 
 @dataclass
@@ -10,12 +131,6 @@ class SwapAmmToken(TokenSettings):
     # TODO: Improve this.
     balance_base: Optional[float] = None
     balance_converted: Optional[float] = None
-
-
-class Pair:
-    def tokens_to_id(self, t1, t2):
-        (first, second) = tuple(sorted((t1, t2)))
-        return f"{first}/{second}"
 
 
 class SwapAmm(Pair):
@@ -147,79 +262,19 @@ class SwapAmm(Pair):
             await pool.get_balance()
 
     def add_pool(self, t1, t2, addresses, myswap_id=None):
-        pool = Pool(t1, t2, addresses, myswap_id)
+        if myswap_id is None:
+            pool = Pool(t1, t2, addresses, myswap_id)
+        else:
+            pool = MySwapPool(t1, t2, addresses, myswap_id)
         self.pools[pool.id] = pool
 
     def get_pool(self, t1, t2):
         try:
+            pools = self.pools.get(self.tokens_to_id(t1, t2), None)
+            print(pools)
+            return pools
             return self.pools[self.tokens_to_id(t1, t2)]
         except:
             raise Exception(
                 f"Trying to get pool that is not set: {self.tokens_to_id(t1, t2)}"
             )
-        
-
-class Pool(Pair):
-    def __init__(self, symbol1, symbol2, addresses, myswap_id):
-        self.id = self.tokens_to_id(symbol1, symbol2)
-        self.addresses = addresses
-        t1 = SwapAmmToken(
-            symbol=TOKEN_SETTINGS[symbol1].symbol,
-            decimal_factor=TOKEN_SETTINGS[symbol1].decimal_factor,
-            address=TOKEN_SETTINGS[symbol1].address,
-        )
-        t2 = SwapAmmToken(
-            symbol=TOKEN_SETTINGS[symbol2].symbol,
-            decimal_factor=TOKEN_SETTINGS[symbol2].decimal_factor,
-            address=TOKEN_SETTINGS[symbol2].address,
-        )
-        setattr(self, symbol1, t1)
-        setattr(self, symbol2, t2)
-        self.tokens = [t1, t2]
-        self.myswap_id = myswap_id
-
-    async def get_balance(self):
-        if self.myswap_id is not None:
-            myswap_pool = await get_myswap_pool(self.myswap_id)
-        for token in self.tokens:
-            balance = 0
-            for address in self.addresses:
-                balance += await balance_of(token.address, address)
-            if self.myswap_id is not None:
-                balance += myswap_pool[token.symbol.upper()]
-            token.balance_base = balance
-            token.balance_converted = Decimal(balance) / token.decimal_factor
-
-    def update_converted_balance(self):
-        for token in self.tokens:
-            token.balance_converted = Decimal(token.balance_base) / token.decimal_factor
-
-    def buy_tokens(self, symbol, amount):
-        # assuming constant product function
-        buy = None
-        sell = None
-        if self.tokens[0].symbol == symbol:
-            buy = self.tokens[0]
-            sell = self.tokens[1]
-        elif self.tokens[1].symbol == symbol:
-            buy = self.tokens[1]
-            sell = self.tokens[0]
-        else:
-            raise Exception(f"Could not buy {symbol}")
-        const = Decimal(buy.balance_base) * \
-            Decimal(sell.balance_base)
-        new_buy = buy.balance_base - amount
-        new_sell = const / Decimal(new_buy)
-        tokens_paid = round(new_sell - sell.balance_base)
-        buy.balance_base = new_buy
-        sell.balance_base = new_sell
-        self.update_converted_balance()
-        return tokens_paid
-
-    def supply_at_price(self, initial_price: Decimal):
-        # assuming constant product function
-        constant = self.tokens[0].balance_converted * self.tokens[1].balance_converted
-        return (initial_price * constant) ** Decimal("0.5") * (
-            Decimal("1") -
-            Decimal("0.95") ** Decimal("0.5")
-        )

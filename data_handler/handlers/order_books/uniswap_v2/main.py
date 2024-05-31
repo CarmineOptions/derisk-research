@@ -1,7 +1,8 @@
 from decimal import Decimal
 import asyncio
-from order_books.abstractions import OrderBookBase
-from swap_amm import SwapAmm
+from handlers.order_books.abstractions import OrderBookBase
+from .swap_amm import MySwapPool, SwapAmm
+
 
 
 class UniswapV2OrderBook(OrderBookBase):
@@ -9,13 +10,18 @@ class UniswapV2OrderBook(OrderBookBase):
 
     def __init__(self, token_a: str, token_b: str):
         super().__init__(token_a, token_b)
-        self.swap_amm = SwapAmm()
         self.token_a = token_a
         self.token_b = token_b
+        self.swap_amm = SwapAmm()
+        # setting = MYSWAP_POOL_SETTINGS[f"mySwap: {self.token_a}/{self.token_b} Pool"]
+        # self.pool = MySwapPool(setting)
 
     async def async_fetch_price_and_liquidity(self) -> None:
+        # await self.pool.get_data()
         await self.swap_amm.init()
-        self.pool = self.swap_amm.get_pool(self.token_a, self.token_b)
+        self.pool = self.swap_amm.pools[self.swap_amm.tokens_to_id(self.token_a, self.token_b)]
+        if isinstance(self.pool, MySwapPool):
+            await self.pool.get_data()
         self._calculate_order_book()
 
     def fetch_price_and_liquidity(self) -> None:
@@ -66,9 +72,9 @@ class UniswapV2OrderBook(OrderBookBase):
 
 
 if __name__ == '__main__':
-    token_a = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"  # ETH
+    token_a = "DAI"  #
     token_b = (
-        "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"  # USDC
+        "USDC"  #
     )
     order_book = UniswapV2OrderBook(token_a, token_b)
     order_book.fetch_price_and_liquidity()

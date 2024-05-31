@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from decimal import Decimal
 from abc import ABC, abstractmethod
-from order_books.constants import TOKEN_MAPPING
+from .constants import TOKEN_MAPPING
 from database.schemas import OrderBookModel
 
 
