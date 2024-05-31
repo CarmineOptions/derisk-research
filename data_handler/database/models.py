@@ -6,6 +6,7 @@ from sqlalchemy.types import JSON
 from sqlalchemy_utils.types.choice import ChoiceType
 
 from tools.constants import ProtocolIDs
+from liquidable_debt.values import LendingProtocolNames
 
 
 class Base(DeclarativeBase):
@@ -32,3 +33,16 @@ class LoanState(Base):
     user = Column(String, index=True)
     collateral = Column(JSON)
     debt = Column(JSON)
+
+
+class LiquidableDebt(Base):
+    """
+    SQLAlchemy model for the liquidable debt table.
+    """
+
+    tablename = "liquidable_debt"
+
+    # TODO To discuss which filds should be written to the DB
+    protocol = Column(ChoiceType(LendingProtocolsNames, impl=String()), nullable=False)
+    user = Column(String, index=True, nullable=False)
+    computed_debt = Column(JSON, nullable=False)
