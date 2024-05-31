@@ -14,6 +14,7 @@ from utils.values import HEALTH_RATIO_LEVEL_ALERT_VALUE
 from web_app.order_books.ekubo.api_connector import EkuboAPIConnector
 from web_app.order_books.constants import TOKEN_MAPPING
 from web_app.order_books.ekubo.main import EkuboOrderBook
+from web_app.order_books.haiko.main import HaikoOrderBook
 
 from .celery_conf import app
 
@@ -70,3 +71,21 @@ def ekubo_order_book():
                 f"With token pair: {token_a} and {token_b} something happened: {exc}"
             )
             continue
+
+
+@app.task(name="haiko_order_book")
+def haiko_order_book():
+    """
+    Fetch the current price and liquidity of the pair from the Haiko API.
+    """
+    all_tokens = set(TOKEN_MAPPING.keys())
+    for base_token in TOKEN_MAPPING:
+        current_tokens = all_tokens - {base_token}
+        for quote_token in current_tokens:
+            try:
+                order_book = HaikoOrderBook(base_token, quote_token)
+                order_book.fetch_price_and_liquidity()
+                serialized_data = order_book.serialize()
+                connector.write_to_db(OrderBookModel(**serialized_data.model_dump()))
+            except Exception as e:
+                logger.info(f"With token pair: {base_token} and {quote_token} something happened: {e}")
