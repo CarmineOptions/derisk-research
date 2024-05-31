@@ -1,8 +1,8 @@
 # Get Markets
 
 ### Class Method
-Use this class method to retrieve detailed information about all markets:
-`haiko.api_connector.HaikoAPIConnector.get_token_markets()`
+Use this class method to retrieve detailed information about markets for tokens:
+`haiko.api_connector.HaikoAPIConnector.get_token_markets(token0, token1)`
 
 ### Data Structure
 This endpoint retrieves a list of dictionaries, each containing details about a market. The structure of each dictionary in the list is as follows(only used and known info):

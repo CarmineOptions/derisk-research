@@ -8,7 +8,7 @@ This folder contains interactions with Haiko API,
 - [Get Haiko Markets](docs/markets.md) - Information about markets for different tokens.
 - [Get Supported Tokens](docs/tokens.md) - All supported tokens on Haiko.
 - [Get Block Information](docs/block_info.md) - Retrieve information about latest Haiko block.
-
+- [Get USD Prices](docs/prices.md) - Retrieve USD prices for tokens on Haiko.
 
 # How to run 
 In this folder: `haiko` run next command
