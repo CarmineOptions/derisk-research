@@ -2,12 +2,12 @@ import dask.dataframe as dd
 import pandas as pd
 
 # from handlers.state import State
-from database.crud import DBConnector
-from database.models import LiquidableDebt
+from data_handler.database.crud import DBConnector
+from data_handler.database.models import LiquidableDebt
 
 from .bases import Collector
 from .collectors import GoogleCloudDataCollector
-from .values import (GS_BUCKET_URL, GS_BUCKET_NAME, LendingProtocolsNames,
+from data_handler.liquidable_debt.values import (GS_BUCKET_URL, GS_BUCKET_NAME, LendingProtocolNames,
                      LOCAL_STORAGE_PATH, PARQUET_FILE_FIELDS_TO_PARSE, COLLATERAL_FIELD_NAME)
 
 
@@ -19,7 +19,7 @@ class GCloudLiquidableDebtDataHandler:
     :cvar AVAILABLE_PROTOCOLS: A list of all available protocols.
     :method: `update_data` -> Updates the data stored in the database.:
     """
-    AVAILABLE_PROTOCOLS = [item.value for item in LendingProtocolsNames]
+    AVAILABLE_PROTOCOLS = [item.value for item in LendingProtocolNames]
     CONNECTOR = DBConnector()
 
     def __init__(
