@@ -60,7 +60,7 @@ def get_report() -> dict:
             try:
                 base_token_name = TOKEN_MAPPING[base_token].name
                 quote_token_name = TOKEN_MAPPING[quote_token].name
-                asyncio.run(order_book.fetch_price_and_liquidity())
+                order_book.fetch_price_and_liquidity()
                 token_pair = f"{base_token_name}-{quote_token_name}"
                 report[token_pair] = {"is_empty": False, "order_book": {}}
                 entry = order_book.get_order_book()

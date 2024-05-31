@@ -59,14 +59,14 @@ class HaikoOrderBook(OrderBookBase):
         Set the current price based on the current tick.
         :param current_price: Decimal - Current market price
         """
-        self.tick_current_price = current_price
+        self.current_price = current_price
 
     def sort_asks_bids(self) -> None:
         """Sort bids and asks data in correct order."""
         self.asks.sort(key=lambda ask: ask[0])
         self.bids.sort(key=lambda bid: bid[0], reverse=True)
 
-    async def fetch_price_and_liquidity(self) -> None:
+    def fetch_price_and_liquidity(self) -> None:
         tokens_markets = self._filter_markets_data(
             self.haiko_connector.get_pair_markets(self.token_a, self.token_b)
         )
@@ -92,7 +92,7 @@ class HaikoOrderBook(OrderBookBase):
             self._calculate_order_book(market_depth_list, Decimal(market["currPrice"]))
 
         self.sort_asks_bids()
-        self.tick_current_price = max(tokens_markets, key=lambda x: Decimal(x["tvl"]))["currPrice"]
+        self.current_price = max(tokens_markets, key=lambda x: Decimal(x["tvl"]))["currPrice"]
 
     def _calculate_order_book(
         self, market_ticks_liquidity: list, current_price: Decimal
@@ -130,10 +130,10 @@ class HaikoOrderBook(OrderBookBase):
         local_asks = []
         x = self._get_token_amount(
             pool_liquidity,
-            self.tick_current_price.sqrt(),
+            self.current_price.sqrt(),
             market_asks[0]['price'].sqrt(),
         )
-        local_asks.append((self.tick_current_price, x))
+        local_asks.append((self.current_price, x))
         for index, ask in enumerate(market_asks):
             if index == 0:
                 continue
@@ -163,7 +163,7 @@ class HaikoOrderBook(OrderBookBase):
         prev_price = Decimal(market_bids[0]['price'])
         y = self._get_token_amount(
             Decimal(market_bids[0]['liquidityCumulative']),
-            self.tick_current_price.sqrt(),
+            self.current_price.sqrt(),
             prev_price.sqrt(),
             is_ask=False
         )
@@ -229,16 +229,18 @@ class HaikoOrderBook(OrderBookBase):
 if __name__ == "__main__":
     # token_0 = "0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d"  # STRK
     # token_1 = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"  # ETH
-    # token_0 = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"  # ETH
-    # token_1 = "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"  # USDC
+    token_0 = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"  # ETH
+    token_1 = "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"  # USDC
     # token_0 = "0x42b8f0484674ca266ac5d08e4ac6a3fe65bd3129795def2dca5c34ecc5f96d2"  # wstETH
     # token_1 = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"  # ETH
-    token_0 = "0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d"  # STRK
-    token_1 = "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"  # USDC
+    # token_0 = "0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d"  # STRK
+    # token_1 = "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"  # USDC
 
     order_book = HaikoOrderBook(token_0, token_1)
-    asyncio.run(order_book.fetch_price_and_liquidity())
+    order_book.fetch_price_and_liquidity()
     histogram = Histogram(order_book)
     histogram.show_asks()
     # histogram.show_bids()
+    s = order_book.serialize()
+    s = s.model_dump()
     print()
