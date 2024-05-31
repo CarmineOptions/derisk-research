@@ -96,6 +96,11 @@ class HaikoAPIConnector(AbstractionAPIConnector):
         endpoint = f"/markets-by-pair?network=mainnet&token0={token0}&token1={token1}"
         return cls.send_get_request(endpoint)  # type: ignore
 
+    @classmethod
+    def get_usd_prices(cls, token_a_name, token_b_name) -> dict:
+        endpoint = f"/usd-prices?network=mainnet&tokens={token_a_name},{token_b_name}"
+        return cls.send_get_request(endpoint)  # type: ignore
+
 
 class HaikoBlastAPIConnector(AbstractionAPIConnector):
     API_URL = "https://starknet-mainnet.blastapi.io"
