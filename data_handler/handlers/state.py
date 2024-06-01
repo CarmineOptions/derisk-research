@@ -6,8 +6,8 @@ from typing import Optional
 
 import pandas
 
-from data_handler.handlers.helpers import Portfolio, TokenValues, ExtraInfo
-from data_handler.handlers.settings import TOKEN_SETTINGS, TokenSettings
+from handlers.helpers import Portfolio, TokenValues, ExtraInfo
+from handlers.settings import TOKEN_SETTINGS, TokenSettings
 
 
 @dataclasses.dataclass
@@ -188,7 +188,7 @@ class State(abc.ABC):
                 method(event)
 
     @abc.abstractmethod
-    def compute_liquidable_debt_at_price(self):
+    def compute_liquidable_debt_at_price(self, *args, **kwargs):
         pass
 
     # TODO: This method will likely differ across protocols. -> Leave undefined?
