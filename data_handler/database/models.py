@@ -1,12 +1,12 @@
 from uuid import uuid4
 
-from sqlalchemy import UUID, BigInteger, Column, MetaData, String
+from sqlalchemy import UUID, BigInteger, Column, MetaData, String, DECIMAL
 from sqlalchemy.orm import DeclarativeBase, Mapped
 from sqlalchemy.types import JSON
 from sqlalchemy_utils.types.choice import ChoiceType
 
 from tools.constants import ProtocolIDs
-from data_handler.liquidable_debt.values import LendingProtocolNames
+from handlers.liquidable_debt.values import LendingProtocolNames
 
 
 class Base(DeclarativeBase):
@@ -40,9 +40,14 @@ class LiquidableDebt(Base):
     SQLAlchemy model for the liquidable debt table.
     """
 
-    tablename = "liquidable_debt"
+    __tablename__ = "liquidable_debt"
 
-    # TODO To discuss which filds should be written to the DB
-    protocol = Column(ChoiceType(LendingProtocolsNames, impl=String()), nullable=False)
+    protocol = Column(ChoiceType(LendingProtocolNames, impl=String()), nullable=False)
     user = Column(String, index=True, nullable=False)
-    computed_debt = Column(JSON, nullable=False)
+    liquidable_debt = Column(DECIMAL, nullable=False)
+    health_factor = Column(DECIMAL, nullable=False)
+    collateral = Column(DECIMAL, nullable=False)
+    risk_adjusted_collateral = Column(DECIMAL, nullable=False)
+    debt = Column(DECIMAL, nullable=False)
+    debt_usd = Column(DECIMAL, nullable=False)
+
