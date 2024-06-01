@@ -6,4 +6,4 @@ alembic upgrade head
 echo "Starting the server and bot..."
 exec "$@"
 
-uvicorn main:app --reload & python -m telegram
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload & python -m telegram

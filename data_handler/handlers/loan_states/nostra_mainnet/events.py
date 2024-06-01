@@ -1,11 +1,11 @@
 from typing import Optional
 import dataclasses
 
-from data_handler.handlers.loan_states.nostra_alpha.events import (
+from handlers.loan_states.nostra_alpha.events import (
     TokenSettings,
     TOKEN_SETTINGS,
 )
-from data_handler.handlers.loan_states.nostra_alpha.events import (
+from handlers.loan_states.nostra_alpha.events import (
     NostraAlphaState,
     NostraAlphaLoanEntity,
 )

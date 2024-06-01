@@ -40,6 +40,7 @@ DB_PASSWORD=#
 DB_HOST=db
 DB_PORT=#
 DERISK_API_URL=#
+REDIS_HOST=redis
 ```
 
 ### 5. Build your docker containers

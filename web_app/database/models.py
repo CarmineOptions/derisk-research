@@ -3,7 +3,7 @@ from uuid import uuid4
 
 from sqlalchemy import (
     UUID, Boolean, Column, DateTime, Float, ForeignKey,
-    MetaData, String, JSON, Integer
+    MetaData, String, JSON, BigInteger
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped
 from sqlalchemy_utils import IPAddressType
@@ -27,7 +27,7 @@ class NotificationData(Base):
     __tablename__ = "notification"
 
     created_at = Column(DateTime, default=datetime.now())
-    email = Column(String, index=True, unique=True, nullable=False)
+    email = Column(String, index=True, nullable=True)
     wallet_id = Column(String, nullable=False)
     telegram_id = Column(String, unique=False, nullable=False)
     ip_address = Column(IPAddressType, nullable=False)
@@ -61,8 +61,8 @@ class OrderBookModel(Base):
 
     token_a = Column(String, nullable=False, index=True)
     token_b = Column(String, nullable=False, index=True)
-    timestamp = Column(DateTime, nullable=False)
-    block = Column(Integer, nullable=False)
+    timestamp = Column(BigInteger, nullable=False)
+    block = Column(BigInteger, nullable=False)
     dex = Column(String, nullable=False, index=True)
     asks = Column(JSON, nullable=True)
     bids = Column(JSON, nullable=True)

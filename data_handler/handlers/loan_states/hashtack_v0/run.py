@@ -2,9 +2,9 @@ import logging
 
 import pandas as pd
 from time import monotonic
-from data_handler.handlers.loan_states.abstractions import LoanStateComputationBase
-from data_handler.handlers.loan_states.hashtack_v0.events import HashstackV0State
-from data_handler.tools.constants import ProtocolAddresses, ProtocolIDs
+from handlers.loan_states.abstractions import LoanStateComputationBase
+from handlers.loan_states.hashtack_v0.events import HashstackV0State
+from tools.constants import ProtocolAddresses, ProtocolIDs
 
 logger = logging.getLogger(__name__)
 
@@ -39,33 +39,6 @@ class HashtackV0StateComputation(LoanStateComputationBase):
 
         result_df = self.get_result_df(hashtack_v0_state.loan_entities)
         return result_df
-
-    def run(self) -> None:
-        """
-        Runs the loan state computation for the HashstackV0 protocol.
-        """
-        max_retries = 5
-        default_last_block = self.last_block
-        for protocol_address in self.PROTOCOL_ADDRESSES:
-            retry = 0
-            self.last_block = default_last_block
-            for _ in range(max_retries):
-                data = self.get_data(protocol_address, self.last_block)
-
-                if not data:
-                    logger.info(f"No data found for address {protocol_address}: {self.last_block}")
-
-                if not data:
-                    self.last_block += self.PAGINATION_SIZE
-                    retry += 1
-                    continue
-                elif retry == max_retries:
-                    break
-
-                processed_data = self.process_data(data)
-                self.save_data(processed_data)
-                self.last_block += self.PAGINATION_SIZE
-                logger.info(f"Processed data up to block {self.last_block}")
 
 
 def run_loan_states_computation_for_hashstack_v0() -> None:

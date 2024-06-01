@@ -71,6 +71,7 @@ GS_BUCKET_URL=#
 REDIS_HOST=redis
 REDIS_PORT=6379
 CHECK_DATA_CHANGES_PERIOD=# in seconds
+ORDER_BOOK_TIME_INTERVAL=# in seconds
 ```
 
 ### 5. Build your docker containers

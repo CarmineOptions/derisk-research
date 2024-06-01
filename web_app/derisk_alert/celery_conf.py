@@ -13,6 +13,7 @@ REDIS_PORT = os.environ.get("REDIS_PORT", 6379)
 CHECK_DATA_CHANGES_PERIOD = int(
     os.environ.get("CHECK_DATA_CHANGES_PERIOD", 60 * 30)
 )  # in seconds
+ORDER_BOOK_TIME_INTERVAL = int(os.environ.get("ORDER_BOOK_TIME_INTERVAL", 5))  # in seconds
 
 app = Celery(
     main="derisk",
@@ -25,6 +26,13 @@ app.conf.beat_schedule = {
         "task": "check_health_ratio_level_changes",
         "schedule": CHECK_DATA_CHANGES_PERIOD,
     },
+    "ekubo-order-book": {
+        "task": "ekubo_order_book",
+        "schedule": ORDER_BOOK_TIME_INTERVAL,
+    },
 }
 
-from .tasks import check_health_ratio_level_changes
+from .tasks import (
+    check_health_ratio_level_changes,
+    ekubo_order_book,
+)

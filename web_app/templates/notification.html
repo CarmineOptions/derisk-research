@@ -20,7 +20,7 @@
     {% endif %}
     {% if activation_link %}
         <div class="alert alert-info">
-            Your activation link: <a href="{{activation_link}}">Click here!</a>
+            Your activation link: <a href="{{activation_link}}" id="tg_link">Click here!</a>
         </div>
     {% endif %}
     <div class="container">
@@ -34,22 +34,22 @@
                     <label for="email">Email:</label>
                 </div>
                 <div class="input-data">
-                    <input type="email" name="email" id="email" required>
+                    <input type="email" name="email" id="email">
                 </div>
                 <div>
-                    <label for="wallet_id">Wallet ID:</label>
+                    <label for="wallet_id">Wallet ID:<span style="color: red">*</span></label>
                 </div>
                 <div class="input-data">
                     <input type="text" id="wallet_id" name="wallet_id" required>
                 </div>
                 <div>
-                    <label for="health_ratio_level">Health ratio level:</label>
+                    <label for="health_ratio_level">Health ratio level:<span style="color: red">*</span></label>
                 </div>
                 <div class="input-data">
                     <input type="text" name="health_ratio_level" id="health_ratio_level" required>
                 </div>
                 <div>
-                    <label for="protocol_id">Protocol ID:</label>
+                    <label for="protocol_id">Protocol ID:<span style="color: red">*</span></label>
                 </div>
                 <div class="input-data">
                     <select id="protocol_id" name="protocol_id">
@@ -65,5 +65,26 @@
         </div>
     </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script>
+    document.getElementById('tg_link').addEventListener('click', function(event) {
+        event.preventDefault();
+
+        const windowWidth = 500;
+        const windowHeight = 500;
+
+        const screenWidth = window.screen.width;
+        const screenHeight = window.screen.height;
+        const left = (screenWidth - windowWidth) / 2;
+        const top = (screenHeight - windowHeight) / 2;
+
+
+        window.open(
+            '{{activation_link}}',
+            '_blank',
+            `noopener,noreferrer,width=${windowWidth},height=${windowHeight},left=${left},top=${top}`
+        );
+    });
+</script>
+
 </body>
 </html>

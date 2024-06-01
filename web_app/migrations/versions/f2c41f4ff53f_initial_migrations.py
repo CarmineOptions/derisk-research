@@ -26,7 +26,7 @@ def upgrade() -> None:
     op.create_table(
         "notification",
         sa.Column("created_at", sa.DateTime(), nullable=True),
-        sa.Column("email", sa.String(), nullable=False),
+        sa.Column("email", sa.String(), nullable=True),
         sa.Column("wallet_id", sa.String(), nullable=False),
         sa.Column("telegram_id", sa.String(), nullable=False),
         sa.Column(
