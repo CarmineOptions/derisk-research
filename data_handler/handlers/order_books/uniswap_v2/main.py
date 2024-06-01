@@ -42,20 +42,30 @@ class UniswapV2OrderBook(OrderBookBase):
         token_b_reserves = self.pool.token_amounts.values[self.token_b]
         total_liquidity = self.pool.total_lp_supply
 
-        for price, token_a_amount in zip(self.pool.token_a.balance_converted, self.pool.token_b.balance_converted):
-            # Calculate token_b_amount using the constant product formula
-            constant_product = token_a_reserves * token_b_reserves
-            token_b_amount = constant_product / (token_a_reserves + token_a_amount)
+        token_a = self.pool.tokens[0]
+        token_b = self.pool.tokens[1]
 
-            # Add (price, token_a_amount) to self.asks
-            self.asks.append((price, token_a_amount))
+        # Calculate the constant product
+        constant_product = token_a_reserves * token_b_reserves
 
-            # Add (price, token_b_amount) to self.bids
-            self.bids.append((price, token_b_amount))
+        # Add (price, token_a_amount) to self.asks
+        self.asks.append((token_a.balance_converted, token_a.balance_converted))
 
-        # Sort asks and bids by price
-        self.asks.sort(key=lambda x: x[0])
-        self.bids.sort(key=lambda x: x[0], reverse=True)
+        # Calculate token_b_amount using the constant product formula
+        token_b_amount = constant_product / (token_a_reserves + token_a.balance_converted)
+
+        # Add (price, token_b_amount) to self.bids
+        self.bids.append((token_a.balance_converted, token_b_amount))
+
+        # Repeat the process for token_b
+        # Add (price, token_b_amount) to self.asks
+        self.asks.append((token_b.balance_converted, token_b.balance_converted))
+
+        # Calculate token_a_amount using the constant product formula
+        token_a_amount = constant_product / (token_b_reserves + token_b.balance_converted)
+
+        # Add (price, token_a_amount) to self.bids
+        self.bids.append((token_b.balance_converted, token_a_amount))
 
         # Calculate total liquidity
         self.total_liquidity = total_liquidity
@@ -72,7 +82,7 @@ class UniswapV2OrderBook(OrderBookBase):
 
 
 if __name__ == '__main__':
-    token_a = "DAI"  #
+    token_a = "ETH"  #
     token_b = (
         "USDC"  #
     )
