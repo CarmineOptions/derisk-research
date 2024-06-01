@@ -5,10 +5,10 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from database.crud import DBConnector
 
-from .values import LendingProtocolsNames, GS_BUCKET_NAME, GS_BUCKET_URL, LOCAL_STORAGE_PATH
-from .exceptions import ProtocolExistenceError
-from .managers import LocalStorageManager
-from .bases import Collector
+from values import LendingProtocolNames, GS_BUCKET_NAME, GS_BUCKET_URL, LOCAL_STORAGE_PATH
+from exceptions import ProtocolExistenceError
+from managers import LocalStorageManager
+from bases import Collector
 
 
 class GoogleCloudDataCollector(Collector):
