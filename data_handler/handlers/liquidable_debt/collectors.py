@@ -5,10 +5,10 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from database.crud import DBConnector
 
-from values import LendingProtocolNames, GS_BUCKET_NAME, GS_BUCKET_URL, LOCAL_STORAGE_PATH
-from exceptions import ProtocolExistenceError
-from managers import LocalStorageManager
-from bases import Collector
+from handlers.liquidable_debt.values import LendingProtocolNames, GS_BUCKET_NAME, GS_BUCKET_URL, LOCAL_STORAGE_PATH
+from handlers.liquidable_debt.exceptions import ProtocolExistenceError
+from handlers.liquidable_debt.managers import LocalStorageManager
+from handlers.liquidable_debt.bases import Collector
 
 
 class GoogleCloudDataCollector(Collector):
@@ -48,8 +48,8 @@ class GoogleCloudDataCollector(Collector):
     def _download_file(
             protocol_name: str,
             bucket_name: str,
-            path: str,
             url: str,
+            path: str = "loans/{protocol}_data/{title}.parquet",
     ) -> None:
         """
         Downloads parquet file to local storage from Google Cloud Storage
@@ -60,7 +60,7 @@ class GoogleCloudDataCollector(Collector):
         """
 
         data = dd.read_parquet(
-            url.format(protocol_name=protocol_name, bucket_name=bucket_name)
+            url.format(bucket_name=bucket_name, protocol_name=protocol_name)
         )
         dd.to_parquet(df=data, path=path.format(protocol_name=protocol_name))
 

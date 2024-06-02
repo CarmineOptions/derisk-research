@@ -8,7 +8,7 @@ load_dotenv()
 
 GS_BUCKET_NAME = os.environ.get("GS_BUCKET_NAME", "")
 GS_BUCKET_URL = os.environ.get("GS_BUCKET_URL", "")
-LOCAL_STORAGE_PATH = "liquidable_debt/loans/{protocol_name}_data/"
+LOCAL_STORAGE_PATH = "loans/{protocol_name}_data/"
 USER_FIELD_NAME = "User"
 PROTOCOL_FIELD_NAME = "Protocol"
 COLLATERAL_FIELD_NAME = "Collateral"

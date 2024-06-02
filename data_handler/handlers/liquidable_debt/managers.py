@@ -12,12 +12,20 @@ class LocalStorageManager:
     """
     @classmethod
     def update_dir(cls, protocol_name: str) -> str:
-        if file_path := f"{protocol_name}_data" in os.listdir("liquidable_debt/loans/"):
-            cls._delete_file(f"liquidable_debt/loans/{file_path}")
+        current_directory = os.getcwd()
+        if "loans" not in os.listdir(current_directory):
+            os.mkdir("loans")
 
-        os.mkdir(f"liquidable_debt/loans/{protocol_name}_data/")
+            return f"{current_directory}/loans"
 
-        return file_path
+        dirs = os.listdir(current_directory+"/loans")
+        for file_path in dirs:
+            if file_path in os.listdir("loans"):
+                cls._delete_file(f"loans/{file_path}")
+
+        os.mkdir(f"loans/{protocol_name}_data/")
+
+        return f"loans/{protocol_name}_data/"
 
     @staticmethod
     def _delete_file(file_path: str) -> None:

@@ -357,7 +357,7 @@ class ZkLendState(State):
             debt_tokens = {
                 token
                 for token, token_amount in loan_entity.debt.values.items()
-                if token_amount > decimal.Decimal("0")
+                if decimal.Decimal(token_amount) > decimal.Decimal("0")
             }
             if not debt_token in debt_tokens:
                 continue
@@ -371,7 +371,7 @@ class ZkLendState(State):
             collateral_tokens = {
                 token
                 for token, token_amount in loan_entity.collateral.values.items()
-                if token_amount > decimal.Decimal("0")
+                if decimal.Decimal(token_amount) > decimal.Decimal("0")
             }
             # Choose the most optimal collateral_token to be liquidated. In this case, the liquidator is indifferent.
             collateral_token = next(iter(list(collateral_tokens)))

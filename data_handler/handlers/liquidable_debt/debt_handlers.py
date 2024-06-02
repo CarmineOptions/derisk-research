@@ -6,8 +6,8 @@ from handlers.state import State
 from database.crud import DBConnector
 from database.models import LiquidableDebt
 
-from bases import Collector
-from collectors import GoogleCloudDataCollector
+from handlers.liquidable_debt.bases import Collector
+from handlers.liquidable_debt.collectors import GoogleCloudDataCollector
 from handlers.liquidable_debt.values import (GS_BUCKET_URL, GS_BUCKET_NAME, LendingProtocolNames,
                                              LOCAL_STORAGE_PATH, COLLATERAL_FIELD_NAME, PROTOCOL_FIELD_NAME,
                                              DEBT_FIELD_NAME, USER_FIELD_NAME, RISK_ADJUSTED_COLLATERAL_USD_FIELD_NAME,
@@ -162,6 +162,12 @@ class GCloudLiquidableDebtDataHandler:
         """
         result = dict()
         separeted_tokens = tokens.split(', ')
+        for token_ in separeted_tokens:
+            if "/" in token_:
+                t = token_.split("/")[1]
+                current_token, value = t.split(" Pool: ")
+                token_index = separeted_tokens.index(token_)
+                separeted_tokens[token_index] = f"{current_token}: {value}"
 
         for token_ in separeted_tokens:
             token, value = token_.split(': ')
