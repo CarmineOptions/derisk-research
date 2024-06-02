@@ -46,8 +46,8 @@ class LiquidableDebt(Base):
     user = Column(String, index=True, nullable=False)
     liquidable_debt = Column(DECIMAL, nullable=False)
     health_factor = Column(DECIMAL, nullable=False)
-    collateral = Column(DECIMAL, nullable=False)
+    collateral = Column(JSON, nullable=False)
     risk_adjusted_collateral = Column(DECIMAL, nullable=False)
-    debt = Column(DECIMAL, nullable=False)
+    debt = Column(JSON, nullable=False)
     debt_usd = Column(DECIMAL, nullable=False)
 
