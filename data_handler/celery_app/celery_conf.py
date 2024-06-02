@@ -40,6 +40,10 @@ app.conf.beat_schedule = {
     #     'task': 'run_loan_states_computation_for_nostra_mainnet',
     #     'schedule': crontab(minute=f'*/{CRONTAB_TIME}'),
     # },
+    f'run_liquidable_debt_computation_for_zklend_every_{CRONTAB_TIME}_mins': {
+        'task': 'run_liquidable_debt_computation_for_zklend',
+        'schedule': crontab(minute=f'*/{CRONTAB_TIME}'),
+    },
 }
 from celery_app.tasks import (
     # run_loan_states_computation_for_hashtack_v0,
@@ -47,6 +51,7 @@ from celery_app.tasks import (
     run_loan_states_computation_for_nostra_alpha,
     # run_loan_states_computation_for_nostra_mainnet,
     # run_loan_states_computation_for_zklend,
+    run_liquidable_debt_computation_for_zklend
 )
 
 app.autodiscover_tasks(["celery_app.tasks"])
