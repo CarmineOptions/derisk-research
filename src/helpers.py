@@ -80,13 +80,13 @@ class Portfolio(TokenValues):
 
     MAX_ROUNDING_ERRORS: TokenValues = MAX_ROUNDING_ERRORS
 
-    def __init__(self, token_values: Optional[dict[str, Union[bool, decimal.Decimal]]] = None) -> None:
+    def __init__(self, token_values: Optional[dict[str, bool | decimal.Decimal]] = None) -> None:
         if token_values is None:
             super().__init__(init_value=decimal.Decimal("0"))
         else:
             super().__init__(values=token_values)
 
-    def __add__(self, second_portfolio: 'Portfolio') -> 'Portfolio':
+    def __add__(self, second_portfolio: Portfolio) -> Portfolio:
         if not isinstance(second_portfolio, Portfolio):
             raise TypeError(f"Cannot add Portfolio and {type(second_portfolio)}")
         new_portfolio = self.values.copy()
