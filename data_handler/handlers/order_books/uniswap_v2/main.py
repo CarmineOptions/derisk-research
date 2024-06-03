@@ -1,17 +1,19 @@
 from decimal import Decimal
 import asyncio
-from handlers.order_books.abstractions import OrderBookBase
-from .swap_amm import MySwapPool, SwapAmm
 
+from handlers.helpers import get_range
+from handlers.order_books.abstractions import OrderBookBase
+from handlers.order_books.uniswap_v2.swap_amm import MySwapPool, SwapAmm
 
 
 class UniswapV2OrderBook(OrderBookBase):
-    DEX = "Starkets"
+    DEX = "Starknet"
 
     def __init__(self, token_a: str, token_b: str):
         super().__init__(token_a, token_b)
         self.token_a = token_a
         self.token_b = token_b
+        self.pool = None
         self.swap_amm = SwapAmm()
         # setting = MYSWAP_POOL_SETTINGS[f"mySwap: {self.token_a}/{self.token_b} Pool"]
         # self.pool = MySwapPool(setting)
@@ -38,37 +40,22 @@ class UniswapV2OrderBook(OrderBookBase):
             loop.run_until_complete(self.async_fetch_price_and_liquidity())
 
     def _calculate_order_book(self) -> None:
-        token_a_reserves = self.pool.token_amounts.values[self.token_a]
-        token_b_reserves = self.pool.token_amounts.values[self.token_b]
-        total_liquidity = self.pool.total_lp_supply
-
-        token_a = self.pool.tokens[0]
-        token_b = self.pool.tokens[1]
-
-        # Calculate the constant product
-        constant_product = token_a_reserves * token_b_reserves
-
-        # Add (price, token_a_amount) to self.asks
-        self.asks.append((token_a.balance_converted, token_a.balance_converted))
-
-        # Calculate token_b_amount using the constant product formula
-        token_b_amount = constant_product / (token_a_reserves + token_a.balance_converted)
-
-        # Add (price, token_b_amount) to self.bids
-        self.bids.append((token_a.balance_converted, token_b_amount))
-
-        # Repeat the process for token_b
-        # Add (price, token_b_amount) to self.asks
-        self.asks.append((token_b.balance_converted, token_b.balance_converted))
-
-        # Calculate token_a_amount using the constant product formula
-        token_a_amount = constant_product / (token_b_reserves + token_b.balance_converted)
-
-        # Add (price, token_a_amount) to self.bids
-        self.bids.append((token_b.balance_converted, token_a_amount))
-
-        # Calculate total liquidity
-        self.total_liquidity = total_liquidity
+        # TODO: fix data fetching for another pairs
+        if not self.pool:
+            raise RuntimeError("Pool is not initialized")
+        token_a_reserves = self.pool.tokens[0].balance_converted
+        token_b_reserves = self.pool.tokens[1].balance_converted
+        current_price = Decimal(token_b_reserves / token_a_reserves)
+        # total_liquidity = self.pool.total_lp_supply
+        # TODO: add checks for collateral token
+        bids_range = get_range(Decimal(0), current_price, Decimal(current_price / 100))
+        asks_range = get_range(current_price, current_price * Decimal("1.3"), Decimal(current_price / 100))
+        for price in bids_range:
+            liquidity = self.pool.supply_at_price(price)
+            self.bids.append((price, liquidity))
+        for price in asks_range:
+            liquidity = self.pool.supply_at_price(price)
+            self.asks.append((price, liquidity))
 
     def calculate_liquidity_amount(self, tick: Decimal, liquidity_pair_total: Decimal) -> Decimal:
         sqrt_ratio = self.get_sqrt_ratio(tick)
@@ -82,12 +69,10 @@ class UniswapV2OrderBook(OrderBookBase):
 
 
 if __name__ == '__main__':
-    token_a = "ETH"  #
+    token_a = "ETH"
     token_b = (
-        "USDC"  #
+        "USDC"
     )
     order_book = UniswapV2OrderBook(token_a, token_b)
     order_book.fetch_price_and_liquidity()
     print(order_book.get_order_book(), "\n")
-
-    
