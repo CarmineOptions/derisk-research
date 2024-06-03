@@ -1,4 +1,6 @@
 import argparse
+from decimal import Decimal
+
 import matplotlib.pyplot as plt
 from typing import List
 
@@ -8,12 +10,22 @@ TOKEN_A = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"  #
 TOKEN_B = "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"  # USDC
 
 
-def fetch_order_book_and_current_price(token_a: str, token_b: str) -> tuple:
+def fetch_order_book_and_current_price(token_a: str, token_b: str) -> tuple[dict, Decimal]:
     """
     Fetch the order book and current price for the given token pair.
     :param token_a: Base token contract address
     :param token_b: Quote token contract address
     :return: Tuple containing the order book and current price
+    The structure of the order book data dict is as follows:
+    {
+        "token_a": "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+        "token_b": "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8",
+        "timestamp": 1634160000,
+        "block": 6343456,
+        "dex": "Ekubo",
+        "asks": [(Decimal("123.76534"), Decimal("456.53423")), ...],
+        "bids": [(Decimal("678.45345"), Decimal("910.43567")), ...],
+    }
     """
     order_book = EkuboOrderBook(token_a, token_b)
     order_book.fetch_price_and_liquidity()

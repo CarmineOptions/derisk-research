@@ -24,7 +24,7 @@ python manage.py histogram
 ## Histogram
 
 To run the script to see histogram, use the following command:
-!!! Pay attention, you should run it from `web_app` folder
+!!! Pay attention, you should run it from `data_handler` folder
 ```sh
 python histogram.py  --type asks
 ```
