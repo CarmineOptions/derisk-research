@@ -18,9 +18,14 @@ class UniswapV2OrderBook(OrderBookBase):
         self._swap_amm = SwapAmm()
 
     def _set_pool(self) -> None:
-        self._pool = self._swap_amm.pools[self._swap_amm.tokens_to_id(self.token_a, self.token_b)]
+        """Retrieve and set pool from available pools."""
+        tokens_id = self._swap_amm.tokens_to_id(self.token_a, self.token_b)
+        if tokens_id not in self._swap_amm.pools:
+            raise ValueError(f"Pool {tokens_id} not found.")
+        self._pool = self._swap_amm.pools[tokens_id]
 
     async def _async_fetch_price_and_liquidity(self) -> None:
+        """Asynchronous implementation of the abstract method to fetch price and liquidity data."""
         await self._swap_amm.init()
         self._set_pool()
         self._calculate_order_book()
@@ -36,6 +41,11 @@ class UniswapV2OrderBook(OrderBookBase):
             loop.run_until_complete(self._async_fetch_price_and_liquidity())
 
     def get_prices_range(self, current_price: Decimal) -> Iterable[Decimal]:
+        """
+        Get prices range based on the current price.
+        :param current_price: Decimal - The current pair price.
+        :return: Iterable[Decimal] - The iterable prices range.
+        """
         collateral_tokens = ("ETH", "wBTC", "STRK")
         if self.token_a in collateral_tokens:
             return get_collateral_token_range(self.token_a, current_price)
@@ -51,7 +61,12 @@ class UniswapV2OrderBook(OrderBookBase):
         self.add_quantities_data(prices_range, current_price)
 
     def add_quantities_data(self, prices_range: Iterable[Decimal], current_price: Decimal) -> None:
-        if not prices_range or current_price == 0:
+        """
+        Add bids and asks data to the order book.
+        :param prices_range: Iterable[Decimal] - The prices range to get quantities for.
+        :param current_price: Decimal - The current pair price.
+        """
+        if current_price == 0:
             raise ValueError("Provide valid prices range and current price for analysis.")
         for price in prices_range:
             supply = self._pool.supply_at_price(price)
@@ -72,10 +87,10 @@ class UniswapV2OrderBook(OrderBookBase):
 
 
 if __name__ == '__main__':
-    token_a = "ETH"
-    token_b = (
+    token_0 = "ETH"
+    token_1 = (
         "USDC"
     )
-    order_book = UniswapV2OrderBook(token_a, token_b)
+    order_book = UniswapV2OrderBook(token_0, token_1)
     order_book.fetch_price_and_liquidity()
     print(order_book.get_order_book(), "\n")
