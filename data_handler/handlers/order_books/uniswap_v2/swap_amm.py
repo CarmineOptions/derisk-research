@@ -4,53 +4,45 @@ from typing import Optional
 
 from handlers.blockchain_call import get_myswap_pool, balance_of, func_call
 from handlers.settings import TOKEN_SETTINGS, TokenSettings
-from handlers.helpers import TokenValues, add_leading_zeros, get_symbol
-
-
-@dataclass
-class MySwapPoolSettings:
-    symbol: str
-    address: str
-    myswap_id: int
-    token_1: str
-    token_2: str
-
+from handlers.helpers import TokenValues, add_leading_zeros
 
 
 class Pair:
     @staticmethod
-    def tokens_to_id(t1, t2):
-        (first, second) = tuple(sorted((t1, t2)))
+    def tokens_to_id(base_token, quote_token):
+        (first, second) = tuple(sorted((base_token, quote_token)))
         return f"{first}/{second}"
+
 
 class Pool(Pair):
     def __init__(self, symbol1, symbol2, addresses, myswap_id):
-        self.id = self.tokens_to_id(symbol1, symbol2)
+        self.id = Pair.tokens_to_id(symbol1, symbol2)
         self.addresses = addresses
-        t1 = SwapAmmToken(
+        base_token = SwapAmmToken(
             symbol=TOKEN_SETTINGS[symbol1].symbol,
             decimal_factor=TOKEN_SETTINGS[symbol1].decimal_factor,
             address=TOKEN_SETTINGS[symbol1].address,
         )
-        t2 = SwapAmmToken(
+        quote_token = SwapAmmToken(
             symbol=TOKEN_SETTINGS[symbol2].symbol,
             decimal_factor=TOKEN_SETTINGS[symbol2].decimal_factor,
             address=TOKEN_SETTINGS[symbol2].address,
         )
-        setattr(self, symbol1, t1)
-        setattr(self, symbol2, t2)
-        self.tokens = [t1, t2]
+        setattr(self, symbol1, base_token)
+        setattr(self, symbol2, quote_token)
+        self.tokens = [base_token, quote_token]
         self.myswap_id = myswap_id
 
     async def get_balance(self):
+        myswap_pool = None
         if self.myswap_id is not None:
             myswap_pool = await get_myswap_pool(self.myswap_id)
         for token in self.tokens:
             balance = 0
+            if myswap_pool and token.symbol.upper() in myswap_pool:
+                balance += myswap_pool[token.symbol.upper()]
             for address in self.addresses:
                 balance += await balance_of(token.address, address)
-            if self.myswap_id is not None:
-                balance += myswap_pool[token.symbol.upper()]
             token.balance_base = balance
             token.balance_converted = Decimal(balance) / token.decimal_factor
 
@@ -58,36 +50,13 @@ class Pool(Pair):
         for token in self.tokens:
             token.balance_converted = Decimal(token.balance_base) / token.decimal_factor
 
-    def buy_tokens(self, symbol, amount):
-        # assuming constant product function
-        buy = None
-        sell = None
-        if self.tokens[0].symbol == symbol:
-            buy = self.tokens[0]
-            sell = self.tokens[1]
-        elif self.tokens[1].symbol == symbol:
-            buy = self.tokens[1]
-            sell = self.tokens[0]
-        else:
-            raise Exception(f"Could not buy {symbol}")
-        const = Decimal(buy.balance_base) * \
-                Decimal(sell.balance_base)
-        new_buy = buy.balance_base - amount
-        new_sell = const / Decimal(new_buy)
-        tokens_paid = round(new_sell - sell.balance_base)
-        buy.balance_base = new_buy
-        sell.balance_base = new_sell
-        self.update_converted_balance()
-        return tokens_paid
-
     def supply_at_price(self, initial_price: Decimal):
         # assuming constant product function
-        constant = self.tokens[0].balance_converted * self.tokens[1].balance_converted
-        return (initial_price * constant) ** Decimal("0.5") * (
+        constant = Decimal(self.tokens[0].balance_converted * self.tokens[1].balance_converted)
+        return (initial_price * constant).sqrt() * (
                 Decimal("1") -
-                Decimal("0.95") ** Decimal("0.5")
+                Decimal("0.95").sqrt()
         )
-
 
 
 class MySwapPool(Pool):
@@ -144,7 +113,6 @@ class SwapAmm(Pair):
                 "0x04d0390b777b424e43839cd1e744799f3de6c176c7e32c1812a41dbd9c19db6a",  # jediswap
                 "0x030615bec9c1506bfac97d9dbd3c546307987d467a7f95d5533c2e861eb81f3f",  # sithswap
                 "0x000023c72abdf49dffc85ae3ede714f2168ad384cc67d08524732acea90df325",  # 10kswap
-                "0x010884171baf1914edc28d7afb619b40a4051cfae78a094a55d230f19e944a28",  # myswap
             ],
             1
         )
@@ -261,20 +229,17 @@ class SwapAmm(Pair):
         for pool in self.pools.values():
             await pool.get_balance()
 
-    def add_pool(self, t1, t2, addresses, myswap_id=None):
+    def add_pool(self, base_token: str, quote_token, pool_addresses, myswap_id=None):
         if myswap_id is None:
-            pool = Pool(t1, t2, addresses, myswap_id)
+            pool = Pool(base_token, quote_token, pool_addresses, myswap_id)
         else:
-            pool = MySwapPool(t1, t2, addresses, myswap_id)
+            pool = MySwapPool(base_token, quote_token, pool_addresses, myswap_id)
         self.pools[pool.id] = pool
 
-    def get_pool(self, t1, t2):
-        try:
-            pools = self.pools.get(self.tokens_to_id(t1, t2), None)
-            print(pools)
-            return pools
-            return self.pools[self.tokens_to_id(t1, t2)]
-        except:
-            raise Exception(
-                f"Trying to get pool that is not set: {self.tokens_to_id(t1, t2)}"
+    def get_pool(self, base_token, quote_token):
+        pools = self.pools.get(self.tokens_to_id(base_token, quote_token), None)
+        if not pools:
+            raise ValueError(
+                f"Trying to get pools that are not set: {self.tokens_to_id(base_token, quote_token)}"
             )
+        return pools
