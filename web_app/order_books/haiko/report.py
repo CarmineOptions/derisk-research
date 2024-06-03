@@ -56,6 +56,10 @@ def get_report() -> dict:
                 logging.log(logging.ERROR, f"Pair of tokens: {base_token}-{quote_token}")
                 logging.log(logging.ERROR, "One of the tokens isn't supported by Haiko")
                 continue
+            except RuntimeError as e:
+                logging.log(logging.ERROR, f"Pair of tokens: {base_token}-{quote_token}")
+                logging.log(logging.ERROR, e)
+                continue
 
             try:
                 base_token_name = TOKEN_MAPPING[base_token].name
