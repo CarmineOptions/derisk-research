@@ -252,6 +252,4 @@ if __name__ == "__main__":
     # token_1 = "0x068f5c6a61780768455de69077e07e89787839bf8166decfbf92b645209c0fb8"
     order_book = HaikoOrderBook(token_0, token_1)
     order_book.fetch_price_and_liquidity()
-    s = order_book.serialize()
-    s = s.model_dump()
-    print()
+    serialized_order_book = order_book.serialize()
