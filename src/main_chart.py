@@ -64,7 +64,10 @@ def get_main_chart_figure(
 ) -> plotly.graph_objs.Figure:
     # Define the AMMs and their color mappings
     amms = src.swap_amm.AMMS
-    color_map = {"JediSwap": "#ECD662", "10kSwap": "#4CA7D0", "MySwap": "#76C1FA", "SithSwap": "#FFA07A"}
+    color_map = {"JediSwap_debt_token_supply": "#4C99D0", 
+                 "10kSwap_debt_token_supply": "#4C6DD0",
+                 "MySwap_debt_token_supply": "#4CA7D0",
+                 "SithSwap_debt_token_supply": "#4C83D0"}
 
     # TODO: Align colors with the rest of the app.
     figure = plotly.express.bar(
