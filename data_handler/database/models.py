@@ -33,6 +33,7 @@ class LoanState(Base):
     user = Column(String, index=True)
     collateral = Column(JSON)
     debt = Column(JSON)
+    deposit = Column(JSON, nullable=True)
 
 
 class LiquidableDebt(Base):
