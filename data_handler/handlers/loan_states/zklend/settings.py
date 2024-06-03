@@ -1,6 +1,6 @@
 import decimal
-import src.blockchain_call
 from dataclasses import dataclass
+from src import blockchain_call
 
 from handlers.settings import TOKEN_SETTINGS, TokenSettings
 from tools.constants import ProtocolAddresses
@@ -22,18 +22,19 @@ class TokenSettings(ZkLendSpecificTokenSettings, TokenSettings):
     pass
 
 
-def convert_string_to_decimal_1e27(string_big_num):
+def format_reserve_data_number(string_large_num: str):
     """
-    Method to convert big string number to decimal.
+    Method to convert large string number to decimal.
     Example:
-    string_big_num = "800000000000000000000000000"
+    string_large_num = "800000000000000000000000000"
     return = 0.80
     """
-    decimal_big_num = decimal.Decimal(string_big_num)
-    scale_factor = decimal.Decimal("1e27")
-    bigResult = decimal_big_num / scale_factor
-    # Have to cast "0.800000000000000000000000000" to "800000000000000000000000000"
-    formatted_number = "{:.2f}".format(bigResult)
+    int_large_num = decimal.Decimal(string_large_num)
+    SCALE_FACTOR = decimal.Decimal("1e27")
+    # Example: cast 800000000000000000000000000 to 0.800000000000000000000000000
+    decimal_large_num = int_large_num / SCALE_FACTOR
+    # Example: convert 0.800000000000000000000000000 to 0.80
+    formatted_number = round(decimal_large_num, 2)
     return formatted_number
 
 def get_value_by_name(data_list, name):
@@ -42,14 +43,14 @@ def get_value_by_name(data_list, name):
     """
     return next((item['value'] for item in data_list if item['name'] == name), None)
 
-def create_and_fill_new_zklend_token_setting(reserve_data):
+def get_token_settings(reserve_data):
     """
     Create and fill new ZkLend token setting.
     """
     # Decimal Values
-    collateral_factor = convert_string_to_decimal_1e27(get_value_by_name(reserve_data, 'collateral_factor'))
+    collateral_factor = format_reserve_data_number(get_value_by_name(reserve_data, 'collateral_factor'))
     debt_factor = decimal.Decimal("1")
-    liquidation_bonus = convert_string_to_decimal_1e27(get_value_by_name(reserve_data, 'liquidation_bonus'))
+    liquidation_bonus = format_reserve_data_number(get_value_by_name(reserve_data, 'liquidation_bonus'))
     
     # STR value
     protocol_token_address = get_value_by_name(reserve_data, 'z_token_address')
@@ -65,7 +66,7 @@ async def get_token_reserve_data(token_setting_address):
     """
     Make a call to ZKLEND_MARKET_ADDRESSES with the tokenSettingAddress (Address).
     """
-    reserve_data = await src.blockchain_call.func_call(
+    reserve_data = await blockchain_call.func_call(
         addr=ProtocolAddresses().ZKLEND_MARKET_ADDRESSES,
         selector="get_reserve_data",
         calldata=[token_setting_address],
@@ -77,13 +78,13 @@ async def fetch_zklend_specific_token_settings():
     Fetch ZkLend specific token settings.
     """
     # New dict to store ZkLendSpecificTokenSettings
-    NEW_ZKLEND_SPECIFIC_TOKEN_SETTINGS: dict[str, ZkLendSpecificTokenSettings] = {}
+    new_zklend_specific_token_settings: dict[str, ZkLendSpecificTokenSettings] = {}
     
     # TOKEN_SETTINGS from /derisk-research/data_handler/handlers/settings.py
     # For each tokenSetting in TOKEN_SETTINGS, get the data from zklend
     for symbol, token_setting in TOKEN_SETTINGS.items():
         reserve_data = await get_token_reserve_data(token_setting.address)
-        new_zklend_specific_token_setting = create_and_fill_new_zklend_token_setting(reserve_data)
-        NEW_ZKLEND_SPECIFIC_TOKEN_SETTINGS[symbol] = new_zklend_specific_token_setting
+        zklend_specific_token_setting = get_token_settings(reserve_data)
+        new_zklend_specific_token_settings[symbol] = zklend_specific_token_setting
     
-    return NEW_ZKLEND_SPECIFIC_TOKEN_SETTINGS
+    return new_zklend_specific_token_settings
