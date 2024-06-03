@@ -109,10 +109,10 @@ def format_reserve_data_number(string_large_num: str):
     return formatted_number
 
 
-def get_value_by_name(data_list, name):
+def get_value_by_name(data_list: list, name: str):
     return next((item['value'] for item in data_list if item['name'] == name), None)
 
-def get_token_settings(reserve_data):
+def get_token_settings(reserve_data: list):
     """
     Create and fill new ZkLend token setting.
     """
@@ -131,7 +131,7 @@ def get_token_settings(reserve_data):
         protocol_token_address
     )
 
-async def get_token_reserve_data(token_setting_address):
+async def get_token_reserve_data(token_setting_address: str):
     reserve_data = await src.blockchain_call.func_call(
         addr=ProtocolAddresses().ZKLEND_MARKET_ADDRESSES,
         selector="get_reserve_data",

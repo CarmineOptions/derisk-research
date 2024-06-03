@@ -37,13 +37,13 @@ def format_reserve_data_number(string_large_num: str):
     formatted_number = round(decimal_large_num, 2)
     return formatted_number
 
-def get_value_by_name(data_list, name):
+def get_value_by_name(data_list: list, name: str):
     """
     Method to return a specific value in a list based on the name.
     """
     return next((item['value'] for item in data_list if item['name'] == name), None)
 
-def get_token_settings(reserve_data):
+def get_token_settings(reserve_data: list):
     """
     Create and fill new ZkLend token setting.
     """
@@ -62,7 +62,7 @@ def get_token_settings(reserve_data):
         protocol_token_address
     )
 
-async def get_token_reserve_data(token_setting_address):
+async def get_token_reserve_data(token_setting_address: str):
     """
     Make a call to ZKLEND_MARKET_ADDRESSES with the tokenSettingAddress (Address).
     """
