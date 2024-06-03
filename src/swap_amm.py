@@ -1,4 +1,3 @@
-import json
 from typing import Optional, Union
 import dataclasses
 import decimal
@@ -10,6 +9,8 @@ import src.helpers
 import src.settings
 
 
+
+AMMS = ["JediSwap", "10kSwap", "MySwap", "SithSwap"]
 
 @dataclasses.dataclass
 class JediSwapPoolSettings():
@@ -305,7 +306,7 @@ class Pool(Pair):
     def __init__(self, symbol1, symbol2, addresses_dict, myswap_id):
         self.id = self.tokens_to_id(symbol1, symbol2)
         self.addresses_dict = addresses_dict
-        self.balances = {amm: {symbol1: 0, symbol2: 0} for amm in addresses_dict.keys()}
+        self.balances = {amm: {symbol1: decimal.Decimal(0), symbol2: decimal.Decimal(0)} for amm in addresses_dict.keys()}
         t1 = SwapAmmToken(
             symbol=src.settings.TOKEN_SETTINGS[symbol1].symbol,
             decimal_factor=src.settings.TOKEN_SETTINGS[symbol1].decimal_factor,
@@ -324,25 +325,21 @@ class Pool(Pair):
     async def get_balance(self):
         if self.myswap_id is not None:
             myswap_pool = await src.blockchain_call.get_myswap_pool(self.myswap_id)
-        for amm, addresses in self.addresses_dict.items():
+        for amm, address in self.addresses_dict.items():
             for token in self.tokens:
-                balance = 0
-                if isinstance(addresses, str):
-                    addresses = [addresses]
-                for address in addresses:
-                    balance += await src.blockchain_call.balance_of(token.address, address)
-                if self.myswap_id is not None:
+                balance = await src.blockchain_call.balance_of(token.address, address)
+                if self.myswap_id is not None and amm == "MySwap":
                     balance += myswap_pool[token.symbol.upper()]
+                balance = decimal.Decimal(balance) / token.decimal_factor
                 self.balances[amm][token.symbol] = balance
-                token.balance_base = sum(self.balances[amm][token.symbol] for amm in self.balances)
-                token.balance_converted = decimal.Decimal(token.balance_base) / token.decimal_factor
+                token.balance_base = balance
+                token.balance_converted = balance
 
     def update_converted_balance(self):
         for token in self.tokens:
-            token.balance_converted = decimal.Decimal(token.balance_base) / token.decimal_factor
+            token.balance_converted = token.balance_base
 
     def buy_tokens(self, symbol, amount):
-        # assuming constant product function
         buy = None
         sell = None
         if self.tokens[0].symbol == symbol:
@@ -353,34 +350,29 @@ class Pool(Pair):
             sell = self.tokens[0]
         else:
             raise Exception(f"Could not buy {symbol}")
-        const = decimal.Decimal(buy.balance_base) * \
-            decimal.Decimal(sell.balance_base)
+        
+        const = buy.balance_base * sell.balance_base
         new_buy = buy.balance_base - amount
-        new_sell = const / decimal.Decimal(new_buy)
-        tokens_paid = round(new_sell - sell.balance_base)
+        new_sell = const / new_buy
+        tokens_paid = new_sell - sell.balance_base
+        
         buy.balance_base = new_buy
         sell.balance_base = new_sell
         self.update_converted_balance()
+        
         return tokens_paid
 
     def supply_at_price(self, initial_price: decimal.Decimal):
-        # assuming constant product function
         constant = self.tokens[0].balance_converted * self.tokens[1].balance_converted
-        return (initial_price * constant) ** decimal.Decimal("0.5") * (
-            decimal.Decimal("1") -
-            decimal.Decimal("0.95") ** decimal.Decimal("0.5")
-        )
-        
+        return (initial_price * constant).sqrt() * (decimal.Decimal(1) - decimal.Decimal(0.95).sqrt())
+
     def get_supply_at_price(self, initial_price: decimal.Decimal, amm: str = None):
         if amm is None:
             constant = self.tokens[0].balance_converted * self.tokens[1].balance_converted
         else:
             constant = self.balances[amm][self.tokens[0].symbol] * self.balances[amm][self.tokens[1].symbol]
         
-        return (initial_price * constant) ** decimal.Decimal("0.5") * (
-            decimal.Decimal("1") -
-            decimal.Decimal("0.95") ** decimal.Decimal("0.5")
-        )
+        return (initial_price * constant).sqrt() * (decimal.Decimal(1) - decimal.Decimal(0.95).sqrt())
 
 class SwapAmm(Pair):
     async def init(self):
@@ -390,10 +382,10 @@ class SwapAmm(Pair):
             "ETH",
             "USDC",
             {
-                "jedi": "0x04d0390b777b424e43839cd1e744799f3de6c176c7e32c1812a41dbd9c19db6a",
-                "sith": "0x030615bec9c1506bfac97d9dbd3c546307987d467a7f95d5533c2e861eb81f3f",
-                "10k": "0x000023c72abdf49dffc85ae3ede714f2168ad384cc67d08524732acea90df325",
-                "my": "0x010884171baf1914edc28d7afb619b40a4051cfae78a094a55d230f19e944a28"
+                "JediSwap": "0x04d0390b777b424e43839cd1e744799f3de6c176c7e32c1812a41dbd9c19db6a",
+                "SithSwap": "0x030615bec9c1506bfac97d9dbd3c546307987d467a7f95d5533c2e861eb81f3f",
+                "10kSwap": "0x000023c72abdf49dffc85ae3ede714f2168ad384cc67d08524732acea90df325",
+                "MySwap": "0x010884171baf1914edc28d7afb619b40a4051cfae78a094a55d230f19e944a28"
             },
             1
         )
@@ -401,9 +393,9 @@ class SwapAmm(Pair):
             "DAI",
             "ETH",
             {
-                "jedi": "0x07e2a13b40fc1119ec55e0bcf9428eedaa581ab3c924561ad4e955f95da63138",
-                "sith": "0x0032ebb8e68553620b97b308684babf606d9556d5c0a652450c32e85f40d000d",
-                "10k": "0x017e9e62c04b50800d7c59454754fe31a2193c9c3c6c92c093f2ab0faadf8c87"
+                "JediSwap": "0x07e2a13b40fc1119ec55e0bcf9428eedaa581ab3c924561ad4e955f95da63138",
+                "SithSwap": "0x0032ebb8e68553620b97b308684babf606d9556d5c0a652450c32e85f40d000d",
+                "10kSwap": "0x017e9e62c04b50800d7c59454754fe31a2193c9c3c6c92c093f2ab0faadf8c87"
             },
             2
         )
@@ -411,9 +403,9 @@ class SwapAmm(Pair):
             "ETH",
             "USDT",
             {
-                "jedi": "0x045e7131d776dddc137e30bdd490b431c7144677e97bf9369f629ed8d3fb7dd6",
-                "sith": "0x00691fa7f66d63dc8c89ff4e77732fff5133f282e7dbd41813273692cc595516",
-                "10k": "0x05900cfa2b50d53b097cb305d54e249e31f24f881885aae5639b0cd6af4ed298"
+                "JediSwap": "0x045e7131d776dddc137e30bdd490b431c7144677e97bf9369f629ed8d3fb7dd6",
+                "SithSwap": "0x00691fa7f66d63dc8c89ff4e77732fff5133f282e7dbd41813273692cc595516",
+                "10kSwap": "0x05900cfa2b50d53b097cb305d54e249e31f24f881885aae5639b0cd6af4ed298"
             },
             4
         )
@@ -421,16 +413,16 @@ class SwapAmm(Pair):
             "wBTC",
             "ETH",
             {
-                "jedi": "0x0260e98362e0949fefff8b4de85367c035e44f734c9f8069b6ce2075ae86b45c",
-                "10k": "0x02a6e0ecda844736c4803a385fb1372eff458c365d2325c7d4e08032c7a908f3"
+                "JediSwap": "0x0260e98362e0949fefff8b4de85367c035e44f734c9f8069b6ce2075ae86b45c",
+                "10kSwap": "0x02a6e0ecda844736c4803a385fb1372eff458c365d2325c7d4e08032c7a908f3"
             }
         )
         self.add_pool(
             "wBTC",
             "USDC",
             {
-                "jedi": "0x005a8054e5ca0b277b295a830e53bd71a6a6943b42d0dbb22329437522bc80c8",
-                "10k": "0x022e45d94d5c6c477d9efd440aad71b2c02a5cd5bed9a4d6da10bb7c19fd93ba"
+                "JediSwap": "0x005a8054e5ca0b277b295a830e53bd71a6a6943b42d0dbb22329437522bc80c8",
+                "10kSwap": "0x022e45d94d5c6c477d9efd440aad71b2c02a5cd5bed9a4d6da10bb7c19fd93ba"
             },
             3
         )
@@ -438,25 +430,25 @@ class SwapAmm(Pair):
             "wBTC",
             "USDT",
             {
-                "jedi": "0x044d13ad98a46fd2322ef2637e5e4c292ce8822f47b7cb9a1d581176a801c1a0",
-                "10k": "0x050031010bcee2f43575b3afe197878e064e1a03c12f2ff437f29a2710e0b6ef"
+                "JediSwap": "0x044d13ad98a46fd2322ef2637e5e4c292ce8822f47b7cb9a1d581176a801c1a0",
+                "10kSwap": "0x050031010bcee2f43575b3afe197878e064e1a03c12f2ff437f29a2710e0b6ef"
             }
         )
         self.add_pool(
             "DAI",
             "wBTC",
             {
-                "jedi": "0x039c183c8e5a2df130eefa6fbaa3b8aad89b29891f6272cb0c90deaa93ec6315",
-                "10k": "0x00f9d8f827734f5fd54571f0e78398033a3c1f1074a471cd4623f2aa45163718"
+                "JediSwap": "0x039c183c8e5a2df130eefa6fbaa3b8aad89b29891f6272cb0c90deaa93ec6315",
+                "10kSwap": "0x00f9d8f827734f5fd54571f0e78398033a3c1f1074a471cd4623f2aa45163718"
             }
         )
         self.add_pool(
             "DAI",
             "USDC",
             {
-                "jedi": "0x00cfd39f5244f7b617418c018204a8a9f9a7f72e71f0ef38f968eeb2a9ca302b",
-                "sith": "0x015e9cd2d4d6b4bb9f1124688b1e6bc19b4ff877a01011d28c25c9ee918e83e5",
-                "10k": "0x02e767b996c8d4594c73317bb102c2018b9036aee8eed08ace5f45b3568b94e5"
+                "JediSwap": "0x00cfd39f5244f7b617418c018204a8a9f9a7f72e71f0ef38f968eeb2a9ca302b",
+                "SithSwap": "0x015e9cd2d4d6b4bb9f1124688b1e6bc19b4ff877a01011d28c25c9ee918e83e5",
+                "10kSwap": "0x02e767b996c8d4594c73317bb102c2018b9036aee8eed08ace5f45b3568b94e5"
             },
             6
         )
@@ -464,17 +456,17 @@ class SwapAmm(Pair):
             "DAI",
             "USDT",
             {
-                "jedi": "0x00f0f5b3eed258344152e1f17baf84a2e1b621cd754b625bec169e8595aea767",
-                "10k": "0x041d52e15e82b003bf0ad52ca58393c87abef3e00f1bf69682fd4162d5773f8f"
+                "JediSwap": "0x00f0f5b3eed258344152e1f17baf84a2e1b621cd754b625bec169e8595aea767",
+                "10kSwap": "0x041d52e15e82b003bf0ad52ca58393c87abef3e00f1bf69682fd4162d5773f8f"
             }
         )
         self.add_pool(
             "USDC",
             "USDT",
             {
-                "jedi": "0x05801bdad32f343035fb242e98d1e9371ae85bc1543962fedea16c59b35bd19b",
-                "sith": "0x0601f72228f73704e827de5bcd8dadaad52c652bb1e42bf492d90bbe22df2cec",
-                "10k": "0x041a708cf109737a50baa6cbeb9adf0bf8d97112dc6cc80c7a458cbad35328b0"
+                "JediSwap": "0x05801bdad32f343035fb242e98d1e9371ae85bc1543962fedea16c59b35bd19b",
+                "SithSwap": "0x0601f72228f73704e827de5bcd8dadaad52c652bb1e42bf492d90bbe22df2cec",
+                "10kSwap": "0x041a708cf109737a50baa6cbeb9adf0bf8d97112dc6cc80c7a458cbad35328b0"
             },
             5
         )
@@ -482,9 +474,9 @@ class SwapAmm(Pair):
             "STRK",
             "USDC",
             {
-                "jedi": "0x05726725e9507c3586cc0516449e2c74d9b201ab2747752bb0251aaa263c9a26",
-                "sith": "0x00900978e650c11605629fc3eda15447d57e884431894973e4928d8cb4c70c24",
-                "10k": "0x066733193503019e4e9472f598ff32f15951a0ddb8fb5001f0beaa8bd1fb6840"
+                "JediSwap": "0x05726725e9507c3586cc0516449e2c74d9b201ab2747752bb0251aaa263c9a26",
+                "SithSwap": "0x00900978e650c11605629fc3eda15447d57e884431894973e4928d8cb4c70c24",
+                "10kSwap": "0x066733193503019e4e9472f598ff32f15951a0ddb8fb5001f0beaa8bd1fb6840"
             },
             None
         )
@@ -492,7 +484,7 @@ class SwapAmm(Pair):
             "STRK",
             "USDT",
             {
-                "10k": "0x0784a8ec64af2b45694b94875fe6adbb57fadf9e196aa1aa1d144d163d0d8c51"
+                "10kSwap": "0x0784a8ec64af2b45694b94875fe6adbb57fadf9e196aa1aa1d144d163d0d8c51"
             },
             None
         )
@@ -500,7 +492,7 @@ class SwapAmm(Pair):
             "DAI",
             "STRK",
             {
-                "jedi": "0x048ddb56ceb74777d081a9ce684aaa78e98c286e14fc1badb3a9938e710d6866"
+                "JediSwap": "0x048ddb56ceb74777d081a9ce684aaa78e98c286e14fc1badb3a9938e710d6866"
             },
             None
         )
@@ -510,7 +502,7 @@ class SwapAmm(Pair):
         for pool in self.pools.values():
             await pool.get_balance()
 
-    def add_pool(self, t1, t2, addresses_dict, myswap_id=None):
+    def add_pool(self, t1: str, t2: str, addresses_dict: dict, myswap_id: int = None):
         pool = Pool(t1, t2, addresses_dict, myswap_id)
         self.pools[pool.id] = pool
 
@@ -522,8 +514,8 @@ class SwapAmm(Pair):
                 f"Trying to get pool that is not set: {self.tokens_to_id(t1, t2)}"
             )
             
-    def get_supply_at_price(self, collateral_token, collateral_token_price, debt_token, amm):
-        pool = self.get_pool(collateral_token, debt_token)
+    def get_supply_at_price(self, collateral_token: str, collateral_token_price: int, debt_token: str, amm: str):
+        pool: Pool = self.get_pool(collateral_token, debt_token)
         return pool.get_supply_at_price(collateral_token_price, amm)
 
 

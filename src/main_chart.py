@@ -37,18 +37,18 @@ def get_main_chart_data(
     data.dropna(inplace=True)
 
     # Initialize columns for each AMM
-    for amm in ["jedi", "10k", "my", "sith"]:
+    for amm in src.swap_amm.AMMS:
         data[f"{amm}_debt_token_supply"] = 0
 
     for index, row in data.iterrows():
         price = row["collateral_token_price"]
         total_supply = 0
-        for amm in ["jedi", "10k", "my", "sith"]:
+        for amm in src.swap_amm.AMMS:
             supply = swap_amms.get_supply_at_price(collateral_token, price, debt_token, amm)
             data.at[index, f"{amm}_debt_token_supply"] = supply
             total_supply += supply
         data.at[index, "debt_token_supply"] = total_supply
-
+    
     if save_data:
         directory = src.protocol_parameters.get_directory(state=state)
         path = f"{directory}/{collateral_token}-{debt_token}.parquet"
@@ -63,9 +63,10 @@ def get_main_chart_figure(
     debt_token: str,
 ) -> plotly.graph_objs.Figure:
     # Define the AMMs and their color mappings
-    amms = ["jedi", "10k", "my", "sith"]
-    color_map = {"jedi": "#ECD662", "10k": "#4CA7D0", "my": "#76C1FA", "sith": "#FFA07A"}
+    amms = src.swap_amm.AMMS
+    color_map = {"JediSwap": "#ECD662", "10kSwap": "#4CA7D0", "MySwap": "#76C1FA", "SithSwap": "#FFA07A"}
 
+    # TODO: Align colors with the rest of the app.
     figure = plotly.express.bar(
         data_frame=data,
         x="collateral_token_price",
