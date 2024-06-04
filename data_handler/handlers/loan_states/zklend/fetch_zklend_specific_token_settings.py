@@ -91,3 +91,6 @@ async def fetch_zklend_specific_token_settings():
         zklend_specific_token_settings[symbol] = zklend_specific_token_setting
     
     return zklend_specific_token_settings
+
+
+ZKLEND_SPECIFIC_TOKEN_SETTINGS = fetch_zklend_specific_token_settings()
