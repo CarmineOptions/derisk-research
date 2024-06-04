@@ -1,5 +1,6 @@
 import decimal
-import pandas 
+import pandas
+ 
 import plotly.express 
 import plotly.graph_objs
 
@@ -25,6 +26,7 @@ def get_main_chart_data(
             ),
         }
     )
+    
     data['liquidable_debt'] = data['collateral_token_price'].apply(
         lambda x: state.compute_liquidable_debt_at_price(
             prices=prices,
@@ -33,28 +35,30 @@ def get_main_chart_data(
             debt_token=debt_token,
         )
     )
+    
     data['liquidable_debt_at_interval'] = data['liquidable_debt'].diff().abs()
     data.dropna(inplace=True)
-
-    # Initialize columns for each AMM
+    
     for amm in src.swap_amm.AMMS:
         data[f"{amm}_debt_token_supply"] = 0
+    
+    def compute_supply_at_price(price):
+        supplies = {amm: swap_amms.get_supply_at_price(collateral_token, price, debt_token, amm) for amm in src.swap_amm.AMMS}
+        total_supply = sum(supplies.values())
+        return supplies, total_supply
 
-    for index, row in data.iterrows():
-        price = row["collateral_token_price"]
-        total_supply = 0
-        for amm in src.swap_amm.AMMS:
-            supply = swap_amms.get_supply_at_price(collateral_token, price, debt_token, amm)
-            data.at[index, f"{amm}_debt_token_supply"] = supply
-            total_supply += supply
-        data.at[index, "debt_token_supply"] = total_supply
+    supplies_and_totals = data['collateral_token_price'].apply(compute_supply_at_price)
+    for amm in src.swap_amm.AMMS:
+        data[f"{amm}_debt_token_supply"] = supplies_and_totals.apply(lambda x: x[0][amm])
+    data['debt_token_supply'] = supplies_and_totals.apply(lambda x: x[1])
     
     if save_data:
         directory = src.protocol_parameters.get_directory(state=state)
         path = f"{directory}/{collateral_token}-{debt_token}.parquet"
         src.helpers.save_dataframe(data=data, path=path)
-        
+    
     return data
+
 
 
 def get_main_chart_figure(
@@ -64,10 +68,10 @@ def get_main_chart_figure(
 ) -> plotly.graph_objs.Figure:
     # Define the AMMs and their color mappings
     amms = src.swap_amm.AMMS
-    color_map = {"JediSwap_debt_token_supply": "#4C99D0", 
-                 "10kSwap_debt_token_supply": "#4C6DD0",
+    color_map = {"10kSwap_debt_token_supply": "#4C6DD0",
                  "MySwap_debt_token_supply": "#4CA7D0",
-                 "SithSwap_debt_token_supply": "#4C83D0"}
+                 "SithSwap_debt_token_supply": "#4C99D0",
+                 "JediSwap_debt_token_supply": "#4C83D0"}
 
     # TODO: Align colors with the rest of the app.
     figure = plotly.express.bar(

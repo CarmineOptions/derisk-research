@@ -10,7 +10,9 @@ import src.settings
 
 
 
-AMMS = ["JediSwap", "10kSwap", "MySwap", "SithSwap"]
+AMMS = ["10kSwap", "MySwap", "SithSwap", "JediSwap"]
+
+
 
 @dataclasses.dataclass
 class JediSwapPoolSettings():
@@ -292,8 +294,8 @@ class Prices:
 @dataclasses.dataclass
 class SwapAmmToken(src.settings.TokenSettings):
     # TODO: Improve this.
-    balance_base: Optional[float] = None
-    balance_converted: Optional[float] = None
+    balance_base: Optional[float] = 0
+    balance_converted: Optional[float] = 0
 
 
 class Pair:
@@ -325,21 +327,23 @@ class Pool(Pair):
     async def get_balance(self):
         if self.myswap_id is not None:
             myswap_pool = await src.blockchain_call.get_myswap_pool(self.myswap_id)
-        for amm, address in self.addresses_dict.items():
-            for token in self.tokens:
-                balance = await src.blockchain_call.balance_of(token.address, address)
-                if self.myswap_id is not None and amm == "MySwap":
-                    balance += myswap_pool[token.symbol.upper()]
-                balance = decimal.Decimal(balance) / token.decimal_factor
-                self.balances[amm][token.symbol] = balance
-                token.balance_base = balance
-                token.balance_converted = balance
+        for token in self.tokens:
+            balance = 0
+            for amm, address in self.addresses_dict.items():
+                amm_balance = 0
+                balance += await src.blockchain_call.balance_of(token.address, address)
+                amm_balance = balance
+                self.balances[amm][token.symbol] += decimal.Decimal(amm_balance) / token.decimal_factor
+            if self.myswap_id is not None:
+                balance += myswap_pool[token.symbol.upper()]
+            token.balance_base = balance
+            token.balance_converted = decimal.Decimal(balance) / token.decimal_factor
 
     def update_converted_balance(self):
         for token in self.tokens:
             token.balance_converted = token.balance_base
 
-    def buy_tokens(self, symbol, amount):
+    def buy_tokens(self, symbol: str, amount: float):
         buy = None
         sell = None
         if self.tokens[0].symbol == symbol:
@@ -369,6 +373,8 @@ class Pool(Pair):
     def get_supply_at_price(self, initial_price: decimal.Decimal, amm: str = None):
         if amm is None:
             constant = self.tokens[0].balance_converted * self.tokens[1].balance_converted
+        elif not amm in self.balances.keys():
+            return 0
         else:
             constant = self.balances[amm][self.tokens[0].symbol] * self.balances[amm][self.tokens[1].symbol]
         

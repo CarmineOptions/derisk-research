@@ -93,35 +93,35 @@ def update_data(zklend_state):
             swap_amms=swap_amms,
             collateral_token=collateral_token,
             debt_token=borrowings_token,
-            save_data=True,
+            save_data=False,
         )
         logging.info(f"Main chart data for pair = {pair} prepared in {time.time() - t2}s")
 
     logging.info(f"updated graphs in {time.time() - t2}s")
 
     for state in states:
-        _ = src.histogram.get_histogram_data(state=state, prices=prices.prices, save_data=True)
+        _ = src.histogram.get_histogram_data(state=state, prices=prices.prices, save_data=False)
 
     loan_stats = {}
     for state in states:
         protocol = src.protocol_parameters.get_protocol(state=state)
-        loan_stats[protocol] = src.loans_table.get_loans_table_data(state=state, prices=prices.prices, save_data=True)
+        loan_stats[protocol] = src.loans_table.get_loans_table_data(state=state, prices=prices.prices, save_data=False)
 
-    general_stats = src.protocol_stats.get_general_stats(states=states, loan_stats=loan_stats, save_data=True)
-    supply_stats = src.protocol_stats.get_supply_stats(states=states, prices=prices.prices, save_data=True)
-    _ = src.protocol_stats.get_collateral_stats(states=states, save_data=True)
-    debt_stats = src.protocol_stats.get_debt_stats(states=states, save_data=True)
-    _ = src.protocol_stats.get_utilization_stats(
-        general_stats=general_stats,
-        supply_stats=supply_stats, 
-        debt_stats=debt_stats, 
-        save_data=True,
-    )
+    # general_stats = src.protocol_stats.get_general_stats(states=states, loan_stats=loan_stats, save_data=True)
+    # supply_stats = src.protocol_stats.get_supply_stats(states=states, prices=prices.prices, save_data=True)
+    # _ = src.protocol_stats.get_collateral_stats(states=states, save_data=False)
+    # debt_stats = src.protocol_stats.get_debt_stats(states=states, save_data=False)
+    # _ = src.protocol_stats.get_utilization_stats(
+        # general_stats=general_stats,
+        # supply_stats=supply_stats, 
+        # debt_stats=debt_stats, 
+        # save_data=False,
+    # )
 
-    max_block_number = zklend_events["block_number"].max()
-    max_timestamp = zklend_events["timestamp"].max()
-    last_update = {"timestamp": str(max_timestamp), "block_number": str(max_block_number)}
-    src.persistent_state.upload_object_as_pickle(last_update, path=src.persistent_state.LAST_UPDATE_FILENAME)
+    # max_block_number = zklend_events["block_number"].max()
+    # max_timestamp = zklend_events["timestamp"].max()
+    # last_update = {"timestamp": str(max_timestamp), "block_number": str(max_block_number)}
+    # src.persistent_state.upload_object_as_pickle(last_update, path=src.persistent_state.LAST_UPDATE_FILENAME)
 
     logging.info(f"Updated CSV data in {time.time() - t0}s")
     return zklend_state
@@ -131,7 +131,7 @@ def update_data_continuously():
     state = src.persistent_state.load_pickle(path=src.persistent_state.PERSISTENT_STATE_FILENAME)
     while True:
         state = update_data(state)
-        src.persistent_state.upload_object_as_pickle(state, path=src.persistent_state.PERSISTENT_STATE_FILENAME)
+        # src.persistent_state.upload_object_as_pickle(state, path=src.persistent_state.PERSISTENT_STATE_FILENAME)
         logging.info("DATA UPDATED")
         time.sleep(120)
 
