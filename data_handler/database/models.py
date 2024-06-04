@@ -8,7 +8,6 @@ from sqlalchemy_utils.types.choice import ChoiceType
 from tools.constants import ProtocolIDs
 from handlers.liquidable_debt.values import LendingProtocolNames
 
-
 class Base(DeclarativeBase):
     """
     Base class for ORM models.
@@ -43,12 +42,8 @@ class LiquidableDebt(Base):
 
     __tablename__ = "liquidable_debt"
 
-    protocol = Column(ChoiceType(LendingProtocolNames, impl=String()), nullable=False)
-    user = Column(String, index=True, nullable=False)
     liquidable_debt = Column(DECIMAL, nullable=False)
-    health_factor = Column(DECIMAL, nullable=False)
-    collateral = Column(JSON, nullable=False)
-    risk_adjusted_collateral = Column(DECIMAL, nullable=False)
-    debt = Column(JSON, nullable=False)
-    debt_usd = Column(DECIMAL, nullable=False)
-
+    protocol = Column(ChoiceType(LendingProtocolNames, impl=String()), nullable=False)
+    price = Column(DECIMAL, nullable=False)
+    collateral_token = Column(String, nullable=False)
+    debt_token = Column(String, nullable=False)
