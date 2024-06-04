@@ -7,6 +7,7 @@ from .celery_conf import app
 # from handlers.loan_states.zklend.run import ZkLendLoanStateComputation
 from handlers.loan_states.nostra_alpha.run import NostraAlphaStateComputation
 # from handlers.loan_states.nostra_mainnet.run import NostraMainnetStateComputation
+from handlers.liquidable_debt.protocols import zklend
 
 
 #@app.task(name="run_loan_states_computation_for_hashtack_v0")
@@ -84,4 +85,8 @@ def run_loan_states_computation_for_nostra_alpha():
 #     )
 #
 
-
+@app.task(name="run_liquidable_debt_computation_for_zklend")
+def run_liquidable_debt_computation_for_zklend():
+    logging.info("Starting zkLend liquidable debt computation")
+    zklend.run()
+    logging.info("zkLend liquidable debt computation finished")
