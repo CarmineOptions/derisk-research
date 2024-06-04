@@ -1,7 +1,7 @@
 """Add LoanState model
 
 Revision ID: d2fa8201b04a
-Revises: 
+Revises:
 Create Date: 2024-05-13 21:07:50.245027
 
 """
@@ -35,6 +35,7 @@ def upgrade() -> None:
         sa.Column("user", sa.String(), nullable=True),
         sa.Column("collateral", sa.JSON(), nullable=True),
         sa.Column("debt", sa.JSON(), nullable=True),
+        sa.Column("deposit", sa.JSON(), nullable=True),
         sa.Column("id", sa.UUID(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )

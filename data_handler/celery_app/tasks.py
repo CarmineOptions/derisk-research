@@ -11,6 +11,7 @@ from .celery_conf import app
 # from handlers.loan_states.zklend.run import ZkLendLoanStateComputation
 from handlers.loan_states.nostra_alpha.run import NostraAlphaStateComputation
 # from handlers.loan_states.nostra_mainnet.run import NostraMainnetStateComputation
+from handlers.liquidable_debt.protocols import zklend
 from handlers.order_books.uniswap_v2.main import UniswapV2OrderBook
 
 connector = DBConnector()
@@ -109,3 +110,9 @@ def uniswap_v2_order_book():
             except Exception as e:
                 logging.info(f"With token pair: {base_token} and {quote_token} something happened: {e}")
 
+
+@app.task(name="run_liquidable_debt_computation_for_zklend")
+def run_liquidable_debt_computation_for_zklend():
+    logging.info("Starting zkLend liquidable debt computation")
+    zklend.run()
+    logging.info("zkLend liquidable debt computation finished")

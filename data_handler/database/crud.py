@@ -9,6 +9,7 @@ from database.database import SQLALCHEMY_DATABASE_URL
 from database.models import Base, LoanState
 from tools.constants import ProtocolIDs
 
+
 ModelType = TypeVar("ModelType", bound=Base)
 
 

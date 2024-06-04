@@ -22,6 +22,8 @@ celery = "^5.4.0"
 redis = "^5.0.4"
 slowapi = "^0.1.9"
 sqlalchemy-utils = "^0.41.2"
+gcsfs = "^2024.5.0"
+dask = {extras = ["dataframe"], version = "^2024.5.2"}
 starknet-py = "^0.22.0"
 
 
