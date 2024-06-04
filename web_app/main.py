@@ -35,7 +35,7 @@ templates = Jinja2Templates(directory="templates")
 
 
 @app.get(
-    path="/create-notifications-subscription",
+    path="/liquidation-watcher",
     description=CreateSubscriptionValues.create_subscription_description_message,
     response_class=HTMLResponse,
 )
@@ -56,7 +56,7 @@ async def create_subscription(request: Request):
 
 
 @app.post(
-    path="/create-notifications-subscription",
+    path="/liquidation-watcher",
     description=CreateSubscriptionValues.create_subscription_description_message,
 )
 async def subscribe_to_notification(
