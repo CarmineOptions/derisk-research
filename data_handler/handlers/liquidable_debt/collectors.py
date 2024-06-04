@@ -31,7 +31,7 @@ class GoogleCloudDataCollector(Collector):
         :param path: The path where the data will be saved to (Local Storage Path).
         :param url: The connection URL to collect data from (Google Cloud Storage Bucket url).
         """
-        cls._check_protocol_existance(protocol_name, available_protocols)
+        cls._check_protocol_existence(protocol_name, available_protocols)
 
         file_name = cls.LS_MANAGER.update_dir(protocol_name)
 
@@ -69,7 +69,7 @@ class GoogleCloudDataCollector(Collector):
         cls.LS_MANAGER.delete_file(file_path)
 
     @classmethod
-    def _check_protocol_existance(
+    def _check_protocol_existence(
             cls,
             protocol_name: str,
             available_protocols: Iterable[str]

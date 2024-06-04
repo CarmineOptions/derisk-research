@@ -1,6 +1,5 @@
 import pandas as pd
 from decimal import Decimal
-from copy import deepcopy
 
 from handlers.state import State
 from database.crud import DBConnector
@@ -12,9 +11,10 @@ from handlers.liquidable_debt.values import (GS_BUCKET_URL, GS_BUCKET_NAME, Lend
                                              LOCAL_STORAGE_PATH, COLLATERAL_FIELD_NAME, PROTOCOL_FIELD_NAME,
                                              DEBT_FIELD_NAME, USER_FIELD_NAME, RISK_ADJUSTED_COLLATERAL_USD_FIELD_NAME,
                                              HEALTH_FACTOR_FIELD_NAME, DEBT_USD_FIELD_NAME, FIELDS_TO_VALIDATE,
-                                             ALL_NEEDED_FIELDS, LIQUIDABLE_DEBT_FIELD_NAME)
+                                             ALL_NEEDED_FIELDS, LIQUIDABLE_DEBT_FIELD_NAME, PRICE_FIELD_NAME)
 from handlers.loan_states.zklend.events import ZkLendState
 from handlers.helpers import TokenValues
+from handlers.liquidable_debt.utils import Prices
 
 
 class GCloudLiquidableDebtDataHandler:
@@ -52,42 +52,64 @@ class GCloudLiquidableDebtDataHandler:
 
         return self._calculate_liquidable_debt(parsed_data)
 
-    def _calculate_liquidable_debt(self, data: dict = None):
+    def _calculate_liquidable_debt(self, data: dict[int, dict[str, str | Decimal | dict[str, Decimal]]] = None):
         """
         Calculates liquidable debt based on data provided and updates an existing data.
-        :param data: Data to calculate liquidable debt for.
+        Data to calculate liquidable debt for:
+        Args: data( dict[
+            int - Row number,
+            dict[
+                str - Field name,
+                str - Token value
+                | Decimal - Field value (the price as example)
+                | dict[
+                    str - Token name,
+                    Decimal - Token value
+                ]
+            ]
+        ])
         :return: A dictionary of the ready liquidable debt data.
         """
-        result_data = deepcopy(data)
+        result_data = dict()
+        prices = Prices()
+        prices.get_lp_token_prices()
 
-        for row_number in data:
-            state = self.state_class(verbose_user=data[row_number][USER_FIELD_NAME])
+        for row_number, row_value in data.items():
+            state = self.state_class(verbose_user=row_value[USER_FIELD_NAME])
 
-            state.loan_entities[data[row_number][USER_FIELD_NAME]].debt.values = {
+            state.loan_entities[row_value[USER_FIELD_NAME]].debt.values = {
                 key: value
-                for key, value in data[row_number][DEBT_FIELD_NAME].items()
+                for key, value in row_value[DEBT_FIELD_NAME].items()
             }
-            state.loan_entities[data[row_number][USER_FIELD_NAME]].collateral.values = {
+            state.loan_entities[row_value[USER_FIELD_NAME]].collateral.values = {
                 key: value
-                for key, value in data[row_number][COLLATERAL_FIELD_NAME].items()
+                for key, value in row_value[COLLATERAL_FIELD_NAME].items()
             }
 
-            for token in data[row_number][DEBT_FIELD_NAME]:
-                if not data[row_number][COLLATERAL_FIELD_NAME].get(token, ""):
+            for token in row_value[DEBT_FIELD_NAME]:
+                if not row_value[COLLATERAL_FIELD_NAME].get(token, ""):
                     continue
 
                 result = state.compute_liquidable_debt_at_price(
-                    prices=TokenValues(),
+                    prices=TokenValues(values=prices.prices.values),
                     collateral_token=token,
-                    collateral_token_price=data[row_number][COLLATERAL_FIELD_NAME][token],
+                    collateral_token_price=row_value[COLLATERAL_FIELD_NAME][token],
                     debt_token=token,
-                    risk_adjusted_collateral_usd=data[row_number][RISK_ADJUSTED_COLLATERAL_USD_FIELD_NAME],
-                    debt_usd=data[row_number][DEBT_USD_FIELD_NAME],
-                    health_factor=data[row_number][HEALTH_FACTOR_FIELD_NAME],
+                    risk_adjusted_collateral_usd=row_value[RISK_ADJUSTED_COLLATERAL_USD_FIELD_NAME],
+                    debt_usd=row_value[DEBT_USD_FIELD_NAME],
+                    health_factor=row_value[HEALTH_FACTOR_FIELD_NAME],
                 )
 
                 if result > Decimal("0"):
-                    result_data[row_number][LIQUIDABLE_DEBT_FIELD_NAME] = result
+                    result_data.update({
+                        row_number: {
+                            LIQUIDABLE_DEBT_FIELD_NAME: result,
+                            PRICE_FIELD_NAME: prices.prices.values[token],
+                            COLLATERAL_FIELD_NAME: token,
+                            DEBT_FIELD_NAME: token,
+                            PROTOCOL_FIELD_NAME: row_value[PROTOCOL_FIELD_NAME]
+                        }
+                    })
 
         return result_data
 
@@ -148,7 +170,7 @@ class GCloudLiquidableDebtDataHandler:
 
             if not isinstance(data[field], str):
                 if data[field] <= Decimal("0") \
-                   or data[field] == Decimal("inf"):
+                        or data[field] == Decimal("inf"):
                     return False
 
         return True
