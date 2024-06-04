@@ -86,7 +86,7 @@ class Portfolio(TokenValues):
         else:
             super().__init__(values=token_values)
 
-    def __add__(self, second_portfolio: Portfolio) -> Portfolio:
+    def __add__(self, second_portfolio: 'Portfolio') -> 'Portfolio':
         if not isinstance(second_portfolio, Portfolio):
             raise TypeError(f"Cannot add Portfolio and {type(second_portfolio)}")
         new_portfolio = self.values.copy()
