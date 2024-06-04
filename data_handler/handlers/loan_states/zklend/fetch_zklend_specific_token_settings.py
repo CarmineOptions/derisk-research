@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from handlers.settings import TOKEN_SETTINGS, TokenSettings
 from tools.constants import ProtocolAddresses
-import src.blockchain_call
+from src import blockchain_call
 
 @dataclass
 class ZkLendSpecificTokenSettings:
@@ -68,7 +68,7 @@ async def get_token_reserve_data(token_setting_address: str):
     """
     Make a call to ZKLEND_MARKET_ADDRESSES with the tokenSettingAddress (Address).
     """
-    reserve_data = await src.blockchain_call.func_call(
+    reserve_data = await blockchain_call.func_call(
         addr=ProtocolAddresses().ZKLEND_MARKET_ADDRESSES,
         selector="get_reserve_data",
         calldata=[token_setting_address],
