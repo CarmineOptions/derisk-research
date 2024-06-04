@@ -11,6 +11,9 @@ REDIS_HOST = os.environ.get("REDIS_HOST", "")
 REDIS_PORT = os.environ.get("REDIS_PORT", 6379)
 
 
+ORDER_BOOK_TIME_INTERVAL = int(os.environ.get("ORDER_BOOK_TIME_INTERVAL", 5))
+
+
 app = Celery(
     main="DataHandler",
     broker=f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
@@ -40,13 +43,19 @@ app.conf.beat_schedule = {
     #     'task': 'run_loan_states_computation_for_nostra_mainnet',
     #     'schedule': crontab(minute=f'*/{CRONTAB_TIME}'),
     # },
+    "uniswap-v2-order-book": {
+        "task": "uniswap_v2_order_book",
+        "schedule": ORDER_BOOK_TIME_INTERVAL,
+    },
 }
+
 from celery_app.tasks import (
     # run_loan_states_computation_for_hashtack_v0,
     # run_loan_states_computation_for_hashtack_v1,
     run_loan_states_computation_for_nostra_alpha,
     # run_loan_states_computation_for_nostra_mainnet,
     # run_loan_states_computation_for_zklend,
+    uniswap_v2_order_book,
 )
 
 app.autodiscover_tasks(["celery_app.tasks"])
