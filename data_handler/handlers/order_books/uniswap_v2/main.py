@@ -4,7 +4,7 @@ from typing import Iterable
 
 from handlers.helpers import get_range, get_collateral_token_range
 from handlers.order_books.abstractions import OrderBookBase
-from handlers.order_books.uniswap_v2.swap_amm import MySwapPool, SwapAmm
+from handlers.order_books.uniswap_v2.swap_amm import SwapAmm
 
 
 class UniswapV2OrderBook(OrderBookBase):
@@ -16,6 +16,14 @@ class UniswapV2OrderBook(OrderBookBase):
         self.token_b = token_b
         self._pool = None
         self._swap_amm = SwapAmm()
+
+    def _set_current_price(self) -> None:
+        """Set the current price of the pair based on asks and bids."""
+        if not self.asks or not self.bids:
+            raise ValueError("Asks and bids are required to calculate the current price.")
+        max_bid_price = max(self.bids, key=lambda x: x[0])[0]
+        min_ask_price = min(self.asks, key=lambda x: x[0])[0]
+        self.current_price = (max_bid_price + min_ask_price) / Decimal("2")
 
     def _set_pool(self) -> None:
         """Retrieve and set pool from available pools."""
@@ -59,6 +67,7 @@ class UniswapV2OrderBook(OrderBookBase):
         current_price = token_b_reserves / token_a_reserves
         prices_range = self.get_prices_range(current_price)
         self.add_quantities_data(prices_range, current_price)
+        self._set_current_price()
 
     def add_quantities_data(self, prices_range: Iterable[Decimal], current_price: Decimal) -> None:
         """
@@ -86,20 +95,24 @@ class UniswapV2OrderBook(OrderBookBase):
         return price
 
     def calculate_token_amount_price_change(
-            self, current_price: Decimal, price_change_ratio: Decimal
+            self, price_change_ratio: Decimal
     ) -> Decimal:
         """
         Calculate amounts of the token_a required to change the price by the given ratio.
-        :param current_price: Decimal - The current pair price.
+        Run this method after fetching the order book for current price to be set.
         :param price_change_ratio: Decimal - The price change ratio.
         :return: Decimal - Quantity that can be traded without moving price outside acceptable bound.
         """
-        min_price = current_price - (current_price * price_change_ratio)
+        if price_change_ratio > 1 or price_change_ratio < 0:
+            raise ValueError("Provide valid price change ratio.")
+        if self.current_price == 0:
+            raise ValueError("Current price of the pair is zero.")
+        min_price = (Decimal("1") - price_change_ratio) * self.current_price
         lower_quantity = Decimal("0")
         for price, quantity in self.bids:
             if price >= min_price:
                 lower_quantity += quantity
-            elif price > current_price:
+            elif price > self.current_price:
                 break
         return lower_quantity
 
@@ -112,4 +125,4 @@ if __name__ == '__main__':
     order_book = UniswapV2OrderBook(token_0, token_1)
     order_book.fetch_price_and_liquidity()
     print(order_book.get_order_book(), "\n")
-    token_amount = order_book.calculate_token_amount_price_change(Decimal("3750"), Decimal(0.05))
+    token_amount = order_book.calculate_token_amount_price_change(Decimal("0.05"))
