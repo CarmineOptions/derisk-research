@@ -77,7 +77,9 @@ def get_main_chart_figure(
     figure = plotly.express.bar(
         data_frame=data,
         x="collateral_token_price",
-        y=[f"{amm}_debt_token_supply" for amm in amms] + ["liquidable_debt_at_interval"],
+        # TODO
+        y=["debt_token_supply", "liquidable_debt_at_interval"],
+        # y=[f"{amm}_debt_token_supply" for amm in amms] + ["liquidable_debt_at_interval"],
         title=f"Liquidable debt and the corresponding supply of {debt_token} at various price intervals of {collateral_token}",
         barmode="overlay",
         opacity=0.65,
