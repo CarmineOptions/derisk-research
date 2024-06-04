@@ -85,6 +85,24 @@ class UniswapV2OrderBook(OrderBookBase):
         price = ((sqrt_ratio / (Decimal(2) ** 128)) ** 2) * 10 ** (self.token_a_decimal - self.token_b_decimal)
         return price
 
+    def calculate_token_amount_price_change(
+            self, current_price: Decimal, price_change_ratio: Decimal
+    ) -> Decimal:
+        """
+        Calculate amounts of the token_a required to change the price by the given ratio.
+        :param current_price: Decimal - The current pair price.
+        :param price_change_ratio: Decimal - The price change ratio.
+        :return: Decimal - Quantity that can be traded without moving price outside acceptable bound.
+        """
+        min_price = current_price - (current_price * price_change_ratio)
+        lower_quantity = Decimal("0")
+        for price, quantity in self.bids:
+            if price >= min_price:
+                lower_quantity += quantity
+            elif price > current_price:
+                break
+        return lower_quantity
+
 
 if __name__ == '__main__':
     token_0 = "ETH"
@@ -94,3 +112,4 @@ if __name__ == '__main__':
     order_book = UniswapV2OrderBook(token_0, token_1)
     order_book.fetch_price_and_liquidity()
     print(order_book.get_order_book(), "\n")
+    token_amount = order_book.calculate_token_amount_price_change(Decimal("3750"), Decimal(0.05))
