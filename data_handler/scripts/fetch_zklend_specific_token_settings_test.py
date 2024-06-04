@@ -2,7 +2,10 @@ import decimal
 from dataclasses import dataclass
 import asyncio
 
-# Mocks for imported modules and constants
+from handlers.loan_states.zklend.fetch_zklend_specific_token_settings import TokenSettings, ZkLendSpecificTokenSettings, get_token_settings
+
+
+# Mock response for the on chain call (func_call)
 class MockBlockchainCall:
     async def func_call(self, addr, selector, calldata):
         return [
@@ -31,14 +34,8 @@ class ProtocolAddresses:
 
 src = type('src', (), {'blockchain_call': MockBlockchainCall()})
 
-@dataclass
-class TokenSettings:
-    symbol: str
-    # Source: Starkscan, e.g.
-    # https://starkscan.co/token/0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7 for ETH.
-    decimal_factor: decimal.Decimal
-    address: str
 
+# Mock TOKEN_SETTINGS dict
 TOKEN_SETTINGS: dict[str, TokenSettings] = {
     "ETH": TokenSettings(
         symbol="ETH",
@@ -82,55 +79,8 @@ TOKEN_SETTINGS: dict[str, TokenSettings] = {
     ),
 }
 
-@dataclass
-class ZkLendSpecificTokenSettings:
-    collateral_factor: decimal.Decimal
-    debt_factor: decimal.Decimal
-    liquidation_bonus: decimal.Decimal
-    protocol_token_address: str
 
-@dataclass
-class TokenSettings(ZkLendSpecificTokenSettings):
-    pass
-
-def format_reserve_data_number(string_large_num: str):
-    """
-    Method to convert large string number to decimal.
-    Example:
-    string_large_num = "800000000000000000000000000"
-    return = 0.80
-    """
-    int_large_num = decimal.Decimal(string_large_num)
-    SCALE_FACTOR = decimal.Decimal("1e27")
-    # Example: cast 800000000000000000000000000 to 0.800000000000000000000000000
-    decimal_large_num = int_large_num / SCALE_FACTOR
-    # Example: convert 0.800000000000000000000000000 to 0.80
-    formatted_number = round(decimal_large_num, 2)
-    return formatted_number
-
-
-def get_value_by_name(data_list: list, name: str):
-    return next((item['value'] for item in data_list if item['name'] == name), None)
-
-def get_token_settings(reserve_data: list):
-    """
-    Create and fill new ZkLend token setting.
-    """
-    # Decimal Values
-    collateral_factor = format_reserve_data_number(get_value_by_name(reserve_data, 'collateral_factor'))
-    debt_factor = decimal.Decimal("1")
-    liquidation_bonus = format_reserve_data_number(get_value_by_name(reserve_data, 'liquidation_bonus'))
-    
-    # STR value
-    protocol_token_address = get_value_by_name(reserve_data, 'z_token_address')
-    
-    return ZkLendSpecificTokenSettings(
-        collateral_factor,
-        debt_factor,
-        liquidation_bonus,
-        protocol_token_address
-    )
-
+# Function to call the mock of func_call
 async def get_token_reserve_data(token_setting_address: str):
     reserve_data = await src.blockchain_call.func_call(
         addr=ProtocolAddresses().ZKLEND_MARKET_ADDRESSES,
@@ -139,21 +89,23 @@ async def get_token_reserve_data(token_setting_address: str):
     )
     return reserve_data
 
+
 async def fetch_zklend_specific_token_settings():
     """
     Fetch ZkLend specific token settings.
     """
     # New dict to store ZkLendSpecificTokenSettings
-    new_zklend_specific_token_settings: dict[str, ZkLendSpecificTokenSettings] = {}
+    zklend_specific_token_settings: dict[str, ZkLendSpecificTokenSettings] = {}
     
     # TOKEN_SETTINGS from /derisk-research/data_handler/handlers/settings.py
     # For each tokenSetting in TOKEN_SETTINGS, get the data from zklend
     for symbol, token_setting in TOKEN_SETTINGS.items():
         reserve_data = await get_token_reserve_data(token_setting.address)
         zklend_specific_token_setting = get_token_settings(reserve_data)
-        new_zklend_specific_token_settings[symbol] = zklend_specific_token_setting
+        zklend_specific_token_settings[symbol] = zklend_specific_token_setting
     
-    return new_zklend_specific_token_settings
+    return zklend_specific_token_settings
+
 
 # Test the functionality
 async def main():
