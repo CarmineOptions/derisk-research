@@ -74,3 +74,9 @@ For downgrading migration:
 ```bash
 alembic downgrade -1
 ```
+
+Useful commands:
+Purge all celery tasks:
+```bash
+docker-compose run --rm celery celery -A celery_app.celery_conf purge
+```
