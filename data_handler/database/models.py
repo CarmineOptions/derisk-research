@@ -19,18 +19,32 @@ class Base(DeclarativeBase):
     metadata = MetaData()
 
 
-class LoanState(Base):
+class BaseState(Base):
+    """
+    Base class for state models.
+    """
+    __abstract__ = True
+
+    block = Column(BigInteger, index=True)
+    timestamp = Column(BigInteger, index=True)
+    protocol_id = Column(ChoiceType(ProtocolIDs, impl=String()), nullable=False)
+    collateral = Column(JSON)
+    debt = Column(JSON)
+
+
+class LoanState(BaseState):
     """
     SQLAlchemy model for the loan_states table.
     """
 
     __tablename__ = "loan_state"
-
-    block = Column(BigInteger, index=True)
-    timestamp = Column(BigInteger, index=True)
-    protocol_id = Column(ChoiceType(ProtocolIDs, impl=String()), nullable=False)
     user = Column(String, index=True)
-    collateral = Column(JSON)
-    debt = Column(JSON)
     deposit = Column(JSON, nullable=True)
 
+
+class InterestRate(BaseState):
+    """
+    SQLAlchemy model for the interest_rates table.
+    """
+
+    __tablename__ = "interest_rate"
