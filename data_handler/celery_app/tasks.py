@@ -2,8 +2,8 @@ from celery import shared_task
 import logging
 from time import monotonic
 
-from database.crud import DBConnector
-from database.models import OrderBookModel
+from db.crud import DBConnector
+from db.models import OrderBookModel
 from handlers.order_books.constants import TOKEN_MAPPING
 from .celery_conf import app
 # from handlers.loan_states.hashtack_v0.run import HashtackV0StateComputation

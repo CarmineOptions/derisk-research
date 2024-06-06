@@ -1,5 +1,5 @@
 import simplejson as json
-from database.models import LiquidableDebt
+from db.models import LiquidableDebt
 
 from handlers.loan_states.zklend.events import ZkLendState
 from handlers.liquidable_debt.debt_handlers import GCloudLiquidableDebtDataHandler

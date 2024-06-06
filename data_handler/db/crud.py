@@ -5,8 +5,8 @@ from sqlalchemy import create_engine, func, select, and_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import scoped_session, sessionmaker, Session, aliased
 
-from data_handler.database.database import SQLALCHEMY_DATABASE_URL
-from data_handler.database.models import Base, LoanState
+from db.database import SQLALCHEMY_DATABASE_URL
+from db.models import Base, LoanState
 from tools.constants import ProtocolIDs
 
 
