@@ -70,7 +70,6 @@ class UniswapV2OrderBook(OrderBookBase):
         prices_range = self.get_prices_range(current_price)
         self.add_quantities_data(prices_range, current_price)
         self._set_current_price()
-        self.timestamp = int(datetime.datetime.now().timestamp())
         self.block = 0
 
     def add_quantities_data(self, prices_range: Iterable[Decimal], current_price: Decimal) -> None:
@@ -107,4 +106,3 @@ if __name__ == '__main__':
     order_book = UniswapV2OrderBook(token_0, token_1)
     order_book.fetch_price_and_liquidity()
     print(order_book.get_order_book(), "\n")
-    token_amount = order_book.calculate_token_amount_price_change(Decimal("0.05"))
