@@ -1,3 +1,4 @@
+from decimal import Decimal
 from uuid import uuid4
 
 from sqlalchemy import UUID, BigInteger, Column, MetaData, String, DECIMAL
@@ -81,3 +82,13 @@ class OrderBookModel(Base):
     dex = Column(String, nullable=False, index=True)
     asks = Column(JSON, nullable=True)
     bids = Column(JSON, nullable=True)
+
+    @property
+    def current_price(self) -> Decimal:
+        """
+        Calculate the current price based on the order book data.
+        """
+        # TODO: add current price field
+        if not self.asks or not self.bids:
+            return Decimal("0")
+        return (Decimal(self.asks[0][0]) + Decimal(self.bids[-1][0])) / Decimal("2")
