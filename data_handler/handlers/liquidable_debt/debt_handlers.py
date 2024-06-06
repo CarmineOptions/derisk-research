@@ -11,7 +11,8 @@ from handlers.liquidable_debt.values import (GS_BUCKET_URL, GS_BUCKET_NAME, Lend
                                              LOCAL_STORAGE_PATH, COLLATERAL_FIELD_NAME, PROTOCOL_FIELD_NAME,
                                              DEBT_FIELD_NAME, USER_FIELD_NAME, RISK_ADJUSTED_COLLATERAL_USD_FIELD_NAME,
                                              HEALTH_FACTOR_FIELD_NAME, DEBT_USD_FIELD_NAME, FIELDS_TO_VALIDATE,
-                                             ALL_NEEDED_FIELDS, LIQUIDABLE_DEBT_FIELD_NAME, PRICE_FIELD_NAME)
+                                             ALL_NEEDED_FIELDS, LIQUIDABLE_DEBT_FIELD_NAME, PRICE_FIELD_NAME,
+                                             MYSWAP_VALUE, JEDISWAP_VALUE, POOL_SPLIT_VALUE)
 from handlers.loan_states.zklend.events import ZkLendState
 from handlers.helpers import TokenValues
 from handlers.liquidable_debt.utils import Prices
@@ -48,7 +49,7 @@ class GCloudLiquidableDebtDataHandler:
             path=path,
             url=self.connection_url
         )
-        parsed_data = self._parse_file(uploaded_file_path)
+        parsed_data = self._parse_file(uploaded_file_path)  # till this line all is done
 
         return self._calculate_liquidable_debt(parsed_data)
 
@@ -142,7 +143,7 @@ class GCloudLiquidableDebtDataHandler:
         """
         result = dict()
 
-        for row_number in data[USER_FIELD_NAME]:
+        for row_number in data[DEBT_FIELD_NAME]:
             arranged_row = {
                 USER_FIELD_NAME: data[USER_FIELD_NAME][row_number],
                 PROTOCOL_FIELD_NAME: data[PROTOCOL_FIELD_NAME][row_number],
@@ -175,8 +176,8 @@ class GCloudLiquidableDebtDataHandler:
 
         return True
 
-    @staticmethod
-    def _transform_str_into_dict(tokens: str) -> dict:
+    @classmethod
+    def _transform_str_into_dict(cls, tokens: str) -> dict:
         """
         Transforms a string into a dictionary.
         :param tokens: The string to transform.
@@ -184,18 +185,43 @@ class GCloudLiquidableDebtDataHandler:
         """
         result = dict()
         separeted_tokens = tokens.split(', ')
-        for token_ in separeted_tokens:
-            if "/" in token_:
-                t = token_.split("/")[1]
-                current_token, value = t.split(" Pool: ")
-                token_index = separeted_tokens.index(token_)
-                separeted_tokens[token_index] = f"{current_token}: {value}"
 
-        for token_ in separeted_tokens:
-            token, value = token_.split(': ')
+        for token in separeted_tokens:
+            if not token:
+                continue
+
+            if MYSWAP_VALUE in token:
+                current_token, value = cls.split_collateral(
+                    token, f"{MYSWAP_VALUE}: "
+                ).split(POOL_SPLIT_VALUE)
+                result.update({current_token: Decimal(value)})
+
+                continue
+
+            if JEDISWAP_VALUE in token:
+                current_token, value = cls.split_collateral(
+                    token, f"{JEDISWAP_VALUE}: "
+                ).split(POOL_SPLIT_VALUE)
+                result.update({current_token: Decimal(value)})
+
+                continue
+
+            token, value = token.split(': ')
             result.update({token: Decimal(value)})
 
         return result
+
+    @staticmethod
+    def split_collateral(collateral_string: str, platform_name: str) -> list:
+        """
+        Removes a platform name from the collateral string.
+        :param collateral_string: The collateral string to split.
+        :param platform_name: The platform name.
+        :return: A collateral string without the platform name.
+        """
+        result = collateral_string.split(platform_name)
+        result.remove("")
+        return next(iter(result))
 
     @classmethod
     def _write_to_db(cls, data: dict = None) -> None:
