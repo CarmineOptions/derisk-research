@@ -207,6 +207,10 @@ class DBConnector:
     def get_latest_order_book(self, dex: str, token_a: str, token_b: str) -> OrderBookModel | None:
         """
         Retrieves the latest order book for a given pair of tokens and DEX.
+        :param dex: str - The DEX name.
+        :param token_a: str - The base token address.
+        :param token_b: str - The quote token address.
+        :return: OrderBookModel instance or None.
         """
         db = self.Session()
         try:

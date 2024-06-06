@@ -5,12 +5,22 @@ from db.crud import DBConnector
 
 class OrderBookProcessor:
     def __init__(self, dex, token_a, token_b):
+        """
+        Initialize the order book processor.
+        :param dex: The DEX name to work with.
+        :param token_a: The base token address.
+        :param token_b: The quote token address.
+        """
         self.dex = dex
         self.token_a = token_a
         self.token_b = token_b
 
     def calculate_price_change(self, price_change_ratio: Decimal) -> Decimal:
-        """Calculate quantity of `token_a` that can be bought to change the price by the given ratio."""
+        """
+        Calculate quantity of `token_a` that can be bought to change the price by the given ratio.
+        :param price_change_ratio: Decimal - The price change ratio.
+        :return: Decimal - Quantity that can be traded without moving price outside acceptable bound.
+        """
         connector = DBConnector()
         order_book = connector.get_latest_order_book(self.dex, self.token_a, self.token_b)
         if not order_book:
@@ -22,7 +32,6 @@ class OrderBookProcessor:
             raise ValueError("Current price of the pair is zero.")
         min_price = (Decimal("1") - price_change_ratio) * current_price
         lower_quantity = Decimal("0")
-        s = sum([Decimal(bid[1]) for bid in order_book.bids])
         for price, quantity in order_book.bids[::-1]:
             if price >= min_price:
                 lower_quantity += Decimal(quantity)
