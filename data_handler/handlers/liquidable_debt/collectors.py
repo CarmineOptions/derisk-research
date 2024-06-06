@@ -3,7 +3,7 @@ from typing import Iterable
 import dask.dataframe as dd
 from sqlalchemy.exc import SQLAlchemyError
 
-from database.crud import DBConnector
+from db.crud import DBConnector
 
 from handlers.liquidable_debt.values import LendingProtocolNames, GS_BUCKET_NAME, GS_BUCKET_URL, LOCAL_STORAGE_PATH
 from handlers.liquidable_debt.exceptions import ProtocolExistenceError

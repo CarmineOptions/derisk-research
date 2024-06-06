@@ -1,6 +1,9 @@
-from celery import shared_task
 import logging
 from time import monotonic
+
+from db.crud import DBConnector
+from db.models import OrderBookModel
+from handlers.order_books.constants import TOKEN_MAPPING
 from .celery_conf import app
 # from handlers.loan_states.hashtack_v0.run import HashtackV0StateComputation
 # from handlers.loan_states.hashtack_v1.run import HashtackV1StateComputation
@@ -8,6 +11,9 @@ from .celery_conf import app
 from handlers.loan_states.nostra_alpha.run import NostraAlphaStateComputation
 # from handlers.loan_states.nostra_mainnet.run import NostraMainnetStateComputation
 from handlers.liquidable_debt.protocols import zklend
+from handlers.order_books.uniswap_v2.main import UniswapV2OrderBook
+
+connector = DBConnector()
 
 
 #@app.task(name="run_loan_states_computation_for_hashtack_v0")
@@ -84,6 +90,25 @@ def run_loan_states_computation_for_nostra_alpha():
 #         monotonic() - start,
 #     )
 #
+
+
+@app.task(name="uniswap_v2_order_book")
+def uniswap_v2_order_book():
+    """
+    Fetch the current price and liquidity of the pair from the Uniswap V2 AMMs.
+    """
+    all_tokens = set(TOKEN_MAPPING.keys())
+    for base_token in TOKEN_MAPPING:
+        current_tokens = all_tokens - {base_token}
+        for quote_token in current_tokens:
+            try:
+                order_book = UniswapV2OrderBook(base_token, quote_token)
+                order_book.fetch_price_and_liquidity()
+                serialized_data = order_book.serialize()
+                connector.write_to_db(OrderBookModel(**serialized_data.model_dump()))
+            except Exception as e:
+                logging.info(f"With token pair: {base_token} and {quote_token} something happened: {e}")
+
 
 @app.task(name="run_liquidable_debt_computation_for_zklend")
 def run_liquidable_debt_computation_for_zklend():

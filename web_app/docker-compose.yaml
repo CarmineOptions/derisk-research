@@ -75,6 +75,7 @@ services:
       dockerfile: ./Dockerfile
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - ./nginx:/etc/nginx/user_conf.d:ro
       - .:/app

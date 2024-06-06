@@ -5,8 +5,8 @@ from typing import Dict, Optional
 import pandas as pd
 from tools.constants import ProtocolIDs
 
-from database.crud import DBConnector
-from database.models import LoanState
+from db.crud import DBConnector
+from db.models import LoanState, InterestRate
 from tools.constants import FIRST_RUNNING_MAPPING
 from tools.api_connector import DeRiskAPIConnector
 
@@ -33,6 +33,7 @@ class LoanStateComputationBase(ABC):
         self.api_connector = DeRiskAPIConnector()
         self.db_connector = DBConnector()
         self.last_block = self.db_connector.get_last_block(self.PROTOCOL_TYPE)
+        self.interest_rate_result: list = []
 
     def get_data(self, form_address: str, min_block: int) -> dict:
         """
@@ -86,7 +87,7 @@ class LoanStateComputationBase(ABC):
                 deposit=item.get('deposit')
             )
             objects_to_write.append(loan)
-        self.db_connector.write_batch_to_db(objects_to_write)
+        self.db_connector.write_loan_states_to_db(objects_to_write)
 
     def process_event(
         self, instance_state: object, method_name: str, event: pd.Series
@@ -115,6 +116,26 @@ class LoanStateComputationBase(ABC):
                     )
         except Exception as e:
             logger.exception(f"Failed to process event due to an error: {e}")
+
+    def save_interest_rate_data(self) -> None:
+        """
+        Saves the interest rate data to the database.
+        """
+        if not self.interest_rate_result:
+            logger.info("No interest rate data to save.")
+            return
+
+        objects_to_write = []
+        for item in self.interest_rate_result:
+            loan = InterestRate(
+                protocol_id=self.PROTOCOL_TYPE,
+                collateral=item["collateral"],
+                debt=item["debt"],
+                block=item["block"],
+                timestamp=item["timestamp"],
+            )
+            objects_to_write.append(loan)
+        self.db_connector.write_batch_to_db(objects_to_write)
 
     def get_result_df(self, loan_entities: dict) -> pd.DataFrame:
         """
@@ -156,7 +177,8 @@ class LoanStateComputationBase(ABC):
         for protocol_address in self.PROTOCOL_ADDRESSES:
             retry = 0
             logger.info(f'Default last block: {default_last_block}')
-            self.last_block = FIRST_RUNNING_MAPPING.get(protocol_address, 10800)# default_last_block
+            # FIXME after first run
+            self.last_block = FIRST_RUNNING_MAPPING.get(protocol_address, 10800) # default_last_block
 
             while retry < max_retries:
                 data = self.get_data(protocol_address, self.last_block)
@@ -169,10 +191,10 @@ class LoanStateComputationBase(ABC):
 
                 processed_data = self.process_data(data)
                 self.save_data(processed_data)
+                self.save_interest_rate_data()
                 self.last_block += self.PAGINATION_SIZE
                 logger.info(f"Processed data up to block {self.last_block}")
                 retry = 0  # Reset retry counter if data is found and processed
 
             if retry == max_retries:
                 logger.info(f"Reached max retries for address {protocol_address}")
-

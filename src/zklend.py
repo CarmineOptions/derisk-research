@@ -15,6 +15,7 @@ import src.state
 ADDRESS: str = "0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05"
 
 
+
 @dataclasses.dataclass
 class ZkLendSpecificTokenSettings:
     # Source: https://zklend.gitbook.io/documentation/using-zklend/technical/asset-parameters.

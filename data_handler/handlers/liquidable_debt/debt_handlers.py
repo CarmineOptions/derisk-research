@@ -2,8 +2,8 @@ import pandas as pd
 from decimal import Decimal
 
 from handlers.state import State
-from database.crud import DBConnector
-from database.models import LiquidableDebt
+from db.crud import DBConnector
+from db.models import LiquidableDebt
 
 from handlers.liquidable_debt.bases import Collector
 from handlers.liquidable_debt.collectors import GoogleCloudDataCollector
