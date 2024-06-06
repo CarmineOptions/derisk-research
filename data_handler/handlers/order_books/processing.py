@@ -41,7 +41,11 @@ class OrderBookProcessor:
 
 
 if __name__ == '__main__':
-    processor = OrderBookProcessor("Starknet", "ETH", "USDC")
+    processor = OrderBookProcessor(
+        "Starknet",
+        "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+        "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"
+    )
     uniswapv2 = processor.calculate_price_change(Decimal("0.05"))
     processor = OrderBookProcessor(
         "Ekubo",

@@ -16,8 +16,17 @@ class UniswapV2OrderBook(OrderBookBase):
         super().__init__(token_a, token_b)
         self.token_a = token_a
         self.token_b = token_b
+        self.token_a_name = None
+        self.token_b_name = None
         self._pool = None
         self._swap_amm = SwapAmm()
+        self._set_token_names()
+
+    def _set_token_names(self) -> None:
+        """Get token names from token addresses."""
+        token_a_info, token_b_info = self.get_tokens_configs()
+        self.token_a_name = token_a_info.name
+        self.token_b_name = token_b_info.name
 
     def _set_current_price(self) -> None:
         """Set the current price of the pair based on asks and bids."""
@@ -29,7 +38,7 @@ class UniswapV2OrderBook(OrderBookBase):
 
     def _set_pool(self) -> None:
         """Retrieve and set pool from available pools."""
-        tokens_id = self._swap_amm.tokens_to_id(self.token_a, self.token_b)
+        tokens_id = self._swap_amm.tokens_to_id(self.token_a_name, self.token_b_name)
         if tokens_id not in self._swap_amm.pools:
             raise ValueError(f"Pool {tokens_id} not found.")
         self._pool = self._swap_amm.pools[tokens_id]
