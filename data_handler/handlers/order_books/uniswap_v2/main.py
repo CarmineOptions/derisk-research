@@ -1,3 +1,4 @@
+import datetime
 from decimal import Decimal
 import asyncio
 from typing import Iterable
@@ -68,6 +69,8 @@ class UniswapV2OrderBook(OrderBookBase):
         prices_range = self.get_prices_range(current_price)
         self.add_quantities_data(prices_range, current_price)
         self._set_current_price()
+        self.timestamp = int(datetime.datetime.now().timestamp())
+        self.block = 0
 
     def add_quantities_data(self, prices_range: Iterable[Decimal], current_price: Decimal) -> None:
         """
@@ -93,28 +96,6 @@ class UniswapV2OrderBook(OrderBookBase):
         sqrt_ratio = self.get_sqrt_ratio(tick)
         price = ((sqrt_ratio / (Decimal(2) ** 128)) ** 2) * 10 ** (self.token_a_decimal - self.token_b_decimal)
         return price
-
-    def calculate_token_amount_price_change(
-            self, price_change_ratio: Decimal
-    ) -> Decimal:
-        """
-        Calculate amounts of the token_a required to change the price by the given ratio.
-        Run this method after fetching the order book for current price to be set.
-        :param price_change_ratio: Decimal - The price change ratio.
-        :return: Decimal - Quantity that can be traded without moving price outside acceptable bound.
-        """
-        if price_change_ratio > 1 or price_change_ratio < 0:
-            raise ValueError("Provide valid price change ratio.")
-        if self.current_price == 0:
-            raise ValueError("Current price of the pair is zero.")
-        min_price = (Decimal("1") - price_change_ratio) * self.current_price
-        lower_quantity = Decimal("0")
-        for price, quantity in self.bids:
-            if price >= min_price:
-                lower_quantity += quantity
-            elif price > self.current_price:
-                break
-        return lower_quantity
 
 
 if __name__ == '__main__':
