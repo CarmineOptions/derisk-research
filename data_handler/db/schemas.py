@@ -31,8 +31,18 @@ class OrderBookModel(BaseModel):
     block: int
     timestamp: int
     dex: str
+    current_price: float
     asks: List[tuple[float, float]]
     bids: List[tuple[float, float]]
+
+    @field_validator("current_price")
+    def convert_current_price_to_float(cls, value: decimal.Decimal) -> float:
+        """
+        Convert decimal value to float
+        :param value: decimal value
+        :return: float value
+        """
+        return float(value)
 
     @field_validator("asks", "bids")
     def convert_decimals_to_floats(
