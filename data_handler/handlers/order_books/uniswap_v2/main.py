@@ -12,6 +12,7 @@ class UniswapV2OrderBook(OrderBookBase):
     DEX = "Starknet"
 
     def __init__(self, token_a: str, token_b: str):
+        # TODO: Change token names to token addresses
         super().__init__(token_a, token_b)
         self.token_a = token_a
         self.token_b = token_b
