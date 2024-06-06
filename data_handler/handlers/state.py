@@ -188,7 +188,7 @@ class State(abc.ABC):
                 method(event)
 
     @abc.abstractmethod
-    def compute_liquidable_debt_at_price(self):
+    def compute_liquidable_debt_at_price(self, *args, **kwargs):
         pass
 
     # TODO: This method will likely differ across protocols. -> Leave undefined?
