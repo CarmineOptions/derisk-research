@@ -91,6 +91,7 @@ class OrderBookBase(ABC):
             "timestamp": int(dt_now.replace(tzinfo=timezone.utc).timestamp()),
             "block": self.block,
             "dex": self.DEX,
+            "current_price": self.current_price,
             "asks": sorted(self.asks, key=lambda x: x[0]),
             "bids": sorted(self.bids, key=lambda x: x[0]),
         }
