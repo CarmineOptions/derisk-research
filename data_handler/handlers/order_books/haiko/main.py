@@ -40,10 +40,7 @@ class HaikoOrderBook(OrderBookBase):
 
     def _set_usd_prices(self) -> None:
         """Set USD prices for tokens based on Haiko API."""
-        token_a_info = TOKEN_MAPPING.get(self.token_a)
-        token_b_info = TOKEN_MAPPING.get(self.token_b)
-        if not token_a_info or not token_b_info:
-            raise ValueError("Information about tokens isn't available.")
+        token_a_info, token_b_info = self.get_tokens_configs()
         token_a_name = token_a_info.name
         token_b_name = token_b_info.name
         prices = self.haiko_connector.get_usd_prices(token_a_name, token_b_name)

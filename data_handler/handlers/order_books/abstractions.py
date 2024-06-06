@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from decimal import Decimal
 from abc import ABC, abstractmethod
-from .constants import TOKEN_MAPPING
+from .constants import TOKEN_MAPPING, TokenConfig
 from db.schemas import OrderBookModel
 
 
@@ -21,6 +21,17 @@ class OrderBookBase(ABC):
         self.token_a_decimal = self.get_token_decimals(token_a)
         self.token_b_decimal = self.get_token_decimals(token_b)
         self.total_liquidity = Decimal("0")
+
+    def get_tokens_configs(self) -> tuple[TokenConfig, TokenConfig]:
+        """
+        Method to get the token configurations
+        :return: tuple[TokenConfig] - The token configurations
+        """
+        token_a_info = TOKEN_MAPPING.get(self.token_a)
+        token_b_info = TOKEN_MAPPING.get(self.token_b)
+        if not token_a_info or not token_b_info:
+            raise ValueError("Information about tokens isn't available.")
+        return token_a_info, token_b_info
 
     def get_token_decimals(self, token: str) -> Decimal:
         """
