@@ -36,6 +36,8 @@ services:
   celery:
     build: .
     command: celery -A celery_app.celery_conf worker --loglevel=INFO
+    environment:
+      - PYTHONPATH=/app
     volumes:
       - .:/app
     depends_on:
@@ -47,6 +49,8 @@ services:
   celery_beat:
     build: .
     command: celery -A celery_app.celery_conf beat --loglevel=INFO
+    environment:
+      - PYTHONPATH=/app
     volumes:
       - .:/app
     depends_on:
