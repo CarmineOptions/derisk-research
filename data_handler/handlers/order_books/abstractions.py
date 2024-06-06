@@ -25,7 +25,7 @@ class OrderBookBase(ABC):
     def get_tokens_configs(self) -> tuple[TokenConfig, TokenConfig]:
         """
         Method to get the token configurations
-        :return: tuple[TokenConfig] - The token configurations
+        :return: tuple[TokenConfig, TokenConfig] - The token configurations
         """
         token_a_info = TOKEN_MAPPING.get(self.token_a)
         token_b_info = TOKEN_MAPPING.get(self.token_b)
