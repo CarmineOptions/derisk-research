@@ -25,6 +25,7 @@ sqlalchemy-utils = "^0.41.2"
 gcsfs = "^2024.5.0"
 dask = {extras = ["dataframe"], version = "^2024.5.2"}
 starknet-py = "^0.22.0"
+simplejson = "^3.19.2"
 
 
 [tool.poetry.group.dev.dependencies]

@@ -1,9 +1,11 @@
 import decimal
+import asyncio
 from dataclasses import dataclass
 
 from handlers.settings import TOKEN_SETTINGS, TokenSettings
 from tools.constants import ProtocolAddresses
 from src import blockchain_call
+
 
 @dataclass
 class ZkLendSpecificTokenSettings:
@@ -92,5 +94,6 @@ async def fetch_zklend_specific_token_settings():
     
     return zklend_specific_token_settings
 
-
-ZKLEND_SPECIFIC_TOKEN_SETTINGS = fetch_zklend_specific_token_settings()
+# FIXME TypeError: 'set' object cannot be interpreted as an integer
+# FIXME startkent_py error
+# ZKLEND_SPECIFIC_TOKEN_SETTINGS = asyncio.run(fetch_zklend_specific_token_settings())

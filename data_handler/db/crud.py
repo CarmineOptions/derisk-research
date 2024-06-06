@@ -3,10 +3,10 @@ from typing import List, Optional, Type, TypeVar
 
 from sqlalchemy import create_engine, func, select, and_
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import scoped_session, sessionmaker, Session
+from sqlalchemy.orm import scoped_session, sessionmaker, Session, aliased
 
-from database.database import SQLALCHEMY_DATABASE_URL
-from database.models import Base, LoanState, OrderBookModel
+from db.database import SQLALCHEMY_DATABASE_URL
+from db.models import Base, LoanState, OrderBookModel
 from tools.constants import ProtocolIDs
 
 
@@ -144,7 +144,23 @@ class DBConnector:
         finally:
             db.close()
 
-    def write_batch_to_db(self, objects: List[LoanState]) -> None:
+    def write_batch_to_db(self, objects: List[Base]) -> None:
+        """
+        Writes a batch of objects to the database efficiently.
+        :param objects: List[Base] - A list of Base instances to write.
+        :raise SQLAlchemyError: If the database operation fails.
+        """
+        db: Session = self.Session()
+        try:
+            db.bulk_save_objects(objects)
+            db.commit()
+        except SQLAlchemyError as e:
+            db.rollback()
+            raise e
+        finally:
+            db.close()
+
+    def write_loan_states_to_db(self, objects: List[LoanState]) -> None:
         """
         Writes a batch of objects to the database efficiently.
         :param objects: List[LoanState] - A list of LoanState instances to write.
@@ -210,5 +226,40 @@ class DBConnector:
                     order_book_condition
                 )
             ).scalar()
+        finally:
+            db.close()
+
+    def get_unique_users_last_block_objects(
+        self, protocol_id: ProtocolIDs
+    ) -> LoanState:
+        """
+        Retrieves the latest loan states for unique users.
+        """
+        db = self.Session()
+        try:
+            # Create a subquery to get the max block for each user
+            subquery = (
+                db.query(LoanState.user, func.max(LoanState.block).label("max_block"))
+                .filter(LoanState.protocol_id == protocol_id)
+                .group_by(LoanState.user)
+                .subquery()
+            )
+
+            # Alias the subquery for clarity
+            alias_subquery = aliased(subquery)
+
+            # Join the main LoanState table with the subquery
+            return (
+                db.query(LoanState)
+                .join(
+                    alias_subquery,
+                    and_(
+                        LoanState.user == alias_subquery.c.user,
+                        LoanState.block == alias_subquery.c.max_block,
+                    ),
+                )
+                .filter(LoanState.protocol_id == protocol_id)
+                .all()
+            )
         finally:
             db.close()

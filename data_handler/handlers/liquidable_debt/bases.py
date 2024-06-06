@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from database.models import Base
+from db.models import Base
 
 
 class Collector(ABC):
