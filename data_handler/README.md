@@ -80,3 +80,11 @@ Purge all celery tasks:
 ```bash
 docker-compose run --rm celery celery -A celery_app.celery_conf purge
 ```
+Purge all celery beat tasks:
+```bash
+docker-compose run --rm celery_beat celery -A celery_app.celery_conf purge
+```
+Go to bash
+```bash
+docker-compose exec backend bash
+```
