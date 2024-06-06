@@ -1,4 +1,3 @@
-from celery import shared_task
 import logging
 from time import monotonic
 
