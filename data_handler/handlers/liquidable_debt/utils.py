@@ -9,7 +9,7 @@ from starknet_py.net.client_models import Call
 from handlers.helpers import TokenValues, get_symbol, add_leading_zeros
 from handlers.settings import (TOKEN_SETTINGS, TokenSettings,
                                HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS, JEDISWAP_POOL_SETTINGS,
-                               MySwapPoolSettings, MYSWAP_POOL_SETTINGS)
+                               MySwapPoolSettings, MYSWAP_POOL_SETTINGS, JediSwapPoolSettings)
 
 NET = FullNodeClient(node_url="https://starknet-mainnet.public.blastapi.io")
 

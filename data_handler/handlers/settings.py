@@ -210,7 +210,7 @@ JEDISWAP_POOL_SETTINGS: dict[str, JediSwapPoolSettings] = {
 }
 
 
-@dataclass
+@dataclasses.dataclass
 class MySwapPoolSettings:
     symbol: str
     address: str
