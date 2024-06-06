@@ -1,12 +1,12 @@
 import uuid
 from typing import List, Optional, Type, TypeVar
 
-from sqlalchemy import create_engine, func, select
+from sqlalchemy import create_engine, func, select, and_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import scoped_session, sessionmaker, Session
 
 from database.database import SQLALCHEMY_DATABASE_URL
-from database.models import Base, LoanState
+from database.models import Base, LoanState, OrderBookModel
 from tools.constants import ProtocolIDs
 
 
@@ -185,5 +185,30 @@ class DBConnector:
         except SQLAlchemyError as e:
             db.rollback()
             raise e
+        finally:
+            db.close()
+
+    def get_latest_order_book(self, dex: str, token_a: str, token_b: str) -> OrderBookModel | None:
+        """
+        Retrieves the latest order book for a given pair of tokens and DEX.
+        """
+        db = self.Session()
+        try:
+            order_book_condition = and_(
+                OrderBookModel.dex == dex,
+                OrderBookModel.token_a == token_a,
+                OrderBookModel.token_b == token_b,
+            )
+            max_timestamp = (
+                select(func.max(OrderBookModel.timestamp))
+                .where(order_book_condition).
+                scalar_subquery()
+            )
+            return db.execute(
+                select(OrderBookModel).where(
+                    OrderBookModel.timestamp == max_timestamp,
+                    order_book_condition
+                )
+            ).scalar()
         finally:
             db.close()
