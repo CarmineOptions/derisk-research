@@ -49,7 +49,7 @@ class GoogleCloudDataCollector(Collector):
             protocol_name: str,
             bucket_name: str,
             url: str,
-            path: str = "loans/{protocol}_data/{title}.parquet",
+            path: str,
     ) -> None:
         """
         Downloads parquet file to local storage from Google Cloud Storage
@@ -66,6 +66,11 @@ class GoogleCloudDataCollector(Collector):
 
     @classmethod
     def _remove_file(cls, file_path: str) -> None:
+        """
+        Removes file from local storage
+        :param file_path: Local storage path to remove
+        :return: None
+        """
         cls.LS_MANAGER.delete_file(file_path)
 
     @classmethod
