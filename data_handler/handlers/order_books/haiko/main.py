@@ -104,7 +104,7 @@ class HaikoOrderBook(OrderBookBase):
             self._calculate_order_book(market_depth_list, Decimal(market["currPrice"]))
 
         self.sort_asks_bids()
-        self.current_price = max(tokens_markets, key=lambda x: Decimal(x["tvl"]))["currPrice"]
+        self.current_price = self.token_a_price / self.token_b_price if self.token_b_price else Decimal(0)
 
     def _calculate_order_book(
         self, market_ticks_liquidity: list, current_price: Decimal
