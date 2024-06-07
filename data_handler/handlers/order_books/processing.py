@@ -4,7 +4,7 @@ from db.crud import DBConnector
 
 
 class OrderBookProcessor:
-    def __init__(self, dex, token_a, token_b):
+    def __init__(self, dex: str, token_a: str, token_b: str):
         """
         Initialize the order book processor.
         :param dex: The DEX name to work with.
@@ -21,23 +21,27 @@ class OrderBookProcessor:
         :param price_change_ratio: Decimal - The price change ratio.
         :return: Decimal - Quantity that can be traded without moving price outside acceptable bound.
         """
+        # Fetch order book
         connector = DBConnector()
         order_book = connector.get_latest_order_book(self.dex, self.token_a, self.token_b)
         if not order_book:
             raise ValueError("No order book found for the given DEX and token pair.")
-        current_price = order_book.current_price
-        if price_change_ratio > 1 or price_change_ratio < 0:
+
+        # Check current price and ratio validity
+        if not (0 < price_change_ratio < 1):
             raise ValueError("Provide valid price change ratio.")
-        if current_price == 0:
+        if order_book.current_price == 0:
             raise ValueError("Current price of the pair is zero.")
-        min_price = (Decimal("1") - price_change_ratio) * current_price
-        lower_quantity = Decimal("0")
+
+        # Calculate the minimum price change
+        min_price = (Decimal("1") - price_change_ratio) * order_book.current_price
+        price_change = Decimal("0")
         for price, quantity in order_book.bids[::-1]:
             if price >= min_price:
-                lower_quantity += Decimal(quantity)
+                price_change += Decimal(quantity)
             elif price < min_price:
                 break
-        return lower_quantity
+        return price_change
 
 
 if __name__ == '__main__':
