@@ -5,6 +5,7 @@ from handlers.settings import TOKEN_SETTINGS, TokenSettings
 from tools.constants import ProtocolAddresses
 from src import blockchain_call
 
+
 @dataclass
 class ZkLendSpecificTokenSettings:
     # Source: https://zklend.gitbook.io/documentation/using-zklend/technical/asset-parameters.
@@ -21,7 +22,7 @@ class TokenSettings(ZkLendSpecificTokenSettings, TokenSettings):
     pass
 
 
-def format_reserve_data_number(value_num: str):
+def format_reserve_data_number(value_num: int):
     """
     Method to convert string number to decimal divided by the scale factor.
     Example:
@@ -37,25 +38,16 @@ def format_reserve_data_number(value_num: str):
     return formatted_number
 
 
-def get_value_by_name(data_list: list[dict[str, str]], name: str):
-    """
-    Method to return a specific value in a list based on the name.
-    """
-    return next((item['value'] for item in data_list if item['name'] == name), None)
-
-
-def get_token_settings(reserve_data: list[dict[str, str]]):
+def get_token_settings(reserve_data: list[int]):
     """
     Create and fill new ZkLend token setting.
     """
-    # Decimal Values
-    collateral_factor = format_reserve_data_number(get_value_by_name(reserve_data, 'collateral_factor'))
+    collateral_factor = format_reserve_data_number(reserve_data[4])
     debt_factor = decimal.Decimal("1")
-    liquidation_bonus = format_reserve_data_number(get_value_by_name(reserve_data, 'liquidation_bonus'))
-    
-    # STR value
-    protocol_token_address = get_value_by_name(reserve_data, 'z_token_address')
-    
+    liquidation_bonus = format_reserve_data_number(reserve_data[14])
+    hexadecimal_without_prefix = hex(reserve_data[2])[2:].upper()
+    # Add '0x0' prefix
+    protocol_token_address = '0x0' + hexadecimal_without_prefix
     return ZkLendSpecificTokenSettings(
         collateral_factor,
         debt_factor,
@@ -69,7 +61,7 @@ async def get_token_reserve_data(token_setting_address: str):
     Make a call to ZKLEND_MARKET_ADDRESSES with the tokenSettingAddress (Address).
     """
     reserve_data = await blockchain_call.func_call(
-        addr=ProtocolAddresses().ZKLEND_MARKET_ADDRESSES,
+        addr=next(iter(ProtocolAddresses().ZKLEND_MARKET_ADDRESSES)),
         selector="get_reserve_data",
         calldata=[token_setting_address],
     )
