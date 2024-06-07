@@ -40,7 +40,7 @@ class HaikoOrderBook(OrderBookBase):
 
     def _set_usd_prices(self) -> None:
         """Set USD prices for tokens based on Haiko API."""
-        token_a_info, token_b_info = self.get_tokens_configs()
+        token_a_info, token_b_info = self.get_token_configs()
         token_a_name = token_a_info.name
         token_b_name = token_b_info.name
         prices = self.haiko_connector.get_usd_prices(token_a_name, token_b_name)

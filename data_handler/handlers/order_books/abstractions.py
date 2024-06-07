@@ -22,7 +22,7 @@ class OrderBookBase(ABC):
         self.token_b_decimal = self.get_token_decimals(token_b)
         self.total_liquidity = Decimal("0")
 
-    def get_tokens_configs(self) -> tuple[TokenConfig, TokenConfig]:
+    def get_token_configs(self) -> tuple[TokenConfig, TokenConfig]:
         """
         Method to get the token configurations
         :return: tuple[TokenConfig, TokenConfig] - The token configurations
