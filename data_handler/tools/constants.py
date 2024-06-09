@@ -19,6 +19,14 @@ class ProtocolIDs(Enum):
     # zkLend protocol
     ZKLEND: str = "zkLend"
 
+    @classmethod
+    def choices(cls) -> list[str]:
+        """
+        This method returns the values of the enum.
+        :return: list of values
+        """
+        return [choice.value for choice in cls]
+
 
 @dataclass(frozen=True)
 class ProtocolAddresses:
