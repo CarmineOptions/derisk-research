@@ -7,7 +7,8 @@ from handlers.order_books.abstractions import OrderBookBase
 
 import pandas as pd
 
-from handlers.order_books.myswap.api_connector import MySwapAPIConnector
+from handlers.order_books.myswap.api_connection.api_connector import MySwapAPIConnector
+from handlers.order_books.myswap.api_connection.data_collectors import braavos_get_tokens_prices
 
 
 MYSWAP_CL_MM_ADDRESS = "0x01114c7103e12c2b2ecbd3a2472ba9c48ddcbf702b1c242dd570057e26212111"
@@ -22,9 +23,19 @@ class MySwapOrderBook(OrderBookBase):
     def __init__(self, token_a: str, token_b: str, apply_filtering: bool = False):
         # TODO: Add logging
         super().__init__(token_a, token_b)
+        self.token_a_name = None
+        self.token_b_name = None
         self.connector = MySwapAPIConnector()
         self.apply_filtering = apply_filtering
+        self._usd_price = Decimal("0")
         self._decimals_diff = Decimal(10 ** (self.token_a_decimal - self.token_b_decimal))
+        self._set_token_names()
+        self._set_usd_price()
+
+    def _set_token_names(self):
+        token_a_info, token_b_info = self.get_tokens_configs()
+        self.token_a_name = token_a_info.name
+        self.token_b_name = token_b_info.name
 
     def _read_liquidity_data(self, pool_id: str) -> pd.DataFrame:
         """
@@ -46,6 +57,14 @@ class MySwapOrderBook(OrderBookBase):
     def fetch_price_and_liquidity(self) -> None:
         # TODO: Create new event loop if not running
         asyncio.run(self._async_fetch_price_and_liquidity())
+
+    def _set_usd_price(self):
+        if not self.token_a_name:
+            raise ValueError("Base token name is not defined.")
+        token_info = braavos_get_tokens_prices([self.token_a_name.lower()])
+        if not token_info or isinstance(token_info, dict):
+            raise RuntimeError(f"Couldn't get token usd price: {token_info.get('error', 'Unknown error')}")
+        self._usd_price = Decimal(token_info[0]["price"])
 
     def _filter_pools_data(self, all_pools: dict) -> list:
         """
@@ -103,7 +122,10 @@ class MySwapOrderBook(OrderBookBase):
         # Add asks and bids to the order book
         self.add_bids(bids, (min_tick, max_tick))
         self.add_asks(asks, bids.iloc[0]["liq"], (min_tick, max_tick))
-        tvl = (sum([bid[1] for bid in self.bids]) * 3676) + (sum([ask[1] for ask in self.asks]) * 3676)
+        tvl = (
+                (sum([bid[1] for bid in self.bids]) * self._usd_price) +
+                (sum([ask[1] for ask in self.asks]) * self._usd_price)
+        )
 
     def add_asks(self, pool_asks: pd.DataFrame, pool_liquidity: Decimal, price_range: tuple[Decimal, Decimal]) -> None:
         if pool_asks.empty:
