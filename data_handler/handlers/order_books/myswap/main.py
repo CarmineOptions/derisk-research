@@ -20,12 +20,20 @@ class MySwapOrderBook(OrderBookBase):
     MAX_PRICE_RANGE = Decimal("1.3")
 
     def __init__(self, token_a: str, token_b: str, apply_filtering: bool = False):
+        # TODO: Add logging
         super().__init__(token_a, token_b)
         self.connector = MySwapAPIConnector()
         self.apply_filtering = apply_filtering
         self._decimals_diff = Decimal(10 ** (self.token_a_decimal - self.token_b_decimal))
 
     def _read_liquidity_data(self, pool_id: str) -> pd.DataFrame:
+        """
+        Read liquidity data from the MySwap data service.
+        :param pool_id: str - The pool id in hexadecimal.
+        :return: pd.DataFrame - The liquidity data.
+        The structure of the data:
+        Columns: tick(numpy.int64), liq(numpy.int64)
+        """
         url = f"https://myswap-cl-charts.s3.amazonaws.com/data/pools/{pool_id}/liqmap.json.gz"
         return pd.read_json(url, compression="gzip")
 
@@ -36,38 +44,66 @@ class MySwapOrderBook(OrderBookBase):
             await self._calculate_order_book(pool["poolkey"])
 
     def fetch_price_and_liquidity(self) -> None:
+        # TODO: Create new event loop if not running
         asyncio.run(self._async_fetch_price_and_liquidity())
 
     def _filter_pools_data(self, all_pools: dict) -> list:
+        """
+        Filter pools data based on the token pair.
+        :param all_pools: dict - All pools data.
+        :return: list - Pools for current pair.
+        """
         return list(filter(
             lambda pool: pool["token0"]["address"] == self.token_a and pool["token1"]["address"] == self.token_b,
             all_pools["pools"]
         ))
 
     def _get_ticks_range(self) -> tuple[Decimal, Decimal]:
+        """
+        Get ticks range based on the current price range.
+        return: tuple[Decimal, Decimal] - The minimum and maximum ticks.
+        """
         price_range = self.calculate_price_range()
         return self._price_to_tick(price_range[0]), self._price_to_tick(price_range[1])
 
     def _price_to_tick(self, price: Decimal) -> Decimal:
+        """
+        Convert price to MySwap tick.
+        :param price: Decimal - The price to convert.
+        :return: Decimal - The unsigned tick value.
+        Signed tick calculation formula:
+        round(log(price / (2 ** 128 * decimals_diff)) / log(1.0001))
+        """
         signed_tick = round(
-            Decimal(math.log(price / (Decimal(2 ** 128) * Decimal(10 ** 12)))) / Decimal(math.log(Decimal("1.0001")))
+            Decimal(math.log(
+                price / (Decimal(2 ** 128) * self._decimals_diff))
+            ) / Decimal(math.log(Decimal("1.0001")))
         )
         return Decimal(signed_tick) + MAX_MYSWAP_TICK
 
     async def _calculate_order_book(self, pool_id: str) -> None:
-        if pool_id != "0x4fd41eced6b9425ca6628fcd358002a895513a7d0ef383de1b1e40cd6f54a27":
-            return
+        # Obtain liquidity data and tick
         data = self._read_liquidity_data(pool_id)
+        if data.empty:
+            return
         current_tick = await func_call(MYSWAP_CL_MM_ADDRESS, "current_tick", [pool_id])
+        if not current_tick:
+            return
         current_tick = current_tick[0]
+
+        # Set prices boundaries in ticks
         self.current_price = self.tick_to_price(current_tick)
         min_tick, max_tick = self._get_ticks_range()
+
+        # Prepare data for processing
         data = data.loc[(min_tick < data["tick"]) & (data["tick"] <= max_tick)]
         asks, bids = data[data["tick"] >= current_tick], data[data["tick"] < current_tick]
+        bids = bids.sort_values("tick", ascending=True)
+
+        # Add asks and bids to the order book
         self.add_bids(bids, (min_tick, max_tick))
         self.add_asks(asks, bids.iloc[0]["liq"], (min_tick, max_tick))
         tvl = (sum([bid[1] for bid in self.bids]) * 3676) + (sum([ask[1] for ask in self.asks]) * 3676)
-        print()
 
     def add_asks(self, pool_asks: pd.DataFrame, pool_liquidity: Decimal, price_range: tuple[Decimal, Decimal]) -> None:
         if pool_asks.empty:
@@ -150,8 +186,10 @@ class MySwapOrderBook(OrderBookBase):
     def tick_to_price(self, tick: Decimal) -> Decimal:
         return Decimal("1.0001") ** (tick - MAX_MYSWAP_TICK) * Decimal(2 ** 128) * self._decimals_diff
 
-    def calculate_liquidity_amount(self, *args, **kwargs) -> Decimal:
-        pass
+    def calculate_liquidity_amount(self, tick, liquidity_pair_total) -> Decimal:
+        sqrt_ratio = self.get_sqrt_ratio(tick)
+        liquidity_delta = liquidity_pair_total / (sqrt_ratio / Decimal(2 ** 128))
+        return liquidity_delta / 10 ** self.token_a_decimal
 
 
 if __name__ == '__main__':
@@ -160,15 +198,3 @@ if __name__ == '__main__':
         "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"
     )
     order_book.fetch_price_and_liquidity()
-    # Get price from sqrt price
-    sqrt_price = 4888134925013110180250533
-    print((Decimal(sqrt_price) / Decimal(2**96)) ** Decimal(2) * Decimal(10 ** 12))
-
-    # Get price from tick
-    MAX_TICK = Decimal(1774532)
-    # Possible formula:
-    # price = Decimal("1.0001") ** Decimal(693396 - MAX_TICK) * Decimal(2 ** 128) * Decimal(10 ** 12)
-    # tick = (
-    #     math.log(price / (Decimal(2 ** 128) * Decimal(10 ** 12))) / math.log(Decimal("1.0001"))
-    # ) + MAX_MYSWAP_TICK
-    print()
