@@ -3,16 +3,17 @@ from datetime import datetime
 from pathlib import Path
 
 
-def get_logger(path: str, echo: bool = False):
+def get_logger(name: str, path: str | Path, echo: bool = False):
     """
     Configure and get logger for haiko order book
+    :param name: name of the logger
     :param path: path to log file
     :param echo: write logs in terminal if set to True
     :return: Configured logger
     """
     path_dir = Path(path)
     path_dir.mkdir(parents=True, exist_ok=True)
-    logger = logging.getLogger("Haiko_Logger")
+    logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
     log_path = path_dir / datetime.now().strftime("order_book_%Y%m%d_%H%M%S.log")
     file_handler = logging.FileHandler(log_path)

@@ -1,12 +1,14 @@
 import asyncio
 import math
 from decimal import Decimal
+from pathlib import Path
 
 from handlers.blockchain_call import func_call
 from handlers.order_books.abstractions import OrderBookBase
 
 import pandas as pd
 
+from handlers.order_books.commons import get_logger
 from handlers.order_books.myswap.api_connection.api_connector import MySwapAPIConnector
 from handlers.order_books.myswap.api_connection.data_collectors import braavos_get_tokens_prices
 
@@ -21,12 +23,12 @@ class MySwapOrderBook(OrderBookBase):
     MAX_PRICE_RANGE = Decimal("1.3")
 
     def __init__(self, token_a: str, token_b: str, apply_filtering: bool = False):
-        # TODO: Add logging
         super().__init__(token_a, token_b)
         self.token_a_name = None
         self.token_b_name = None
         self.connector = MySwapAPIConnector()
         self.apply_filtering = apply_filtering
+        self.logger = get_logger("MySwap", Path().resolve().joinpath("./logs"))
         self._usd_price = Decimal("0")
         self._decimals_diff = Decimal(10 ** (self.token_a_decimal - self.token_b_decimal))
         self._set_token_names()

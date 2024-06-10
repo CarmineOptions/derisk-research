@@ -1,9 +1,10 @@
 from decimal import Decimal
+from pathlib import Path
 
 from data_handler.handlers.order_books.abstractions import OrderBookBase
 from data_handler.handlers.order_books.constants import TOKEN_MAPPING
 from data_handler.handlers.order_books.haiko.api_connector import HaikoAPIConnector, HaikoBlastAPIConnector
-from data_handler.handlers.order_books.haiko.logger import get_logger
+from data_handler.handlers.order_books.commons import get_logger
 
 
 class HaikoOrderBook(OrderBookBase):
@@ -20,7 +21,7 @@ class HaikoOrderBook(OrderBookBase):
         self.haiko_connector = HaikoAPIConnector()
         self.blast_connector = HaikoBlastAPIConnector()
         self.apply_filtering = apply_filtering
-        self.logger = get_logger("./logs", echo=True)
+        self.logger = get_logger("Haiko", Path().resolve().joinpath("./logs"), echo=True)
 
         self.token_a_price = Decimal(0)
         self.token_b_price = Decimal(0)
@@ -240,7 +241,7 @@ if __name__ == "__main__":
     # token_1 = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"  # ETH
     # token_0 = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"  # ETH
     # token_1 = "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"  # USDC
-    token_0 = "0x042b8f0484674ca266ac5d08e4ac6a3fe65bd3129795def2dca5c34ecc5f96d2"  # wstETH
+    token_0 = "0x42b8f0484674ca266ac5d08e4ac6a3fe65bd3129795def2dca5c34ecc5f96d2"  # wstETH
     token_1 = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"  # ETH
     # token_0 = "0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d"  # STRK
     # token_1 = "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"  # USDC
