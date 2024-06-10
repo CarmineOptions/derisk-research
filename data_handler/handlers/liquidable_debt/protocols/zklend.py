@@ -1,4 +1,3 @@
-import simplejson as json
 from db.models import LiquidableDebt
 
 from handlers.loan_states.zklend.events import ZkLendState
@@ -21,17 +20,12 @@ def run():
         protocol_name=LendingProtocolNames.ZKLEND.value,
     )
 
-    for row_number, value in data.items():
-        if value.get(LIQUIDABLE_DEBT_FIELD_NAME):
-            db_row = LiquidableDebt(
-                liquidable_debt=value[LIQUIDABLE_DEBT_FIELD_NAME],
-                protocol=value[PROTOCOL_FIELD_NAME],
-                price=value[PRICE_FIELD_NAME],
-                collateral_token=value[COLLATERAL_FIELD_NAME],
-                debt_token=value[DEBT_FIELD_NAME],
-            )
-            handler.CONNECTOR.write_to_db(db_row)
-
-
-if __name__ == '__main__':
-    run()
+    for debt_token, liquidable_debt_info in data.items():
+        db_row = LiquidableDebt(
+            debt_token=debt_token,
+            liquidable_debt=liquidable_debt_info[LIQUIDABLE_DEBT_FIELD_NAME],
+            protocol=LendingProtocolNames.ZKLEND.value,
+            collateral_token_price=liquidable_debt_info[PRICE_FIELD_NAME],
+            collateral_token=liquidable_debt_info[COLLATERAL_FIELD_NAME]
+        )
+        handler.CONNECTOR.write_to_db(db_row)
