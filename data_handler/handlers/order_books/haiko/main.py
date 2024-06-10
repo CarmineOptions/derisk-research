@@ -1,9 +1,9 @@
 from decimal import Decimal
 
-from web_app.order_books.abstractions import OrderBookBase
-from web_app.order_books.constants import TOKEN_MAPPING
-from web_app.order_books.haiko.api_connector import HaikoAPIConnector, HaikoBlastAPIConnector
-from web_app.order_books.haiko.logger import get_logger
+from handlers.order_books.abstractions import OrderBookBase
+from handlers.order_books.constants import TOKEN_MAPPING
+from handlers.order_books.haiko.api_connector import HaikoAPIConnector, HaikoBlastAPIConnector
+from handlers.order_books.haiko.logger import get_logger
 
 
 class HaikoOrderBook(OrderBookBase):

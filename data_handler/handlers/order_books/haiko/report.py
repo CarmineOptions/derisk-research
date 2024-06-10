@@ -1,11 +1,10 @@
-import asyncio
 import json
 import logging
 from datetime import datetime
 from pathlib import Path
 
-from web_app.order_books.constants import TOKEN_MAPPING
-from web_app.order_books.haiko.main import HaikoOrderBook
+from handlers.order_books.constants import TOKEN_MAPPING
+from handlers.order_books.haiko.main import HaikoOrderBook
 
 
 def filter_logs(logs_path: Path) -> None:
