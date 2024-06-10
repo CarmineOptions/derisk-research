@@ -140,11 +140,11 @@ TOKEN_SETTINGS: dict[str, TokenSettings] = {
         symbol=TOKEN_SETTINGS[token].symbol,
         decimal_factor=TOKEN_SETTINGS[token].decimal_factor,
         address=TOKEN_SETTINGS[token].address,
-        collateral_factor=TOKEN_SETTINGS[token].collateral_factor,
-        debt_factor=TOKEN_SETTINGS[token].debt_factor,
-        liquidator_fee_beta=TOKEN_SETTINGS[token].liquidator_fee_beta,
-        liquidator_fee_max=TOKEN_SETTINGS[token].liquidator_fee_max,
-        protocol_fee=TOKEN_SETTINGS[token].protocol_fee,
+        # collateral_factor=TOKEN_SETTINGS[token].collateral_factor,
+        # debt_factor=TOKEN_SETTINGS[token].debt_factor,
+        # liquidator_fee_beta=TOKEN_SETTINGS[token].liquidator_fee_beta,
+        # liquidator_fee_max=TOKEN_SETTINGS[token].liquidator_fee_max,
+        # protocol_fee=TOKEN_SETTINGS[token].protocol_fee,
         protocol_token_address=NOSTRA_MAINNET_SPECIFIC_TOKEN_SETTINGS[
             token
         ].protocol_token_address,
