@@ -2,6 +2,7 @@ import pandas as pd
 import asyncio
 from decimal import Decimal
 from copy import deepcopy
+from collections import defaultdict
 
 from handlers.state import State
 from db.crud import DBConnector
@@ -45,7 +46,7 @@ class GCloudLiquidableDebtDataHandler:
         self.connection_url = connection_url
         self.bucket_name = bucket_name
         self.state_class = loan_state_class
-        self.token_pairs = dict()
+        self.token_pairs = defaultdict()
 
     def prepare_data(self, protocol_name: str, path: str = LOCAL_STORAGE_PATH) -> dict:
         uploaded_file_path = self.collector.collect_data(
@@ -88,10 +89,37 @@ class GCloudLiquidableDebtDataHandler:
 
         return max_token_prices
 
+    def _check_pair_correspondence(
+            self,
+            result_data: dict,
+            debt_token_symbol: str,
+            collateral_tokens: list[str, ...],
+    ) -> dict:
+        """
+        Checks if a debt token corresponds to a pair of collateral tokens.
+        :param result_data: A dict of data.
+        :param debt_token_symbol: The symbol of the debt token.
+        :param collateral_tokens: A list of collateral tokens.
+        :return: A dict of data.
+        """
+        for pair in TOKEN_PAIRS:
+            if debt_token_symbol == pair[1]:
+                collateral_token_index = 0
+
+                if pair[collateral_token_index] not in collateral_tokens:
+                    if result_data.get(debt_token_symbol) and debt_token_symbol not in self.token_pairs.keys():
+                        del result_data[debt_token_symbol]
+                        break
+
+                    continue
+                self.token_pairs.update({debt_token_symbol: pair[collateral_token_index]})
+
+        return result_data
+
     def _sort_by_token_pair_correspondence(
             self,
-            parsed_data: dict[int, dict[str, str | Decimal | dict[str, Decimal]]] = None,
-            max_token_prices: dict[str, dict[str, Decimal | int]] = None
+            parsed_data: dict = None,
+            max_token_prices: dict = None
     ) -> dict:
         """
         Sorts a given data by token pair correspondence.
@@ -119,27 +147,20 @@ class GCloudLiquidableDebtDataHandler:
         """
         result = deepcopy(max_token_prices)
         for debt_token, token_info in max_token_prices.items():
-            for pair in TOKEN_PAIRS:
-                if debt_token == pair[1]:
-                    collateral_token_index = 0
-                    collateral_keys = parsed_data[token_info[ROW_ID_FIELD_NAME]][
-                        COLLATERAL_FIELD_NAME
-                    ].keys()
-
-                    if pair[collateral_token_index] not in collateral_keys:
-                        if result.get(debt_token) and debt_token not in self.token_pairs.keys():
-                            del result[debt_token]
-                            break
-
-                        continue
-
-                    self.token_pairs.update({debt_token: pair[collateral_token_index]})
+            result = self._check_pair_correspondence(
+                result_data=result,
+                debt_token_symbol=debt_token,
+                collateral_tokens=list(parsed_data[token_info[ROW_ID_FIELD_NAME]][
+                                           COLLATERAL_FIELD_NAME
+                                       ].keys()
+                                       )
+            )
 
         return result
 
     def _calculate_liquidable_debt(
-            self, data: dict[int, dict[str, str | Decimal | dict[str, Decimal]]] = None,
-            max_token_prices: dict[str, dict[str, Decimal | int]] = None
+            self, data: dict = None,
+            max_token_prices: dict = None
     ) -> dict:
         """
         Calculates liquidable debt based on data provided and updates an existing data.
@@ -171,16 +192,15 @@ class GCloudLiquidableDebtDataHandler:
         asyncio.run(prices.get_lp_token_prices())
 
         for debt_token, token_info in max_token_prices.items():
+            if not self.token_pairs.get(debt_token):
+                continue
             # even if it isn't per-user data, we need to provide a user ID
             # so like that we're able to provide debt and collateral values
             user_wallet_id = data[token_info[ROW_ID_FIELD_NAME]][USER_FIELD_NAME]
-            if not self.token_pairs.get(debt_token):
-                continue
             collateral_token_symbol = self.token_pairs[debt_token]
             state = self.state_class(verbose_user=user_wallet_id)
 
-            if not isinstance(state, HashstackV0State) \
-               and not isinstance(state, HashstackV1State):
+            if not isinstance(state, (HashstackV0State, HashstackV1State)):
                 state.loan_entities[user_wallet_id].debt.values = {
                     debt_token: token_info[PRICE_FIELD_NAME]
                 }
