@@ -4,7 +4,7 @@ import pandas as pd
 from time import monotonic
 from handlers.loan_states.abstractions import LoanStateComputationBase
 from handlers.loan_states.hashtack_v0.events import HashstackV0State
-from tools.constants import ProtocolAddresses, ProtocolIDs
+from handler_tools.constants import ProtocolAddresses, ProtocolIDs
 
 logger = logging.getLogger(__name__)
 
