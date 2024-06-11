@@ -106,9 +106,11 @@ class MySwapOrderBook(OrderBookBase):
         # Obtain liquidity data and tick
         data = self._read_liquidity_data(pool_id)
         if data.empty:
+            self.logger.info("No liquidity data for the pool.")
             return
         current_tick = await func_call(MYSWAP_CL_MM_ADDRESS, "current_tick", [pool_id])
         if not current_tick:
+            self.logger.info("Couldn't get current tick.")
             return
         current_tick = current_tick[0]
 
