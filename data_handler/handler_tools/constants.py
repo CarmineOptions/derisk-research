@@ -125,22 +125,29 @@ class ProtocolAddresses:
     )
 
 
+NOSTRA_EVENTS_MAPPING = {
+    "Mint": "process_debt_mint_event",
+    "Burn": "process_debt_burn_event",
+    "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Burn": "process_debt_burn_event",
+    "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Mint": "process_debt_mint_event",
+}
+
 FIRST_RUNNING_MAPPING = {
     # zkLend
     "0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05": 48668,
     # Hashstack_v0
     "0x03dcf5c72ba60eb7b2fe151032769d49dd3df6b04fa3141dffd6e2aa162b7a6e": 21000,
     # Hashstack_v1_r
-    "0x00436d8d078de345c11493bd91512eae60cd2713e05bcaa0bb9f0cba90358c6e": 268062, # ETH
-    "0x03bcecd40212e9b91d92bbe25bb3643ad93f0d230d93237c675f46fac5187e8c": 268067, # USDC
-    "0x05fa6cc6185eab4b0264a4134e2d4e74be11205351c7c91196cb27d5d97f8d21": 268064, # USDT
-    "0x019c981ec23aa9cbac1cc1eb7f92cf09ea2816db9cbd932e251c86a2e8fb725f": 268070, # DAI
+    "0x00436d8d078de345c11493bd91512eae60cd2713e05bcaa0bb9f0cba90358c6e": 268062,  # ETH
+    "0x03bcecd40212e9b91d92bbe25bb3643ad93f0d230d93237c675f46fac5187e8c": 268067,  # USDC
+    "0x05fa6cc6185eab4b0264a4134e2d4e74be11205351c7c91196cb27d5d97f8d21": 268064,  # USDT
+    "0x019c981ec23aa9cbac1cc1eb7f92cf09ea2816db9cbd932e251c86a2e8fb725f": 268070,  # DAI
     # Hashstack_v1_d
-    "0x01ef7f9f8bf01678dc6d27e2c26fb7e8eac3812a24752e6a1d6a49d153bec9f3": 268063, # ETH
-    "0x021d8d8519f5464ec63c6b9a80a5229c5ddeed57ecded4c8a9dfc34e31b49990": 268068, # USDC
-    "0x012b8185e237dd0340340faeb3351dbe53f8a42f5a9bf974ddf90ced56e301c7": 268065, # USDT
-    "0x07eeed99c095f83716e465e2c52a3ec8f47b323041ddc4f97778ac0393b7f358": 268071, # DAI
-    "0x02614c784267d2026042ab98588f90efbffaade8982567e93530db4ed41201cf": 268060, # wBTC
+    "0x01ef7f9f8bf01678dc6d27e2c26fb7e8eac3812a24752e6a1d6a49d153bec9f3": 268063,  # ETH
+    "0x021d8d8519f5464ec63c6b9a80a5229c5ddeed57ecded4c8a9dfc34e31b49990": 268068,  # USDC
+    "0x012b8185e237dd0340340faeb3351dbe53f8a42f5a9bf974ddf90ced56e301c7": 268065,  # USDT
+    "0x07eeed99c095f83716e465e2c52a3ec8f47b323041ddc4f97778ac0393b7f358": 268071,  # DAI
+    "0x02614c784267d2026042ab98588f90efbffaade8982567e93530db4ed41201cf": 268060,  # wBTC
     # Nostra_alpha
     "0x0553cea5d1dc0e0157ffcd36a51a0ced717efdadd5ef1b4644352bb45bd35453": 10854,
     "0x047e794d7c49c49fd2104a724cfa69a92c5a4b50a5753163802617394e973833": 10892,
@@ -190,4 +197,3 @@ FIRST_RUNNING_MAPPING = {
     "0x001258eae3eae5002125bebf062d611a772e8aea3a1879b64a19f363ebd00947": 548440,
     "0x0292be6baee291a148006db984f200dbdb34b12fb2136c70bfe88649c12d934b": 168364,
 }
-
