@@ -6,8 +6,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import scoped_session, sessionmaker, Session, aliased
 
 from db.database import SQLALCHEMY_DATABASE_URL
-from db.models import Base, LoanState, OrderBookModel
-from tools.constants import ProtocolIDs
+from db.models import Base, LoanState, InterestRate, OrderBookModel
+from handler_tools.constants import ProtocolIDs
 
 
 ModelType = TypeVar("ModelType", bound=Base)
@@ -264,6 +264,25 @@ class DBConnector:
                 )
                 .filter(LoanState.protocol_id == protocol_id)
                 .all()
+            )
+        finally:
+            db.close()
+
+    def get_last_interest_rate_record_by_protocol_id(
+        self, protocol_id: ProtocolIDs
+    ) -> InterestRate:
+        """
+        Retrieves the last interest rate record by protocol ID.
+        :param protocol_id: ProtocolIDs - The protocol ID to filter by.
+        :return: InterestRate | None
+        """
+        db = self.Session()
+        try:
+            return (
+                db.query(InterestRate)
+                .filter(InterestRate.protocol_id == protocol_id)
+                .order_by(InterestRate.block.desc())
+                .first()
             )
         finally:
             db.close()

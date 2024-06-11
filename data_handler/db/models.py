@@ -6,7 +6,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped
 from sqlalchemy.types import JSON
 from sqlalchemy_utils.types.choice import ChoiceType
 
-from tools.constants import ProtocolIDs
+from handler_tools.constants import ProtocolIDs
 from handlers.liquidable_debt.values import LendingProtocolNames
 
 

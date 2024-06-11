@@ -1,9 +1,9 @@
 from decimal import Decimal
 from pathlib import Path
 
-from data_handler.handlers.order_books.abstractions import OrderBookBase
-from data_handler.handlers.order_books.constants import TOKEN_MAPPING
-from data_handler.handlers.order_books.haiko.api_connector import HaikoAPIConnector, HaikoBlastAPIConnector
+from handlers.order_books.abstractions import OrderBookBase
+from handlers.order_books.constants import TOKEN_MAPPING
+from handlers.order_books.haiko.api_connector import HaikoAPIConnector, HaikoBlastAPIConnector
 from data_handler.handlers.order_books.commons import get_logger
 
 
@@ -41,7 +41,10 @@ class HaikoOrderBook(OrderBookBase):
 
     def _set_usd_prices(self) -> None:
         """Set USD prices for tokens based on Haiko API."""
-        token_a_info, token_b_info = self.get_tokens_configs()
+        token_a_info = TOKEN_MAPPING.get(self.token_a)
+        token_b_info = TOKEN_MAPPING.get(self.token_b)
+        if not token_a_info or not token_b_info:
+            raise ValueError("Information about tokens isn't available.")
         token_a_name = token_a_info.name
         token_b_name = token_b_info.name
         prices = self.haiko_connector.get_usd_prices(token_a_name, token_b_name)
