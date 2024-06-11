@@ -134,7 +134,6 @@ class LoanStateComputationBase(ABC):
 
         return result_data
 
-
     def save_data(self, df: pd.DataFrame) -> None:
         """
         Saves the processed data to the database.
@@ -208,6 +207,27 @@ class LoanStateComputationBase(ABC):
             }
         )
         return result_df
+
+    def add_interest_rate_data(self, state_instance: State, event: pd.Series) -> None:
+        """
+        Adds interest rate data to the state instance.
+        :param state_instance: The state instance to add the data to.
+        :param event: The event data.
+        """
+        self.interest_rate_result.append(
+            {
+                "block": event["block_number"],
+                "timestamp": event["timestamp"],
+                "debt": {
+                    token: float(amount)
+                    for token, amount in state_instance.debt_interest_rate_models.values.items()
+                },
+                "collateral": {
+                    token: float(amount)
+                    for token, amount in state_instance.collateral_interest_rate_models.values.items()
+                },
+            }
+        )
 
     def run(self) -> None:
         """
