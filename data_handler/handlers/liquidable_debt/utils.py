@@ -14,14 +14,27 @@ from handlers.settings import (TOKEN_SETTINGS, TokenSettings,
 NET = FullNodeClient(node_url="https://starknet-mainnet.public.blastapi.io")
 
 
-async def balance_of(token_addr, holder_addr):
+async def balance_of(token_addr: str, holder_addr: str) -> int:
+    """
+    Calls `balance_of` on `token_addr` and `holder_addr`
+    :param token_addr: address of token
+    :param holder_addr: address of holder
+    :return: balance of `token_addr` and `holder_addr`
+    """
     res = await func_call(
         int(token_addr, base=16), "balanceOf", [int(holder_addr, base=16)]
     )
     return res[0]
 
 
-async def func_call(addr, selector, calldata):
+async def func_call(addr: int, selector: int, calldata: list[int] = None) -> list[int]:
+    """
+    Calls the contract function with the given address and selector.
+    :param addr: The address to call the contract function with.
+    :param selector: The selector to call the contract function with.
+    :param calldata: The data to call the contract function with.
+    :return: A list of the results of the contract function call.
+    """
     call = Call(
         to_addr=addr, selector=get_selector_from_name(selector), calldata=calldata
     )
@@ -46,6 +59,10 @@ class JediSwapPool:
         self.token_amounts: TokenValues | None = None
 
     async def get_data(self) -> None:
+        """
+        Collects the total supply of LP tokens and the amount of both tokens in the pool.
+        :return: None
+        """
         self.total_lp_supply = Decimal(
             (
                 await func_call(
@@ -78,6 +95,10 @@ class MySwapPool:
         self.token_amounts: TokenValues | None = None
 
     async def get_data(self) -> None:
+        """
+        Collects the total supply of LP tokens and the amounts of both tokens in the pool.
+        :return: None
+        """
         self.total_lp_supply = Decimal(
             (
                 await func_call(
@@ -120,11 +141,16 @@ class LPTokenPools:
         )
 
     async def get_data(self) -> None:
+        """
+        This method collects the total supply of LP tokens and the amounts of both tokens in the pool.
+        :return: None
+        """
         for pool in self.pools.values():
             await pool.get_data()
 
 
 class Prices:
+    URL = "https://api.coingecko.com/api/v3/simple/price?ids={token_ids}&vs_currencies={vs_currency}"
 
     def __init__(self):
         self.tokens = [
@@ -141,13 +167,17 @@ class Prices:
         self.prices: TokenValues = TokenValues()
         self.get_prices()
 
-    def get_prices(self):
+    def get_prices(self) -> None:
+        """
+        Assigns token prices to `self.prices`
+        :return: None
+        """
         token_ids = ""
         for token in self.tokens:
             token_ids += f"{token[0]},"
-        url = f"https://api.coingecko.com/api/v3/simple/price?ids={token_ids}&vs_currencies={self.vs_currency}"
+        url = self.URL.format(token_ids=token_ids, vs_currency=self.vs_currency)
         response = requests.get(url)
-        if response.status_code == 200:
+        if response.ok:
             data = response.json()
             for token in self.tokens:
                 (id, symbol) = token
@@ -156,6 +186,10 @@ class Prices:
             raise Exception(f"Failed getting prices, status code = {response.status_code}.")
 
     async def get_lp_token_prices(self) -> None:
+        """
+        Assigns LP token prices to `self.prices`
+        :return: None
+        """
         lp_token_pools = LPTokenPools()
         await lp_token_pools.get_data()
         for lp_token, lp_token_pool in lp_token_pools.pools.items():
@@ -166,6 +200,12 @@ class Prices:
             pool: JediSwapPool | MySwapPool,
             prices: TokenValues,
     ) -> Decimal:
+        """
+        Calculates token prices
+        :param pool: JediSwap or MySwap
+        :param prices: TokenValues
+        :return: Decimal
+        """
         token_1 = get_symbol(pool.settings.token_1)
         token_2 = get_symbol(pool.settings.token_2)
         token_1_value = (
