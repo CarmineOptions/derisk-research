@@ -69,20 +69,7 @@ class ZkLendLoanStateComputation(LoanStateComputationBase):
         :type event: pd.Series
         """
         zklend_state.process_accumulators_sync_event(event)
-        self.interest_rate_result.append(
-            {
-                "block": event["block_number"],
-                "timestamp": event["timestamp"],
-                "debt": {
-                    token: float(amount)
-                    for token, amount in zklend_state.debt_interest_rate_models.values.items()
-                },
-                "collateral": {
-                    token: float(amount)
-                    for token, amount in zklend_state.collateral_interest_rate_models.values.items()
-                },
-            }
-        )
+        self.add_interest_rate_data(zklend_state, event)
 
     def process_data(self, data: list[dict]) -> pd.DataFrame:
         """
