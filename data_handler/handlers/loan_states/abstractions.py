@@ -3,12 +3,13 @@ from abc import ABC, abstractmethod
 from typing import Dict, Optional
 
 import pandas as pd
-from tools.constants import ProtocolIDs
+from handler_tools.constants import ProtocolIDs
 
 from db.crud import DBConnector
 from db.models import LoanState, InterestRate
-from tools.constants import FIRST_RUNNING_MAPPING
-from tools.api_connector import DeRiskAPIConnector
+from data_handler.handlers.state import State
+from handler_tools.constants import FIRST_RUNNING_MAPPING
+from handler_tools.api_connector import DeRiskAPIConnector
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +25,7 @@ class LoanStateComputationBase(ABC):
     PROTOCOL_ADDRESSES: Optional[Dict[str, str]] = None
     PROTOCOL_TYPE: Optional[ProtocolIDs] = None
     PAGINATION_SIZE: int = 1000
+    INTEREST_RATES_KEYS: list = []
 
     def __init__(self):
         """
@@ -35,24 +37,17 @@ class LoanStateComputationBase(ABC):
         self.last_block = self.db_connector.get_last_block(self.PROTOCOL_TYPE)
         self.interest_rate_result: list = []
 
-    def get_data(self, form_address: str, min_block: int) -> dict:
+    @abstractmethod
+    def process_interest_rate_event(self, instance_state: State, event: pd.Series) -> None:
         """
-        Fetches data from the DeRisk API endpoint using the defined protocol address.
-        This method must be implemented by subclasses to specify how data is retrieved from the API.
+        Processes an interest rate event.
 
-        :param form_address: The address of the contract from which to retrieve events.
-        :type form_address: str
-        :param min_block: The minimum block number from which to retrieve events.
-        :type min_block: int
+        :param instance_state: The instance of the state class to call the method on.
+        :type instance_state: object
+        :param event: The data of the event.
+        :type event: pd.Series
         """
-        logger.info(
-            f"Fetching data from {self.last_block} to {min_block + self.PAGINATION_SIZE} for address {form_address}"
-        )
-        return self.api_connector.get_data(
-            from_address=form_address,
-            min_block_number=self.last_block,
-            max_block_number=min_block + self.PAGINATION_SIZE,
-        )
+        pass
 
     @abstractmethod
     def process_data(self, data: list[dict]) -> pd.DataFrame:
@@ -65,6 +60,80 @@ class LoanStateComputationBase(ABC):
         :return: pd.DataFrame
         """
         pass
+
+    def process_event(
+        self, instance_state: State, method_name: str, event: pd.Series
+    ) -> None:
+        """
+        Processes an event based on the method name and the event data.
+
+        Updates the last block processed to ensure data consistency
+        and calls the appropriate method to handle the event.
+
+        :param instance_state: The instance of the state class to call the method on.
+        :type instance_state: object
+        :param method_name: The name of the method to call for processing the event.
+        :param event: The event data as a pandas Series.
+        """
+        try:
+            block_number = event.get("block_number")
+            # For each block number, process the interest rate event
+            if (
+                self.last_block != block_number
+                and event["key_name"] in self.INTEREST_RATES_KEYS
+            ):
+                self.process_interest_rate_event(instance_state, event)
+
+            if block_number and block_number >= self.last_block:
+                self.last_block = block_number
+                method = getattr(instance_state, method_name, None)
+                if method:
+                    method(event)
+                else:
+                    logger.info(
+                        f"No method named {method_name} found for processing event."
+                    )
+        except Exception as e:
+            logger.exception(f"Failed to process event due to an error: {e}")
+
+    def get_data(self, from_address: str, min_block: int) -> list:
+        """
+        Fetches data from the DeRisk API endpoint using the defined protocol address.
+        This method must be implemented by subclasses to specify how data is retrieved from the API.
+
+        :param from_address: The address of the contract from which to retrieve events.
+        :type from_address: str
+        :param min_block: The minimum block number from which to retrieve events.
+        :type min_block: int
+        """
+        logger.info(
+            f"Fetching data from {self.last_block} to {min_block + self.PAGINATION_SIZE} for address {from_address}"
+        )
+        return self.api_connector.get_data(
+            from_address=from_address,
+            min_block_number=self.last_block,
+            max_block_number=min_block + self.PAGINATION_SIZE,
+        )
+
+    def get_addresses_data(self, from_addresses: list[str], min_block: int) -> list[dict]:
+        """
+        Fetches data from the DeRisk API endpoint using the defined protocol address.
+        This method must be implemented by subclasses to specify how data is retrieved from the API.
+
+        :param from_addresses: The addresses of the contract from which to retrieve events.
+        :type from_addresses: list[str]
+        :param min_block: The minimum block number from which to retrieve events.
+        :type min_block: int
+        """
+        logger.info(
+            f"Fetching data from {self.last_block} to {min_block + self.PAGINATION_SIZE} for addresses {from_addresses}"
+        )
+        result_data: list = []
+        for from_address in from_addresses:
+            result_data.extend(self.get_data(from_address, min_block))
+
+        return result_data
+
 
     def save_data(self, df: pd.DataFrame) -> None:
         """
@@ -88,34 +157,6 @@ class LoanStateComputationBase(ABC):
             )
             objects_to_write.append(loan)
         self.db_connector.write_loan_states_to_db(objects_to_write)
-
-    def process_event(
-        self, instance_state: object, method_name: str, event: pd.Series
-    ) -> None:
-        """
-        Processes an event based on the method name and the event data.
-
-        Updates the last block processed to ensure data consistency
-        and calls the appropriate method to handle the event.
-
-        :param instance_state: The instance of the state class to call the method on.
-        :type instance_state: object
-        :param method_name: The name of the method to call for processing the event.
-        :param event: The event data as a pandas Series.
-        """
-        try:
-            block_number = event.get("block_number")
-            if block_number and block_number >= self.last_block:
-                self.last_block = block_number
-                method = getattr(instance_state, method_name, None)
-                if method:
-                    method(event)
-                else:
-                    logger.info(
-                        f"No method named {method_name} found for processing event."
-                    )
-        except Exception as e:
-            logger.exception(f"Failed to process event due to an error: {e}")
 
     def save_interest_rate_data(self) -> None:
         """
@@ -177,8 +218,8 @@ class LoanStateComputationBase(ABC):
         for protocol_address in self.PROTOCOL_ADDRESSES:
             retry = 0
             logger.info(f'Default last block: {default_last_block}')
-            # FIXME after first run
-            self.last_block = FIRST_RUNNING_MAPPING.get(protocol_address, 10800) # default_last_block
+
+            self.last_block = default_last_block
 
             while retry < max_retries:
                 data = self.get_data(protocol_address, self.last_block)

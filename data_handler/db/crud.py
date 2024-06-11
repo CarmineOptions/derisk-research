@@ -7,7 +7,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker, Session, aliased
 
 from db.database import SQLALCHEMY_DATABASE_URL
 from db.models import Base, LoanState, InterestRate
-from tools.constants import ProtocolIDs
+from handler_tools.constants import ProtocolIDs
 
 
 ModelType = TypeVar("ModelType", bound=Base)
