@@ -51,13 +51,14 @@ def get_token_settings(reserve_data: list[dict[str, str]]):
     Create and fill new ZkLend token setting.
     """
     # Decimal Values
-    collateral_factor = format_reserve_data_number(get_value_by_name(reserve_data, 'collateral_factor'))
+    collateral_factor = format_reserve_data_number(get_value_by_name(reserve_data[4], 'collateral_factor'))
     debt_factor = decimal.Decimal("1")
-    liquidation_bonus = format_reserve_data_number(get_value_by_name(reserve_data, 'liquidation_bonus'))
+    liquidation_bonus = format_reserve_data_number(get_value_by_name(reserve_data[14], 'liquidation_bonus'))
     
     # STR value
-    protocol_token_address = get_value_by_name(reserve_data, 'z_token_address')
-    
+    hexadecimal_without_prefix = hex(reserve_data[2])[2:].upper()
+    # Add '0x0' prefix
+    protocol_token_address = '0x0' + hexadecimal_without_prefix
     return ZkLendSpecificTokenSettings(
         collateral_factor,
         debt_factor,
@@ -71,7 +72,7 @@ async def get_token_reserve_data(token_setting_address: str):
     Make a call to ZKLEND_MARKET_ADDRESSES with the tokenSettingAddress (Address).
     """
     reserve_data = await blockchain_call.func_call(
-        addr=ProtocolAddresses().ZKLEND_MARKET_ADDRESSES,
+        addr=next(iter(ProtocolAddresses().ZKLEND_MARKET_ADDRESSES)),
         selector="get_reserve_data",
         calldata=[token_setting_address],
     )
@@ -96,4 +97,5 @@ async def fetch_zklend_specific_token_settings():
 
 # FIXME TypeError: 'set' object cannot be interpreted as an integer
 # FIXME startkent_py error
-# ZKLEND_SPECIFIC_TOKEN_SETTINGS = asyncio.run(fetch_zklend_specific_token_settings())
+if __name__ == "__main__":
+    ZKLEND_SPECIFIC_TOKEN_SETTINGS = asyncio.run(fetch_zklend_specific_token_settings())

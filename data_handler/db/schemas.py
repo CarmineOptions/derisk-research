@@ -22,6 +22,16 @@ class LoanStateResponse(LoanStateBase):
     pass
 
 
+class InterestRateModel(BaseModel):
+    """
+    A data model class that validates data user entered
+    """
+    block: int
+    timestamp: int
+    debt: Dict[str, float]
+    collateral: Dict[str, float]
+
+
 class OrderBookModel(BaseModel):
     """
     A data model class that validates data user entered

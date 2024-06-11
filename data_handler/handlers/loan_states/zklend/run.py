@@ -2,9 +2,10 @@ import logging
 
 import pandas as pd
 from time import monotonic
+from handlers.state import State
 from handlers.loan_states.abstractions import LoanStateComputationBase
 from handlers.loan_states.zklend.events import ZkLendState
-from tools.constants import ProtocolAddresses, ProtocolIDs
+from handler_tools.constants import ProtocolAddresses, ProtocolIDs
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +22,41 @@ class ZkLendLoanStateComputation(LoanStateComputationBase):
         "zklend::market::Market::AccumulatorsSync",
     ]
 
+    def process_event(
+            self, instance_state: State, method_name: str, event: pd.Series
+    ) -> None:
+        """
+        Processes an event based on the method name and the event data.
+
+        Updates the last block processed to ensure data consistency
+        and calls the appropriate method to handle the event.
+
+        :param instance_state: The instance of the state class to call the method on.
+        :type instance_state: object
+        :param method_name: The name of the method to call for processing the event.
+        :param event: The event data as a pandas Series.
+        """
+        try:
+            block_number = event.get("block_number")
+            # For each block number, process the interest rate event
+            if (
+                    self.last_block != block_number
+                    and event["key_name"] in self.INTEREST_RATES_KEYS
+            ):
+                self.process_interest_rate_event(instance_state, event)
+
+            if block_number and block_number >= self.last_block:
+                self.last_block = block_number
+                method = getattr(instance_state, method_name, None)
+                if method:
+                    method(event)
+                else:
+                    logger.info(
+                        f"No method named {method_name} found for processing event."
+                    )
+        except Exception as e:
+            logger.exception(f"Failed to process event due to an error: {e}")
+
     def process_interest_rate_event(
         self, zklend_state: ZkLendState, event: pd.Series
     ) -> None:
@@ -33,20 +69,7 @@ class ZkLendLoanStateComputation(LoanStateComputationBase):
         :type event: pd.Series
         """
         zklend_state.process_accumulators_sync_event(event)
-        self.interest_rate_result.append(
-            {
-                "block": event["block_number"],
-                "timestamp": event["timestamp"],
-                "debt": {
-                    token: float(amount)
-                    for token, amount in zklend_state.debt_interest_rate_models.values.items()
-                },
-                "collateral": {
-                    token: float(amount)
-                    for token, amount in zklend_state.collateral_interest_rate_models.values.items()
-                },
-            }
-        )
+        self.add_interest_rate_data(zklend_state, event)
 
     def process_data(self, data: list[dict]) -> pd.DataFrame:
         """
@@ -77,41 +100,6 @@ class ZkLendLoanStateComputation(LoanStateComputationBase):
             for loan in zklend_state.loan_entities.values()
         ]
         return result_df
-
-    def process_event(
-        self, instance_state: ZkLendState, method_name: str, event: pd.Series
-    ) -> None:
-        """
-        Processes an event based on the method name and the event data.
-
-        Updates the last block processed to ensure data consistency
-        and calls the appropriate method to handle the event.
-
-        :param instance_state: The instance of the state class to call the method on.
-        :type instance_state: object
-        :param method_name: The name of the method to call for processing the event.
-        :param event: The event data as a pandas Series.
-        """
-        try:
-            block_number = event.get("block_number")
-            # For each block number, process the interest rate event
-            if (
-                self.last_block != block_number
-                and event["key_name"] in self.INTEREST_RATES_KEYS
-            ):
-                self.process_interest_rate_event(instance_state, event)
-
-            if block_number and block_number >= self.last_block:
-                self.last_block = block_number
-                method = getattr(instance_state, method_name, None)
-                if method:
-                    method(event)
-                else:
-                    logger.info(
-                        f"No method named {method_name} found for processing event."
-                    )
-        except Exception as e:
-            logger.exception(f"Failed to process event due to an error: {e}")
 
     def run(self) -> None:
         """
