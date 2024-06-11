@@ -24,7 +24,7 @@ def run():
         db_row = LiquidableDebt(
             debt_token=debt_token,
             liquidable_debt=liquidable_debt_info[LIQUIDABLE_DEBT_FIELD_NAME],
-            protocol=LendingProtocolNames.NOSTRA_MAINNET.value,
+            protocol_name=LendingProtocolNames.NOSTRA_MAINNET.value,
             collateral_token_price=liquidable_debt_info[PRICE_FIELD_NAME],
             collateral_token=liquidable_debt_info[COLLATERAL_FIELD_NAME]
         )
