@@ -38,7 +38,7 @@ class OrderBookModel(BaseModel):
 
     token_a: str
     token_b: str
-    block: int
+    block: Optional[int] = 0
     timestamp: int
     dex: str
     asks: List[tuple[float, float]]
