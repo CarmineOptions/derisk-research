@@ -2,9 +2,9 @@ from decimal import Decimal
 import asyncio
 from typing import Iterable
 
-from helpers import get_range, get_collateral_token_range
-from order_books.abstractions import OrderBookBase
-from swap_amm import SwapAmm
+from handlers.helpers import get_range, get_collateral_token_range
+from handlers.order_books.abstractions import OrderBookBase
+from handlers.order_books.uniswap_v2.swap_amm import SwapAmm
 
 
 class UniswapV2OrderBook(OrderBookBase):
