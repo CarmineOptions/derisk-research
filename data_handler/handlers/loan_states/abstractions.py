@@ -89,7 +89,7 @@ class LoanStateComputationBase(ABC):
                 if method:
                     method(event)
                 else:
-                    logger.info(
+                    logger.debug(
                         f"No method named {method_name} found for processing event."
                     )
         except Exception as e:
