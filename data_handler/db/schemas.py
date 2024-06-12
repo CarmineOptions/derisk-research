@@ -54,3 +54,14 @@ class OrderBookModel(BaseModel):
         :return: list of tuples of float values
         """
         return [(float(a), float(b)) for a, b in value]
+
+    @field_validator("block")
+    def validate_block(cls, value: int| None) -> int:
+        """
+        Validate block number
+        :param value: block number
+        :return: block number
+        """
+        if value is None:
+            return 0
+        return value
