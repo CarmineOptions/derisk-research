@@ -1,5 +1,5 @@
+import time
 from decimal import Decimal
-from dataclasses import dataclass
 
 import requests
 from starknet_py.net.full_node_client import FullNodeClient
@@ -7,7 +7,7 @@ from starknet_py.hash.selector import get_selector_from_name
 from starknet_py.net.client_models import Call
 
 from handlers.helpers import TokenValues, get_symbol, add_leading_zeros
-from handlers.settings import (TOKEN_SETTINGS, TokenSettings,
+from handlers.settings import (TOKEN_SETTINGS,
                                HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS, JEDISWAP_POOL_SETTINGS,
                                MySwapPoolSettings, MYSWAP_POOL_SETTINGS, JediSwapPoolSettings)
 

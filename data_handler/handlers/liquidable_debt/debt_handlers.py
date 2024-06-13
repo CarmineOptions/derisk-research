@@ -3,6 +3,7 @@ import asyncio
 from decimal import Decimal
 from copy import deepcopy
 from collections import defaultdict
+from typing import Iterable
 
 from handlers.state import State
 from db.crud import DBConnector
@@ -14,9 +15,9 @@ from handlers.liquidable_debt.values import (GS_BUCKET_URL, GS_BUCKET_NAME, Lend
                                              LOCAL_STORAGE_PATH, COLLATERAL_FIELD_NAME, PROTOCOL_FIELD_NAME,
                                              DEBT_FIELD_NAME, USER_FIELD_NAME, RISK_ADJUSTED_COLLATERAL_USD_FIELD_NAME,
                                              HEALTH_FACTOR_FIELD_NAME, DEBT_USD_FIELD_NAME, FIELDS_TO_VALIDATE,
-                                             ALL_NEEDED_FIELDS, LIQUIDABLE_DEBT_FIELD_NAME, PRICE_FIELD_NAME,
+                                             LIQUIDABLE_DEBT_FIELD_NAME, PRICE_FIELD_NAME,
                                              MYSWAP_VALUE, JEDISWAP_VALUE, POOL_SPLIT_VALUE, ROW_ID_FIELD_NAME)
-from handlers.loan_states.zklend.events import ZkLendState
+from handlers.loan_states.zklend.events import ZkLendState, ZkLendLoanEntity
 from handlers.loan_states.hashtack_v0.events import HashstackV0State
 from handlers.loan_states.hashtack_v1.events import HashstackV1State
 from handlers.helpers import TokenValues
@@ -49,6 +50,12 @@ class GCloudLiquidableDebtDataHandler:
         self.token_pairs = defaultdict()
 
     def prepare_data(self, protocol_name: str, path: str = LOCAL_STORAGE_PATH) -> dict:
+        """
+        Prepares the data for the given protocol.
+        :param protocol_name: Protocol name.
+        :param path: path to the file.
+        :return: dict
+        """
         uploaded_file_path = self.collector.collect_data(
             protocol_name=protocol_name,
             available_protocols=self.AVAILABLE_PROTOCOLS,
@@ -58,9 +65,9 @@ class GCloudLiquidableDebtDataHandler:
         )
         parsed_data = self._parse_file(uploaded_file_path)
         max_token_prices = self._get_all_max_token_values(parsed_data)
-        max_token_prices = self._sort_by_token_pair_correspondence(parsed_data, max_token_prices)
+        sorted_max_token_prices = self._sort_by_token_pair_correspondence(parsed_data, max_token_prices)
 
-        return self._calculate_liquidable_debt(parsed_data, max_token_prices)
+        return self._calculate_liquidable_debt(parsed_data, sorted_max_token_prices)
 
     @staticmethod
     def _get_all_max_token_values(data: dict = None) -> dict:
@@ -85,7 +92,6 @@ class GCloudLiquidableDebtDataHandler:
                     max_token_prices[token][ROW_ID_FIELD_NAME] = index
                     max_token_prices[token][PRICE_FIELD_NAME] = price
 
-                    continue
 
         return max_token_prices
 
@@ -158,6 +164,22 @@ class GCloudLiquidableDebtDataHandler:
 
         return result
 
+    def get_prices_range(self, collateral_token_name: str, current_price: Decimal) -> Iterable[Decimal]:
+        """
+        Get prices range based on the current price.
+        :param current_price: Decimal - The current pair price.
+        :return: Iterable[Decimal] - The iterable prices range.
+        """
+        from handlers.helpers import get_range, get_collateral_token_range
+
+        collateral_tokens = ("ETH", "wBTC", "STRK")
+
+        if collateral_token_name in collateral_tokens:
+            return get_collateral_token_range(collateral_token_name, current_price)
+
+        return get_range(Decimal(0), current_price * Decimal("1.3"), Decimal(current_price / 100))
+
+
     def _calculate_liquidable_debt(
             self, data: dict = None,
             max_token_prices: dict = None
@@ -196,7 +218,8 @@ class GCloudLiquidableDebtDataHandler:
                 continue
             # even if it isn't per-user data, we need to provide a user ID
             # so like that we're able to provide debt and collateral values
-            user_wallet_id = data[token_info[ROW_ID_FIELD_NAME]][USER_FIELD_NAME]
+            row_data = data[token_info[ROW_ID_FIELD_NAME]]
+            user_wallet_id = row_data[USER_FIELD_NAME]
             collateral_token_symbol = self.token_pairs[debt_token]
             state = self.state_class(verbose_user=user_wallet_id)
 
@@ -205,46 +228,50 @@ class GCloudLiquidableDebtDataHandler:
                     debt_token: token_info[PRICE_FIELD_NAME]
                 }
                 state.loan_entities[user_wallet_id].collateral.values = {
-                    collateral_token_symbol: data[token_info[ROW_ID_FIELD_NAME]][
+                    collateral_token_symbol: row_data[
                         COLLATERAL_FIELD_NAME
                     ][collateral_token_symbol]
                 }
 
             if isinstance(state, ZkLendState):
+                prices = self.get_prices_range()
+                health_factor = ZkLendLoanEntity().calculate_health_factor(
+                    collateral=row_data[RISK_ADJUSTED_COLLATERAL_USD_FIELD_NAME],
+                    debt=row_data[DEBT_USD_FIELD_NAME]
+                )
+
+
+
                 result = state.compute_liquidable_debt_at_price(
                     prices=TokenValues(init_value=prices.prices.values.get(debt_token)),
                     collateral_token=collateral_token_symbol,
-                    collateral_token_price=data[token_info[ROW_ID_FIELD_NAME]][
-                        COLLATERAL_FIELD_NAME
-                    ][collateral_token_symbol],
+                    collateral_token_price=row_data[COLLATERAL_FIELD_NAME][collateral_token_symbol],
                     debt_token=debt_token,
-                    risk_adjusted_collateral_usd=data[token_info[
-                        ROW_ID_FIELD_NAME
-                    ]][RISK_ADJUSTED_COLLATERAL_USD_FIELD_NAME],
-                    debt_usd=data[token_info[ROW_ID_FIELD_NAME]][DEBT_USD_FIELD_NAME],
-                    health_factor=data[token_info[ROW_ID_FIELD_NAME]][HEALTH_FACTOR_FIELD_NAME],
+                    risk_adjusted_collateral_usd=row_data[RISK_ADJUSTED_COLLATERAL_USD_FIELD_NAME],
+                    debt_usd=row_data[DEBT_USD_FIELD_NAME],
+                    health_factor=health_factor
                 )
 
             else:
                 result = state.compute_liquidable_debt_at_price(
                     prices=TokenValues(init_value=prices.prices.values.get(debt_token)),
                     collateral_token=collateral_token_symbol,
-                    collateral_token_price=data[token_info[ROW_ID_FIELD_NAME]][
+                    collateral_token_price=row_data[
                         COLLATERAL_FIELD_NAME
                     ][collateral_token_symbol],
                     debt_token=debt_token,
-                    debt_usd=data[token_info[ROW_ID_FIELD_NAME]][DEBT_USD_FIELD_NAME],
-                    health_factor=data[token_info[ROW_ID_FIELD_NAME]][HEALTH_FACTOR_FIELD_NAME],
+                    debt_usd=row_data[DEBT_USD_FIELD_NAME],
+                    health_factor=row_data[HEALTH_FACTOR_FIELD_NAME],
                 )
 
             if result > Decimal("0"):
                 result_data.update({
                     debt_token: {
                         LIQUIDABLE_DEBT_FIELD_NAME: result,
-                        PRICE_FIELD_NAME: data[token_info[ROW_ID_FIELD_NAME]][COLLATERAL_FIELD_NAME][
+                        PRICE_FIELD_NAME: row_data[COLLATERAL_FIELD_NAME][
                             collateral_token_symbol],
                         COLLATERAL_FIELD_NAME: collateral_token_symbol,
-                        PROTOCOL_FIELD_NAME: data[token_info[ROW_ID_FIELD_NAME]][PROTOCOL_FIELD_NAME]
+                        PROTOCOL_FIELD_NAME: row_data[PROTOCOL_FIELD_NAME]
                     }
                 })
 
@@ -372,3 +399,21 @@ class GCloudLiquidableDebtDataHandler:
 class DBLiquidableDebtDataHandler:
     # TODO write logic when it will be needed
     pass
+
+
+
+if __name__ == "__main__":
+    from handlers.state import InterestRateModels
+    import decimal
+    prices = Prices()
+    asyncio.run(prices.get_lp_token_prices())
+    entity = ZkLendLoanEntity()
+
+    result = entity.compute_health_factor(
+        prices=prices.prices,
+        risk_adjusted_collateral_usd=decimal.Decimal("4.289010e+03"),
+        debt_usd=decimal.Decimal("2.216265e+01"),
+        collateral_interest_rate_models=InterestRateModels(values={"ETH": 1.000352069024109, "wBTC": 1.0, "USDC": 1.0000236924317043, "DAI": 1.0, "USDT": 1.0, "wstETH": 1.0, "LORDS": 1.0, "STRK": 1.0}),
+        debt_interest_rate_models=InterestRateModels(values={"ETH": 1.000747934860041, "wBTC": 1.0, "USDC": 1.0000454565350412, "DAI": 1.0, "USDT": 1.0, "wstETH": 1.0, "LORDS": 1.0, "STRK": 1.0})
+    )
+    print(result)

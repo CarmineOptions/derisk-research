@@ -49,7 +49,7 @@ class ZkLendLoanEntity(LoanEntity):
 
     def compute_health_factor(
             self,
-            standardized: bool,
+            # standardized: bool,
             collateral_interest_rate_models: Optional[InterestRateModels] = None,
             debt_interest_rate_models: Optional[InterestRateModels] = None,
             prices: Optional[TokenValues] = None,
@@ -68,16 +68,11 @@ class ZkLendLoanEntity(LoanEntity):
                 prices=prices,
                 risk_adjusted=False,
             )
-        if standardized:
-            # Denominator is the value of (risk-adjusted) collateral at which the loan entity can be liquidated.
-            # TODO: denominator = debt_usd * liquidation_threshold??
-            denominator = debt_usd
-        else:
-            denominator = debt_usd
-        if denominator == decimal.Decimal("0"):
+
+        if debt_usd == decimal.Decimal("0"):
             # TODO: Assumes collateral is positive.
             return decimal.Decimal("Inf")
-        return risk_adjusted_collateral_usd / denominator
+        return risk_adjusted_collateral_usd / debt_usd
 
     def compute_debt_to_be_liquidated(
             self,
@@ -349,9 +344,21 @@ class ZkLendState(State):
         debt_usd: decimal.Decimal,
         health_factor: decimal.Decimal
     ) -> decimal.Decimal:
+        """
+        Compute the amount of `debt_token` that can be liquidated at the given price of `collateral_token`.
+        :param prices: Changed prices of the tokens.
+        :param collateral_token: Collateral token.
+        :param collateral_token_price: Collateral token price.
+        :param debt_token: Debt token.
+        :param risk_adjusted_collateral_usd: Risk-adjusted collateral value.
+        :param debt_usd: Debt value.
+        :param health_factor: health factor.
+        :return: The amount of `debt_token` that can be liquidated.
+        """
         changed_prices = copy.deepcopy(prices)
         changed_prices.values[collateral_token] = collateral_token_price
         max_liquidated_amount = decimal.Decimal("0")
+
         for loan_entity in self.loan_entities.values():
             # Filter out entities who borrowed the token of interest.
             debt_tokens = {
@@ -359,7 +366,7 @@ class ZkLendState(State):
                 for token, token_amount in loan_entity.debt.values.items()
                 if decimal.Decimal(token_amount) > decimal.Decimal("0")
             }
-            if not debt_token in debt_tokens:
+            if debt_token not in debt_tokens:
                 continue
 
             if health_factor >= decimal.Decimal(

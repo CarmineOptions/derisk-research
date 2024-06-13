@@ -65,8 +65,8 @@ class InterestRateModels(TokenValues):
     Raw amount is the amount that would have been accumulated into the face amount if it were deposited at genesis.
     """
 
-    def __init__(self) -> None:
-        super().__init__(init_value=decimal.Decimal("1"))
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(init_value=decimal.Decimal("1"), *args, **kwargs)
 
 
 class LoanEntity(abc.ABC):
