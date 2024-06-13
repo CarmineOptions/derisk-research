@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import Optional, Dict
 from typing import List
 import decimal
@@ -41,6 +42,7 @@ class OrderBookModel(BaseModel):
     block: int
     timestamp: int
     dex: str
+    current_price: Decimal
     asks: List[tuple[float, float]]
     bids: List[tuple[float, float]]
 
