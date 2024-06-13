@@ -45,12 +45,13 @@ class NostraMainnetStateComputation(LoanStateComputationBase):
             # For each block number, process the interest rate event
             if event["from_address"] == INTEREST_RATE_MODEL_ADDRESS:
                 self.process_interest_rate_event(instance_state, event)
+                return
 
             if block_number and block_number >= self.last_block:
                 self.last_block = block_number
                 event_type = self.ADDRESSES_TO_EVENTS[event["from_address"]]
                 getattr(
-                    self, self.EVENTS_METHODS_MAPPING[(event_type, event["key_name"])]
+                    instance_state, self.EVENTS_METHODS_MAPPING[(event_type, event["key_name"])]
                 )(event=event)
         except Exception as e:
             logger.exception(f"Failed to process event due to an error: {e}")
@@ -91,8 +92,7 @@ class NostraMainnetStateComputation(LoanStateComputationBase):
 
         # Filter out events that are not in the mapping
         for index, row in sorted_df.iterrows():
-            method_name = self.EVENTS_MAPPING.get(row["key_name"], "") or ""
-            self.process_event(nostra_mainnet_state, method_name, row)
+            self.process_event(nostra_mainnet_state, None, row)
 
         result_df = self.get_result_df(nostra_mainnet_state.loan_entities)
         return result_df
@@ -101,13 +101,17 @@ class NostraMainnetStateComputation(LoanStateComputationBase):
         """
         Runs the loan state computation for the specific protocol.
         """
-        max_retries = 30
+        max_retries = 1000000 # FIXME remove this code only for first run
         retry = 0
 
         logger.info(f"Default last block: {self.last_block}")
-        self.last_block = 165331 # FIXME first run
+        self.last_block = 165334 # FIXME first run
 
         while retry < max_retries:
+            if self.last_block >= 649308: # FIXME remove this code only for first run
+                logger.info(f"Reached max block: {self.last_block}")
+                break
+
             interest_rate_data = self.get_data(
                 INTEREST_RATE_MODEL_ADDRESS, self.last_block
             )

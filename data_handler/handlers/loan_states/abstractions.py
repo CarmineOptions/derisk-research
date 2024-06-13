@@ -82,6 +82,7 @@ class LoanStateComputationBase(ABC):
                 and event["key_name"] in self.INTEREST_RATES_KEYS
             ):
                 self.process_interest_rate_event(instance_state, event)
+                return
 
             if block_number and block_number >= self.last_block:
                 self.last_block = block_number

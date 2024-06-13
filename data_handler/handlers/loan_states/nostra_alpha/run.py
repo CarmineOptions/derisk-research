@@ -6,6 +6,8 @@ from handlers.loan_states.abstractions import LoanStateComputationBase
 from handlers.loan_states.nostra_alpha.events import (
     NostraAlphaState,
     INTEREST_RATE_MODEL_ADDRESS,
+    ADDRESSES_TO_EVENTS,
+    EVENTS_METHODS_MAPPING,
 )
 from handler_tools.constants import ProtocolAddresses, ProtocolIDs, NOSTRA_EVENTS_MAPPING
 
@@ -21,6 +23,8 @@ class NostraAlphaStateComputation(LoanStateComputationBase):
     PROTOCOL_ADDRESSES = ProtocolAddresses().NOSTRA_ALPHA_ADDRESSES
     INTEREST_RATES_KEYS = ["InterestStateUpdated"]
     EVENTS_MAPPING = NOSTRA_EVENTS_MAPPING
+    EVENTS_METHODS_MAPPING = EVENTS_METHODS_MAPPING
+    ADDRESSES_TO_EVENTS = ADDRESSES_TO_EVENTS
 
     def process_interest_rate_event(
         self, nostra_state: NostraAlphaState, event: pd.Series
@@ -65,15 +69,51 @@ class NostraAlphaStateComputation(LoanStateComputationBase):
         result_df = self.get_result_df(nostra_alpha_state.loan_entities)
         return result_df
 
+    def process_event(
+            self, instance_state: NostraAlphaState, method_name: str, event: pd.Series
+    ) -> None:
+        """
+        Processes an event based on the method name and the event data.
+
+        Updates the last block processed to ensure data consistency
+        and calls the appropriate method to handle the event.
+
+        :param instance_state: The instance of the state class to call the method on.
+        :type instance_state: object
+        :param method_name: The name of the method to call for processing the event.
+        :param event: The event data as a pandas Series.
+        """
+        try:
+            block_number = event.get("block_number")
+            # For each block number, process the interest rate event
+            if event["from_address"] == INTEREST_RATE_MODEL_ADDRESS:
+                self.process_interest_rate_event(instance_state, event)
+                return
+
+            if block_number and block_number >= self.last_block:
+                self.last_block = block_number
+                event_type = self.ADDRESSES_TO_EVENTS[event["from_address"]]
+                getattr(
+                    instance_state, self.EVENTS_METHODS_MAPPING[(event_type, event["key_name"])]
+                )(event=event)
+        except Exception as e:
+            logger.exception(f"Failed to process event due to an error: {e}")
+
     def run(self) -> None:
         """
         Runs the loan state computation for the specific protocol.
         """
-        max_retries = 5
+        max_retries = 1000000  # FIXME remove this code only for first run
         retry = 0
+
+        self.last_block = 10854 # FIXME first run
 
         logger.info(f"Default last block: {self.last_block}")
         while retry < max_retries:
+            if self.last_block >= 647952: # FIXME last block
+                logger.info(f"Reached the last block: {self.last_block}")
+                break
+
             interest_rate_data = self.get_data(
                 INTEREST_RATE_MODEL_ADDRESS, self.last_block
             )
