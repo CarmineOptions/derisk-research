@@ -57,11 +57,20 @@ def main():
             options=["zkLend", "Hashstack V0", "Hashstack V1", "Nostra Alpha", "Nostra Mainnet"],
             default=["zkLend", "Hashstack V0", "Hashstack V1", "Nostra Alpha", "Nostra Mainnet"],
         )
-        current_pair = streamlit.selectbox(
-            label="Select collateral-loan pair:",
-            options=src.settings.PAIRS,
+        collateral_token = streamlit.selectbox(
+            label="Select collateral token:",
+            options=list(src.settings.COLLATERAL_TO_DEBT_TOKENS.keys()),
             index=0,
         )
+        
+        debt_token_options = src.settings.COLLATERAL_TO_DEBT_TOKENS[collateral_token]
+        debt_token = streamlit.selectbox(
+            label="Select debt token:",
+            options=debt_token_options,
+            index=0,
+        )
+
+    current_pair = f"{collateral_token}-{debt_token}"
 
     main_chart_data = pandas.DataFrame()
     histogram_data = pandas.DataFrame()

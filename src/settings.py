@@ -68,3 +68,10 @@ PAIRS: list[str] = [
     "STRK-USDT",
     "STRK-DAI",
 ]
+
+COLLATERAL_TO_DEBT_TOKENS = {}
+for pair in PAIRS:
+    collateral, debt = pair.split('-')
+    if collateral not in COLLATERAL_TO_DEBT_TOKENS:
+        COLLATERAL_TO_DEBT_TOKENS[collateral] = []
+    COLLATERAL_TO_DEBT_TOKENS[collateral].append(debt)
