@@ -21,7 +21,6 @@ class HashstackV0InterestRate:
         self.token = token
         self.min_block_number = min_block_number
         self.max_block_number = max_block_number
-        self.interest_rates = []
         self.api_connector = DeRiskAPIConnector()
         self.events = None
         self._set_events()
