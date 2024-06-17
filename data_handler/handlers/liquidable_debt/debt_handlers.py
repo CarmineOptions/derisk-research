@@ -154,11 +154,17 @@ class GCloudLiquidableDebtDataHandler:
         for protocol in ProtocolIDs:
             current_protocol = str(protocol.value).lower()
             if protocol_name.lower() == current_protocol:
+                # TODO rework it and move it to the separate method
+                # use try/except/finally block
                 try:
-                    return requests.get(cls.INTEREST_MODEL_VALUES_URL.format(protocol=protocol.value))
+                    response = requests.get(cls.INTEREST_MODEL_VALUES_URL.format(protocol=protocol.value))
+                    response.raise_for_status()
+                    return response.json()
                 except:
                     time.sleep(10)
-                    return requests.get(cls.INTEREST_MODEL_VALUES_URL.format(protocol=protocol.value))
+                    response = requests.get(cls.INTEREST_MODEL_VALUES_URL.format(protocol=protocol.value))
+                    response.raise_for_status()
+                    return response.json()
 
     def _calculate_liquidable_debt(
             self, data: dict = None,
@@ -183,66 +189,70 @@ class GCloudLiquidableDebtDataHandler:
         result_data = dict()
         current_prices = Prices()
         asyncio.run(current_prices.get_lp_token_prices())
+        # TODO: Create mapping for interest rate models for each protocol to decrease number of sending request
 
         for index, row in data.items():
             # even if it isn't per-user data, we need to provide a user ID
             # so like that we're able to provide debt and collateral values
             user_wallet_id = row[USER_FIELD_NAME]
             state = self.state_class(verbose_user=user_wallet_id)
+            # FIXME move it to mapping
+            interest_rate_models = self.get_interest_rate_models_data(
+                protocol_name=row[PROTOCOL_FIELD_NAME]
+            )
 
             for collateral_token in row[COLLATERAL_FIELD_NAME].keys():
                 hypothetical_collateral_token_prices = self.get_prices_range(
                     collateral_token_name=collateral_token,
                     current_price=current_prices.prices.values[collateral_token]
                 )
-                interest_rate_models = self.get_interest_rate_models_data(
-                    protocol_name=row[PROTOCOL_FIELD_NAME]
-                ).json()
+
+                # Set up collateral and debt interest rate models
                 state.collateral_interest_rate_models = interest_rate_models[COLLATERAL_FIELD_NAME.lower()]
                 state.debt_interest_rate_models = interest_rate_models[DEBT_FIELD_NAME.lower()]
 
-                for hypotherical_price in hypothetical_collateral_token_prices:
-                    current_prices.prices.values[collateral_token] = hypotherical_price
+                for hypothetical_price in hypothetical_collateral_token_prices:
+                    current_prices.prices.values[collateral_token] = hypothetical_price
 
                     if not isinstance(state, (HashstackV0State, HashstackV1State)):
                         state.loan_entities[user_wallet_id].debt.values = {
-                            debt_token: hypotherical_price
+                            debt_token: hypothetical_price
                             for debt_token in TOKEN_PAIRS.get(collateral_token, "")
                         }
                         state.loan_entities[user_wallet_id].collateral.values = {
-                            collateral_token: hypotherical_price
+                            collateral_token: hypothetical_price
                         }
 
                     if isinstance(state, ZkLendState):
                         liquidable_debt = state.compute_liquidable_debt_at_price(
                             prices=TokenValues(init_value=current_prices.prices.values.get(collateral_token)),
                             collateral_token=collateral_token,
-                            collateral_token_price=hypotherical_price,
+                            collateral_token_price=hypothetical_price,
                             debt_token=debt_token,
                         )
+                    #
+                    # else:
+                    #     liquidable_debt = state.compute_liquidable_debt_at_price(
+                    #         prices=TokenValues(init_value=prices.prices.values.get(debt_token)),
+                    #         collateral_token=collateral_token_symbol,
+                    #         collateral_token_price=row_data[
+                    #             COLLATERAL_FIELD_NAME
+                    #         ][collateral_token_symbol],
+                    #         debt_token=debt_token,
+                    #         debt_usd=row_data[DEBT_USD_FIELD_NAME],
+                    #         health_factor=row_data[HEALTH_FACTOR_FIELD_NAME],
+                    #     )
 
-                    else:
-                        liquidable_debt = state.compute_liquidable_debt_at_price(
-                            prices=TokenValues(init_value=prices.prices.values.get(debt_token)),
-                            collateral_token=collateral_token_symbol,
-                            collateral_token_price=row_data[
-                                COLLATERAL_FIELD_NAME
-                            ][collateral_token_symbol],
-                            debt_token=debt_token,
-                            debt_usd=row_data[DEBT_USD_FIELD_NAME],
-                            health_factor=row_data[HEALTH_FACTOR_FIELD_NAME],
-                        )
-
-                    if result > Decimal("0"):
-                        result_data.update({
-                            debt_token: {
-                                LIQUIDABLE_DEBT_FIELD_NAME: result,
-                                PRICE_FIELD_NAME: row_data[COLLATERAL_FIELD_NAME][
-                                    collateral_token_symbol],
-                                COLLATERAL_FIELD_NAME: collateral_token_symbol,
-                                PROTOCOL_FIELD_NAME: row_data[PROTOCOL_FIELD_NAME]
-                            }
-                        })
+                    # if result > Decimal("0"):
+                    #     result_data.update({
+                    #         debt_token: {
+                    #             LIQUIDABLE_DEBT_FIELD_NAME: result,
+                    #             PRICE_FIELD_NAME: row_data[COLLATERAL_FIELD_NAME][
+                    #                 collateral_token_symbol],
+                    #             COLLATERAL_FIELD_NAME: collateral_token_symbol,
+                    #             PROTOCOL_FIELD_NAME: row_data[PROTOCOL_FIELD_NAME]
+                    #         }
+                    #     })
 
         return result_data
 
@@ -316,9 +326,9 @@ class GCloudLiquidableDebtDataHandler:
         :return: A dictionary of the transformed data.
         """
         result = dict()
-        separeted_tokens = tokens.split(', ')
+        separated_tokens = tokens.split(', ')
 
-        for token in separeted_tokens:
+        for token in separated_tokens:
             if not token:
                 continue
 
@@ -344,7 +354,7 @@ class GCloudLiquidableDebtDataHandler:
         return result
 
     @staticmethod
-    def split_collateral(collateral_string: str, platform_name: str) -> list:
+    def split_collateral(collateral_string: str, platform_name: str) -> str:
         """
         Removes a platform name from the collateral string.
         :param collateral_string: The collateral string to split.
