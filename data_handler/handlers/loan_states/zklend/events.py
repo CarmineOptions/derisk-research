@@ -49,7 +49,7 @@ class ZkLendLoanEntity(LoanEntity):
 
     def compute_health_factor(
             self,
-            # standardized: bool,
+            standardized: bool,
             collateral_interest_rate_models: Optional[InterestRateModels] = None,
             debt_interest_rate_models: Optional[InterestRateModels] = None,
             prices: Optional[TokenValues] = None,
@@ -70,8 +70,8 @@ class ZkLendLoanEntity(LoanEntity):
             )
 
         if debt_usd == decimal.Decimal("0"):
-            # TODO: Assumes collateral is positive.
             return decimal.Decimal("Inf")
+
         return risk_adjusted_collateral_usd / debt_usd
 
     def compute_debt_to_be_liquidated(
@@ -99,9 +99,9 @@ class ZkLendLoanEntity(LoanEntity):
         # TODO: Commit a PDF with the derivation of the formula?
         numerator = debt_usd - risk_adjusted_collateral_usd
         denominator = prices.values[debt_token] * (
-            1
-            - self.TOKEN_SETTINGS[collateral_token].collateral_factor
-            * (1 + self.TOKEN_SETTINGS[collateral_token].liquidation_bonus)
+                1
+                - self.TOKEN_SETTINGS[collateral_token].collateral_factor
+                * (1 + self.TOKEN_SETTINGS[collateral_token].liquidation_bonus)
         )
         return decimal.Decimal(f"{numerator}") / denominator
 
@@ -340,48 +340,48 @@ class ZkLendState(State):
         collateral_token: str,
         collateral_token_price: decimal.Decimal,
         debt_token: str,
-        risk_adjusted_collateral_usd: decimal.Decimal,
-        debt_usd: decimal.Decimal,
-        health_factor: decimal.Decimal
     ) -> decimal.Decimal:
-        """
-        Compute the amount of `debt_token` that can be liquidated at the given price of `collateral_token`.
-        :param prices: Changed prices of the tokens.
-        :param collateral_token: Collateral token.
-        :param collateral_token_price: Collateral token price.
-        :param debt_token: Debt token.
-        :param risk_adjusted_collateral_usd: Risk-adjusted collateral value.
-        :param debt_usd: Debt value.
-        :param health_factor: health factor.
-        :return: The amount of `debt_token` that can be liquidated.
-        """
         changed_prices = copy.deepcopy(prices)
         changed_prices.values[collateral_token] = collateral_token_price
         max_liquidated_amount = decimal.Decimal("0")
-
         for loan_entity in self.loan_entities.values():
             # Filter out entities who borrowed the token of interest.
             debt_tokens = {
                 token
                 for token, token_amount in loan_entity.debt.values.items()
-                if decimal.Decimal(token_amount) > decimal.Decimal("0")
+                if token_amount > decimal.Decimal("0")
             }
-            if debt_token not in debt_tokens:
+            if not debt_token in debt_tokens:
                 continue
 
-            if health_factor >= decimal.Decimal(
-                "1"
-            ) or health_factor <= decimal.Decimal("0"):
+            # Filter out entities with health factor below 1.
+            risk_adjusted_collateral_usd = loan_entity.compute_collateral_usd(
+                risk_adjusted=True,
+                collateral_interest_rate_models=self.collateral_interest_rate_models,
+                prices=changed_prices,
+            )
+            debt_usd = loan_entity.compute_debt_usd(
+                risk_adjusted=False,
+                debt_interest_rate_models=self.debt_interest_rate_models,
+                prices=changed_prices,
+            )
+            health_factor = loan_entity.compute_health_factor(
+                standardized=False,
+                risk_adjusted_collateral_usd=risk_adjusted_collateral_usd,
+                debt_usd=debt_usd,
+            )
+            # TODO: `health_factor` < 0 should not be possible if the data is right. Should we keep the filter?
+            if health_factor >= decimal.Decimal("1") or health_factor <= decimal.Decimal("0"):
                 continue
 
             # Find out how much of the `debt_token` will be liquidated.
             collateral_tokens = {
                 token
                 for token, token_amount in loan_entity.collateral.values.items()
-                if decimal.Decimal(token_amount) > decimal.Decimal("0")
+                if token_amount > decimal.Decimal("0")
             }
             # Choose the most optimal collateral_token to be liquidated. In this case, the liquidator is indifferent.
-            collateral_token = next(iter(list(collateral_tokens)))
+            collateral_token = list(collateral_tokens)[0]
             max_liquidated_amount += loan_entity.compute_debt_to_be_liquidated(
                 debt_token=debt_token,
                 collateral_token=collateral_token,

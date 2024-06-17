@@ -74,17 +74,11 @@ PAIRS: list[str] = [
     "STRK-USDT",
     "STRK-DAI",
 ]
-TOKEN_PAIRS: tuple[list[str, ...], ...] = (
-    ["ETH", "USDC"],
-    ["ETH", "USDT"],
-    ["ETH", "DAI"],
-    ["wBTC", "USDC"],
-    ["wBTC", "USDT"],
-    ["wBTC", "DAI"],
-    ["STRK", "USDC"],
-    ["STRK", "USDT"],
-    ["STRK", "DAI"],
-)
+TOKEN_PAIRS: dict[str, tuple[str, ...]] = {
+    "ETH": ("USDC", "USDT", "DAI"),
+    "wBTC": ("USDC", "USDT", "DAI"),
+    "STRK": ("USDC", "USDT", "DAI"),
+}
 
 HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS: dict[str, TokenSettings] = {
     "JediSwap: DAI/ETH Pool": TokenSettings(

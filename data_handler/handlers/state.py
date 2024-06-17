@@ -97,8 +97,8 @@ class LoanEntity(abc.ABC):
                 if risk_adjusted
                 else decimal.Decimal("1")
             )
-            * collateral_interest_rate_models.values[token]
-            * prices.values[token]
+            * decimal.Decimal(str(collateral_interest_rate_models.values[token]))
+            * decimal.Decimal(str(prices.values[token]))
             for token, token_amount in self.collateral.values.items()
         )
 
@@ -116,8 +116,8 @@ class LoanEntity(abc.ABC):
                 if risk_adjusted
                 else decimal.Decimal("1")
             )
-            * debt_interest_rate_models.values[token]
-            * prices.values[token]
+            * decimal.Decimal(str(decimal.Decimal(str(debt_interest_rate_models.values[token]))))
+            * decimal.Decimal(str(decimal.Decimal(str(prices.values[token]))))
             for token, token_amount in self.debt.values.items()
         )
 
