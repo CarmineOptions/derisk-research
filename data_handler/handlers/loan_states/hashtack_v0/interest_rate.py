@@ -31,7 +31,6 @@ class HashstackV0InterestRate:
         if not isinstance(self.min_block_number, int) or not isinstance(self.max_block_number, int):
             raise ValueError("Block numbers must be integers")
         result = self.api_connector.get_data(HASHSTACK_ADDRESS, self.min_block_number, self.max_block_number)
-        # token_address = hex(int(self.token, base=16))
         if isinstance(result, dict):
             raise RuntimeError(f"Error while fetching events: {result.get('error', 'Unknown error')}")
         self.events = list(filter(lambda event: event["data"][0] == self.token, result))

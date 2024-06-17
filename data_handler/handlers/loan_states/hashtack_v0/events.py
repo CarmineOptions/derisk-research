@@ -608,14 +608,6 @@ class HashstackV0Event:
     interest_rate_supply: decimal.Decimal
     interest_rate_borrow: decimal.Decimal
 
-    def __hash__(self):
-        return hash((self.block, self.timestamp))
-
-    def __eq__(self, other):
-        if not other.hasattr("block") or not other.hasattr("timestamp"):
-            return False
-        return (self.block, self.timestamp) == (other.block, other.timestamp)
-
     def serialize(self):
         return {
             "block": self.block,
