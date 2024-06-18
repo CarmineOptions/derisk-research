@@ -21,6 +21,7 @@ class HashstackV0InterestRate:
         self.token = token
         self.min_block_number = min_block_number
         self.max_block_number = max_block_number
+        self.interest_rates = []
         self.api_connector = DeRiskAPIConnector()
         self.events = None
         self._set_events()
@@ -71,6 +72,10 @@ class HashstackV0InterestRate:
 
 
 if __name__ == '__main__':
-    interest_rate = HashstackV0InterestRate("0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d", 646000, 647000)
+    interest_rate = HashstackV0InterestRate(
+        "0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d",
+        646000,
+        647000
+    )
     interest_rate.calculate_interest_rate()
     print(interest_rate.serialize())
