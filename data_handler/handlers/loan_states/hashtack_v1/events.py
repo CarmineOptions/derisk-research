@@ -624,8 +624,6 @@ class HashstackV1State(State):
         collateral_token: str,
         collateral_token_price: decimal.Decimal,
         debt_token: str,
-        debt_usd: decimal.Decimal,
-        health_factor: decimal.Decimal
     ) -> decimal.Decimal:
         changed_prices = copy.deepcopy(prices)
         changed_prices.values[collateral_token] = collateral_token_price
@@ -640,6 +638,18 @@ class HashstackV1State(State):
             if not debt_token in debt_tokens:
                 continue
 
+            # Filter out users with health factor below 1.
+            debt_usd = loan_entity.compute_debt_usd(
+                risk_adjusted=False,
+                debt_interest_rate_models=self.debt_interest_rate_models,
+                prices=changed_prices,
+            )
+            health_factor = loan_entity.compute_health_factor(
+                standardized=False,
+                collateral_interest_rate_models=self.collateral_interest_rate_models,
+                prices=changed_prices,
+                debt_usd=debt_usd,
+            )
             # TODO: Does this parameter still hold?
             if health_factor >= decimal.Decimal("1.04"):
                 continue

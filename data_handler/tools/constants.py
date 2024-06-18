@@ -20,6 +20,16 @@ class ProtocolIDs(Enum):
     ZKLEND: str = "zkLend"
 
 
+# Temporary solution.
+# TODO remove it when all protocols with interest rate models will be available
+class AvailableProtocolID(Enum):
+    # nostra protocols
+    NOSTRA_ALPHA: str = "Nostra_alpha"
+    NOSTRA_MAINNET: str = "Nostra_mainnet"
+    # zkLend protocol
+    ZKLEND: str = "zkLend"
+
+
 @dataclass(frozen=True)
 class ProtocolAddresses:
     """
