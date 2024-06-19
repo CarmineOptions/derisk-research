@@ -1,16 +1,17 @@
+from decimal import Decimal
+
+from db.models import InterestRate
 from handler_tools.api_connector import DeRiskAPIConnector
 from handlers.loan_states.hashtack_v0.events import HashstackV0Event
 
-from decimal import Decimal
-
-
-HASHSTACK_ADDRESS = "0x01b862c518939339b950d0d21a3d4cc8ead102d6270850ac8544636e558fab68"
+HASHSTACK_INTEREST_RATE_ADDRESS = "0x01b862c518939339b950d0d21a3d4cc8ead102d6270850ac8544636e558fab68"
 
 SECONDS_IN_YEAR = Decimal(365 * 24 * 60 * 60)
 
 
 class HashstackV0InterestRate:
     """Class for calculating interest rates for a given token on the Hashstack V0 protocol."""
+
     def __init__(self, token: str, min_block_number: int, max_block_number: int):
         """
         Initialize the HashstackV0InterestRate object.
@@ -30,12 +31,17 @@ class HashstackV0InterestRate:
         """Fetch events from the API, filter them by token and set them to the events attribute."""
         if not isinstance(self.min_block_number, int) or not isinstance(self.max_block_number, int):
             raise ValueError("Block numbers must be integers")
-        result = self.api_connector.get_data(HASHSTACK_ADDRESS, self.min_block_number, self.max_block_number)
+        result = self.api_connector.get_data(
+            HASHSTACK_INTEREST_RATE_ADDRESS,
+            self.min_block_number,
+            self.max_block_number,
+        )
         if isinstance(result, dict):
             raise RuntimeError(f"Error while fetching events: {result.get('error', 'Unknown error')}")
         self.events = list(filter(lambda event: event["data"][0] == self.token, result))
 
-    def calculate_interest_rate(self):
+    def calculate_interest_rates(self) -> None:
+        """Calculate the interest rates for the given token."""
         if not self.events:
             return
         supply_interest_rate_cum = Decimal("0")
@@ -45,7 +51,7 @@ class HashstackV0InterestRate:
             # First block will have 0 interest rate
             if index == 0:
                 first_event = HashstackV0Event(
-                    event["block_number"], event["timestamp"], supply_interest_rate_cum, borrow_interest_rate_cum
+                    event["block_number"], event["timestamp"], supply_interest_rate_cum, borrow_interest_rate_cum,
                 )
                 self.interest_rates.append(first_event)
                 continue
@@ -61,21 +67,21 @@ class HashstackV0InterestRate:
             supply_interest_rate_cum += (supply_apr * seconds_passed / SECONDS_IN_YEAR) / percents_decimals_shift
             borrow_interest_rate_cum += (borrow_apr * seconds_passed / SECONDS_IN_YEAR) / percents_decimals_shift
             current_event = HashstackV0Event(
-                event["block_number"], current_timestamp, supply_interest_rate_cum, borrow_interest_rate_cum
+                event["block_number"], current_timestamp, supply_interest_rate_cum, borrow_interest_rate_cum,
             )
             self.interest_rates.append(current_event)
 
-    def serialize(self):
+    def serialize(self) -> list[InterestRate]:
         """Get interests rates serialized as database models."""
         # TODO: Add integration with existing sqlalchemy model
         return [event.serialize() for event in self.interest_rates]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     interest_rate = HashstackV0InterestRate(
         "0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d",
         646000,
-        647000
+        647000,
     )
-    interest_rate.calculate_interest_rate()
+    interest_rate.calculate_interest_rates()
     print(interest_rate.serialize())
