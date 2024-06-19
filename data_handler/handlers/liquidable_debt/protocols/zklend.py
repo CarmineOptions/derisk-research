@@ -12,7 +12,11 @@ from handlers.loan_states.zklend.events import ZkLendState, ZkLendLoanEntity
 from db.models import LiquidableDebt
 
 
-def run():
+def run() -> None:
+    """
+    Runs the liquidable debt computing script for zKlend protocol.
+    :return: None
+    """
     handler = GCloudLiquidableDebtDataHandler(
         loan_state_class=ZkLendState,
         connection_url=GS_BUCKET_URL,

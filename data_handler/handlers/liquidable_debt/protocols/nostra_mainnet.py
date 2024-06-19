@@ -9,7 +9,11 @@ from handlers.liquidable_debt.values import (GS_BUCKET_NAME, GS_BUCKET_URL, USER
                                              DEBT_USD_FIELD_NAME, PRICE_FIELD_NAME, LendingProtocolNames)
 
 
-def run():
+def run() -> None:
+    """
+    Runs the liquidable debt computing script for Nostra Mainnet protocol.
+    :return: None
+    """
     handler = GCloudLiquidableDebtDataHandler(
         loan_state_class=NostraMainnetState,
         connection_url=GS_BUCKET_URL,

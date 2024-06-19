@@ -9,7 +9,11 @@ from handlers.liquidable_debt.values import (GS_BUCKET_NAME, GS_BUCKET_URL, USER
                                              DEBT_USD_FIELD_NAME, PRICE_FIELD_NAME, LendingProtocolNames)
 
 
-def run():
+def run() -> None:
+    """
+    Runs the liquidable debt computing script for Hashstack v1 protocol.
+    :return: None
+    """
     handler = GCloudLiquidableDebtDataHandler(
         loan_state_class=HashstackV1State,
         connection_url=GS_BUCKET_URL,
