@@ -1,3 +1,4 @@
+from decimal import Decimal
 from uuid import uuid4
 
 from sqlalchemy import UUID, BigInteger, Column, MetaData, String, DECIMAL
@@ -5,7 +6,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped
 from sqlalchemy.types import JSON
 from sqlalchemy_utils.types.choice import ChoiceType
 
-from tools.constants import ProtocolIDs
+from handler_tools.constants import ProtocolIDs
 from handlers.liquidable_debt.values import LendingProtocolNames
 
 
@@ -76,5 +77,6 @@ class OrderBookModel(Base):
     timestamp = Column(BigInteger, nullable=False)
     block = Column(BigInteger, nullable=False)
     dex = Column(String, nullable=False, index=True)
+    current_price = Column(DECIMAL, nullable=False)
     asks = Column(JSON, nullable=True)
     bids = Column(JSON, nullable=True)

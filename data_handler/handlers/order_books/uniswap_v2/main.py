@@ -1,3 +1,4 @@
+import datetime
 from decimal import Decimal
 import asyncio
 from typing import Iterable
@@ -14,8 +15,17 @@ class UniswapV2OrderBook(OrderBookBase):
         super().__init__(token_a, token_b)
         self.token_a = token_a
         self.token_b = token_b
+        self.token_a_name = None
+        self.token_b_name = None
         self._pool = None
         self._swap_amm = SwapAmm()
+        self._set_token_names()
+
+    def _set_token_names(self) -> None:
+        """Get token names from token addresses."""
+        token_a_info, token_b_info = self.get_token_configs()
+        self.token_a_name = token_a_info.name
+        self.token_b_name = token_b_info.name
 
     def _set_current_price(self) -> None:
         """Set the current price of the pair based on asks and bids."""
@@ -27,7 +37,7 @@ class UniswapV2OrderBook(OrderBookBase):
 
     def _set_pool(self) -> None:
         """Retrieve and set pool from available pools."""
-        tokens_id = self._swap_amm.tokens_to_id(self.token_a, self.token_b)
+        tokens_id = self._swap_amm.tokens_to_id(self.token_a_name, self.token_b_name)
         if tokens_id not in self._swap_amm.pools:
             raise ValueError(f"Pool {tokens_id} not found.")
         self._pool = self._swap_amm.pools[tokens_id]
@@ -68,6 +78,7 @@ class UniswapV2OrderBook(OrderBookBase):
         prices_range = self.get_prices_range(current_price)
         self.add_quantities_data(prices_range, current_price)
         self._set_current_price()
+        self.block = 0
 
     def add_quantities_data(self, prices_range: Iterable[Decimal], current_price: Decimal) -> None:
         """
@@ -94,28 +105,6 @@ class UniswapV2OrderBook(OrderBookBase):
         price = ((sqrt_ratio / (Decimal(2) ** 128)) ** 2) * 10 ** (self.token_a_decimal - self.token_b_decimal)
         return price
 
-    def calculate_token_amount_price_change(
-            self, price_change_ratio: Decimal
-    ) -> Decimal:
-        """
-        Calculate amounts of the token_a required to change the price by the given ratio.
-        Run this method after fetching the order book for current price to be set.
-        :param price_change_ratio: Decimal - The price change ratio.
-        :return: Decimal - Quantity that can be traded without moving price outside acceptable bound.
-        """
-        if price_change_ratio > 1 or price_change_ratio < 0:
-            raise ValueError("Provide valid price change ratio.")
-        if self.current_price == 0:
-            raise ValueError("Current price of the pair is zero.")
-        min_price = (Decimal("1") - price_change_ratio) * self.current_price
-        lower_quantity = Decimal("0")
-        for price, quantity in self.bids:
-            if price >= min_price:
-                lower_quantity += quantity
-            elif price > self.current_price:
-                break
-        return lower_quantity
-
 
 if __name__ == '__main__':
     token_0 = "ETH"
@@ -125,4 +114,3 @@ if __name__ == '__main__':
     order_book = UniswapV2OrderBook(token_0, token_1)
     order_book.fetch_price_and_liquidity()
     print(order_book.get_order_book(), "\n")
-    token_amount = order_book.calculate_token_amount_price_change(Decimal("0.05"))

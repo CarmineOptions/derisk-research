@@ -6,8 +6,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import scoped_session, sessionmaker, Session, aliased
 
 from db.database import SQLALCHEMY_DATABASE_URL
-from db.models import Base, LoanState
-from tools.constants import ProtocolIDs
+from db.models import Base, LoanState, OrderBookModel, InterestRate
+from handler_tools.constants import ProtocolIDs
 
 
 ModelType = TypeVar("ModelType", bound=Base)
@@ -204,6 +204,35 @@ class DBConnector:
         finally:
             db.close()
 
+    def get_latest_order_book(self, dex: str, token_a: str, token_b: str) -> OrderBookModel | None:
+        """
+        Retrieves the latest order book for a given pair of tokens and DEX.
+        :param dex: str - The DEX name.
+        :param token_a: str - The base token address.
+        :param token_b: str - The quote token address.
+        :return: OrderBookModel instance or None.
+        """
+        db = self.Session()
+        try:
+            order_book_condition = and_(
+                OrderBookModel.dex == dex,
+                OrderBookModel.token_a == token_a,
+                OrderBookModel.token_b == token_b,
+            )
+            max_timestamp = (
+                select(func.max(OrderBookModel.timestamp))
+                .where(order_book_condition).
+                scalar_subquery()
+            )
+            return db.execute(
+                select(OrderBookModel).where(
+                    OrderBookModel.timestamp == max_timestamp,
+                    order_book_condition
+                )
+            ).scalar()
+        finally:
+            db.close()
+
     def get_unique_users_last_block_objects(
         self, protocol_id: ProtocolIDs
     ) -> LoanState:
@@ -235,6 +264,25 @@ class DBConnector:
                 )
                 .filter(LoanState.protocol_id == protocol_id)
                 .all()
+            )
+        finally:
+            db.close()
+
+    def get_last_interest_rate_record_by_protocol_id(
+        self, protocol_id: ProtocolIDs
+    ) -> InterestRate:
+        """
+        Retrieves the last interest rate record by protocol ID.
+        :param protocol_id: ProtocolIDs - The protocol ID to filter by.
+        :return: InterestRate | None
+        """
+        db = self.Session()
+        try:
+            return (
+                db.query(InterestRate)
+                .filter(InterestRate.protocol_id == protocol_id)
+                .order_by(InterestRate.block.desc())
+                .first()
             )
         finally:
             db.close()

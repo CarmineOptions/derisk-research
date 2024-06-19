@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import Optional, Dict
 from typing import List
 import decimal
@@ -21,6 +22,16 @@ class LoanStateResponse(LoanStateBase):
     pass
 
 
+class InterestRateModel(BaseModel):
+    """
+    A data model class that validates data user entered
+    """
+    block: int
+    timestamp: int
+    debt: Dict[str, float]
+    collateral: Dict[str, float]
+
+
 class OrderBookModel(BaseModel):
     """
     A data model class that validates data user entered
@@ -31,6 +42,7 @@ class OrderBookModel(BaseModel):
     block: int
     timestamp: int
     dex: str
+    current_price: Decimal
     asks: List[tuple[float, float]]
     bids: List[tuple[float, float]]
 
