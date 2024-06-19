@@ -86,18 +86,15 @@ class GCloudLiquidableDebtDataHandler:
     ) -> dict:
         """
         Sorts a given data by token pair correspondence.
-        Args: parsed_data( dict[
-            int - Row number,
-            dict[
-                str - Field name,
-                str - Token value
-                | Decimal - Field value (the price as example)
-                | dict[
-                    str - Token name,
-                    Decimal - Token value
-                ]
-            ]
-        ])
+        :param parsed_data: {
+            Row number: {
+                Field name: Token value
+                 or Decimal - Field value (the price as example)
+                 or {
+                    Token name: Token value
+                }
+            }
+        }
         :return: A dictionary of a sorted data.
         """
         result = deepcopy(parsed_data)
@@ -144,6 +141,17 @@ class GCloudLiquidableDebtDataHandler:
         ]:
             raise ProtocolExistenceError(protocol_name)
 
+    @staticmethod
+    def _get_response(protocol_name: str) -> requests.Response:
+        """
+        Gets the response from endpoint for the given protocol.
+        :param protocol_name: str
+        :return: requests.Response
+        """
+        response = requests.get(cls.INTEREST_MODEL_VALUES_URL.format(protocol=protocol_name))
+        response.raise_for_status()
+        return response.json()
+
     @classmethod
     def get_interest_rate_models_data(cls, protocol_name: str) -> dict:
         """
@@ -156,14 +164,10 @@ class GCloudLiquidableDebtDataHandler:
             current_protocol = str(protocol.value).lower()
             if protocol_name.lower() == current_protocol:
                 try:
-                    response = requests.get(cls.INTEREST_MODEL_VALUES_URL.format(protocol=protocol.value))
-                    response.raise_for_status()
-                    return response.json()
+                    return cls._get_response(protocol.value)
                 except:
                     time.sleep(10)
-                    response = requests.get(cls.INTEREST_MODEL_VALUES_URL.format(protocol=protocol.value))
-                    response.raise_for_status()
-                    return response.json()
+                    return cls._get_response(protocol.value)
 
     @staticmethod
     def normalize_protocol_name(protocol_name: str) -> str:
@@ -180,18 +184,15 @@ class GCloudLiquidableDebtDataHandler:
         """
         Calculates liquidable debt based on data provided and updates an existing data.
         Data to calculate liquidable debt for:
-        Args: data( dict[
-            int - Row number,
-            dict[
-                str - Field name,
-                str - Token value
-                | Decimal - Field value (the price as example)
-                | dict[
-                    str - Token name,
-                    Decimal - Token value
-                ]
-            ]
-        ])
+        :param data: {
+            Row number: {
+                Field name: Token value
+                 or Decimal - Field value (the price as example)
+                 or {
+                    Token name: Token value
+                }
+            }
+        }
         :return: A dictionary of the ready liquidable debt data.
         """
         result_data = dict()
