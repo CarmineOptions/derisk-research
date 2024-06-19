@@ -8,42 +8,91 @@ import src.helpers
 import src.protocol_parameters
 import src.state
 import src.swap_amm
+import src.types
+
+
+
+# TODO: move to helpers/BaBaseTokenParameters
+def get_underlying_address(
+    token_parameters: dict[str, src.types.BaseTokenParameters], 
+    underlying_symbol: str,
+) -> set[str]:
+    underlying_addresses = [
+        x.underlying_address
+        for x in token_parameters.values()
+        if x.underlying_symbol == underlying_symbol
+    ]
+    assert len(underlying_addresses) == 1
+    return underlying_addresses[0]
+
+
+# TODO: move to helpers/BaBaseTokenParameters
+def get_address(
+    token_parameters: dict[str, src.types.BaseTokenParameters], 
+    underlying_symbol: str,
+) -> set[str]:
+    addresses = [
+        x.address
+        for x in token_parameters.values()
+        if x.underlying_symbol == underlying_symbol
+    ]
+    if len(addresses) != 1:
+        print(token_parameters)
+        print(underlying_symbol)
+        print(addresses)
+    assert len(addresses) == 1
+    return addresses[0]
+
 
 def get_main_chart_data(
     state: src.state.State,
-    prices: src.helpers.TokenValues,
+    prices: src.types.Prices,
     swap_amms: src.swap_amm.SwapAmm,
-    collateral_token: str,
-    debt_token: str,
+    collateral_token_underlying_symbol: str,
+    debt_token_underlying_symbol: str,
     save_data: bool = False,
 ) -> pandas.DataFrame:
-    collateral_token_price = prices.values[collateral_token]
+    collateral_token_underlying_address = get_underlying_address(
+        token_parameters=state.token_parameters.collateral,
+        underlying_symbol=collateral_token_underlying_symbol,
+    )
     data = pandas.DataFrame(
         {
             "collateral_token_price": src.helpers.get_collateral_token_range(
-                collateral_token=collateral_token,
-                collateral_token_price=collateral_token_price,
+                collateral_token_underlying_address=collateral_token_underlying_address,
+                collateral_token_price=prices[collateral_token_underlying_address],
             ),
         }
     )
-    
+
+    debt_token_underlying_address = get_underlying_address(
+        token_parameters=state.token_parameters.debt,
+        underlying_symbol=debt_token_underlying_symbol,
+    )
     data['liquidable_debt'] = data['collateral_token_price'].apply(
         lambda x: state.compute_liquidable_debt_at_price(
             prices=prices,
-            collateral_token=collateral_token,
+            collateral_token_underlying_address=collateral_token_underlying_address,
             collateral_token_price=x,
-            debt_token=debt_token,
+            debt_token_underlying_address=debt_token_underlying_address,
         )
     )
-    
+
     data['liquidable_debt_at_interval'] = data['liquidable_debt'].diff().abs()
     data.dropna(inplace=True)
     
     for amm in src.swap_amm.AMMS:
         data[f"{amm}_debt_token_supply"] = 0
     
-    def compute_supply_at_price(price):
-        supplies = {amm: swap_amms.get_supply_at_price(collateral_token, price, debt_token, amm) for amm in src.swap_amm.AMMS}
+    def compute_supply_at_price(collateral_token_price: float):
+        supplies = {
+            amm: swap_amms.get_supply_at_price(
+                collateral_token_underlying_symbol=collateral_token_underlying_symbol, 
+                collateral_token_price=collateral_token_price, 
+                debt_token_underlying_symbol=debt_token_underlying_symbol, 
+                amm=amm,
+            ) for amm in src.swap_amm.AMMS
+        }
         total_supply = sum(supplies.values())
         return supplies, total_supply
 
@@ -51,10 +100,10 @@ def get_main_chart_data(
     for amm in src.swap_amm.AMMS:
         data[f"{amm}_debt_token_supply"] = supplies_and_totals.apply(lambda x: x[0][amm])
     data['debt_token_supply'] = supplies_and_totals.apply(lambda x: x[1])
-    
+
     if save_data:
         directory = src.protocol_parameters.get_directory(state=state)
-        path = f"{directory}/{collateral_token}-{debt_token}.parquet"
+        path = f"{directory}/{collateral_token_underlying_address}-{debt_token_underlying_address}.parquet"
         src.helpers.save_dataframe(data=data, path=path)
     
     return data
@@ -92,7 +141,7 @@ def get_main_chart_figure(
     figure.update_xaxes(title_text=f"{collateral_token} Price (USD)")
     figure.update_yaxes(title_text="Volume (USD)")
 
-    collateral_token_price = src.swap_amm.Prices().prices.values[collateral_token]
+    collateral_token_price = src.swap_amm.Prices().prices[collateral_token]
     figure.add_vline(
         x=collateral_token_price,
         line_width=2,

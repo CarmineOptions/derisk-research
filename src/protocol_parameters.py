@@ -39,16 +39,19 @@ def get_protocol(state: src.state.State) -> str:
 
 
 # TODO: make this an attribute of the State class?
-def get_supply_function_call_parameters(protocol: str, token: str) -> tuple[list[str], str]:
+def get_supply_function_call_parameters(
+    protocol: str,
+    token_address: str,
+) -> tuple[list[str], str]:
     if protocol == 'zkLend':
-        return [src.zklend.TOKEN_SETTINGS[token].protocol_token_address], 'felt_total_supply'
+        return [token_address], 'felt_total_supply'
     if protocol == 'Nostra Alpha':
         token_addresses = [
             address
             for address, nostra_token
             in src.nostra_alpha.ADDRESSES_TO_TOKENS.items()
             if (
-                nostra_token == token
+                nostra_token == token_address
                 and src.nostra_alpha.ADDRESSES_TO_EVENTS[address] in {
                     'interest_bearing_deposit',
                     'interest_bearing_collateral',
@@ -62,7 +65,7 @@ def get_supply_function_call_parameters(protocol: str, token: str) -> tuple[list
             for address, nostra_token
             in src.nostra_mainnet.ADDRESSES_TO_TOKENS.items()
             if (
-                nostra_token == token
+                nostra_token == token_address
                 and src.nostra_mainnet.ADDRESSES_TO_EVENTS[address] in {
                     'interest_bearing_deposit',
                     'interest_bearing_collateral',

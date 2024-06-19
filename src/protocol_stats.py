@@ -7,9 +7,11 @@ import src.blockchain_call
 import src.hashstack_v0
 import src.hashstack_v1
 import src.helpers
+import src.main_chart
 import src.protocol_parameters
 import src.settings
 import src.state
+import src.types
 
 
 
@@ -52,7 +54,7 @@ def get_general_stats(
 
 def get_supply_stats(
     states: list[src.state.State],
-    prices: src.helpers.TokenValues,
+    prices: src.types.Prices,
     save_data: bool = False,
 ) -> pandas.DataFrame:
     data = []
@@ -62,15 +64,15 @@ def get_supply_stats(
         for token in src.settings.TOKEN_SETTINGS:
             # TODO: Add wstETH.
             if token == 'wstETH' and protocol not in {'zkLend', 'Nostra Mainnet'}:
-                token_supplies[token] = decimal.Decimal("0")
+                token_supplies[token] = 0.0
                 continue
             # TODO: Add LORDS.
             if token == 'LORDS' and protocol != 'Nostra Mainnet':
-                token_supplies[token] = decimal.Decimal("0")
+                token_supplies[token] = 0.0
                 continue
             # TODO: Add STRK.
             if token == 'STRK' and protocol not in {'zkLend', 'Nostra Mainnet'}:
-                token_supplies[token] = decimal.Decimal("0")
+                token_supplies[token] = 0.0
                 continue
 
             if protocol == 'Hashstack V0':
@@ -90,7 +92,10 @@ def get_supply_stats(
             else:
                 addresses, selector = src.protocol_parameters.get_supply_function_call_parameters(
                     protocol=protocol, 
-                    token=token,
+                    token_address=src.main_chart.get_address(
+                        token_parameters=state.token_parameters.collateral,
+                        underlying_symbol=token,
+                    ),
                 )
                 supply = 0
                 for address in addresses:
@@ -101,13 +106,13 @@ def get_supply_stats(
                             calldata = [],
                         )
                     )[0]
-            supply = decimal.Decimal(str(supply)) / src.settings.TOKEN_SETTINGS[token].decimal_factor
+            supply = supply / src.settings.TOKEN_SETTINGS[token].decimal_factor
             token_supplies[token] = round(supply, 4)
         data.append(
             {
                 'Protocol': protocol,
                 'ETH supply': token_supplies['ETH'],
-                'wBTC supply': token_supplies['wBTC'],
+                'WBTC supply': token_supplies['WBTC'],
                 'USDC supply': token_supplies['USDC'],
                 'DAI supply': token_supplies['DAI'],
                 'USDT supply': token_supplies['USDT'],
@@ -118,7 +123,7 @@ def get_supply_stats(
         )
     data = pandas.DataFrame(data)
     data['Total supply (USD)'] = sum(
-        data[column] * prices.values[column.split(' ')[0]] 
+        data[column] * prices[src.settings.TOKEN_SETTINGS[token].address]
         for column in data.columns 
         if 'supply' in column
     ).apply(lambda x: round(x, 4))
@@ -139,30 +144,30 @@ def get_collateral_stats(
         for token in src.settings.TOKEN_SETTINGS:
             # TODO: Add wstETH.
             if token == 'wstETH' and protocol not in {'zkLend', 'Nostra Mainnet'}:
-                token_collaterals[token] = decimal.Decimal("0")
+                token_collaterals[token] = 0.0
                 continue
             # TODO: Add LORDS.
             if token == 'LORDS' and protocol != 'Nostra Mainnet':
-                token_collaterals[token] = decimal.Decimal("0")
+                token_collaterals[token] = 0.0
                 continue
             # TODO: Add STRK.
             if token == 'STRK' and protocol not in {'zkLend', 'Nostra Mainnet'}:
-                token_collaterals[token] = decimal.Decimal("0")
+                token_collaterals[token] = 0.0
                 continue
             collateral = (
                 sum(
-                    loan_entity.collateral.values[token]
+                    float(loan_entity.collateral[token])
                     for loan_entity in state.loan_entities.values()
                 )
                 / src.settings.TOKEN_SETTINGS[token].decimal_factor
-                * state.collateral_interest_rate_models.values[token]
+                * float(state.interest_rate_models.collateral[token])
             )
             token_collaterals[token] = round(collateral, 4)
         data.append(
             {
                 'Protocol': protocol,
                 'ETH collateral': token_collaterals['ETH'],
-                'wBTC collateral': token_collaterals['wBTC'],
+                'WBTC collateral': token_collaterals['WBTC'],
                 'USDC collateral': token_collaterals['USDC'],
                 'DAI collateral': token_collaterals['DAI'],
                 'USDT collateral': token_collaterals['USDT'],
@@ -201,18 +206,18 @@ def get_debt_stats(
                 continue
             debt = (
                 sum(
-                    loan_entity.debt.values[token]
+                    float(loan_entity.debt[token])
                     for loan_entity in state.loan_entities.values()
                 )
                 / src.settings.TOKEN_SETTINGS[token].decimal_factor
-                * state.debt_interest_rate_models.values[token]
+                * float(state.interest_rate_models.debt[token])
             )
             token_debts[token] = round(debt, 4)
         data.append(
             {
                 'Protocol': protocol,
                 'ETH debt': token_debts['ETH'],
-                'wBTC debt': token_debts['wBTC'],
+                'WBTC debt': token_debts['WBTC'],
                 'USDC debt': token_debts['USDC'],
                 'DAI debt': token_debts['DAI'],
                 'USDT debt': token_debts['USDT'],
@@ -241,7 +246,7 @@ def get_utilization_stats(
                 general_stats['Total debt (USD)'] + supply_stats['Total supply (USD)']
             ),
             'ETH utilization': debt_stats['ETH debt'] / (supply_stats['ETH supply'] + debt_stats['ETH debt']),
-            'wBTC utilization': debt_stats['wBTC debt'] / (supply_stats['wBTC supply'] + debt_stats['wBTC debt']),
+            'WBTC utilization': debt_stats['WBTC debt'] / (supply_stats['WBTC supply'] + debt_stats['WBTC debt']),
             'USDC utilization': debt_stats['USDC debt'] / (supply_stats['USDC supply'] + debt_stats['USDC debt']),
             'DAI utilization': debt_stats['DAI debt'] / (supply_stats['DAI supply'] + debt_stats['DAI debt']),
             'USDT utilization': debt_stats['USDT debt'] / (supply_stats['USDT supply'] + debt_stats['USDT debt']),
