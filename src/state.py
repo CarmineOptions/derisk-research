@@ -1,165 +1,10 @@
-from typing import Optional
 import abc
 import collections
-import dataclasses
-import decimal
 
 import pandas
 
-import src.settings
-import src.helpers
+import src.types
 
-
-
-@dataclasses.dataclass
-class SpecificTokenSettings:
-    collateral_factor: decimal.Decimal
-    debt_factor: decimal.Decimal
-
-
-@dataclasses.dataclass
-class TokenSettings(SpecificTokenSettings, src.settings.TokenSettings):
-    pass
-
-
-LOAN_ENTITY_SPECIFIC_TOKEN_SETTINGS: dict[str, SpecificTokenSettings] = {
-    "ETH": SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
-    "wBTC": SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
-    "USDC": SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
-    "DAI": SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
-    "USDT": SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
-    "wstETH": SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
-    "LORDS": SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
-    "STRK": SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
-}
-TOKEN_SETTINGS: dict[str, TokenSettings] = {
-    token: TokenSettings(
-        symbol=src.settings.TOKEN_SETTINGS[token].symbol,
-        decimal_factor=src.settings.TOKEN_SETTINGS[token].decimal_factor,
-        address=src.settings.TOKEN_SETTINGS[token].address,
-        collateral_factor=LOAN_ENTITY_SPECIFIC_TOKEN_SETTINGS[token].collateral_factor,
-        debt_factor=LOAN_ENTITY_SPECIFIC_TOKEN_SETTINGS[token].debt_factor,
-    )
-    for token in src.settings.TOKEN_SETTINGS
-}
-
-
-class InterestRateModel(collections.defaultdict):
-    """
-    A class that describes the state of the interest rate index which helps transform face amounts into raw amounts. 
-    Raw amount is the amount that would have been accumulated into the face amount if it were deposited at genesis.
-    """
-
-    def __init__(self) -> None:
-        super().__init__(lambda: decimal.Decimal("1"))
-
-
-class InterestRateModels:
-    """
-    A class that describes the state of the interest rate indices which help transform face amounts into raw amounts. 
-    Raw amount is the amount that would have been accumulated into the face amount if it were deposited at genesis.
-    """
-
-    def __init__(self) -> None:
-        # These models reflect the interest rates at which users lend/stake funds.
-        self.collateral: InterestRateModel = InterestRateModel()
-        # These models reflect the interest rates at which users borrow funds.
-        self.debt: InterestRateModel = InterestRateModel()
-
-
-@dataclasses.dataclass
-class BaseTokenParameters:
-    address: str
-    decimals: int
-    symbol: str
-    underlying_symbol: str
-
-
-class TokenParameters:
-    """
-    A class that describes the parameters of collateral and debt token. These parameter are e.g. the token address,
-    symbol, decimals, underlying token symbol, etc.
-    """
-
-    def __init__(self) -> None:
-        self.collateral: dict[str, BaseTokenParameters] = {}
-        self.debt: dict[str, BaseTokenParameters] = {}
-
-
-class LoanEntity(abc.ABC):
-    """
-    A class that describes and entity which can hold collateral, borrow debt and be liquidable. For example, on 
-    Starknet, such an entity is the user in case of zkLend, Nostra Alpha and Nostra Mainnet, or an individual loan in 
-    case od Hashstack V0 and Hashstack V1.
-    """
-
-    TOKEN_SETTINGS: dict[str, TokenSettings] = TOKEN_SETTINGS
-
-    def __init__(self) -> None:
-        self.collateral: src.helpers.Portfolio = src.helpers.Portfolio()
-        self.debt: src.helpers.Portfolio = src.helpers.Portfolio()
-
-    def compute_collateral_usd(
-        self,
-        risk_adjusted: bool,
-        collateral_interest_rate_model: InterestRateModel,
-        prices: src.helpers.TokenValues,
-    ) -> decimal.Decimal:
-        return sum(
-            token_amount
-            / self.TOKEN_SETTINGS[token].decimal_factor
-            * (self.TOKEN_SETTINGS[token].collateral_factor if risk_adjusted else decimal.Decimal("1"))
-            * collateral_interest_rate_model[token]
-            * prices[token]
-            for token, token_amount in self.collateral.items()
-        )
-
-    def compute_debt_usd(
-        self, 
-        risk_adjusted: bool,
-        debt_interest_rate_model: InterestRateModel,
-        prices: src.helpers.TokenValues,
-    ) -> decimal.Decimal:
-        return sum(
-            token_amount
-            / self.TOKEN_SETTINGS[token].decimal_factor
-            / (self.TOKEN_SETTINGS[token].debt_factor if risk_adjusted else decimal.Decimal("1"))
-            * debt_interest_rate_model[token]
-            * prices[token]
-            for token, token_amount in self.debt.items()
-        )
-
-    @abc.abstractmethod
-    def compute_health_factor(self):
-        pass
-
-    @abc.abstractmethod
-    def compute_debt_to_be_liquidated(self):
-        pass
-
-    def get_collateral_str(self, collateral_interest_rate_model: InterestRateModel) -> str:
-        return ', '.join(
-            f"{token}: {round(token_amount / self.TOKEN_SETTINGS[token].decimal_factor * collateral_interest_rate_model[token], 4)}"
-            for token, token_amount in self.collateral.items()
-            if token_amount > decimal.Decimal("0")
-        )
-
-    def get_debt_str(self, debt_interest_rate_model: InterestRateModel) -> str:
-        return ', '.join(
-            f"{token}: {round(token_amount / self.TOKEN_SETTINGS[token].decimal_factor * debt_interest_rate_model[token], 4)}"
-            for token, token_amount in self.debt.items()
-            if token_amount > decimal.Decimal("0")
-        )
-
-    def has_collateral(self) -> bool:
-        if any(token_amount for token_amount in self.collateral.values()):
-            return True
-        return False
-
-    def has_debt(self) -> bool:
-        if any(token_amount for token_amount in self.debt.values()):
-            return True
-        return False
 
 
 class State(abc.ABC):
@@ -171,16 +16,17 @@ class State(abc.ABC):
 
     def __init__(
         self,
-        loan_entity_class: LoanEntity,
-        verbose_user: Optional[str] = None,
+        loan_entity_class: src.types.LoanEntity,
+        verbose_user: str | None = None,
     ) -> None:
-        self.loan_entity_class: LoanEntity = loan_entity_class
-        self.verbose_user: Optional[str] = verbose_user
+        self.loan_entity_class: src.type.LoanEntity = loan_entity_class
+        self.verbose_user: str | None = verbose_user
         self.loan_entities: collections.defaultdict = collections.defaultdict(self.loan_entity_class)
-        self.interest_rate_models: InterestRateModels = InterestRateModels()
-        self.token_parameters: TokenParameters = TokenParameters()
+        self.interest_rate_models: src.types.CollateralAndDebtInterestRateModels = src.types.CollateralAndDebtInterestRateModels()
+        self.token_parameters: src.types.CollateralAndDebtTokenParameters = src.types.CollateralAndDebtTokenParameters()
         self.last_block_number: int = 0
 
+    # TODO: This method will likely differ across protocols. -> Leave undefined?
     def process_event(self, event: pandas.Series) -> None:
         # TODO: Save the timestamp of each update?
         assert event["block_number"] >= self.last_block_number
