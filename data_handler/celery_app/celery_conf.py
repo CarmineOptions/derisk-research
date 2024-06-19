@@ -55,14 +55,15 @@ app.conf.beat_schedule = {
         'task': 'run_liquidable_debt_computation_for_nostra_mainnet',
         'schedule': crontab(minute=f'*/{CRONTAB_TIME}'),
     },
-    f'run_liquidable_debt_computation_for_hashstack_v0_every_{CRONTAB_TIME}_mins': {
-        'task': 'run_liquidable_debt_computation_for_hashstack_v0',
-        'schedule': crontab(minute=f'*/{CRONTAB_TIME}'),
-    },
-    f'run_liquidable_debt_computation_for_hashstack_v1_every_{CRONTAB_TIME}_mins': {
-        'task': 'run_liquidable_debt_computation_for_hashstack_v1',
-        'schedule': crontab(minute=f'*/{CRONTAB_TIME}'),
-    },
+    # Interest rate part is not implemented yet
+    # f'run_liquidable_debt_computation_for_hashstack_v0_every_{CRONTAB_TIME}_mins': {
+    #     'task': 'run_liquidable_debt_computation_for_hashstack_v0',
+    #     'schedule': crontab(minute=f'*/{CRONTAB_TIME}'),
+    # },
+    # f'run_liquidable_debt_computation_for_hashstack_v1_every_{CRONTAB_TIME}_mins': {
+    #     'task': 'run_liquidable_debt_computation_for_hashstack_v1',
+    #     'schedule': crontab(minute=f'*/{CRONTAB_TIME}'),
+    # },
     "constant_product_market_makers_order_book": {
         "task": "uniswap_v2_order_book",
         "schedule": ORDER_BOOK_TIME_INTERVAL,
