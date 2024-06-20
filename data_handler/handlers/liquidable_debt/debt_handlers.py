@@ -141,8 +141,8 @@ class GCloudLiquidableDebtDataHandler:
         ]:
             raise ProtocolExistenceError(protocol_name)
 
-    @staticmethod
-    def _get_response(protocol_name: str) -> requests.Response:
+    @classmethod
+    def _get_response(cls, protocol_name: str) -> requests.Response:
         """
         Gets the response from endpoint for the given protocol.
         :param protocol_name: str
@@ -195,6 +195,9 @@ class GCloudLiquidableDebtDataHandler:
         }
         :return: A dictionary of the ready liquidable debt data.
         """
+        # FIXME Read loan_entities from the database
+        # FIXME concentrate for one Protocol and one collateral_token and debt_token
+        # FIXME go through all data and init them as loan_entities
         result_data = dict()
         current_prices = Prices()
         asyncio.run(current_prices.get_lp_token_prices())
@@ -203,58 +206,59 @@ class GCloudLiquidableDebtDataHandler:
             for protocol in AvailableProtocolID
         }
 
-        for index, row in data.items():
+        # init just once for improving performance
+        state = self.state_class()
+        # TODO: 1. Read data from db for state.loan_entities from LoanState model
+        # TODO: 2. Set last interest rate record by block
+        # state.interest_rate_models = InterestRateModels(..)
+        # # Set up collateral and debt interest rate models
+        # state.collateral_interest_rate_models = InterestRateModels(
+        #     values=interest_rate_models[COLLATERAL_FIELD_NAME.lower()]
+        # )
+        # state.debt_interest_rate_models = InterestRateModels(
+        #     values=interest_rate_models[DEBT_FIELD_NAME.lower()]
+        # )
+        # for index, row in data.items():
             # even if it isn't per-user data, we need to provide a user ID
             # so like that we're able to provide debt and collateral values
-            user_wallet_id = row[USER_FIELD_NAME]
-            state = self.state_class(verbose_user=user_wallet_id)
-            normalized_protocol_name = self.normalize_protocol_name(row[PROTOCOL_FIELD_NAME])
-            interest_rate_models = INTEREST_RATE_MODELS_MAPPING.get(normalized_protocol_name)
-            debt_token = next(iter(row[DEBT_FIELD_NAME].keys()))
+            # TODO use just one collateral token and debt token
+            # for collateral_token in row[COLLATERAL_FIELD_NAME].keys():
+            #     hypothetical_collateral_token_prices = self.get_prices_range(
+            #         collateral_token_name=collateral_token,
+            #         current_price=current_prices.prices.values[collateral_token]
+            #     )
 
-            for collateral_token in row[COLLATERAL_FIELD_NAME].keys():
-                hypothetical_collateral_token_prices = self.get_prices_range(
-                    collateral_token_name=collateral_token,
-                    current_price=current_prices.prices.values[collateral_token]
-                )
+        # Go through first hypothetical prices and then through the debts
+        for hypothetical_price in hypothetical_collateral_token_prices:
+            current_prices.prices.values[collateral_token] = hypothetical_price
 
-                # Set up collateral and debt interest rate models
-                state.collateral_interest_rate_models = InterestRateModels(
-                    values=interest_rate_models[COLLATERAL_FIELD_NAME.lower()]
-                )
-                state.debt_interest_rate_models = InterestRateModels(
-                    values=interest_rate_models[DEBT_FIELD_NAME.lower()]
-                )
+            if not isinstance(state, (HashstackV0State, HashstackV1State)):
+                # FIXME not needed, will be done in the first step
+                # state.loan_entities[user_wallet_id].debt.values = {
+                #     debt_token: hypothetical_price
+                #     for debt_token in TOKEN_PAIRS.get(collateral_token, "")
+                # }
+                # state.loan_entities[user_wallet_id].collateral.values = {
+                #     collateral_token: hypothetical_price
+                # }
 
-                for hypothetical_price in hypothetical_collateral_token_prices:
-                    current_prices.prices.values[collateral_token] = hypothetical_price
+            liquidable_debt = state.compute_liquidable_debt_at_price(
+                prices=TokenValues(init_value=current_prices.prices.values.get(collateral_token)),
+                collateral_token=collateral_token,
+                collateral_token_price=hypothetical_price,
+                debt_token=debt_token,
+            )
 
-                    if not isinstance(state, (HashstackV0State, HashstackV1State)):
-                        state.loan_entities[user_wallet_id].debt.values = {
-                            debt_token: hypothetical_price
-                            for debt_token in TOKEN_PAIRS.get(collateral_token, "")
-                        }
-                        state.loan_entities[user_wallet_id].collateral.values = {
-                            collateral_token: hypothetical_price
-                        }
-
-                    liquidable_debt = state.compute_liquidable_debt_at_price(
-                        prices=TokenValues(init_value=current_prices.prices.values.get(collateral_token)),
-                        collateral_token=collateral_token,
-                        collateral_token_price=hypothetical_price,
-                        debt_token=debt_token,
-                    )
-
-                    if liquidable_debt > Decimal("0"):
-                        result_data.update({
-                            f"{uuid.uuid4()}": {
-                                LIQUIDABLE_DEBT_FIELD_NAME: liquidable_debt,
-                                PRICE_FIELD_NAME: hypothetical_price,
-                                COLLATERAL_FIELD_NAME: collateral_token,
-                                PROTOCOL_FIELD_NAME: row[PROTOCOL_FIELD_NAME],
-                                DEBT_FIELD_NAME: debt_token,
-                            }
-                        })
+            if liquidable_debt > Decimal("0"):
+                result_data.update({
+                    f"{uuid.uuid4()}": {
+                        LIQUIDABLE_DEBT_FIELD_NAME: liquidable_debt,
+                        PRICE_FIELD_NAME: hypothetical_price,
+                        COLLATERAL_FIELD_NAME: collateral_token,
+                        PROTOCOL_FIELD_NAME: row[PROTOCOL_FIELD_NAME],
+                        DEBT_FIELD_NAME: debt_token,
+                    }
+                })
 
         return result_data
 
