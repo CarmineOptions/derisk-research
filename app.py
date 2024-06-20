@@ -59,11 +59,12 @@ def main():
         )
         collateral_token = streamlit.selectbox(
             label="Select collateral token:",
-            options=list(src.settings.COLLATERAL_TO_DEBT_TOKENS.keys()),
+            options=list(src.settings.COLLATERAL_TOKENS),
             index=0,
         )
         
-        debt_token_options = src.settings.COLLATERAL_TO_DEBT_TOKENS[collateral_token]
+        debt_token_options = src.settings.DEBT_TOKENS
+        
         debt_token = streamlit.selectbox(
             label="Select debt token:",
             options=debt_token_options,
