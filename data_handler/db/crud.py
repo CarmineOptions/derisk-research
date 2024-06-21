@@ -1,7 +1,7 @@
 import uuid
 from typing import List, Optional, Type, TypeVar
 
-from sqlalchemy import create_engine, func, select, and_
+from sqlalchemy import create_engine, func, select, and_, desc
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import scoped_session, sessionmaker, Session, aliased
 
@@ -284,5 +284,20 @@ class DBConnector:
                 .order_by(InterestRate.block.desc())
                 .first()
             )
+        finally:
+            db.close()
+
+    def get_all_block_records(self, model: Type[ModelType] = None):
+        """
+        Retrieves all rows of given model in descending order.
+        :param model: Type - The model to get data from.
+        """
+        db = self.Session()
+        try:
+            return db.query(
+                model.user,
+                model.collateral,
+                model.debt,
+            ).order_by(desc(model.block))
         finally:
             db.close()
