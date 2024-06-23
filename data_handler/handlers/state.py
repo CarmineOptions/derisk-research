@@ -173,8 +173,8 @@ class InterestRateModels(TokenValues):
     Raw amount is the amount that would have been accumulated into the face amount if it were deposited at genesis.
     """
 
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(init_value=decimal.Decimal("1"), *args, **kwargs)
+    def __init__(self, init_value=decimal.Decimal("1"), *args, **kwargs) -> None:
+        super().__init__(init_value=init_value, *args, **kwargs)
 
 
 class LoanEntity(abc.ABC):
@@ -198,7 +198,7 @@ class LoanEntity(abc.ABC):
             prices: TokenValues,
     ) -> decimal.Decimal:
         return sum(
-            token_amount
+            decimal.Decimal(token_amount)
             / self.TOKEN_SETTINGS[token].decimal_factor
             * (
                 self.TOKEN_SETTINGS[token].collateral_factor
@@ -217,7 +217,7 @@ class LoanEntity(abc.ABC):
             prices: TokenValues,
     ) -> decimal.Decimal:
         return sum(
-            token_amount
+            decimal.Decimal(token_amount)
             / self.TOKEN_SETTINGS[token].decimal_factor
             / (
                 self.TOKEN_SETTINGS[token].debt_factor

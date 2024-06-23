@@ -41,7 +41,6 @@ DB_HOST=db
 DB_PORT=#
 DERISK_API_URL=#
 REDIS_HOST=redis
-ITEREST_MODEL_VALUES_URL=#
 ```
 
 ### 5. Build your docker containers
