@@ -45,4 +45,4 @@ class LendingProtocolNames(Enum):
     HASHSTACK_V1: str = 'hashstack_v1'
     NOSTRA_ALPHA: str = 'nostra_alpha'
     NOSTRA_MAINNET: str = 'nostra_mainnet'
-    ZKLEND: str = 'zklend'
+    ZKLEND: str = 'zkLend'
