@@ -93,6 +93,38 @@ class DBConnector:
         finally:
             db.close()
 
+    def _get_subquery(self):
+        """
+        Returns subquery for loan state last blocks query
+        """
+        session = self.Session()
+        return (
+            session.query(
+                LoanState.user,
+                func.max(LoanState.block).label('latest_block')
+            )
+            .group_by(LoanState.user)
+            .subquery()
+        )
+
+    def get_latest_block_loans(self):
+        session = self.Session()
+        subquery = self._get_subquery()
+
+        result = (
+            session.query(LoanState)
+            .join(
+                subquery,
+                and_(
+                    LoanState.user == subquery.c.user,
+                    LoanState.block == subquery.c.latest_block
+                )
+            )
+            .all()
+        )
+
+        return result
+
     def get_loans(
         self,
         model: Type[Base],

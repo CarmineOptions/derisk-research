@@ -1,6 +1,7 @@
 import uuid
 import asyncio
 from datetime import datetime
+from decimal import Decimal
 
 from db.crud import DBConnector
 from db.models import HealthRatioLevel, LoanState
@@ -33,9 +34,7 @@ class ZkLendHealthRatioHandler:
         :param protocol_name: Protocol name.
         :return: tuple
         """
-        fetched_data = self.get_data_from_db(
-            protocol_name=protocol_name
-        )
+        fetched_data = self.get_data_from_db()
         interest_rate_models = self.get_interest_rate_models_from_db(
             protocol_id=protocol_name
         )
@@ -53,8 +52,8 @@ class ZkLendHealthRatioHandler:
         for instance in data:
             loan_entity = self.loan_entity_class()
 
-            loan_entity.debt = TokenValues(values=instance.debt.items())
-            loan_entity.collateral = TokenValues(values=instance.collateral.items())
+            loan_entity.debt = TokenValues(values=instance.debt)
+            loan_entity.collateral = TokenValues(values=instance.collateral)
 
             state.loan_entities.update(
                 {
@@ -93,7 +92,8 @@ class ZkLendHealthRatioHandler:
                 debt_usd=debt_usd,
             )
 
-            if health_ratio_level > Decimal("0"):
+            if health_ratio_level > Decimal("0") and \
+               health_ratio_level != Decimal("Infinity"):
                 result_data.update({
                         f"{uuid.uuid4()}": {
                             USER_FIELD_NAME: user_id,
@@ -114,16 +114,12 @@ class ZkLendHealthRatioHandler:
         return cls.CONNECTOR.get_last_interest_rate_record_by_protocol_id(protocol_id=protocol_id)
 
     @classmethod
-    def get_data_from_db(cls, protocol_name: str) -> dict:
+    def get_data_from_db(cls) -> dict:
         """
         Gets the data from the database based on the protocol name.
-        :param protocol_name: The protocol name.
         :return: The data from the database.
         """
-        return cls.CONNECTOR.get_loans(
-            model=LoanState,
-            protocol=protocol_name
-        )
+        return cls.CONNECTOR.get_latest_block_loans()
 
     @classmethod
     def write_to_db(cls, data: HealthRatioLevel = None) -> None:
