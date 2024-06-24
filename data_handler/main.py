@@ -1,13 +1,13 @@
 from typing import List, Optional
-from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi import FastAPI, Depends, HTTPException, Request, status, Query
 from sqlalchemy.orm import Session
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.middleware import SlowAPIMiddleware
 
 from db.schemas import LoanStateResponse, InterestRateModel
-from tools.constants import ProtocolIDs
-from db.models import LoanState, InterestRate
+from handler_tools.constants import ProtocolIDs
+from db.models import LoanState, InterestRate, HealthRatioLevel
 from db.database import Base, engine, get_database
 
 # Create the database tables
@@ -98,3 +98,31 @@ def get_last_interest_rate_by_block(
     ).order_by(InterestRate.block.desc()).first()
 
     return last_record
+
+
+@limiter.limit("10/second")
+@app.get("/health-ratio-per-user/")
+async def get_health_ratio_per_user(
+        request: Request,
+        user_id: str = Query(...,),
+        db: Session = Depends(get_database)
+):
+    """
+    Returns the health ratio by user id provided.
+    :param request: The request object.
+    :param user_id: The user id.
+    :param db: The database session.
+    :return: The health ratio by user id.
+    """
+    if not user_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User ID is required")
+
+    row = db.query(HealthRatioLevel).filter(
+        HealthRatioLevel.user_id == user_id,
+    ).first()
+
+    if not row:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail="Health ratio with user ID provided not found")
+
+    return row.value
