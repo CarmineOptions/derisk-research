@@ -4,9 +4,9 @@ from handlers.liquidable_debt.debt_handlers import (
 from handlers.liquidable_debt.values import (
     COLLATERAL_FIELD_NAME, DEBT_FIELD_NAME,
     LIQUIDABLE_DEBT_FIELD_NAME, PRICE_FIELD_NAME,
-    LendingProtocolNames
 )
 from handlers.loan_states.zklend.events import ZkLendState, ZkLendLoanEntity
+from handler_tools.constants import ProtocolIDs
 
 from db.models import LiquidableDebt
 
@@ -21,13 +21,13 @@ def run() -> None:
         loan_entity_class=ZkLendLoanEntity
     )
 
-    data = handler.calculate_liquidable_debt(protocol_name=LendingProtocolNames.ZKLEND.value)
+    data = handler.calculate_liquidable_debt(protocol_name=ProtocolIDs.ZKLEND.value)
 
     for liquidable_debt_info in data.values():
         db_row = LiquidableDebt(
             debt_token=liquidable_debt_info[DEBT_FIELD_NAME],
             liquidable_debt=liquidable_debt_info[LIQUIDABLE_DEBT_FIELD_NAME],
-            protocol_name=LendingProtocolNames.ZKLEND.value,
+            protocol_name=ProtocolIDs.ZKLEND.value,
             collateral_token_price=liquidable_debt_info[PRICE_FIELD_NAME],
             collateral_token=liquidable_debt_info[COLLATERAL_FIELD_NAME]
         )
