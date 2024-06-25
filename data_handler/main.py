@@ -1,5 +1,5 @@
 from typing import List, Optional
-from fastapi import FastAPI, Depends, HTTPException, Request, status, Query
+from fastapi import FastAPI, Depends, HTTPException, Request, status, Query, Path
 from sqlalchemy.orm import Session
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -101,19 +101,27 @@ def get_last_interest_rate_by_block(
 
 
 @limiter.limit("10/second")
-@app.get("/health-ratio-per-user/")
+@app.get("/health-ratio-per-user/{protocol}/")
 async def get_health_ratio_per_user(
         request: Request,
+        protocol: str = Path(...,),
         user_id: str = Query(...,),
         db: Session = Depends(get_database)
 ):
     """
     Returns the health ratio by user id provided.
     :param request: The request object.
+    :param protocol: The protocol ID to filter by.
     :param user_id: The user id.
     :param db: The database session.
     :return: The health ratio by user id.
     """
+    if protocol is None:
+        raise HTTPException(status_code=400, detail="Protocol ID is required")
+
+    if protocol not in ProtocolIDs.choices():
+        raise HTTPException(status_code=400, detail="Invalid protocol ID")
+
     if not user_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User ID is required")
 
