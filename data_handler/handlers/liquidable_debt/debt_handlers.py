@@ -55,14 +55,12 @@ class DBLiquidableDebtDataHandler:
         :param protocol_name: Protocol name.
         :return: tuple
         """
-        fetched_data = self.get_data_from_db(
-            protocol_name=protocol_name
-        )
+        loan_data = self.get_loans_from_db(protocol_name=protocol_name)
         interest_rate_models = self.get_interest_rate_models_from_db(
             protocol_id=protocol_name
         )
 
-        return fetched_data, interest_rate_models
+        return loan_data, interest_rate_models
 
     @staticmethod
     def get_prices_range(collateral_token_name: str, current_price: Decimal) -> Iterable[Decimal]:
@@ -102,11 +100,11 @@ class DBLiquidableDebtDataHandler:
             )
 
         # Set up collateral and debt interest rate models
-        state.collateral_interest_rate_models = InterestRateModels(
-            init_value=Decimal(interest_rate_models.collateral.get("STRK", ""))
+        state.collateral_interest_rate_models = TokenValues(
+            values=interest_rate_models.collateral
         )
-        state.debt_interest_rate_models = InterestRateModels(
-            init_value=Decimal(interest_rate_models.debt.get("USDC", ""))
+        state.debt_interest_rate_models = TokenValues(
+            values=interest_rate_models.debt
         )
 
         current_prices = Prices()
@@ -150,7 +148,7 @@ class DBLiquidableDebtDataHandler:
         return cls.CONNECTOR.get_last_interest_rate_record_by_protocol_id(protocol_id=protocol_id)
 
     @classmethod
-    def get_data_from_db(cls, protocol_name: str) -> dict:
+    def get_loans_from_db(cls, protocol_name: str) -> dict:
         """
         Gets the data from the database based on the protocol name.
         :param protocol_name: The protocol name.
