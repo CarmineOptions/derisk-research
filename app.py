@@ -59,18 +59,20 @@ def main():
         )
         collateral_token = streamlit.selectbox(
             label="Select collateral token:",
-            options=list(src.settings.COLLATERAL_TOKENS),
+            options=src.settings.COLLATERAL_TOKENS,
             index=0,
         )
-        
-        debt_token_options = src.settings.DEBT_TOKENS
         
         debt_token = streamlit.selectbox(
             label="Select debt token:",
-            options=debt_token_options,
+            options=src.settings.DEBT_TOKENS,
             index=0,
         )
-
+        
+    if(debt_token == collateral_token):
+        streamlit.subheader(
+            f":warning: you are selecting the same token for Debt and Collateral")   
+        
     current_pair = f"{collateral_token}-{debt_token}"
 
     main_chart_data = pandas.DataFrame()
