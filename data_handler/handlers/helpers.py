@@ -118,12 +118,12 @@ class InterestRateState:
         self.token_timestamps[token_name] = self.current_timestamp
         self.current_block = current_block
 
-    def _fill_state_data(self):
+    def _fill_state_data(self) -> None:
         """General function for filling the state data."""
         self._fill_cumulative_data()
         self._fill_timestamps()
 
-    def _fill_cumulative_data(self):
+    def _fill_cumulative_data(self) -> None:
         """Fill the cumulative collateral and debt data with latest block data or default values. Default value is 1."""
         if self.last_block_data:
             self.cumulative_collateral = {
@@ -138,7 +138,7 @@ class InterestRateState:
             }
             self.cumulative_debt = self.cumulative_collateral.copy()
 
-    def _fill_timestamps(self):
+    def _fill_timestamps(self) -> None:
         """Fill the token timestamps with latest block timestamp or default value. Default value is 0"""
         if self.last_block_data:
             self.token_timestamps = {
@@ -171,7 +171,6 @@ class InterestRateState:
             token_name: float(value) for token_name, value in self.cumulative_debt.items()
         }
         return {"collateral": collateral, "debt": debt}
-
 
 
 def decimal_range(
