@@ -599,30 +599,3 @@ class HashstackV0State(State):
             if loan_entity.has_debt()
         }
         return len(unique_active_borrowers)
-
-
-@dataclasses.dataclass
-class HashstackV0Event:
-    block: int
-    timestamp: int
-    interest_rate_supply: decimal.Decimal
-    interest_rate_borrow: decimal.Decimal
-
-    def serialize(self) -> dict:
-        """
-        Get event as a dictionary.
-        :return: dict - The dictionary with event info.
-        The structure of the dictionary:
-        {
-            "block": int,
-            "timestamp": int,
-            "interest_rate_supply": float,
-            "interest_rate_borrow": float,
-        }
-        """
-        return {
-            "block": self.block,
-            "timestamp": self.timestamp,
-            "interest_rate_supply": float(self.interest_rate_supply),
-            "interest_rate_borrow": float(self.interest_rate_borrow),
-        }
