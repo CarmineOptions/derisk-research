@@ -130,9 +130,9 @@ class HashstackV0InterestRate:
             end_block = latest_block
         return start_block, end_block
 
-    def run(self) -> None:
-        """Run the interest rate calculation process from the last stored block or from 0 block."""
-        latest_block = asyncio.run(NET.get_block_number())
+    async def _run_async(self) -> None:
+        """Asynchronous function for running the interest rate calculation process and fetching data from on-chain."""
+        latest_block = await NET.get_block_number()
         start_block = self.last_block_data.block if self.last_block_data else 0
         if start_block == latest_block:
             return
@@ -152,6 +152,17 @@ class HashstackV0InterestRate:
                 continue
             processed_data = self.calculate_interest_rates()
             self.db_connector.write_batch_to_db(processed_data)
+
+    def run(self) -> None:
+        """Run the interest rate calculation process from the last stored block or from 0 block."""
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            new_loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(new_loop)
+            new_loop.run_until_complete(self._run_async())
+            asyncio.set_event_loop(loop)
+        else:
+            loop.run_until_complete(self._run_async())
 
 
 if __name__ == "__main__":
