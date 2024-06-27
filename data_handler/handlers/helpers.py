@@ -1,10 +1,13 @@
 import decimal
 import os
+from decimal import Decimal
 from typing import Iterator, Optional, Union
 
 import google.cloud.storage
 import pandas
 
+from handler_tools.constants import TOKEN_MAPPING, ProtocolIDs
+from db.models import InterestRate
 from handlers.settings import TOKEN_SETTINGS, PAIRS
 
 GS_BUCKET_NAME = "derisk-persistent-state"
@@ -70,6 +73,77 @@ class Portfolio(TokenValues):
     def set_value(self, token: str, value: decimal.Decimal):
         self.values[token] = value
         self.round_small_value_to_zero(token=token)
+
+
+class InterestRateState:
+    def __init__(self, current_block: int, last_block_data: InterestRate | None):
+        self.last_block_data = last_block_data
+        self.current_block = current_block
+        self.current_timestamp = last_block_data.timestamp if last_block_data else 0
+
+        self.cumulative_collateral: dict[str, Decimal] = {}
+        self.cumulative_debt: dict[str, Decimal] = {}
+        self.token_timestamps: dict[str, int] = {}
+        self._fill_state_data()
+
+    def get_seconds_passed(self, token_name: str) -> Decimal:
+        return Decimal(
+            self.current_timestamp - self.token_timestamps[token_name]
+        )
+
+    def update_state_cumulative_data(
+            self, token_name: str, current_block: int, collateral_change: Decimal, debt_change: Decimal
+    ):
+        self.cumulative_collateral[token_name] += collateral_change
+        self.cumulative_debt[token_name] += debt_change
+        self.token_timestamps[token_name] = self.current_timestamp
+        self.current_block = current_block
+
+    def _fill_state_data(self):
+        self._fill_cumulative_data()
+        self._fill_timestamps()
+
+    def _fill_cumulative_data(self):
+        if self.last_block_data:
+            self.cumulative_collateral = {
+                token_name: Decimal(value) for token_name, value in self.last_block_data.collateral.items()
+            }
+            self.cumulative_debt = {
+                token_name: Decimal(value) for token_name, value in self.last_block_data.debt.items()
+            }
+        else:
+            self.cumulative_collateral = {
+                token_name: Decimal("1") for token_name in TOKEN_MAPPING.values()
+            }
+            self.cumulative_debt = self.cumulative_collateral.copy()
+
+    def _fill_timestamps(self):
+        if self.last_block_data:
+            self.token_timestamps = {
+                token_name: self.last_block_data.timestamp for token_name in TOKEN_MAPPING.values()
+            }
+        else:
+            self.token_timestamps = {
+                token_name: 0 for token_name in TOKEN_MAPPING.values()
+            }
+
+    def build_interest_rate_model(self, protocol_id: ProtocolIDs):
+        return InterestRate(
+            block=self.current_block,
+            timestamp=self.current_timestamp,
+            protocol_id=protocol_id,
+            **self._serialize_cumulative_data()
+        )
+
+    def _serialize_cumulative_data(self):
+        collateral = {
+            token_name: float(value) for token_name, value in self.cumulative_collateral.items()
+        }
+        debt = {
+            token_name: float(value) for token_name, value in self.cumulative_debt.items()
+        }
+        return {"collateral": collateral, "debt": debt}
+
 
 
 def decimal_range(
