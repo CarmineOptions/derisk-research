@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from decimal import Decimal
 
@@ -7,6 +8,7 @@ from db.crud import DBConnector
 from db.models import InterestRate
 from handler_tools.api_connector import DeRiskAPIConnector
 from handler_tools.constants import ProtocolIDs, TOKEN_MAPPING
+from handlers.blockchain_call import NET
 from handlers.helpers import InterestRateState
 
 HASHSTACK_INTEREST_RATE_ADDRESS = "0x01b862c518939339b950d0d21a3d4cc8ead102d6270850ac8544636e558fab68"
@@ -33,16 +35,19 @@ class HashstackV0InterestRate:
         self.events: list[dict] = []
         self._events_over: bool = False
 
-    def _set_events(self, start_block: int = 0) -> None:
+    def _set_events(self, start_block: int, end_block: int) -> None:
         """
         Fetch events from the API, filter them by token and set them to the events attribute.
         Set flag that events are over if the result is an error.
         """
+        if not isinstance(start_block, int) or not isinstance(end_block, int):
+            logging.info("Invalid block numbers provided.")
+            self.events.clear()
         self.events.clear()
         result = self.api_connector.get_data(
             HASHSTACK_INTEREST_RATE_ADDRESS,
             start_block,
-            start_block + self.PAGINATION_SIZE,
+            end_block,
         )
         if isinstance(result, dict):
             logging.info(f"Error while fetching events: {result.get('error', 'Unknown error')}")
@@ -106,14 +111,43 @@ class HashstackV0InterestRate:
         self._add_block_data(blocks_data, interest_rate_state.build_interest_rate_model(HASHSTACK_ID))
         return blocks_data
 
+    def _get_blocks_bounds(self, start_block, end_block, latest_block) -> tuple[int, int]:
+        """
+        Calculate the bounds for the blocks pagination.
+        :param start_block: int - Previous start block number.
+        :param end_block: int - Previous end block number.
+        :param latest_block: int - The latest block number.
+        :return: tuple[int, int] - The new start and end block numbers.
+        """
+        if end_block + self.PAGINATION_SIZE < latest_block:
+            start_block += end_block
+        else:
+            end_block = latest_block
+            return start_block, end_block
+        if start_block + self.PAGINATION_SIZE <= latest_block:
+            end_block += self.PAGINATION_SIZE
+        else:
+            end_block = latest_block
+        return start_block, end_block
+
     def run(self) -> None:
         """Run the interest rate calculation process from the last stored block or from 0 block."""
+        latest_block = asyncio.run(NET.get_block_number())
         start_block = self.last_block_data.block if self.last_block_data else 0
-
-        # Fetch and set events until API throws an error
-        while not self._events_over:
-            self._set_events(start_block)
-            start_block += self.PAGINATION_SIZE
+        if start_block == latest_block:
+            return
+        start_block, end_block = self._get_blocks_bounds(
+            start_block,
+            start_block + self.PAGINATION_SIZE,
+            latest_block
+        )
+        events_over = False
+        # Fetch and set events until blocks are over
+        while not events_over:
+            if end_block >= latest_block:
+                events_over = True
+            self._set_events(start_block, end_block)
+            start_block, end_block = self._get_blocks_bounds(start_block, end_block, latest_block)
             if not self.events:
                 continue
             processed_data = self.calculate_interest_rates()
