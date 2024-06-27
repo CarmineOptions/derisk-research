@@ -2,8 +2,6 @@ import asyncio
 import logging
 from decimal import Decimal
 
-from starknet_py.net.client_models import Event
-
 from db.crud import DBConnector
 from db.models import InterestRate
 from handler_tools.api_connector import DeRiskAPIConnector
