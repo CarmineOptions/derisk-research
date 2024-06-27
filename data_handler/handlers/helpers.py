@@ -76,7 +76,14 @@ class Portfolio(TokenValues):
 
 
 class InterestRateState:
+    """Class for storing the state of the interest rate calculation."""
+
     def __init__(self, current_block: int, last_block_data: InterestRate | None):
+        """
+        Initialize the InterestRateState object.
+        :param current_block: int - The current block number.
+        :param last_block_data: InterestRate | None - The last block data from storage or None if is not present.
+        """
         self.last_block_data = last_block_data
         self.current_block = current_block
         self.current_timestamp = last_block_data.timestamp if last_block_data else 0
@@ -87,23 +94,37 @@ class InterestRateState:
         self._fill_state_data()
 
     def get_seconds_passed(self, token_name: str) -> Decimal:
+        """
+        Get the number of seconds passed since the last event for given token.
+        :param token_name: str - The name of the token, for example `STRK`.
+        :return: Decimal - The number of seconds passed.
+        """
         return Decimal(
             self.current_timestamp - self.token_timestamps[token_name]
         )
 
     def update_state_cumulative_data(
             self, token_name: str, current_block: int, collateral_change: Decimal, debt_change: Decimal
-    ):
+    ) -> None:
+        """
+        Update the state of interest rate calculation with the new data.
+        :param token_name: str - The name of the token, for example `STRK`.
+        :param current_block: int - The current block number.
+        :param collateral_change: Decimal - The change in collateral(supply) interest rate.
+        :param debt_change: Decimal - The change in debt(borrow) interest rate.
+        """
         self.cumulative_collateral[token_name] += collateral_change
         self.cumulative_debt[token_name] += debt_change
         self.token_timestamps[token_name] = self.current_timestamp
         self.current_block = current_block
 
     def _fill_state_data(self):
+        """General function for filling the state data."""
         self._fill_cumulative_data()
         self._fill_timestamps()
 
     def _fill_cumulative_data(self):
+        """Fill the cumulative collateral and debt data with latest block data or default values. Default value is 1."""
         if self.last_block_data:
             self.cumulative_collateral = {
                 token_name: Decimal(value) for token_name, value in self.last_block_data.collateral.items()
@@ -118,6 +139,7 @@ class InterestRateState:
             self.cumulative_debt = self.cumulative_collateral.copy()
 
     def _fill_timestamps(self):
+        """Fill the token timestamps with latest block timestamp or default value. Default value is 0"""
         if self.last_block_data:
             self.token_timestamps = {
                 token_name: self.last_block_data.timestamp for token_name in TOKEN_MAPPING.values()
@@ -127,7 +149,12 @@ class InterestRateState:
                 token_name: 0 for token_name in TOKEN_MAPPING.values()
             }
 
-    def build_interest_rate_model(self, protocol_id: ProtocolIDs):
+    def build_interest_rate_model(self, protocol_id: ProtocolIDs) -> InterestRate:
+        """
+        Build the InterestRate model object from the current state data.
+        :param protocol_id: ProtocolIDs - The ID of protocol.
+        :return: InterestRate - The InterestRate model object.
+        """
         return InterestRate(
             block=self.current_block,
             timestamp=self.current_timestamp,
@@ -135,7 +162,8 @@ class InterestRateState:
             **self._serialize_cumulative_data()
         )
 
-    def _serialize_cumulative_data(self):
+    def _serialize_cumulative_data(self) -> dict[str, dict[str, float]]:
+        """Serialize the cumulative collateral and debt data to write to the database."""
         collateral = {
             token_name: float(value) for token_name, value in self.cumulative_collateral.items()
         }
