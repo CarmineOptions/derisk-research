@@ -1,5 +1,5 @@
 import asyncio
-import decimal
+import collections
 
 import pandas
 
@@ -43,6 +43,7 @@ def get_general_stats(
                 'Number of active borrowers': number_of_active_borrowers,
                 'Total debt (USD)': round(loan_stats[protocol]['Debt (USD)'].sum(), 4),
                 'Total risk adjusted collateral (USD)': round(loan_stats[protocol]['Risk-adjusted collateral (USD)'].sum(), 4),
+                'Total Collateral (USD)': round(loan_stats[protocol]['Collateral (USD)'].sum(), 4),
             }
         )
     data = pandas.DataFrame(data)
@@ -62,19 +63,6 @@ def get_supply_stats(
         protocol = src.protocol_parameters.get_protocol(state=state)
         token_supplies = {}
         for token in src.settings.TOKEN_SETTINGS:
-            # TODO: Add wstETH.
-            if token == 'wstETH' and protocol not in {'zkLend', 'Nostra Mainnet'}:
-                token_supplies[token] = 0.0
-                continue
-            # TODO: Add LORDS.
-            if token == 'LORDS' and protocol != 'Nostra Mainnet':
-                token_supplies[token] = 0.0
-                continue
-            # TODO: Add STRK.
-            if token == 'STRK' and protocol not in {'zkLend', 'Nostra Mainnet'}:
-                token_supplies[token] = 0.0
-                continue
-
             if protocol == 'Hashstack V0':
                 supply = asyncio.run(
                     src.blockchain_call.balance_of(
@@ -89,10 +77,11 @@ def get_supply_stats(
                         holder_addr = src.hashstack_v1.R_TOKENS[token],
                     )
                 )
+            # TODO: zkLend, Nostra Alpha and Nostra Mainnet should be implemented similarly to Hashstack V0 and V1.
             else:
                 addresses, selector = src.protocol_parameters.get_supply_function_call_parameters(
                     protocol=protocol, 
-                    token_address=src.main_chart.get_address(
+                    token_addresses=src.helpers.get_addresses(
                         token_parameters=state.token_parameters.collateral,
                         underlying_symbol=token,
                     ),
@@ -123,7 +112,7 @@ def get_supply_stats(
         )
     data = pandas.DataFrame(data)
     data['Total supply (USD)'] = sum(
-        data[column] * prices[src.settings.TOKEN_SETTINGS[token].address]
+        data[column] * prices[src.settings.TOKEN_SETTINGS[column.replace(' supply', '')].address]
         for column in data.columns 
         if 'supply' in column
     ).apply(lambda x: round(x, 4))
@@ -140,29 +129,34 @@ def get_collateral_stats(
     data = []
     for state in states:
         protocol = src.protocol_parameters.get_protocol(state=state)
-        token_collaterals = {}
+        token_collaterals = collections.defaultdict(float)
         for token in src.settings.TOKEN_SETTINGS:
-            # TODO: Add wstETH.
-            if token == 'wstETH' and protocol not in {'zkLend', 'Nostra Mainnet'}:
-                token_collaterals[token] = 0.0
-                continue
-            # TODO: Add LORDS.
-            if token == 'LORDS' and protocol != 'Nostra Mainnet':
-                token_collaterals[token] = 0.0
-                continue
-            # TODO: Add STRK.
-            if token == 'STRK' and protocol not in {'zkLend', 'Nostra Mainnet'}:
-                token_collaterals[token] = 0.0
-                continue
-            collateral = (
-                sum(
-                    float(loan_entity.collateral[token])
-                    for loan_entity in state.loan_entities.values()
+            # TODO: save zkLend amounts under token_addresses?
+            if protocol == 'zkLend':
+                token_addresses = [
+                    src.helpers.get_underlying_address(
+                        token_parameters=state.token_parameters.collateral,
+                        underlying_symbol=token,
+                    )
+                ]
+            elif protocol in {'Nostra Alpha', 'Nostra Mainnet'}:
+                token_addresses = src.helpers.get_addresses(
+                    token_parameters=state.token_parameters.collateral,
+                    underlying_symbol=token,
                 )
-                / src.settings.TOKEN_SETTINGS[token].decimal_factor
-                * float(state.interest_rate_models.collateral[token])
-            )
-            token_collaterals[token] = round(collateral, 4)
+            else:
+                raise ValueError
+            for token_address in token_addresses:
+                collateral = (
+                    sum(
+                        float(loan_entity.collateral[token_address])
+                        for loan_entity in state.loan_entities.values()
+                    )
+                    / src.settings.TOKEN_SETTINGS[token].decimal_factor
+                    * float(state.interest_rate_models.collateral[token_address])
+                )
+                token_collaterals[token] += round(collateral, 4)
+
         data.append(
             {
                 'Protocol': protocol,
@@ -190,29 +184,34 @@ def get_debt_stats(
     data = []
     for state in states:
         protocol = src.protocol_parameters.get_protocol(state=state)
-        token_debts = {}
+        token_debts = collections.defaultdict(float)
         for token in src.settings.TOKEN_SETTINGS:
-            # TODO: Add wstETH.
-            if token == 'wstETH' and protocol not in {'zkLend', 'Nostra Mainnet'}:
-                token_debts[token] = decimal.Decimal("0")
-                continue
-            # TODO: Add LORDS.
-            if token == 'LORDS' and protocol != 'Nostra Mainnet':
-                token_debts[token] = decimal.Decimal("0")
-                continue
-            # TODO: Add STRK.
-            if token == 'STRK' and protocol not in {'zkLend', 'Nostra Mainnet'}:
-                token_debts[token] = decimal.Decimal("0")
-                continue
-            debt = (
-                sum(
-                    float(loan_entity.debt[token])
-                    for loan_entity in state.loan_entities.values()
+            # TODO: save zkLend amounts under token_addresses?
+            if protocol == 'zkLend':
+                token_addresses = [
+                        src.helpers.get_underlying_address(
+                        token_parameters=state.token_parameters.debt,
+                        underlying_symbol=token,
+                    )
+                ]
+            elif protocol in {'Nostra Alpha', 'Nostra Mainnet'}:
+                token_addresses = src.helpers.get_addresses(
+                    token_parameters=state.token_parameters.debt,
+                    underlying_symbol=token,
                 )
-                / src.settings.TOKEN_SETTINGS[token].decimal_factor
-                * float(state.interest_rate_models.debt[token])
-            )
-            token_debts[token] = round(debt, 4)
+            else:
+                raise ValueError
+            for token_address in token_addresses:
+                debt = (
+                    sum(
+                        float(loan_entity.debt[token_address])
+                        for loan_entity in state.loan_entities.values()
+                    )
+                    / src.settings.TOKEN_SETTINGS[token].decimal_factor
+                    * float(state.interest_rate_models.debt[token_address])
+                )
+                token_debts[token] = round(debt, 4)
+
         data.append(
             {
                 'Protocol': protocol,
@@ -250,22 +249,13 @@ def get_utilization_stats(
             'USDC utilization': debt_stats['USDC debt'] / (supply_stats['USDC supply'] + debt_stats['USDC debt']),
             'DAI utilization': debt_stats['DAI debt'] / (supply_stats['DAI supply'] + debt_stats['DAI debt']),
             'USDT utilization': debt_stats['USDT debt'] / (supply_stats['USDT supply'] + debt_stats['USDT debt']),
-            # TODO: hotfix to avoid `InvalidOperation: [<class 'decimal.DivisionUndefined'>]`
-            'wstETH utilization': debt_stats['wstETH debt'].astype(float) / (
-                supply_stats['wstETH supply'].astype(float) + debt_stats['wstETH debt'].astype(float)
-            ),
-            # TODO: hotfix to avoid `InvalidOperation: [<class 'decimal.DivisionUndefined'>]`
-            'LORDS utilization': debt_stats['LORDS debt'].astype(float) / (
-                supply_stats['LORDS supply'].astype(float) + debt_stats['LORDS debt'].astype(float)
-            ),
-            # TODO: hotfix to avoid `InvalidOperation: [<class 'decimal.DivisionUndefined'>]`
-            'STRK utilization': debt_stats['STRK debt'].astype(float) / (
-                supply_stats['STRK supply'].astype(float) + debt_stats['STRK debt'].astype(float)
-            ),
+            'wstETH utilization': debt_stats['wstETH debt'] / (supply_stats['wstETH supply'] + debt_stats['wstETH debt']),
+            'LORDS utilization': debt_stats['LORDS debt'] / (supply_stats['LORDS supply'] + debt_stats['LORDS debt']),
+            'STRK utilization': debt_stats['STRK debt'] / (supply_stats['STRK supply'] + debt_stats['STRK debt']),
         },
     )
     utilization_columns = [x for x in data.columns if 'utilization' in x]
-    data[utilization_columns] = data[utilization_columns].applymap(lambda x: round(x, 4))
+    data[utilization_columns] = data[utilization_columns].map(lambda x: round(x, 4))
     if save_data:
         path = "data/utilization_stats.parquet"
         src.helpers.save_dataframe(data=data, path=path)

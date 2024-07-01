@@ -41,36 +41,10 @@ def get_protocol(state: src.state.State) -> str:
 # TODO: make this an attribute of the State class?
 def get_supply_function_call_parameters(
     protocol: str,
-    token_address: str,
+    token_addresses: list[str],
 ) -> tuple[list[str], str]:
     if protocol == 'zkLend':
-        return [token_address], 'felt_total_supply'
-    if protocol == 'Nostra Alpha':
-        token_addresses = [
-            address
-            for address, nostra_token
-            in src.nostra_alpha.ADDRESSES_TO_TOKENS.items()
-            if (
-                nostra_token == token_address
-                and src.nostra_alpha.ADDRESSES_TO_EVENTS[address] in {
-                    'interest_bearing_deposit',
-                    'interest_bearing_collateral',
-                }
-            )
-        ]
-        return token_addresses, 'totalSupply'
-    if protocol == 'Nostra Mainnet':
-        token_addresses = [
-            address
-            for address, nostra_token
-            in src.nostra_mainnet.ADDRESSES_TO_TOKENS.items()
-            if (
-                nostra_token == token_address
-                and src.nostra_mainnet.ADDRESSES_TO_EVENTS[address] in {
-                    'interest_bearing_deposit',
-                    'interest_bearing_collateral',
-                }
-            )
-        ]
+        return token_addresses, 'felt_total_supply'
+    if protocol in {'Nostra Alpha', 'Nostra Mainnet'}:
         return token_addresses, 'totalSupply'
     raise ValueError
