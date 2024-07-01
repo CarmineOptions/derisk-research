@@ -62,11 +62,14 @@ TOKEN_SETTINGS: dict[str, TokenSettings] = {
 PAIRS: list[str] = [
     "ETH-USDC",
     "ETH-USDT",
+    "ETH-DAI",
     "ETH-DAI V2",
     "WBTC-USDC",
     "WBTC-USDT",
     "WBTC-DAI",
+    "WBTC-DAI V2",
     "STRK-USDC",
     "STRK-USDT",
     "STRK-DAI",
+    "STRK-DAI V2",
 ]
