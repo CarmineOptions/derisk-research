@@ -2,6 +2,7 @@ import uuid
 import asyncio
 from datetime import datetime
 from decimal import Decimal
+from collections import defaultdict
 
 from db.crud import DBConnector
 from db.models import HealthRatioLevel, LoanState
@@ -9,24 +10,25 @@ from db.models import HealthRatioLevel, LoanState
 from handlers.helpers import TokenValues
 from handlers.state import State, LoanEntity
 from handlers.loan_states.zklend.events import ZkLendState, ZkLendLoanEntity
+from handlers.loan_states.nostra_alpha.events import NostraAlphaState, NostraAlphaLoanEntity
 from handler_tools.constants import ProtocolIDs
 from handlers.liquidable_debt.utils import Prices
-from handlers.liquidable_debt.values import USER_FIELD_NAME, HEALTH_FACTOR_FIELD_NAME, TIMESTAMP_FIELD_NAME
+from handlers.liquidable_debt.values import (USER_FIELD_NAME, HEALTH_FACTOR_FIELD_NAME,
+                                             TIMESTAMP_FIELD_NAME, PROTOCOL_FIELD_NAME)
 
 
-class ZkLendHealthRatioHandler:
+class BaseHealthRatioHandler:
     """
-    A handler that collects data from DB,
+    A base handler class that collects data from DB,
     computes health_ratio level and stores it in the database.
 
-    :cvar AVAILABLE_PROTOCOLS: A list of all available protocols.
     :cvar CONNECTOR: A DB connection object.
     """
     CONNECTOR = DBConnector()
 
-    def __init__(self):
-        self.state_class = ZkLendState
-        self.loan_entity_class = ZkLendLoanEntity
+    def __init__(self, state_class: State = None, loan_entity_class: LoanEntity = None):
+        self.state_class = state_class
+        self.loan_entity_class = loan_entity_class
 
     def fetch_data(self, protocol_name: str) -> tuple:
         """
@@ -41,7 +43,55 @@ class ZkLendHealthRatioHandler:
 
         return fetched_data, interest_rate_models
 
-    def calculate_health_ratio(self) -> dict:
+    @classmethod
+    def get_interest_rate_models_from_db(cls, protocol_id: str) -> dict:
+        """
+        Returns interest rate models data from DB.
+        :param protocol_id: str
+        :return: dict
+        """
+        return cls.CONNECTOR.get_last_interest_rate_record_by_protocol_id(protocol_id=protocol_id)
+
+    @classmethod
+    def get_data_from_db(cls) -> dict:
+        """
+        Gets the data from the database based on the protocol name.
+        :return: The data from the database.
+        """
+        return cls.CONNECTOR.get_latest_block_loans()
+
+    @classmethod
+    def write_to_db(cls, data: HealthRatioLevel = None) -> None:
+        """
+        Writes the data into the database.
+        :param data: A dictionary of the parsed data.
+        :return: None
+        """
+        cls.CONNECTOR.write_to_db(data)
+
+    @staticmethod
+    def health_ratio_is_valid(health_ratio_level: Decimal = None) -> bool:
+        """
+        Checks if the given health ratio level is valid.
+        :param health_ratio_level: Health ratio level
+        :return: bool
+        """
+        return (health_ratio_level > Decimal("0") and
+                health_ratio_level != Decimal("Infinity"))
+
+
+class ZkLendHealthRatioHandler(BaseHealthRatioHandler):
+    """
+    A zkLend handler that collects data from DB,
+    computes health_ratio level and stores it in the database.
+
+    :cvar CONNECTOR: A DB connection object.
+    """
+
+    def __init__(self):
+        super().__init__(state_class=ZkLendState, loan_entity_class=ZkLendLoanEntity)
+
+    def calculate_health_ratio(self) -> defaultdict:
         """
         Calculates health ratio based on provided data.
         :return: A dictionary of the ready health ratio data.
@@ -72,7 +122,7 @@ class ZkLendHealthRatioHandler:
         current_prices = Prices()
         asyncio.run(current_prices.get_lp_token_prices())
 
-        result_data = dict()
+        result_data = defaultdict()
         prices = TokenValues(values=current_prices.prices.values)
 
         for user_id, loan_entity in state.loan_entities.items():
@@ -92,54 +142,88 @@ class ZkLendHealthRatioHandler:
                 debt_usd=debt_usd,
             )
 
-            if health_ratio_level > Decimal("0") and \
-               health_ratio_level != Decimal("Infinity"):
+            if self.health_ratio_is_valid(health_ratio_level):
                 result_data.update({
-                        f"{uuid.uuid4()}": {
-                            USER_FIELD_NAME: user_id,
-                            HEALTH_FACTOR_FIELD_NAME: health_ratio_level,
-                            TIMESTAMP_FIELD_NAME: datetime.now().timestamp(),
-                        }
-                    })
+                    f"{uuid.uuid4()}": {
+                        USER_FIELD_NAME: user_id,
+                        HEALTH_FACTOR_FIELD_NAME: health_ratio_level,
+                        TIMESTAMP_FIELD_NAME: datetime.now().timestamp(),
+                        PROTOCOL_FIELD_NAME: ProtocolIDs.ZKLEND.value
+                    }
+                })
 
         return result_data
 
-    @classmethod
-    def get_interest_rate_models_from_db(cls, protocol_id: str) -> dict:
-        """
-        Returns interest rate models data from DB.
-        :param protocol_id: str
-        :return: dict
-        """
-        return cls.CONNECTOR.get_last_interest_rate_record_by_protocol_id(protocol_id=protocol_id)
 
-    @classmethod
-    def get_data_from_db(cls) -> dict:
+class NostrAlphaHealthRatioHandler(BaseHealthRatioHandler):
+    """
+    A Nostra Alha handler that collects data from DB,
+    computes health_ratio level and stores it in the database.
+
+    :cvar CONNECTOR: A DB connection object.
+    """
+    def __init__(self):
+        super().__init__(state_class=NostraAlphaState, loan_entity_class=NostraAlphaLoanEntity)
+
+    def calculate_health_ratio(self) -> defaultdict:
         """
-        Gets the data from the database based on the protocol name.
-        :return: The data from the database.
+        Calculates health ratio based on provided data.
+        :return: A dictionary of the ready health ratio data.
         """
-        return cls.CONNECTOR.get_latest_block_loans()
+        data, interest_rate_models = self.fetch_data(protocol_name=ProtocolIDs.NOSTRA_ALPHA.value)
+        state = self.state_class()
 
-    @classmethod
-    def write_to_db(cls, data: HealthRatioLevel = None) -> None:
-        """
-        Writes the data into the database.
-        :param data: A dictionary of the parsed data.
-        :return: None
-        """
-        cls.CONNECTOR.write_to_db(data)
+        for instance in data:
+            loan_entity = self.loan_entity_class()
 
+            loan_entity.debt = TokenValues(values=instance.debt)
+            loan_entity.collateral = TokenValues(values=instance.collateral)
 
-if __name__ == "__main__":
-    handler = ZkLendHealthRatioHandler()
+            state.loan_entities.update(
+                {
+                    instance.user: loan_entity,
+                }
+            )
 
-    data = handler.calculate_health_ratio()
-
-    for id_, health_ratio in data.items():
-        instance = HealthRatioLevel(
-            timestamp=health_ratio[TIMESTAMP_FIELD_NAME],
-            user_id=health_ratio[USER_FIELD_NAME],
-            value=health_ratio[HEALTH_FACTOR_FIELD_NAME]
+        # Set up collateral and debt interest rate models
+        state.collateral_interest_rate_models = TokenValues(
+            values=interest_rate_models.collateral
         )
-        handler.write_to_db(instance)
+        state.debt_interest_rate_models = TokenValues(
+            values=interest_rate_models.debt
+        )
+
+        current_prices = Prices()
+        asyncio.run(current_prices.get_lp_token_prices())
+
+        result_data = defaultdict()
+        prices = TokenValues(values=current_prices.prices.values)
+
+        for user_id, loan_entity in state.loan_entities.items():
+            risk_adjusted_collateral_usd = loan_entity.compute_collateral_usd(
+                risk_adjusted=True,
+                collateral_interest_rate_models=state.collateral_interest_rate_models,
+                prices=prices,
+            )
+            risk_adjusted_debt_usd = loan_entity.compute_debt_usd(
+                risk_adjusted=True,
+                debt_interest_rate_models=state.debt_interest_rate_models,
+                prices=prices,
+            )
+            health_ratio_level = loan_entity.compute_health_factor(
+                standardized=False,
+                risk_adjusted_collateral_usd=risk_adjusted_collateral_usd,
+                risk_adjusted_debt_usd=risk_adjusted_debt_usd
+            )
+
+            if self.health_ratio_is_valid(health_ratio_level):
+                result_data.update({
+                    f"{uuid.uuid4()}": {
+                        USER_FIELD_NAME: user_id,
+                        HEALTH_FACTOR_FIELD_NAME: health_ratio_level,
+                        TIMESTAMP_FIELD_NAME: datetime.now().timestamp(),
+                        PROTOCOL_FIELD_NAME: ProtocolIDs.NOSTRA_ALPHA.value
+                    }
+                })
+
+        return result_data
