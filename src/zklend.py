@@ -16,8 +16,8 @@ import src.types
 ZKLEND_MARKET: str = "0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05"
 
 
-# Keys are values of the "key_name" column in the database, values are the respective method names.
-EVENTS_METHODS_MAPPING: dict[str, str] = {
+# Keys are event names, values are names of the respective methods that process the given event.
+ZKLEND_EVENTS_TO_METHODS_MAPPING: dict[str, str] = {
     "AccumulatorsSync": "process_accumulators_sync_event",
     "zklend::market::Market::AccumulatorsSync": "process_accumulators_sync_event",
     "Deposit": "process_deposit_event",
@@ -38,19 +38,26 @@ EVENTS_METHODS_MAPPING: dict[str, str] = {
 
 
 
-def get_events(start_block_number: int = 0) -> pandas.DataFrame:
+# TODO: Load and process transfers as well.
+def zklend_get_events(start_block_number: int = 0) -> pandas.DataFrame:
     return src.helpers.get_events(
         addresses=(ZKLEND_MARKET, ""),
-        event_names=tuple(EVENTS_METHODS_MAPPING),
+        event_names=tuple(ZKLEND_EVENTS_TO_METHODS_MAPPING),
         start_block_number=start_block_number,
     )
 
 
-class CollateralEnabled(collections.defaultdict):
+def _zklend_collateral_enabled_default() -> bool:
+    return False
+
+
+class ZkLendCollateralEnabled(collections.defaultdict):
     """ A class that describes which tokens are eligible to be counted as collateral. """
 
     def __init__(self) -> None:
-        super().__init__(lambda: False)
+        # TODO: this is a workaround, without it, the class can't be pickled. Remove after we don't store the results as pickles anymore
+        super().__init__(_zklend_collateral_enabled_default)
+        # super().__init__(lambda: False)
 
 
 class ZkLendLoanEntity(src.types.LoanEntity):
@@ -66,14 +73,14 @@ class ZkLendLoanEntity(src.types.LoanEntity):
     def __init__(self) -> None:
         super().__init__()
         self.deposit: src.types.Portfolio = src.types.Portfolio()
-        self.collateral_enabled: CollateralEnabled = CollateralEnabled()
+        self.collateral_enabled: ZkLendCollateralEnabled = ZkLendCollateralEnabled()
 
     def compute_health_factor(
         self,
         standardized: bool,
-        collateral_token_parameters: dict[str, src.types.BaseTokenParameters] | None = None,
+        collateral_token_parameters: src.types.TokenParameters | None = None,
         collateral_interest_rate_model: src.types.InterestRateModels | None = None,
-        debt_token_parameters: dict[str, src.types.BaseTokenParameters] | None = None,
+        debt_token_parameters: src.types.TokenParameters | None = None,
         debt_interest_rate_model: src.types.InterestRateModels | None = None,
         prices: src.types.Prices | None = None,
         risk_adjusted_collateral_usd: float | None = None,
@@ -108,16 +115,16 @@ class ZkLendLoanEntity(src.types.LoanEntity):
 
     def compute_debt_to_be_liquidated(
         self,
-        debt_token_underlying_address: str,
         collateral_token_underlying_address: str,
+        debt_token_underlying_address: str,
         prices: src.types.Prices,
-        collateral_token_parameters: dict[str, src.types.BaseTokenParameters],
+        collateral_token_parameters: src.types.TokenParameters,
         collateral_interest_rate_model: src.types.InterestRateModels | None = None,
-        debt_token_parameters: dict[str, src.types.BaseTokenParameters] | None = None,
+        debt_token_parameters: src.types.TokenParameters | None = None,
         debt_interest_rate_model: src.types.InterestRateModels | None = None,
-        risk_adjusted_collateral_usd: decimal.Decimal | None = None,
-        debt_usd: decimal.Decimal | None = None,
-    ) -> decimal.Decimal:
+        risk_adjusted_collateral_usd: float | None = None,
+        debt_usd: float | None = None,
+    ) -> float:
         if risk_adjusted_collateral_usd is None:
             risk_adjusted_collateral_usd = self.compute_collateral_usd(
                 risk_adjusted = True,
@@ -160,7 +167,7 @@ class ZkLendState(src.state.State):
     relevant event.
     """
 
-    EVENTS_METHODS_MAPPING: dict[str, str] = EVENTS_METHODS_MAPPING
+    EVENTS_TO_METHODS_MAPPING: dict[str, str] = ZKLEND_EVENTS_TO_METHODS_MAPPING
 
     def __init__(
         self,
@@ -407,13 +414,22 @@ class ZkLendState(src.state.State):
         changed_prices[collateral_token_underlying_address] = collateral_token_price
         max_liquidated_amount = 0.0
         for loan_entity in self.loan_entities.values():
-            # Filter out entities who borrowed the token of interest.
-            debt_tokens = {
-                token
+            # Filter out entities where the collateral token of interest is deposited as collateral.
+            collateral_token_underlying_addresses = {
+                token  # TODO: this assumes that `token` is the underlying address
+                for token, token_amount in loan_entity.collateral.items()
+                if token_amount > decimal.Decimal("0")
+            }
+            if not collateral_token_underlying_address in collateral_token_underlying_addresses:
+                continue
+
+            # Filter out entities where the debt token of interest is borowed.
+            debt_token_underlying_addresses = {
+                token  # TODO: this assumes that `token` is the underlying address
                 for token, token_amount in loan_entity.debt.items()
                 if token_amount > decimal.Decimal("0")
             }
-            if not debt_token_underlying_address in debt_tokens:
+            if not debt_token_underlying_address in debt_token_underlying_addresses:
                 continue
 
             # Filter out entities with health factor below 1.
@@ -438,15 +454,8 @@ class ZkLendState(src.state.State):
             if health_factor >= 1.0 or health_factor <= 0.0:
                 continue
 
-            # Find out how much of the `debt_token` will be liquidated.
-            collateral_token_underlying_addresses = {
-                token
-                for token, token_amount in loan_entity.collateral.items()
-                if token_amount > decimal.Decimal("0")
-            }
-            # Choose the most optimal collateral_token to be liquidated.
-            # TODO: In this case, the liquidator is indifferent.
-            collateral_token_underlying_address = list(collateral_token_underlying_addresses)[0]
+            # Find out how much of the `debt_token` will be liquidated. We assume that the liquidator receives the 
+            # collateral token of interest even though it might not be the most optimal choice for the liquidator.
             max_liquidated_amount += loan_entity.compute_debt_to_be_liquidated(
                 debt_token_underlying_address=debt_token_underlying_address,
                 collateral_token_underlying_address=collateral_token_underlying_address,
