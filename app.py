@@ -71,7 +71,7 @@ def main():
         
     if(debt_token == collateral_token):
         streamlit.subheader(
-            f":warning: you are selecting the same token for Debt and Collateral")   
+            f":warning: You are selecting the same token for Debt and Collateral")   
         
     current_pair = f"{collateral_token}-{debt_token}"
 
