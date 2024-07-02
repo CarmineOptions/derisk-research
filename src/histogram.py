@@ -1,5 +1,3 @@
-import os
-
 import pandas
 import plotly.express
 import streamlit
@@ -7,12 +5,13 @@ import streamlit
 import src.helpers
 import src.protocol_parameters
 import src.settings
+import src.types
 
 
 
 def get_histogram_data(
     state: src.state.State,
-    prices: src.helpers.TokenValues,
+    prices: src.types.Prices,
     save_data: bool = False,
 ) -> pandas.DataFrame:
     data = [
@@ -21,8 +20,8 @@ def get_histogram_data(
             "debt": (
                 token_amount 
                 / loan_entity.TOKEN_SETTINGS[token].decimal_factor 
-                * state.debt_interest_rate_models.values[token] 
-                * prices.values[token]
+                * state.interest_rate_models.debt[token] 
+                * prices[token]
             ),
         }
         for loan_entity in state.loan_entities.values()
@@ -57,7 +56,7 @@ def visualization(data: pandas.DataFrame):
                 "ETH": "blue",
                 "USDT": "purple",
                 "USDC": "green",
-                "wBTC": "orange",
+                "WBTC": "orange",
                 "wstETH": "brown",
                 "LORDS": "black",
             },
@@ -83,7 +82,7 @@ def visualization(data: pandas.DataFrame):
                 "ETH": "blue",
                 "USDT": "purple",
                 "USDC": "green",
-                "wBTC": "orange",
+                "WBTC": "orange",
                 "wstETH": "brown",
                 "LORDS": "black",
             },
