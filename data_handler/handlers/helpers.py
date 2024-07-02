@@ -142,6 +142,8 @@ class InterestRateState:
                 token_name: self.last_block_data.timestamp for token_name in TOKEN_MAPPING.values()
             }
         else:
+            # First token event occurrence will update the timestamp,
+            # so after first interest rate for token will be 1.
             self.token_timestamps = {
                 token_name: 0 for token_name in TOKEN_MAPPING.values()
             }
