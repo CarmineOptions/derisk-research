@@ -73,3 +73,7 @@ PAIRS: list[str] = [
     "STRK-DAI",
     "STRK-DAI V2",
 ]
+
+COLLATERAL_TOKENS = ['ETH', 'WBTC', 'STRK']
+
+DEBT_TOKENS = ['USDC', 'USDT', 'DAI', 'DAI V2']
