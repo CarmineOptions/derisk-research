@@ -126,7 +126,8 @@ async def get_health_ratio_per_user(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User ID is required")
 
     row = db.query(HealthRatioLevel).filter(
-        HealthRatioLevel.user_id == user_id,
+        HealthRatioLevel.protocol_id == protocol,
+        HealthRatioLevel.user_id == user_id
     ).first()
 
     if not row:
