@@ -110,7 +110,7 @@ class DBConnector:
         try:
             query = db.query(model)
             if protocol:
-                query = query.filter(model.protocol == protocol)
+                query = query.filter(model.protocol_id == protocol)
             if user:
                 query = query.filter(model.user == user)
             if start_block is not None:
