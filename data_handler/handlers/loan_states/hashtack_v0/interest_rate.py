@@ -31,6 +31,7 @@ class HashstackV0InterestRate:
             HASHSTACK_ID
         )
         self.events: list[dict] = []
+        self.blocks_data: list[InterestRate] = []
         self._events_over: bool = False
 
     def _set_events(self, start_block: int, end_block: int) -> None:
@@ -54,102 +55,98 @@ class HashstackV0InterestRate:
             return
         self.events = result
 
-    def _add_block_data(self, block_data: list[InterestRate], interest_rate_entry: InterestRate) -> None:
+    def _add_block_data(self, interest_rate_entry: InterestRate) -> None:
         """
-        Add the interest rate entry to the block data and update last block data stored.
-        :param block_data: list[InterestRate] - list of blocks with interest rates data.
+        Add the interest rate entry to the blocks data and update last block data stored.
         :param interest_rate_entry: InterestRate - interest rate entry to add.
         """
-        block_data.append(interest_rate_entry)
+        self.blocks_data.append(interest_rate_entry)
         self.last_block_data = interest_rate_entry
 
-    def calculate_interest_rates(self) -> list[InterestRate]:
+    def calculate_interest_rates(self) -> None:
         """
         Calculate the interest rates for provided events range.
         :return: list[InterestRate] - list of blocks with interest rates data.
         """
         if not self.events:
-            return []
+            return
         percents_decimals_shift = Decimal("0.0001")
-        blocks_data: list[InterestRate] = []
         interest_rate_state = InterestRateState(self.events[0]["block_number"], self.last_block_data)
 
-        for index, event in enumerate(self.events):
+        for event in self.events:
             # If block number in event is different from previous, add block data
             if interest_rate_state.current_block != event["block_number"]:
-                self._add_block_data(blocks_data, interest_rate_state.build_interest_rate_model(HASHSTACK_ID))
+                self._add_block_data(interest_rate_state.build_interest_rate_model(HASHSTACK_ID))
 
             # Get token name. Validate event `key_name` and token name.
             token_name = TOKEN_MAPPING.get(event["data"][0], "")
+            interest_rate_state.current_block = event["block_number"]
+            interest_rate_state.latest_timestamp = event["timestamp"]
             if not token_name or event["key_name"] != "current_apr":
-                interest_rate_state.current_block = event["block_number"]
                 continue
 
             # Set initial timestamp values for the first token event
             if not self.last_block_data or interest_rate_state.token_timestamps[token_name] == 0:
                 interest_rate_state.token_timestamps[token_name] = event["timestamp"]
-                interest_rate_state.current_block = event["block_number"]
                 continue
 
             # Get needed variables
-            interest_rate_state.current_timestamp = event["timestamp"]
             seconds_passed = interest_rate_state.get_seconds_passed(token_name)
             borrow_apr_bps = Decimal(int(event["data"][1], 16))
             supply_apr_bps = Decimal(int(event["data"][2], 16))
 
             # Calculate interest rate for supply and borrow and convert to percents using the formula:
             # (apr * seconds_passed / seconds_in_year) / 10000
-            current_collateral_change = (supply_apr_bps * seconds_passed / SECONDS_IN_YEAR) * percents_decimals_shift
-            current_debt_change = (borrow_apr_bps * seconds_passed / SECONDS_IN_YEAR) * percents_decimals_shift
+            cumulative_collateral_interest_rate_increase = (
+                    (supply_apr_bps * seconds_passed / SECONDS_IN_YEAR) * percents_decimals_shift
+            )
+            cumulative_debt_interest_rate_increase = (
+                    (borrow_apr_bps * seconds_passed / SECONDS_IN_YEAR) * percents_decimals_shift
+            )
             interest_rate_state.update_state_cumulative_data(
-                token_name, event["block_number"], current_collateral_change, current_debt_change
+                token_name, event["block_number"],
+                cumulative_collateral_interest_rate_increase,
+                cumulative_debt_interest_rate_increase,
             )
 
         # Write last block data
-        self._add_block_data(blocks_data, interest_rate_state.build_interest_rate_model(HASHSTACK_ID))
-        return blocks_data
+        self._add_block_data(interest_rate_state.build_interest_rate_model(HASHSTACK_ID))
 
-    def _get_blocks_bounds(self, start_block, end_block, latest_block) -> tuple[int, int]:
+    def _get_blocks_bounds(self, end_block: int, latest_block: int) -> tuple[int, int]:
         """
         Calculate the bounds for the blocks pagination.
-        :param start_block: int - Previous start block number.
         :param end_block: int - Previous end block number.
         :param latest_block: int - The latest block number.
         :return: tuple[int, int] - The new start and end block numbers.
         """
         if end_block + self.PAGINATION_SIZE < latest_block:
-            start_block += end_block
+            return end_block, end_block + self.PAGINATION_SIZE
         else:
-            end_block = latest_block
-            return start_block, end_block
-        if start_block + self.PAGINATION_SIZE <= latest_block:
-            end_block += self.PAGINATION_SIZE
-        else:
-            end_block = latest_block
-        return start_block, end_block
+            return end_block, latest_block
 
     async def _run_async(self) -> None:
         """Asynchronous function for running the interest rate calculation process and fetching data from on-chain."""
         latest_block = await NET.get_block_number()
-        start_block = self.last_block_data.block if self.last_block_data else 0
-        if start_block == latest_block:
+        last_block = self.last_block_data.block if self.last_block_data else 222000
+        if last_block == latest_block:
             return
         start_block, end_block = self._get_blocks_bounds(
-            start_block,
-            start_block + self.PAGINATION_SIZE,
+            last_block,
             latest_block
         )
-        events_over = False
         # Fetch and set events until blocks are over
-        while not events_over:
-            if end_block >= latest_block:
-                events_over = True
+        while start_block < latest_block:
             self._set_events(start_block, end_block)
-            start_block, end_block = self._get_blocks_bounds(start_block, end_block, latest_block)
+            start_block, end_block = self._get_blocks_bounds(end_block, latest_block)
             if not self.events:
                 continue
-            processed_data = self.calculate_interest_rates()
-            self.db_connector.write_batch_to_db(processed_data)
+            self.calculate_interest_rates()
+            self._write_to_db()
+
+    def _write_to_db(self) -> None:
+        """Write the calculated interest rates to the database and clear blocks data."""
+        self.db_connector.write_batch_to_db(self.blocks_data)
+        self.blocks_data.clear()
 
     def run(self) -> None:
         """Run the interest rate calculation process from the last stored block or from 0 block."""
