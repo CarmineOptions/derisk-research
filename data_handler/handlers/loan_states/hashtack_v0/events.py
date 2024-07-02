@@ -560,14 +560,14 @@ class HashstackV0State(State):
 
             # Filter out users with health factor below 1.
             debt_usd = loan_entity.compute_debt_usd(
-                risk_adjusted=False, 
+                risk_adjusted=False,
                 debt_interest_rate_models=self.debt_interest_rate_models,
                 prices=changed_prices,
             )
             health_factor = loan_entity.compute_health_factor(
                 standardized=False,
                 collateral_interest_rate_models=self.collateral_interest_rate_models,
-                prices=changed_prices, 
+                prices=changed_prices,
                 debt_usd=debt_usd,
             )
             health_factor_liquidation_threshold = (

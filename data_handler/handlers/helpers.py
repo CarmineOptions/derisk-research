@@ -21,7 +21,8 @@ class TokenValues:
         init_value: decimal.Decimal = decimal.Decimal("0"),
     ) -> None:
         if values:
-            assert set(values.keys()) == set(TOKEN_SETTINGS.keys())
+            # Nostra Mainnet can contain different tokens that aren't mentioned in `TOKEN_SETTINGS`
+            # assert set(values.keys()) == set(TOKEN_SETTINGS.keys())
             self.values: dict[str, decimal.Decimal] = values
         else:
             self.values: dict[str, decimal.Decimal] = {

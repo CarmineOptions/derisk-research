@@ -10,6 +10,7 @@ import src.helpers
 import src.settings
 import src.state
 import src.swap_amm
+import src.types
 
 
 
@@ -18,7 +19,7 @@ R_TOKENS: dict[str, str] = {
     'USDC': '0x03bcecd40212e9b91d92bbe25bb3643ad93f0d230d93237c675f46fac5187e8c',
     'USDT': '0x05fa6cc6185eab4b0264a4134e2d4e74be11205351c7c91196cb27d5d97f8d21',
     'DAI': '0x019c981ec23aa9cbac1cc1eb7f92cf09ea2816db9cbd932e251c86a2e8fb725f',
-    'wBTC': '0x01320a9910e78afc18be65e4080b51ecc0ee5c0a8b6cc7ef4e685e02b50e57ef',
+    'WBTC': '0x01320a9910e78afc18be65e4080b51ecc0ee5c0a8b6cc7ef4e685e02b50e57ef',
 }
 
 
@@ -27,12 +28,12 @@ ADDRESSES_TO_TOKENS: dict[str, str] = {
     '0x03bcecd40212e9b91d92bbe25bb3643ad93f0d230d93237c675f46fac5187e8c': 'USDC',
     '0x05fa6cc6185eab4b0264a4134e2d4e74be11205351c7c91196cb27d5d97f8d21': 'USDT',
     '0x019c981ec23aa9cbac1cc1eb7f92cf09ea2816db9cbd932e251c86a2e8fb725f': 'DAI',
-    '0x01320a9910e78afc18be65e4080b51ecc0ee5c0a8b6cc7ef4e685e02b50e57ef': 'wBTC',
+    '0x01320a9910e78afc18be65e4080b51ecc0ee5c0a8b6cc7ef4e685e02b50e57ef': 'WBTC',
     '0x01ef7f9f8bf01678dc6d27e2c26fb7e8eac3812a24752e6a1d6a49d153bec9f3': 'ETH',
     '0x021d8d8519f5464ec63c6b9a80a5229c5ddeed57ecded4c8a9dfc34e31b49990': 'USDC',
     '0x012b8185e237dd0340340faeb3351dbe53f8a42f5a9bf974ddf90ced56e301c7': 'USDT', 
     '0x07eeed99c095f83716e465e2c52a3ec8f47b323041ddc4f97778ac0393b7f358': 'DAI',
-    '0x02614c784267d2026042ab98588f90efbffaade8982567e93530db4ed41201cf': 'wBTC',
+    '0x02614c784267d2026042ab98588f90efbffaade8982567e93530db4ed41201cf': 'WBTC',
     # JediSwap pools.
     '0x07e2a13b40fc1119ec55e0bcf9428eedaa581ab3c924561ad4e955f95da63138': 'JediSwap: DAI/ETH Pool',
     '0x00cfd39f5244f7b617418c018204a8a9f9a7f72e71f0ef38f968eeb2a9ca302b': 'JediSwap: DAI/USDC Pool',
@@ -55,7 +56,7 @@ ADDRESSES_TO_TOKENS: dict[str, str] = {
     '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7': 'ETH',
     '0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8': 'USDC',
     '0x068f5c6a61780768455de69077e07e89787839bf8166decfbf92b645209c0fb8': 'USDT',
-    '0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac': 'wBTC',
+    '0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac': 'WBTC',
 }
 
 
@@ -151,7 +152,7 @@ HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS: dict[str, src.settings.TokenSettings] = 
 }
 HASHSTACK_V1_SPECIFIC_TOKEN_SETTINGS: dict[str, HashstackV1SpecificTokenSettings] = {
     "ETH": HashstackV1SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
-    "wBTC": HashstackV1SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
+    "WBTC": HashstackV1SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
     "USDC": HashstackV1SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
     "DAI": HashstackV1SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
     "USDT": HashstackV1SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
@@ -243,8 +244,8 @@ TOKEN_SETTINGS: dict[str, TokenSettings] = {
 }
 
 
-# Keys are values of the "key_name" column in the database, values are the respective method names.
-EVENTS_METHODS_MAPPING: dict[str, str] = {
+# Keys are event names, values are names of the respective methods that process the given event.
+EVENTS_TO_METHODS_MAPPING: dict[str, str] = {
     "new_loan": "process_new_loan_event",
     "collateral_added": "process_collateral_added_event",
     "loan_spent": "process_loan_spent_event",
@@ -253,52 +254,11 @@ EVENTS_METHODS_MAPPING: dict[str, str] = {
 }
 
 
-MAX_ROUNDING_ERRORS: src.helpers.TokenValues = src.helpers.MAX_ROUNDING_ERRORS
-# TODO: The additional tokens are not allowed in `src.helpers.TokenValues`, fix this.
-MAX_ROUNDING_ERRORS.values.update(
-    {
-        token: decimal.Decimal("0.5e13")
-        for token in HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS
-    }
-)
-
-
-
-class HashstackV1Portfolio(src.helpers.Portfolio):
-    """ A class that describes holdings of tokens of Hashstack users. """
-
-    MAX_ROUNDING_ERRORS: src.helpers.TokenValues = MAX_ROUNDING_ERRORS
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.values.update(
-            {
-                token: decimal.Decimal("0")
-                for token in HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS
-            }
-        )
-
-
-class HashstackV1InterestRateModels(src.helpers.TokenValues):
-    """
-    A class that describes the state of the interest rate indices which help transform face amounts into raw amounts. 
-    Raw amount is the amount that would have been accumulated into the face amount if it were deposited at genesis.
-    """
-
-    def __init__(self) -> None:
-        super().__init__(init_value=decimal.Decimal("1"))
-        self.values.update(
-            {
-                token: decimal.Decimal("1")
-                for token in HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS
-            }
-        )
-
 
 def get_events(start_block_number: int = 0) -> pandas.DataFrame:
     events = src.helpers.get_events(
         addresses = tuple(ADDRESSES_TO_TOKENS),
-        event_names = tuple(EVENTS_METHODS_MAPPING),
+        event_names = tuple(EVENTS_TO_METHODS_MAPPING),
         start_block_number = start_block_number,
     )
     # Ensure we're processing `loan_repaid` after other loan-altering events and the other events in a logical order. 
@@ -320,7 +280,7 @@ def get_events(start_block_number: int = 0) -> pandas.DataFrame:
     return events
 
 
-class HashstackV1LoanEntity(src.state.LoanEntity):
+class HashstackV1LoanEntity(src.types.LoanEntity):
     """
     A class that describes the Hashstack V1 loan entity. On top of the abstract `LoanEntity`, it implements the `user`,
     `original_collateral` and `borrowed_collateral` attributes in order to help with accounting for the changes in 
@@ -337,57 +297,59 @@ class HashstackV1LoanEntity(src.state.LoanEntity):
     def __init__(self, user: str) -> None:
         super().__init__()
         self.user: str = user
-        self.original_collateral: HashstackV1Portfolio = HashstackV1Portfolio()
-        self.borrowed_collateral: HashstackV1Portfolio = HashstackV1Portfolio()
-        self.collateral: HashstackV1Portfolio = HashstackV1Portfolio()
-        self.debt: HashstackV1Portfolio = HashstackV1Portfolio()
+        self.original_collateral: src.types.Portfolio = src.types.Portfolio()
+        self.borrowed_collateral: src.types.Portfolio = src.types.Portfolio()
+        self.collateral: src.types.Portfolio = src.types.Portfolio()
+        self.debt: src.types.Portfolio = src.types.Portfolio()
 
     def compute_health_factor(
         self,
         standardized: bool,
-        collateral_interest_rate_models: Optional[src.state.InterestRateModels] = None,
-        debt_interest_rate_models: Optional[src.state.InterestRateModels] = None,
-        prices: Optional[src.helpers.TokenValues] = None,
+        collateral_interest_rate_model: Optional[src.types.InterestRateModels] = None,
+        debt_interest_rate_model: Optional[src.types.InterestRateModels] = None,
+        prices: Optional[src.types.Prices] = None,
         collateral_usd: Optional[decimal.Decimal] = None,
         debt_usd: Optional[decimal.Decimal] = None,
     ) -> decimal.Decimal:
-        if collateral_usd is None:
-            collateral_usd = self.compute_collateral_usd(
-                risk_adjusted = False,
-                collateral_interest_rate_models = collateral_interest_rate_models,
-                prices = prices,
-            )
-        if debt_usd is None:
-            debt_usd = self.compute_debt_usd(
-                risk_adjusted = False,
-                debt_interest_rate_models = debt_interest_rate_models,
-                prices = prices,
-            )
-        if standardized:
-            # Denominator is the value of (risk-adjusted) collateral at which the loan entity can be liquidated.
-            # TODO: Does this parameter still hold?
-            denominator = decimal.Decimal("1.04") * debt_usd
-        else:
-            denominator = debt_usd
-        if denominator == decimal.Decimal("0"):
-            # TODO: Assumes collateral is positive.
-            return decimal.Decimal("Inf")
-        return collateral_usd / denominator
+        pass  # TODO
+        # if collateral_usd is None:
+        #     collateral_usd = self.compute_collateral_usd(
+        #         risk_adjusted = False,
+        #         collateral_interest_rate_model = collateral_interest_rate_model,
+        #         prices = prices,
+        #     )
+        # if debt_usd is None:
+        #     debt_usd = self.compute_debt_usd(
+        #         risk_adjusted = False,
+        #         debt_interest_rate_model = debt_interest_rate_model,
+        #         prices = prices,
+        #     )
+        # if standardized:
+        #     # Denominator is the value of (risk-adjusted) collateral at which the loan entity can be liquidated.
+        #     # TODO: Does this parameter still hold?
+        #     denominator = decimal.Decimal("1.04") * debt_usd
+        # else:
+        #     denominator = debt_usd
+        # if denominator == decimal.Decimal("0"):
+        #     # TODO: Assumes collateral is positive.
+        #     return decimal.Decimal("Inf")
+        # return collateral_usd / denominator
 
     def compute_debt_to_be_liquidated(
         self,
-        debt_interest_rate_models: Optional[src.state.InterestRateModels] = None,
-        prices: Optional[src.helpers.TokenValues] = None,
+        debt_interest_rate_model: Optional[src.types.InterestRateModels] = None,
+        prices: Optional[src.types.Prices] = None,
         debt_usd: Optional[decimal.Decimal] = None,
     ) -> decimal.Decimal:
-        # TODO: Has the liquidation mechanism changed? 
-        if debt_usd is None:
-            debt_usd = self.compute_debt_usd(
-                risk_adjusted = False,
-                debt_interest_rate_models = debt_interest_rate_models,
-                prices = prices,
-            )
-        return debt_usd
+        pass  # TODO
+        # # TODO: Has the liquidation mechanism changed? 
+        # if debt_usd is None:
+        #     debt_usd = self.compute_debt_usd(
+        #         risk_adjusted = False,
+        #         debt_interest_rate_model = debt_interest_rate_model,
+        #         prices = prices,
+        #     )
+        # return debt_usd
 
 
 class HashstackV1State(src.state.State):
@@ -398,7 +360,7 @@ class HashstackV1State(src.state.State):
     """
 
     ADDRESSES_TO_TOKENS: dict[str, str] = ADDRESSES_TO_TOKENS
-    EVENTS_METHODS_MAPPING: dict[str, str] = EVENTS_METHODS_MAPPING
+    EVENTS_TO_METHODS_MAPPING: dict[str, str] = EVENTS_TO_METHODS_MAPPING
 
     def __init__(
         self,
@@ -408,10 +370,6 @@ class HashstackV1State(src.state.State):
             loan_entity_class=HashstackV1LoanEntity,
             verbose_user=verbose_user,
         )
-        # These models reflect the interest rates at which users lend/stake funds.
-        self.collateral_interest_rate_models: HashstackV1InterestRateModels = HashstackV1InterestRateModels()
-        # These models reflect the interest rates at which users borrow funds.
-        self.debt_interest_rate_models: HashstackV1InterestRateModels = HashstackV1InterestRateModels()
 
     # TODO: There appears to be some overlap with HashstackV0State. Can we simplify the code?
     # TODO: Reduce most of the events processing to `rewrite_original_collateral`, `rewrite_borrowed_collateral`, and 
@@ -435,23 +393,28 @@ class HashstackV1State(src.state.State):
         original_collateral_face_amount = decimal.Decimal(str(int(event["data"][14], base=16)))
 
         self.loan_entities[loan_id] = HashstackV1LoanEntity(user=user)
-        # TODO: Make it possible to initialize `HashstackV1Portfolio`` with some token amount directly.
-        original_collateral = HashstackV1Portfolio()
-        original_collateral.values[original_collateral_token] = original_collateral_face_amount
+        # TODO: Make it possible to initialize `src.types.Portfolio`` with some token amount directly.
+        original_collateral = src.types.Portfolio()
+        original_collateral[original_collateral_token] = original_collateral_face_amount
         self.loan_entities[loan_id].original_collateral = original_collateral
-        borrowed_collateral = HashstackV1Portfolio()
-        borrowed_collateral.values[borrowed_collateral_token] = borrowed_collateral_face_amount
+        borrowed_collateral = src.types.Portfolio()
+        borrowed_collateral[borrowed_collateral_token] = borrowed_collateral_face_amount
         self.loan_entities[loan_id].borrowed_collateral = borrowed_collateral
-        # TODO: Make it easier to sum 2 `HashstackV1Portfolio` instances.
-        self.loan_entities[loan_id].collateral.values = {
-            token: (
-                self.loan_entities[loan_id].original_collateral.values[token]
-                + self.loan_entities[loan_id].borrowed_collateral.values[token]
-            )
-            for token in TOKEN_SETTINGS
-        }
-        debt = HashstackV1Portfolio()
-        debt.values[debt_token] = debt_face_amount
+        # TODO: Make it easier to sum 2 `src.types.Portfolio` instances.
+        self.loan_entities[loan_id].collateral = src.types.Portfolio(
+            **{
+                token: (
+                    self.loan_entities[loan_id].original_collateral[token]
+                    + self.loan_entities[loan_id].borrowed_collateral[token]
+                )
+                for token in set().union(
+                    self.loan_entities[loan_id].original_collateral,
+                    self.loan_entities[loan_id].borrowed_collateral,
+                )
+            }
+        )
+        debt = src.types.Portfolio()
+        debt[debt_token] = debt_face_amount
         self.loan_entities[loan_id].debt = debt
         if self.loan_entities[loan_id].user == self.verbose_user:
             logging.info(
@@ -477,16 +440,21 @@ class HashstackV1State(src.state.State):
         original_collateral_token = self.ADDRESSES_TO_TOKENS[src.helpers.add_leading_zeros(event["data"][1])]
         original_collateral_face_amount = decimal.Decimal(str(int(event["data"][2], base=16)))
 
-        original_collateral = HashstackV1Portfolio()
-        original_collateral.values[original_collateral_token] = original_collateral_face_amount
+        original_collateral = src.types.Portfolio()
+        original_collateral[original_collateral_token] = original_collateral_face_amount
         self.loan_entities[loan_id].original_collateral = original_collateral
-        self.loan_entities[loan_id].collateral.values = {
-            token: (
-                self.loan_entities[loan_id].original_collateral.values[token]
-                + self.loan_entities[loan_id].borrowed_collateral.values[token]
-            )
-            for token in TOKEN_SETTINGS
-        }
+        self.loan_entities[loan_id].collateral = src.types.Portfolio(
+            **{
+                token: (
+                    self.loan_entities[loan_id].original_collateral[token]
+                    + self.loan_entities[loan_id].borrowed_collateral[token]
+                )
+                for token in set().union(
+                    self.loan_entities[loan_id].original_collateral,
+                    self.loan_entities[loan_id].borrowed_collateral,
+                )
+            }
+        )
         if self.loan_entities[loan_id].user == self.verbose_user:
             logging.info(
                 'In block number = {}, collateral was added, resulting in collateral of face amount = {} of token = '
@@ -518,20 +486,25 @@ class HashstackV1State(src.state.State):
         new_borrowed_collateral_token = self.ADDRESSES_TO_TOKENS[src.helpers.add_leading_zeros(event["data"][17])]
         new_borrowed_collateral_face_amount = decimal.Decimal(str(int(event["data"][18], base=16)))
 
-        new_borrowed_collateral = HashstackV1Portfolio()
-        new_borrowed_collateral.values[new_borrowed_collateral_token] = new_borrowed_collateral_face_amount
+        new_borrowed_collateral = src.types.Portfolio()
+        new_borrowed_collateral[new_borrowed_collateral_token] = new_borrowed_collateral_face_amount
         self.loan_entities[new_loan_id].borrowed_collateral = new_borrowed_collateral
-        self.loan_entities[new_loan_id].collateral.values = {
-            token: (
-                self.loan_entities[new_loan_id].original_collateral.values[token]
-                + self.loan_entities[new_loan_id].borrowed_collateral.values[token]
-            )
-            for token in TOKEN_SETTINGS
-        }
-        new_debt = HashstackV1Portfolio()
-        new_debt.values[new_debt_token] = new_debt_face_amount
+        self.loan_entities[new_loan_id].collateral = src.types.Portfolio(
+            **{
+                token: (
+                    self.loan_entities[new_loan_id].original_collateral[token]
+                    + self.loan_entities[new_loan_id].borrowed_collateral[token]
+                )
+                for token in set().union(
+                    self.loan_entities[new_loan_id].original_collateral,
+                    self.loan_entities[new_loan_id].borrowed_collateral,
+                )
+            }
+        )
+        new_debt = src.types.Portfolio()
+        new_debt[new_debt_token] = new_debt_face_amount
         # Based on the documentation, it seems that it's only possible to spend the whole amount.
-        assert self.loan_entities[old_loan_id].debt.values == new_debt.values
+        assert self.loan_entities[old_loan_id].debt == new_debt
         self.loan_entities[new_loan_id].debt = new_debt
         if self.loan_entities[new_loan_id].user == self.verbose_user:
             logging.info(
@@ -594,21 +567,26 @@ class HashstackV1State(src.state.State):
         assert new_borrowed_collateral_face_amount == decimal.Decimal("0")
         assert new_original_collateral_face_amount == decimal.Decimal("0")
 
-        new_original_collateral = HashstackV1Portfolio()
-        new_original_collateral.values[new_original_collateral_token] = new_original_collateral_face_amount
-        new_borrowed_collateral = HashstackV1Portfolio()
-        new_borrowed_collateral.values[new_borrowed_collateral_token] = new_borrowed_collateral_face_amount
+        new_original_collateral = src.types.Portfolio()
+        new_original_collateral[new_original_collateral_token] = new_original_collateral_face_amount
+        new_borrowed_collateral = src.types.Portfolio()
+        new_borrowed_collateral[new_borrowed_collateral_token] = new_borrowed_collateral_face_amount
         self.loan_entities[new_loan_id].original_collateral = new_original_collateral
         self.loan_entities[new_loan_id].borrowed_collateral = new_borrowed_collateral
-        self.loan_entities[new_loan_id].collateral.values = {
-            token: (
-                self.loan_entities[new_loan_id].original_collateral.values[token]
-                + self.loan_entities[new_loan_id].borrowed_collateral.values[token]
-            )
-            for token in TOKEN_SETTINGS
-        }
-        new_debt = HashstackV1Portfolio()
-        new_debt.values[new_debt_token] = new_debt_face_amount
+        self.loan_entities[new_loan_id].collateral = src.types.Portfolio(
+            **{
+                token: (
+                    self.loan_entities[new_loan_id].original_collateral[token]
+                    + self.loan_entities[new_loan_id].borrowed_collateral[token]
+                )
+                for token in set().union(
+                    self.loan_entities[new_loan_id].original_collateral,
+                    self.loan_entities[new_loan_id].borrowed_collateral,
+                )
+            }
+        )
+        new_debt = src.types.Portfolio()
+        new_debt[new_debt_token] = new_debt_face_amount
         self.loan_entities[new_loan_id].debt = new_debt
         if self.loan_entities[new_loan_id].user == self.verbose_user:
             logging.info(
@@ -625,45 +603,114 @@ class HashstackV1State(src.state.State):
                 )
             )
 
+    async def collect_token_parameters(self) -> None:
+        # Get the sets of unique collateral and debt tokens.
+        collateral_tokens = {
+            y for x in self.loan_entities.values() for y in x.collateral.keys()
+        }
+        debt_tokens = {
+            y for x in self.loan_entities.values() for y in x.debt.keys()
+        }
+        logging.error('{} {}'.format(collateral_tokens, debt_tokens))
+
+    #     # Get parameters for each collateral and debt token. Under zkLend, the collateral token in the events data is
+    #     # the underlying token directly.
+    #     for underlying_collateral_token_address in collateral_tokens:
+    #         underlying_collateral_token_symbol = await src.helpers.get_symbol(
+    #             token_address=underlying_collateral_token_address
+    #         )
+    #         # The order of the arguments is: `enabled`, `decimals`, `z_token_address`, `interest_rate_model`,
+    #         # `collateral_factor`, `borrow_factor`, `reserve_factor`, `last_update_timestamp`, `lending_accumulator`,
+    #         # `debt_accumulator`, `current_lending_rate`, `current_borrowing_rate`, `raw_total_debt`, `flash_loan_fee`,
+    #         # `liquidation_bonus`, `debt_limit`.
+    #         reserve_data = await src.blockchain_call.func_call(
+    #             addr=ZKLEND_MARKET,
+    #             selector="get_reserve_data",
+    #             calldata=[underlying_collateral_token_address],
+    #         )
+    #         collateral_token_address = src.helpers.add_leading_zeros(
+    #             hex(reserve_data[2])
+    #         )
+    #         collateral_token_symbol = await src.helpers.get_symbol(
+    #             token_address=collateral_token_address
+    #         )
+    #         self.collateral[underlying_collateral_token_address] = (
+    #             ZkLendCollateralTokenParameters(
+    #                 address=collateral_token_address,
+    #                 decimals=int(reserve_data[1]),
+    #                 symbol=collateral_token_symbol,
+    #                 underlying_symbol=underlying_collateral_token_symbol,
+    #                 underlying_address=underlying_collateral_token_address,
+    #                 collateral_factor=decimal.Decimal(reserve_data[4]),
+    #                 liquidation_bonus=decimal.Decimal(reserve_data[14]),
+    #             )
+    #         )
+    #     for underlying_debt_token_address in debt_tokens:
+    #         underlying_debt_token_symbol = await src.helpers.get_symbol(
+    #             token_address=underlying_debt_token_address
+    #         )
+    #         # The order of the arguments is: `enabled`, `decimals`, `z_token_address`, `interest_rate_model`,
+    #         # `collateral_factor`, `borrow_factor`, `reserve_factor`, `last_update_timestamp`, `lending_accumulator`,
+    #         # `debt_accumulator`, `current_lending_rate`, `current_borrowing_rate`, `raw_total_debt`, `flash_loan_fee`,
+    #         # `liquidation_bonus`, `debt_limit`.
+    #         reserve_data = await src.blockchain_call.func_call(
+    #             addr=ZKLEND_MARKET,
+    #             selector="get_reserve_data",
+    #             calldata=[underlying_debt_token_address],
+    #         )
+    #         debt_token_address = src.helpers.add_leading_zeros(hex(reserve_data[2]))
+    #         debt_token_symbol = await src.helpers.get_symbol(
+    #             token_address=debt_token_address
+    #         )
+    #         self.debt[underlying_debt_token_address] = ZkLendDebtTokenParameters(
+    #             address=debt_token_address,
+    #             decimals=int(reserve_data[1]),
+    #             symbol=debt_token_symbol,
+    #             underlying_symbol=underlying_debt_token_symbol,
+    #             underlying_address=underlying_debt_token_address,
+    #             debt_factor=decimal.Decimal(reserve_data[5]),
+    #         )
+
     def compute_liquidable_debt_at_price(
         self,
-        prices: src.helpers.TokenValues,
+        prices: src.types.Prices,
         collateral_token: str,
-        collateral_token_price: decimal.Decimal,
+        collateral_token_price: float,
         debt_token: str,
     ) -> decimal.Decimal:
-        changed_prices = copy.deepcopy(prices)
-        changed_prices.values[collateral_token] = collateral_token_price
-        max_liquidated_amount = decimal.Decimal("0")
-        for loan_entity in self.loan_entities.values():
-            # Filter out users who borrowed the token of interest.
-            debt_tokens = {
-                token
-                for token, token_amount in loan_entity.debt.values.items()
-                if token_amount > decimal.Decimal("0")
-            }
-            if not debt_token in debt_tokens:
-                continue
+        pass  # TODO
+        # changed_prices = copy.deepcopy(prices)
+        # changed_prices[collateral_token] = collateral_token_price
+        # max_liquidated_amount = decimal.Decimal("0")
+        # for loan_entity in self.loan_entities.values():
+        #     # Filter out users who borrowed the token of interest.
+        #     debt_tokens = {
+        #         token
+        #         for token, token_amount in loan_entity.debt.items()
+        #         if token_amount > decimal.Decimal("0")
+        #     }
+        #     if not debt_token in debt_tokens:
+        #         continue
 
-            # Filter out users with health factor below 1.
-            debt_usd = loan_entity.compute_debt_usd(
-                risk_adjusted=False, 
-                debt_interest_rate_models=self.debt_interest_rate_models,
-                prices=changed_prices,
-            )
-            health_factor = loan_entity.compute_health_factor(
-                standardized=False,
-                collateral_interest_rate_models=self.collateral_interest_rate_models,
-                prices=changed_prices, 
-                debt_usd=debt_usd,
-            )
-            # TODO: Does this parameter still hold?
-            if health_factor >= decimal.Decimal("1.04"):
-                continue
+        #     # Filter out users with health factor below 1.
+        #     debt_usd = loan_entity.compute_debt_usd(
+        #         risk_adjusted=False, 
+        #         debt_interest_rate_model=self.interest_rate_model.debt,
+        #         prices=changed_prices,
+        #     )
+        #     health_factor = loan_entity.compute_health_factor(
+        #         standardized=False,
+        #         collateral_interest_rate_model=self.interest_rate_model.collateral,
+        #         prices=changed_prices, 
+        #         debt_usd=debt_usd,
+        #     )
+        #     # TODO: Does this parameter still hold?
+        #     if health_factor >= decimal.Decimal("1.04"):
+        #         continue
 
-            # Find out how much of the `debt_token` will be liquidated.
-            max_liquidated_amount += loan_entity.compute_debt_to_be_liquidated(debt_usd=debt_usd)
-        return max_liquidated_amount
+        #     # Find out how much of the `debt_token` will be liquidated.
+        #     max_liquidated_amount += loan_entity.compute_debt_to_be_liquidated(debt_usd=debt_usd)
+        # return max_liquidated_amount
 
     def compute_number_of_active_users(self) -> int:
         unique_active_users = {

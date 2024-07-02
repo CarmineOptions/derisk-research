@@ -16,10 +16,11 @@ LAST_UPDATE_FILENAME = "last_update.json"
 
 
 def load_pickle(path: str) -> src.zklend.ZkLendState:
+    # TODO: generalize to last_update.json!
     # TODO: generalize to every protocol
     # TODO: use https://stackoverflow.com/a/58709164 instead?
     response = requests.get(
-        f"https://storage.googleapis.com/derisk-persistent-state/{path}"
+        f"https://storage.googleapis.com/{src.helpers.GS_BUCKET_NAME}/{path}"
     )
     if response.status_code == 200:
         try:
@@ -41,7 +42,7 @@ def upload_object_as_pickle(object: Any, path: str):
 
 
 def update_persistent_state_manually():
-    zklend_events = src.zklend.get_events()
+    zklend_events = src.zklend.zklend_get_events()
 
     zklend_state = src.zklend.ZkLendState()
     for _, zklend_event in zklend_events.iterrows():
