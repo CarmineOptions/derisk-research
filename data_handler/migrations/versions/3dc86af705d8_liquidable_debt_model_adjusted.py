@@ -15,7 +15,7 @@ from handlers.liquidable_debt.values import LendingProtocolNames
 
 # revision identifiers, used by Alembic.
 revision: str = '3dc86af705d8'
-down_revision: Union[str, None] = '593bb0a7d06b'
+down_revision: Union[str, None] = 'd271a1dc6633'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
