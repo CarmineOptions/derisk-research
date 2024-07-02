@@ -42,8 +42,8 @@ FIELDS_TO_VALIDATE = (
 
 
 class LendingProtocolNames(Enum):
-    HASHSTACK_V0: str = 'hashstack_v0'
-    HASHSTACK_V1: str = 'hashstack_v1'
-    NOSTRA_ALPHA: str = 'nostra_alpha'
-    NOSTRA_MAINNET: str = 'nostra_mainnet'
+    HASHSTACK_V0: str = "Hashstack_v0"
+    HASHSTACK_V1: str = "Hashstack_v1"
+    NOSTRA_ALPHA: str = "Nostra_alpha"
+    NOSTRA_MAINNET: str = "Nostra_mainnet"
     ZKLEND: str = 'zkLend'
