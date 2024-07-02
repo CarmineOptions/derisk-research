@@ -3,12 +3,12 @@ import dataclasses
 
 from handlers.loan_states.nostra_alpha.events import (
     TokenSettings,
-    TOKEN_SETTINGS,
 )
 from handlers.loan_states.nostra_alpha.events import (
     NostraAlphaState,
     NostraAlphaLoanEntity,
 )
+from handlers.state import NostraAlphaSpecificTokenSettings, NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS
 
 
 # Source: https://docs.nostra.finance/lend/deployed-contracts/lend-mainnet#asset-contracts.
@@ -102,7 +102,7 @@ class NostraMainnetSpecificTokenSettings:
 
 
 @dataclasses.dataclass
-class TokenSettings(NostraMainnetSpecificTokenSettings, TokenSettings):
+class TokenSettings(NostraMainnetSpecificTokenSettings, NostraAlphaSpecificTokenSettings):
     pass
 
 
@@ -137,19 +137,19 @@ NOSTRA_MAINNET_SPECIFIC_TOKEN_SETTINGS: dict[
 TOKEN_SETTINGS: dict[str, TokenSettings] = {
     token: TokenSettings(
         # TODO: These can actually differ between Nostra Alpha and Nostra Mainnet.
-        symbol=TOKEN_SETTINGS[token].symbol,
-        decimal_factor=TOKEN_SETTINGS[token].decimal_factor,
-        address=TOKEN_SETTINGS[token].address,
-        # collateral_factor=TOKEN_SETTINGS[token].collateral_factor,
-        # debt_factor=TOKEN_SETTINGS[token].debt_factor,
-        # liquidator_fee_beta=TOKEN_SETTINGS[token].liquidator_fee_beta,
-        # liquidator_fee_max=TOKEN_SETTINGS[token].liquidator_fee_max,
-        # protocol_fee=TOKEN_SETTINGS[token].protocol_fee,
+        symbol=NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS[token].symbol,
+        decimal_factor=NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS[token].decimal_factor,
+        address=NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS[token].address,
+        collateral_factor=NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS[token].collateral_factor,
+        debt_factor=NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS[token].debt_factor,
+        liquidator_fee_beta=NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS[token].liquidator_fee_beta,
+        liquidator_fee_max=NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS[token].liquidator_fee_max,
+        protocol_fee=NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS[token].protocol_fee,
         protocol_token_address=NOSTRA_MAINNET_SPECIFIC_TOKEN_SETTINGS[
             token
         ].protocol_token_address,
     )
-    for token in TOKEN_SETTINGS
+    for token in NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS
 }
 
 

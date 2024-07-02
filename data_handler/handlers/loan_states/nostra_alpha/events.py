@@ -6,8 +6,8 @@ import logging
 import pandas as pd
 
 from handlers.helpers import Portfolio, TokenValues, add_leading_zeros
-from handlers.settings import TOKEN_SETTINGS, TokenSettings
-from handlers.state import LoanEntity, InterestRateModels, State
+from handlers.settings import TokenSettings
+from handlers.state import LoanEntity, InterestRateModels, State, NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS
 
 LIQUIDATION_HEALTH_FACTOR_THRESHOLD = decimal.Decimal("1")
 TARGET_HEALTH_FACTOR = decimal.Decimal("1.25")
@@ -109,7 +109,7 @@ class NostraAlphaLoanEntity(LoanEntity):
     earns interest and the amount that doesn't. We keep all balances in raw amounts.
     """
 
-    TOKEN_SETTINGS: dict[str, TokenSettings] = TOKEN_SETTINGS
+    TOKEN_SETTINGS: dict[str, TokenSettings] = NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS
     # TODO: Move these to `PROTOCOL_SETTINGS` (similar to `TOKEN_SETTINGS`)? Might be useful when
     # `compute_health_factor` is generalized.
     LIQUIDATION_HEALTH_FACTOR_THRESHOLD = LIQUIDATION_HEALTH_FACTOR_THRESHOLD
@@ -452,7 +452,7 @@ class NostraAlphaState(State):
             debt_tokens = {
                 token
                 for token, token_amount in loan_entity.debt.values.items()
-                if token_amount > decimal.Decimal("0")
+                if decimal.Decimal(token_amount) > decimal.Decimal("0")
             }
             if not debt_token in debt_tokens:
                 continue
