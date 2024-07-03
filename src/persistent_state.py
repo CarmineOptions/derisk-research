@@ -10,7 +10,7 @@ import src.zklend
 
 
 
-PERSISTENT_STATE_FILENAME = "persistent-state.pckl"
+PERSISTENT_STATE_FILENAME = "persistent-state.pkl"
 LAST_UPDATE_FILENAME = "last_update.json"
 
 
