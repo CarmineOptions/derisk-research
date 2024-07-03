@@ -87,11 +87,11 @@ class InterestRateState:
         """
         self.last_block_data = last_block_data
         self.current_block = current_block
-        self.latest_timestamp = last_block_data.timestamp if last_block_data else 0
+        self.current_timestamp = last_block_data.timestamp if last_block_data else 0
 
         self.cumulative_collateral_interest_rates: dict[str, Decimal] = {}
         self.cumulative_debt_interest_rate: dict[str, Decimal] = {}
-        self.token_timestamps: dict[str, int] = {}
+        self.previous_token_timestamps: dict[str, int] = {}
         self._fill_state_data()
 
     def get_seconds_passed(self, token_name: str) -> Decimal:
@@ -101,22 +101,24 @@ class InterestRateState:
         :return: Decimal - The number of seconds passed.
         """
         return Decimal(
-            self.latest_timestamp - self.token_timestamps[token_name]
+            self.current_timestamp - self.previous_token_timestamps[token_name]
         )
 
     def update_state_cumulative_data(
-            self, token_name: str, current_block: int, collateral_increase: Decimal, debt_increase: Decimal
+            self, token_name: str, current_block: int,
+            cumulative_collateral_interest_rate_increase: Decimal,
+            cumulative_debt_interest_rate_increase: Decimal,
     ) -> None:
         """
         Update the state of interest rate calculation with the new data.
         :param token_name: str - The name of the token, for example `STRK`.
         :param current_block: int - The current block number.
-        :param collateral_increase: Decimal - The change in collateral(supply) interest rate.
-        :param debt_increase: Decimal - The change in debt(borrow) interest rate.
+        :param cumulative_collateral_interest_rate_increase: Decimal - The change in collateral(supply) interest rate.
+        :param cumulative_debt_interest_rate_increase: Decimal - The change in debt(borrow) interest rate.
         """
-        self.cumulative_collateral_interest_rates[token_name] += collateral_increase
-        self.cumulative_debt_interest_rate[token_name] += debt_increase
-        self.token_timestamps[token_name] = self.latest_timestamp
+        self.cumulative_collateral_interest_rates[token_name] += cumulative_collateral_interest_rate_increase
+        self.cumulative_debt_interest_rate[token_name] += cumulative_debt_interest_rate_increase
+        self.previous_token_timestamps[token_name] = self.current_timestamp
         self.current_block = current_block
 
     def _fill_state_data(self) -> None:
@@ -139,13 +141,13 @@ class InterestRateState:
     def _fill_timestamps(self) -> None:
         """Fill the token timestamps with latest block timestamp or default value. Default value is 0"""
         if self.last_block_data:
-            self.token_timestamps = {
+            self.previous_token_timestamps = {
                 token_name: self.last_block_data.timestamp for token_name in TOKEN_MAPPING.values()
             }
         else:
             # First token event occurrence will update the timestamp,
             # so after first interest rate for token will be 1.
-            self.token_timestamps = {
+            self.previous_token_timestamps = {
                 token_name: 0 for token_name in TOKEN_MAPPING.values()
             }
 
@@ -157,7 +159,7 @@ class InterestRateState:
         """
         return InterestRate(
             block=self.current_block,
-            timestamp=self.latest_timestamp,
+            timestamp=self.current_timestamp,
             protocol_id=protocol_id,
             **self._serialize_cumulative_data()
         )

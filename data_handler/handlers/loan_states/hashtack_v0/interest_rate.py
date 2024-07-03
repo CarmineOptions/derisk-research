@@ -20,6 +20,7 @@ class HashstackV0InterestRate:
     """Class for calculating interest rates on the Hashstack V0 protocol."""
 
     PAGINATION_SIZE = 1000
+    DEFAULT_START_BLOCK = 0
 
     def __init__(self):
         """
@@ -81,13 +82,13 @@ class HashstackV0InterestRate:
             # Get token name. Validate event `key_name` and token name.
             token_name = TOKEN_MAPPING.get(event["data"][0], "")
             interest_rate_state.current_block = event["block_number"]
-            interest_rate_state.latest_timestamp = event["timestamp"]
+            interest_rate_state.current_timestamp = event["timestamp"]
             if not token_name or event["key_name"] != "current_apr":
                 continue
 
             # Set initial timestamp values for the first token event
-            if not self.last_block_data or interest_rate_state.token_timestamps[token_name] == 0:
-                interest_rate_state.token_timestamps[token_name] = event["timestamp"]
+            if not self.last_block_data or interest_rate_state.previous_token_timestamps[token_name] == 0:
+                interest_rate_state.previous_token_timestamps[token_name] = event["timestamp"]
                 continue
 
             # Get needed variables
@@ -112,32 +113,19 @@ class HashstackV0InterestRate:
         # Write last block data
         self._add_block_data(interest_rate_state.build_interest_rate_model(HASHSTACK_ID))
 
-    def _get_blocks_bounds(self, end_block: int, latest_block: int) -> tuple[int, int]:
-        """
-        Calculate the bounds for the blocks pagination.
-        :param end_block: int - Previous end block number.
-        :param latest_block: int - The latest block number.
-        :return: tuple[int, int] - The new start and end block numbers.
-        """
-        if end_block + self.PAGINATION_SIZE < latest_block:
-            return end_block, end_block + self.PAGINATION_SIZE
-        else:
-            return end_block, latest_block
-
     async def _run_async(self) -> None:
         """Asynchronous function for running the interest rate calculation process and fetching data from on-chain."""
         latest_block = await NET.get_block_number()
-        last_block = self.last_block_data.block if self.last_block_data else 222000
-        if last_block == latest_block:
+        previous_block = self.last_block_data.block if self.last_block_data else self.DEFAULT_START_BLOCK
+        if previous_block == latest_block:
             return
-        start_block, end_block = self._get_blocks_bounds(
-            last_block,
-            latest_block
-        )
+        start_block, end_block = previous_block, min(previous_block + self.PAGINATION_SIZE, latest_block)
         # Fetch and set events until blocks are over
-        while start_block < latest_block:
+        while start_block < latest_block and not self._events_over:
             self._set_events(start_block, end_block)
-            start_block, end_block = self._get_blocks_bounds(end_block, latest_block)
+            start_block += self.PAGINATION_SIZE
+            end_block = start_block + self.PAGINATION_SIZE
+            end_block = end_block if end_block <= latest_block else latest_block
             if not self.events:
                 continue
             self.calculate_interest_rates()
