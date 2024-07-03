@@ -51,7 +51,7 @@ app.conf.beat_schedule = {
     #     "task": "uniswap_v2_order_book",
     #     "schedule": ORDER_BOOK_TIME_INTERVAL,
     # },
-    "ekubo_order_book": {
+    f"run_ekubo_order_book_{ORDER_BOOK_TIME_INTERVAL}_mins": {
         "task": "ekubo_order_book",
         "schedule": ORDER_BOOK_TIME_INTERVAL,
     },
@@ -75,4 +75,4 @@ app.conf.beat_schedule = {
 from celery_app.order_books_tasks import (
     ekubo_order_book,
 )
-app.autodiscover_tasks(["celery_app.tasks"])
+app.autodiscover_tasks(["celery_app.tasks", "celery_app.order_books_tasks"])
