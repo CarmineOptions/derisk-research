@@ -1,6 +1,6 @@
 import logging
 
-from database.crud import DBConnector
+from db.crud import DBConnector
 from db.models import OrderBookModel
 
 from handlers.order_books.ekubo.api_connector import EkuboAPIConnector
