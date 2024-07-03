@@ -120,7 +120,8 @@ def update_data(zklend_state: src.zklend.ZkLendState):
             debt_token_underlying_symbol=debt_token_underlying_symbol,
             save_data=True,
         )
-        logging.info(f"Main chart data for pair = {pair} prepared in {time.time() - t3}s")
+        protocol = src.protocol_parameters.get_protocol(state=state)
+        logging.info(f"Main chart data for protocol = {protocol} and pair = {pair} prepared in {time.time() - t3}s")
     logging.info(f"updated graphs in {time.time() - t3}s")
 
     loan_stats = {}

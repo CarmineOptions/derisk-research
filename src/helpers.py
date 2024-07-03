@@ -179,7 +179,7 @@ def upload_file_to_bucket(source_path: str, target_path: str):
     # Upload the file to the bucket.
     blob = bucket.blob(target_path)
     blob.upload_from_filename(source_path)
-    logging.info(f"File = {source_path} uploaded to = gs://{GS_BUCKET_NAME}/{target_path}.")
+    logging.debug(f"File = {source_path} uploaded to = gs://{bucket_name}/{target_path}.")
 
 
 def save_dataframe(data: pandas.DataFrame, path: str) -> None:
