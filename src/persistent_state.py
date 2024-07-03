@@ -1,8 +1,8 @@
 from typing import Any
 import logging
 import os
-import pickle
 
+import dill
 import requests
 
 import src.helpers
@@ -24,9 +24,9 @@ def load_pickle(path: str) -> src.zklend.ZkLendState:
     )
     if response.status_code == 200:
         try:
-            state = pickle.loads(response.content)
+            state = dill.loads(response.content)
             return state
-        except pickle.UnpicklingError as e:
+        except dill.UnpicklingError as e:
             logging.info(f"Failed to unpickle the data: {e}.")
             return src.zklend.ZkLendState()
     else:
@@ -36,7 +36,7 @@ def load_pickle(path: str) -> src.zklend.ZkLendState:
 
 def upload_object_as_pickle(object: Any, path: str):
     with open(path, "wb") as out_file:
-        pickle.dump(object, out_file)
+        dill.dump(object, out_file)
     src.helpers.upload_file_to_bucket(source_path=path, target_path=path)
     os.remove(path)
 
@@ -48,13 +48,7 @@ def update_persistent_state_manually():
     for _, zklend_event in zklend_events.iterrows():
         zklend_state.process_event(event=zklend_event)
 
-    with open(PERSISTENT_STATE_FILENAME, "wb") as file:
-        pickle.dump(zklend_state, file)
-    src.helpers.upload_file_to_bucket(
-        source_path=PERSISTENT_STATE_FILENAME,
-        target_path=PERSISTENT_STATE_FILENAME,
-    )
-    os.remove(PERSISTENT_STATE_FILENAME)
+    upload_object_as_pickle(object = zklend_state, path = PERSISTENT_STATE_FILENAME)
     
     logging.info(
         f"Created and saved a new persistent state under the latest block = {zklend_state.last_block_number}."
