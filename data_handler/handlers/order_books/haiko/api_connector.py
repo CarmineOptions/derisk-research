@@ -1,4 +1,4 @@
-from web_app.utils.abstractions import AbstractionAPIConnector
+from handlers.order_books.abstractions import AbstractionAPIConnector
 
 
 class HaikoAPIConnector(AbstractionAPIConnector):
