@@ -15,7 +15,7 @@ class LoanStateBase(BaseModel):
     deposit: Optional[Dict]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class LoanStateResponse(LoanStateBase):
