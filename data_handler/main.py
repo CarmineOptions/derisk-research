@@ -5,9 +5,9 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.middleware import SlowAPIMiddleware
 
-from db.schemas import LoanStateResponse, InterestRateModel
+from db.schemas import LoanStateResponse, InterestRateModel, OrderBookResponseModel
 from handler_tools.constants import ProtocolIDs
-from db.models import LoanState, InterestRate
+from db.models import LoanState, InterestRate, OrderBookModel
 from db.database import Base, engine, get_database
 
 # Create the database tables
@@ -23,14 +23,14 @@ app.add_middleware(SlowAPIMiddleware)
 @limiter.limit("10/second")
 @app.get("/loan_states", response_model=List[LoanStateResponse])
 async def read_loan_states(
-        request: Request,
-        protocol: Optional[str] = None,
-        start_block: Optional[int] = None,
-        end_block: Optional[int] = None,
-        start_datetime: Optional[int] = None,
-        end_datetime: Optional[int] = None,
-        user: Optional[str] = None,
-        db: Session = Depends(get_database),
+    request: Request,
+    protocol: Optional[str] = None,
+    start_block: Optional[int] = None,
+    end_block: Optional[int] = None,
+    start_datetime: Optional[int] = None,
+    end_datetime: Optional[int] = None,
+    user: Optional[str] = None,
+    db: Session = Depends(get_database),
 ) -> List[LoanStateResponse]:
     """
     Fetch loan states from the database with optional filtering.
@@ -76,9 +76,9 @@ async def read_loan_states(
 @limiter.limit("10/second")
 @app.get("/interest-rate/", response_model=InterestRateModel)
 def get_last_interest_rate_by_block(
-        request: Request,
-        protocol: Optional[str] = None,
-        db: Session = Depends(get_database)
+    request: Request,
+    protocol: Optional[str] = None,
+    db: Session = Depends(get_database),
 ):
     """
     Fetch the last interest rate record by block number.
@@ -86,15 +86,45 @@ def get_last_interest_rate_by_block(
     :param db: The database session.
     :return: The last interest rate record.
     """
-    print("protocol", protocol)
     if protocol is None:
         raise HTTPException(status_code=400, detail="Protocol ID is required")
 
     if protocol not in ProtocolIDs.choices():
         raise HTTPException(status_code=400, detail="Invalid protocol ID")
 
-    last_record = db.query(InterestRate).filter(
-        InterestRate.protocol_id == protocol
-    ).order_by(InterestRate.block.desc()).first()
+    last_record = (
+        db.query(InterestRate)
+        .filter(InterestRate.protocol_id == protocol)
+        .order_by(InterestRate.block.desc())
+        .first()
+    )
 
     return last_record
+
+
+@app.get("/orderbook/", responses_model=OrderBookResponseModel)
+def get_orderbook(
+    base_token: str, quote_token: str, dex: str, db: Session = Depends(get_database)
+) -> OrderBookResponseModel:
+    """
+    Fetch order book records from the database.
+    :param base_token: The base token symbol.
+    :param quote_token: The quote token symbol.
+    :param dex: The DEX name.
+    :return: A list of order book records.
+    """
+    records = (
+        db.query(OrderBookModel)
+        .filter(
+            OrderBookModel.token_a == base_token,
+            OrderBookModel.token_b == quote_token,
+            OrderBookModel.dex == dex,
+        )
+        .order_by(OrderBookModel.timestamp.desc())
+        .first()
+    )
+
+    if not records:
+        raise HTTPException(status_code=404, detail="Records not found")
+
+    return records
