@@ -17,6 +17,11 @@ RISK_ADJUSTED_COLLATERAL_USD_FIELD_NAME = "Risk-adjusted collateral (USD)"
 DEBT_USD_FIELD_NAME = "Debt (USD)"
 HEALTH_FACTOR_FIELD_NAME = "Health factor"
 LIQUIDABLE_DEBT_FIELD_NAME = "Liquidable debt"
+PRICE_FIELD_NAME = "price"
+MYSWAP_VALUE = "mySwap"
+JEDISWAP_VALUE = "JediSwap"
+POOL_SPLIT_VALUE = " Pool: "
+ROW_ID_FIELD_NAME = "id"
 ALL_NEEDED_FIELDS = (
     USER_FIELD_NAME,
     PROTOCOL_FIELD_NAME,
@@ -36,8 +41,8 @@ FIELDS_TO_VALIDATE = (
 
 
 class LendingProtocolNames(Enum):
-    HASHSTACK_V0: str = 'hashstack_v0'
-    HASHSTACK_V1: str = 'hashstack_v1'
-    NOSTRA_ALPHA: str = 'nostra_alpha'
-    NOSTRA_MAINNET: str = 'nostra_mainnet'
-    ZKLEND: str = 'zklend'
+    HASHSTACK_V0: str = "Hashstack_v0"
+    HASHSTACK_V1: str = "Hashstack_v1"
+    NOSTRA_ALPHA: str = "Nostra_alpha"
+    NOSTRA_MAINNET: str = "Nostra_mainnet"
+    ZKLEND: str = 'zkLend'

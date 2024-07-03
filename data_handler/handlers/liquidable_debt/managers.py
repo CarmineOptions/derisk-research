@@ -12,6 +12,11 @@ class LocalStorageManager:
     """
     @classmethod
     def update_dir(cls, protocol_name: str) -> str:
+        """
+        Updates the local storage directory.
+        :param protocol_name: The protocol name.
+        :return: The updated local storage directory path.
+        """
         current_directory = os.getcwd()
         if "loans" not in os.listdir(current_directory):
             os.mkdir("loans")
