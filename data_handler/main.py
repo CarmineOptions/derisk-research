@@ -102,7 +102,7 @@ def get_last_interest_rate_by_block(
     return last_record
 
 
-@app.get("/orderbook/", responses_model=OrderBookResponseModel)
+@app.get("/orderbook/", response_model=OrderBookResponseModel)
 def get_orderbook(
     base_token: str, quote_token: str, dex: str, db: Session = Depends(get_database)
 ) -> OrderBookResponseModel:
