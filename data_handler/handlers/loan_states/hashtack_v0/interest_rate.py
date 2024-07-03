@@ -20,7 +20,7 @@ class HashstackV0InterestRate:
     """Class for calculating interest rates on the Hashstack V0 protocol."""
 
     PAGINATION_SIZE = 1000
-    DEFAULT_START_BLOCK = 0
+    DEFAULT_START_BLOCK = 222000
 
     def __init__(self):
         """
@@ -124,8 +124,7 @@ class HashstackV0InterestRate:
         while start_block < latest_block and not self._events_over:
             self._set_events(start_block, end_block)
             start_block += self.PAGINATION_SIZE
-            end_block = start_block + self.PAGINATION_SIZE
-            end_block = end_block if end_block <= latest_block else latest_block
+            end_block = min(start_block + self.PAGINATION_SIZE, latest_block)
             if not self.events:
                 continue
             self.calculate_interest_rates()
