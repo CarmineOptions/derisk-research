@@ -5,6 +5,7 @@ from db.crud import DBConnector
 from db.models import OrderBookModel
 from handlers.order_books.constants import TOKEN_MAPPING
 from .celery_conf import app
+from handlers.order_books.ekubo.api_connector import EkuboAPIConnector
 # from handlers.loan_states.hashtack_v0.run import HashtackV0StateComputation
 # from handlers.loan_states.hashtack_v1.run import HashtackV1StateComputation
 # from handlers.loan_states.zklend.run import ZkLendLoanStateComputation
@@ -115,3 +116,5 @@ def run_liquidable_debt_computation_for_zklend():
     logging.info("Starting zkLend liquidable debt computation")
     zklend.run()
     logging.info("zkLend liquidable debt computation finished")
+
+

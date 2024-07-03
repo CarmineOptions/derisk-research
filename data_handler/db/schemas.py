@@ -31,7 +31,7 @@ class InterestRateModel(BaseModel):
     collateral: Dict[str, float]
 
 
-class OrderBookModel(BaseModel):
+class OrderBookResponseModel(BaseModel):
     """
     A data model class that validates data user entered
     """
