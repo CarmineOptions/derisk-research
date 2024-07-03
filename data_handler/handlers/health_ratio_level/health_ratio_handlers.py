@@ -92,14 +92,13 @@ class ZkLendHealthRatioHandler(BaseHealthRatioHandler):
     def __init__(self):
         super().__init__(state_class=ZkLendState, loan_entity_class=ZkLendLoanEntity)
 
-    def calculate_health_ratio(self) -> defaultdict:
+    def initialize_loan_entities(self, state: State, data: dict = None) -> State:
         """
-        Calculates health ratio based on provided data.
-        :return: A dictionary of the ready health ratio data.
+        Initializes the loan entities in a state instance.
+        :param state: State
+        :param data: dict
+        :return: State
         """
-        data, interest_rate_models = self.fetch_data(protocol_name=ProtocolIDs.ZKLEND.value)
-        state = self.state_class()
-
         for instance in data:
             loan_entity = self.loan_entity_class()
 
@@ -111,6 +110,17 @@ class ZkLendHealthRatioHandler(BaseHealthRatioHandler):
                     instance.user: loan_entity,
                 }
             )
+
+        return state
+
+    def calculate_health_ratio(self) -> defaultdict:
+        """
+        Calculates health ratio based on provided data.
+        :return: A dictionary of the ready health ratio data.
+        """
+        data, interest_rate_models = self.fetch_data(protocol_name=ProtocolIDs.ZKLEND.value)
+        state = self.state_class()
+        state = self.initialize_loan_entities(state=state, data=data)
 
         # Set up collateral and debt interest rate models
         state.collateral_interest_rate_models = TokenValues(
@@ -166,14 +176,13 @@ class NostrAlphaHealthRatioHandler(BaseHealthRatioHandler):
     def __init__(self):
         super().__init__(state_class=NostraAlphaState, loan_entity_class=NostraAlphaLoanEntity)
 
-    def calculate_health_ratio(self) -> defaultdict:
+    def initialize_loan_entities(self, state: State, data: dict = None) -> State:
         """
-        Calculates health ratio based on provided data.
-        :return: A dictionary of the ready health ratio data.
+        Initializes the loan entities in a state instance.
+        :param state: State
+        :param data: dict
+        :return: State
         """
-        data, interest_rate_models = self.fetch_data(protocol_name=ProtocolIDs.NOSTRA_ALPHA.value)
-        state = self.state_class()
-
         for instance in data:
             loan_entity = self.loan_entity_class()
 
@@ -185,6 +194,17 @@ class NostrAlphaHealthRatioHandler(BaseHealthRatioHandler):
                     instance.user: loan_entity,
                 }
             )
+
+        return state
+
+    def calculate_health_ratio(self) -> defaultdict:
+        """
+        Calculates health ratio based on provided data.
+        :return: A dictionary of the ready health ratio data.
+        """
+        data, interest_rate_models = self.fetch_data(protocol_name=ProtocolIDs.NOSTRA_ALPHA.value)
+        state = self.state_class()
+        state = self.initialize_loan_entities(state=state, data=data)
 
         # Set up collateral and debt interest rate models
         state.collateral_interest_rate_models = TokenValues(
@@ -240,14 +260,13 @@ class NostrMainnetHealthRatioHandler(BaseHealthRatioHandler):
     def __init__(self):
         super().__init__(state_class=NostraMainnetState, loan_entity_class=NostraMainnetLoanEntity)
 
-    def calculate_health_ratio(self) -> defaultdict:
+    def initialize_loan_entities(self, state: State, data: dict = None) -> State:
         """
-        Calculates health ratio based on provided data.
-        :return: A dictionary of the ready health ratio data.
+        Initializes the loan entities in a state instance.
+        :param state: State
+        :param data: dict
+        :return: State
         """
-        data, interest_rate_models = self.fetch_data(protocol_name=ProtocolIDs.NOSTRA_MAINNET.value)
-        state = self.state_class()
-
         for instance in data:
             loan_entity = self.loan_entity_class()
 
@@ -259,6 +278,17 @@ class NostrMainnetHealthRatioHandler(BaseHealthRatioHandler):
                     instance.user: loan_entity,
                 }
             )
+
+        return state
+
+    def calculate_health_ratio(self) -> defaultdict:
+        """
+        Calculates health ratio based on provided data.
+        :return: A dictionary of the ready health ratio data.
+        """
+        data, interest_rate_models = self.fetch_data(protocol_name=ProtocolIDs.NOSTRA_MAINNET.value)
+        state = self.state_class()
+        state = self.initialize_loan_entities(state=state, data=data)
 
         # Set up collateral and debt interest rate models
         state.collateral_interest_rate_models = TokenValues(

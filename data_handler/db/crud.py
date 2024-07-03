@@ -1,9 +1,9 @@
 import uuid
 from typing import List, Optional, Type, TypeVar
 
-from sqlalchemy import create_engine, func, select, and_, desc
+from sqlalchemy import create_engine, func, select, and_, desc, Subquery
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import scoped_session, sessionmaker, Session, aliased
+from sqlalchemy.orm import scoped_session, sessionmaker, Session, aliased, Query
 
 from db.database import SQLALCHEMY_DATABASE_URL
 from db.models import Base, LoanState, OrderBookModel, InterestRate
@@ -93,9 +93,10 @@ class DBConnector:
         finally:
             db.close()
 
-    def _get_subquery(self):
+    def _get_subquery(self) -> Subquery:
         """
         Returns subquery for loan state last blocks query
+        :return: Subquery
         """
         session = self.Session()
         return (
@@ -107,7 +108,11 @@ class DBConnector:
             .subquery()
         )
 
-    def get_latest_block_loans(self):
+    def get_latest_block_loans(self) -> list[tuple[LoanState]]:
+        """
+        Returns latest loan state for all loan states.
+        :return: list[tuple[LoanState]]
+        """
         session = self.Session()
         subquery = self._get_subquery()
 
@@ -319,7 +324,7 @@ class DBConnector:
         finally:
             db.close()
 
-    def get_all_block_records(self, model: Type[ModelType] = None):
+    def get_all_block_records(self, model: Type[ModelType] = None) -> Query:
         """
         Retrieves all rows of given model in descending order.
         :param model: Type - The model to get data from.

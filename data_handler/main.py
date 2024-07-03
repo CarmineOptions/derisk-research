@@ -1,5 +1,6 @@
 from typing import List, Optional
 from fastapi import FastAPI, Depends, HTTPException, Request, status, Query, Path
+from sqlalchemy import desc
 from sqlalchemy.orm import Session
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -128,7 +129,7 @@ async def get_health_ratio_per_user(
     row = db.query(HealthRatioLevel).filter(
         HealthRatioLevel.protocol_id == protocol,
         HealthRatioLevel.user_id == user_id
-    ).first()
+    ).order_by(desc(HealthRatioLevel.timestamp)).first()
 
     if not row:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
