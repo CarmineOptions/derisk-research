@@ -16,7 +16,7 @@ import src.types
 
 
 # TODO: rename
-GS_BUCKET_NAME = "derisk-persistent-state/test2"
+GS_BUCKET_NAME = "derisk-persistent-state/v1"
 
 
 
