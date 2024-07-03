@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 connector = DBConnector()
 
 
-# @app.task(name="ekubo_order_book")
+@app.task(name="ekubo_order_book")
 def ekubo_order_book():
     """
     Fetch the current price and liquidity of the pair from the Ekubo API.
