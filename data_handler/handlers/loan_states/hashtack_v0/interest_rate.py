@@ -20,7 +20,7 @@ class HashstackV0InterestRate:
     """Class for calculating interest rates on the Hashstack V0 protocol."""
 
     PAGINATION_SIZE = 1000
-    DEFAULT_START_BLOCK = 222000
+    DEFAULT_START_BLOCK = 0
 
     def __init__(self):
         """
@@ -56,7 +56,7 @@ class HashstackV0InterestRate:
             return
         self.events = result
 
-    def _add_block_data(self, interest_rate_entry: InterestRate) -> None:
+    def _add_interest_rate_entry(self, interest_rate_entry: InterestRate) -> None:
         """
         Add the interest rate entry to the blocks data and update last block data stored.
         :param interest_rate_entry: InterestRate - interest rate entry to add.
@@ -77,7 +77,7 @@ class HashstackV0InterestRate:
         for event in self.events:
             # If block number in event is different from previous, add block data
             if interest_rate_state.current_block != event["block_number"]:
-                self._add_block_data(interest_rate_state.build_interest_rate_model(HASHSTACK_ID))
+                self._add_interest_rate_entry(interest_rate_state.build_interest_rate_model(HASHSTACK_ID))
 
             # Get token name. Validate event `key_name` and token name.
             token_name = TOKEN_MAPPING.get(event["data"][0], "")
@@ -111,7 +111,7 @@ class HashstackV0InterestRate:
             )
 
         # Write last block data
-        self._add_block_data(interest_rate_state.build_interest_rate_model(HASHSTACK_ID))
+        self._add_interest_rate_entry(interest_rate_state.build_interest_rate_model(HASHSTACK_ID))
 
     async def _run_async(self) -> None:
         """Asynchronous function for running the interest rate calculation process and fetching data from on-chain."""

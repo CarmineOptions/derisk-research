@@ -105,7 +105,8 @@ class InterestRateState:
         )
 
     def update_state_cumulative_data(
-            self, token_name: str, current_block: int,
+            self, token_name: str,
+            current_block: int,
             cumulative_collateral_interest_rate_increase: Decimal,
             cumulative_debt_interest_rate_increase: Decimal,
     ) -> None:
