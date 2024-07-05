@@ -120,7 +120,8 @@ def update_data(zklend_state: src.zklend.ZkLendState):
             debt_token_underlying_symbol=debt_token_underlying_symbol,
             save_data=True,
         )
-        logging.info(f"Main chart data for pair = {pair} prepared in {time.time() - t3}s")
+        protocol = src.protocol_parameters.get_protocol(state=state)
+        logging.info(f"Main chart data for protocol = {protocol} and pair = {pair} prepared in {time.time() - t3}s")
     logging.info(f"updated graphs in {time.time() - t3}s")
 
     loan_stats = {}
@@ -147,6 +148,7 @@ def update_data(zklend_state: src.zklend.ZkLendState):
     max_timestamp = zklend_events["timestamp"].max()
     last_update = {"timestamp": str(max_timestamp), "block_number": str(max_block_number)}
     src.persistent_state.upload_object_as_pickle(last_update, path=src.persistent_state.LAST_UPDATE_FILENAME)
+    src.persistent_state.upload_object_as_pickle(zklend_state, path=src.persistent_state.PERSISTENT_STATE_FILENAME)
 
     logging.info(f"Updated CSV data in {time.time() - t0}s")
     return zklend_state
@@ -156,7 +158,6 @@ def update_data_continuously():
     state = src.persistent_state.load_pickle(path=src.persistent_state.PERSISTENT_STATE_FILENAME)
     while True:
         state = update_data(state)
-        src.persistent_state.upload_object_as_pickle(state, path=src.persistent_state.PERSISTENT_STATE_FILENAME)
         logging.info("DATA UPDATED")
         time.sleep(120)
 

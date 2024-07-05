@@ -5,10 +5,6 @@ import decimal
 
 
 
-def _interest_rate_model_default() -> decimal.Decimal:
-    return decimal.Decimal("1")
-
-
 class InterestRateModels(collections.defaultdict):
     """
     A class that describes the state of the interest rate indices for multiple tokens. The indices help transform face 
@@ -16,10 +12,8 @@ class InterestRateModels(collections.defaultdict):
     were deposited at genesis.
     """
 
-    def __init__(self) -> None:
-        # TODO: this is a workaround, without it, the class can't be pickled. Remove after we don't store the results as pickles anymore
-        super().__init__(_interest_rate_model_default)
-        # super().__init__(lambda: decimal.Decimal("1"))
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(lambda: decimal.Decimal("1"), *args[1:], **kwargs)
 
 
 class CollateralAndDebtInterestRateModels:
@@ -47,34 +41,24 @@ class BaseTokenParameters:
     underlying_address: str
 
 
-def _base_token_parameters_default() -> BaseTokenParameters:
-    return BaseTokenParameters(
-        address='',
-        decimals=0,
-        symbol='',
-        underlying_symbol='',
-        underlying_address='',
-    )
-
-
 class TokenParameters(collections.defaultdict):
     """
     A class that describes the parameters of collateral or debt tokens. These parameters are e.g. the token address,
     symbol, decimals, underlying token symbol, etc.
     """
 
-    def __init__(self) -> None:
-        # TODO: this is a workaround, without it, the class can't be pickled. Remove after we don't store the results as pickles anymore
-        super().__init__(_base_token_parameters_default)
-        # super().__init__(
-        #     lambda: BaseTokenParameters(
-        #         address='',
-        #         decimals=0,
-        #         symbol='',
-        #         underlying_symbol='',
-        #         underlying_address='',
-        #     ),
-        # )
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(
+            lambda: BaseTokenParameters(
+                address='',
+                decimals=0,
+                symbol='',
+                underlying_symbol='',
+                underlying_address='',
+            ),
+            *args[1:],
+            **kwargs,
+        )
 
 
 class CollateralAndDebtTokenParameters:
@@ -89,7 +73,7 @@ class CollateralAndDebtTokenParameters:
 
 
 class Portfolio(collections.defaultdict):
-    """A class that describes holdings of tokens."""
+    """ A class that describes holdings of tokens. """
 
     # TODO: Update the values.
     MAX_ROUNDING_ERRORS: collections.defaultdict = collections.defaultdict(
@@ -158,10 +142,10 @@ class Portfolio(collections.defaultdict):
         },
     )
 
-    def __init__(self, **kwargs) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         assert all(isinstance(x, str) for x in kwargs.keys())
         assert all(isinstance(x, decimal.Decimal) for x in kwargs.values())
-        super().__init__(decimal.Decimal, **kwargs)
+        super().__init__(decimal.Decimal, *args[1:], **kwargs)
 
     def __add__(self, second_portfolio: 'Portfolio') -> 'Portfolio':
         if not isinstance(second_portfolio, Portfolio):
@@ -190,8 +174,8 @@ class Portfolio(collections.defaultdict):
 class Prices(collections.defaultdict):
     """ A class that describes the prices of tokens. """
 
-    def __init__(self) -> None:
-        super().__init__(lambda: None)
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(lambda: None, *args[1:], **kwargs)
 
 
 class LoanEntity(abc.ABC):
