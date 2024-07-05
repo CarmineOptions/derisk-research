@@ -11,7 +11,7 @@ from alembic import op
 import sqlalchemy_utils
 import sqlalchemy as sa
 
-from tools.constants import ProtocolIDs
+from handler_tools.constants import ProtocolIDs
 
 
 # revision identifiers, used by Alembic.
