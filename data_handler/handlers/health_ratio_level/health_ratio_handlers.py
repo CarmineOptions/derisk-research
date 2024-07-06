@@ -34,12 +34,10 @@ class ZkLendHealthRatioHandler:
         :param protocol_name: Protocol name.
         :return: tuple
         """
-        fetched_data = self.get_data_from_db()
-        interest_rate_models = self.get_interest_rate_models_from_db(
-            protocol_id=protocol_name
-        )
+        loan_states_data = self.CONNECTOR.get_latest_block_loans()
+        interest_rate_models = self.CONNECTOR.get_last_interest_rate_record_by_protocol_id(protocol_id=protocol_name)
 
-        return fetched_data, interest_rate_models
+        return loan_states_data, interest_rate_models
 
     def calculate_health_ratio(self) -> dict:
         """
@@ -103,43 +101,3 @@ class ZkLendHealthRatioHandler:
                     })
 
         return result_data
-
-    @classmethod
-    def get_interest_rate_models_from_db(cls, protocol_id: str) -> dict:
-        """
-        Returns interest rate models data from DB.
-        :param protocol_id: str
-        :return: dict
-        """
-        return cls.CONNECTOR.get_last_interest_rate_record_by_protocol_id(protocol_id=protocol_id)
-
-    @classmethod
-    def get_data_from_db(cls) -> dict:
-        """
-        Gets the data from the database based on the protocol name.
-        :return: The data from the database.
-        """
-        return cls.CONNECTOR.get_latest_block_loans()
-
-    @classmethod
-    def write_to_db(cls, data: HealthRatioLevel = None) -> None:
-        """
-        Writes the data into the database.
-        :param data: A dictionary of the parsed data.
-        :return: None
-        """
-        cls.CONNECTOR.write_to_db(data)
-
-
-if __name__ == "__main__":
-    handler = ZkLendHealthRatioHandler()
-
-    data = handler.calculate_health_ratio()
-
-    for id_, health_ratio in data.items():
-        instance = HealthRatioLevel(
-            timestamp=health_ratio[TIMESTAMP_FIELD_NAME],
-            user_id=health_ratio[USER_FIELD_NAME],
-            value=health_ratio[HEALTH_FACTOR_FIELD_NAME]
-        )
-        handler.write_to_db(instance)
