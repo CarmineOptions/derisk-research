@@ -143,6 +143,8 @@ class Portfolio(collections.defaultdict):
     )
 
     def __init__(self, *args, **kwargs) -> None:
+        if args:
+            assert args[0] == decimal.Decimal
         assert all(isinstance(x, str) for x in kwargs.keys())
         assert all(isinstance(x, decimal.Decimal) for x in kwargs.values())
         super().__init__(decimal.Decimal, *args[1:], **kwargs)

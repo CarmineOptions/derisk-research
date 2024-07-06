@@ -193,8 +193,6 @@ def main():
                 )
                 streamlit.plotly_chart(figure, True)
 
-    streamlit.header("Loan size distribution")
-
     last_update = src.persistent_state.load_pickle(path=src.persistent_state.LAST_UPDATE_FILENAME)
     last_timestamp = last_update["timestamp"]
     last_block_number = last_update["block_number"]
