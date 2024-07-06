@@ -35,7 +35,6 @@ def update_data(zklend_state: src.zklend.ZkLendState):
 
     # Iterate over ordered events to obtain the final state of each user.
     t1 = time.time()
-    zklend_state = src.zklend.ZkLendState()
     for _, zklend_event in zklend_events.iterrows():
         zklend_state.process_event(event=zklend_event)
 
@@ -165,4 +164,5 @@ def update_data_continuously():
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-    update_data(src.zklend.ZkLendState())
+    zklend_state = src.persistent_state.load_pickle(path=src.persistent_state.PERSISTENT_STATE_FILENAME)
+    update_data(zklend_state)
