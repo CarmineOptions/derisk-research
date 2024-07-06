@@ -301,7 +301,7 @@ class DBConnector:
             db.close()
 
     def get_last_interest_rate_record_by_protocol_id(
-        self, protocol_id: ProtocolIDs.value
+        self, protocol_id: ProtocolIDs
     ) -> InterestRate:
         """
         Retrieves the last interest rate record by protocol ID.
