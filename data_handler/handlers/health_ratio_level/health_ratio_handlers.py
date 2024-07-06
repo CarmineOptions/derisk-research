@@ -37,12 +37,10 @@ class BaseHealthRatioHandler:
         :param protocol_name: Protocol name.
         :return: tuple
         """
-        fetched_data = self.get_data_from_db()
-        interest_rate_models = self.get_interest_rate_models_from_db(
-            protocol_id=protocol_name
-        )
+        loan_states_data = self.CONNECTOR.get_latest_block_loans()
+        interest_rate_models = self.CONNECTOR.get_last_interest_rate_record_by_protocol_id(protocol_id=protocol_name)
 
-        return fetched_data, interest_rate_models
+        return loan_states_data, interest_rate_models
 
     @classmethod
     def get_interest_rate_models_from_db(cls, protocol_id: str) -> dict:
