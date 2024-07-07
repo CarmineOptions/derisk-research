@@ -15,7 +15,7 @@ class LoanStateBase(BaseModel):
     deposit: Optional[Dict]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class LoanStateResponse(LoanStateBase):
@@ -32,7 +32,7 @@ class InterestRateModel(BaseModel):
     collateral: Dict[str, float]
 
 
-class OrderBookModel(BaseModel):
+class OrderBookResponseModel(BaseModel):
     """
     A data model class that validates data user entered
     """
