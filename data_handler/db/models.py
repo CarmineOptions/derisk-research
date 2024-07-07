@@ -91,3 +91,4 @@ class HealthRatioLevel(Base):
     timestamp = Column(BigInteger, index=True)
     user_id = Column(String, index=True)
     value = Column(DECIMAL, nullable=False)
+    protocol_id = Column(ChoiceType(ProtocolIDs, impl=String()), nullable=False)
