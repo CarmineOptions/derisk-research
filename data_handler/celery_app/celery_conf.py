@@ -47,6 +47,23 @@ app.conf.beat_schedule = {
         'task': 'run_liquidable_debt_computation_for_zklend',
         'schedule': crontab(minute=f'*/{CRONTAB_TIME}'),
     },
+    f'run_liquidable_debt_computation_for_nostra_alpha_every_{CRONTAB_TIME}_mins': {
+        'task': 'run_liquidable_debt_computation_for_nostra_alpha',
+        'schedule': crontab(minute=f'*/{CRONTAB_TIME}'),
+    },
+    f'run_liquidable_debt_computation_for_nostra_mainnet_every_{CRONTAB_TIME}_mins': {
+        'task': 'run_liquidable_debt_computation_for_nostra_mainnet',
+        'schedule': crontab(minute=f'*/{CRONTAB_TIME}'),
+    },
+    # Interest rate part is not implemented yet
+    # f'run_liquidable_debt_computation_for_hashstack_v0_every_{CRONTAB_TIME}_mins': {
+    #     'task': 'run_liquidable_debt_computation_for_hashstack_v0',
+    #     'schedule': crontab(minute=f'*/{CRONTAB_TIME}'),
+    # },
+    # f'run_liquidable_debt_computation_for_hashstack_v1_every_{CRONTAB_TIME}_mins': {
+    #     'task': 'run_liquidable_debt_computation_for_hashstack_v1',
+    #     'schedule': crontab(minute=f'*/{CRONTAB_TIME}'),
+    # },
     "constant_product_market_makers_order_book": {
         "task": "uniswap_v2_order_book",
         "schedule": ORDER_BOOK_TIME_INTERVAL,
@@ -54,11 +71,15 @@ app.conf.beat_schedule = {
 }
 
 # from celery_app.tasks import (
-    # run_loan_states_computation_for_hashtack_v0,
-    # run_loan_states_computation_for_hashtack_v1,
-    # run_loan_states_computation_for_nostra_alpha,
-    # run_loan_states_computation_for_nostra_mainnet,
-    # run_loan_states_computation_for_zklend,
+#     run_loan_states_computation_for_hashtack_v0,
+#     run_loan_states_computation_for_hashtack_v1,
+#     run_loan_states_computation_for_nostra_alpha,
+#     run_loan_states_computation_for_nostra_mainnet,
+#     run_loan_states_computation_for_zklend,
+#     run_liquidable_debt_computation_for_nostra_alpha,
+#     run_liquidable_debt_computation_for_nostra_mainnet,
+#     run_liquidable_debt_computation_for_hashstack_v0,
+#     run_liquidable_debt_computation_for_hashstack_v1,
 #     run_liquidable_debt_computation_for_zklend,
 #     uniswap_v2_order_book,
 # )

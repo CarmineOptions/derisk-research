@@ -1,5 +1,6 @@
 import datetime
 import logging
+import math
 import multiprocessing
 import os
 
@@ -26,27 +27,22 @@ def main():
 
     (
         zklend_main_chart_data,
-        zklend_histogram_data,
         zklend_loans_data,
     ) = src.helpers.load_data(protocol='zkLend')
-    (
-        hashstack_v0_main_chart_data,
-        hashstack_v0_histogram_data,
-        hashstack_v0_loans_data,
-    ) = src.helpers.load_data(protocol='Hashstack V0')
-    (
-        hashstack_v1_main_chart_data,
-        hashstack_v1_histogram_data,
-        hashstack_v1_loans_data,
-    ) = src.helpers.load_data(protocol='Hashstack V1')
+    # (
+    #     hashstack_v0_main_chart_data,
+    #     hashstack_v0_loans_data,
+    # ) = src.helpers.load_data(protocol='Hashstack V0')
+    # (
+    #     hashstack_v1_main_chart_data,
+    #     hashstack_v1_loans_data,
+    # ) = src.helpers.load_data(protocol='Hashstack V1')
     (
         nostra_alpha_main_chart_data,
-        nostra_alpha_histogram_data,
         nostra_alpha_loans_data,
     ) = src.helpers.load_data(protocol='Nostra Alpha')
     (
         nostra_mainnet_main_chart_data,
-        nostra_mainnet_histogram_data,
         nostra_mainnet_loans_data,
     ) = src.helpers.load_data(protocol='Nostra Mainnet')
 
@@ -54,8 +50,11 @@ def main():
     with col1:
         protocols = streamlit.multiselect(
             label="Select protocols",
-            options=["zkLend", "Hashstack V0", "Hashstack V1", "Nostra Alpha", "Nostra Mainnet"],
-            default=["zkLend", "Hashstack V0", "Hashstack V1", "Nostra Alpha", "Nostra Mainnet"],
+            # TODO
+            options=["zkLend", "Nostra Alpha", "Nostra Mainnet"],
+            default=["zkLend", "Nostra Alpha", "Nostra Mainnet"],
+            # options=["zkLend", "Hashstack V0", "Hashstack V1", "Nostra Alpha", "Nostra Mainnet"],
+            # default=["zkLend", "Hashstack V0", "Hashstack V1", "Nostra Alpha", "Nostra Mainnet"],
         )
         current_pair = streamlit.selectbox(
             label="Select collateral-loan pair:",
@@ -64,42 +63,32 @@ def main():
         )
 
     main_chart_data = pandas.DataFrame()
-    histogram_data = pandas.DataFrame()
+    # histogram_data = pandas.DataFrame()
     loans_data = pandas.DataFrame()
     protocol_main_chart_data_mapping = {
         'zkLend': zklend_main_chart_data[current_pair],
-        'Hashstack V0': hashstack_v0_main_chart_data[current_pair],
-        'Hashstack V1': hashstack_v1_main_chart_data[current_pair],
+        # 'Hashstack V0': hashstack_v0_main_chart_data[current_pair],
+        # 'Hashstack V1': hashstack_v1_main_chart_data[current_pair],
         'Nostra Alpha': nostra_alpha_main_chart_data[current_pair],
         'Nostra Mainnet': nostra_mainnet_main_chart_data[current_pair],
     }
-    protocol_histogram_data_mapping = {
-        'zkLend': zklend_histogram_data,
-        'Hashstack V0': hashstack_v0_histogram_data,
-        'Hashstack V1': hashstack_v1_histogram_data,
-        'Nostra Alpha': nostra_alpha_histogram_data,
-        'Nostra Mainnet': nostra_mainnet_histogram_data,
-    }
     protocol_loans_data_mapping = {
         'zkLend': zklend_loans_data,
-        'Hashstack V0': hashstack_v0_loans_data,
-        'Hashstack V1': hashstack_v1_loans_data,
+        # 'Hashstack V0': hashstack_v0_loans_data,
+        # 'Hashstack V1': hashstack_v1_loans_data,
         'Nostra Alpha': nostra_alpha_loans_data,
         'Nostra Mainnet': nostra_mainnet_loans_data,
     }
     for protocol in protocols:
         protocol_main_chart_data = protocol_main_chart_data_mapping[protocol]
-        protocol_histogram_data = protocol_histogram_data_mapping[protocol]
+        if protocol_main_chart_data.empty:
+            continue
         protocol_loans_data = protocol_loans_data_mapping[protocol]
         if main_chart_data.empty:
             main_chart_data = protocol_main_chart_data
         else:
             main_chart_data["liquidable_debt"] += protocol_main_chart_data["liquidable_debt"]
             main_chart_data["liquidable_debt_at_interval"] += protocol_main_chart_data["liquidable_debt_at_interval"]
-        if histogram_data.empty:
-            histogram_data = protocol_histogram_data
-        else:
-            histogram_data = pandas.concat([histogram_data, protocol_histogram_data])
         if loans_data.empty:
             loans_data = protocol_loans_data
         else:
@@ -107,10 +96,16 @@ def main():
 
     # Plot the liquidable debt against the available supply.
     collateral_token, debt_token = current_pair.split("-")
+    collateral_token_underlying_address = src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[collateral_token]
+    collateral_token_decimals = int(math.log10(src.settings.TOKEN_SETTINGS[collateral_token].decimal_factor))
+    underlying_addresses_to_decimals = {collateral_token_underlying_address: collateral_token_decimals}
+    prices = src.helpers.get_prices(token_decimals = underlying_addresses_to_decimals)
+    collateral_token_price = prices[collateral_token_underlying_address]
     figure = src.main_chart.get_main_chart_figure(
         data=main_chart_data.astype(float),
         collateral_token=collateral_token,
         debt_token=debt_token,
+        collateral_token_price=collateral_token_price,
     )
     streamlit.plotly_chart(figure_or_data=figure, use_container_width=True)
 
@@ -118,7 +113,8 @@ def main():
         main_chart_data['liquidable_debt_at_interval'] / main_chart_data['debt_token_supply']
     )
     example_row = main_chart_data[
-        main_chart_data['debt_to_supply_ratio'] > 0.75
+        (main_chart_data['debt_to_supply_ratio'] > 0.75)
+        & (main_chart_data['collateral_token_price'] <= collateral_token_price)
     ].sort_values('collateral_token_price').iloc[-1]
 
     if not example_row.empty:
@@ -132,7 +128,7 @@ def main():
             return 'very high'
 
         streamlit.subheader(
-            f":warning: At price of {int(example_row['collateral_token_price']):,}, the risk of acquiring bad debt for "
+            f":warning: At price of {round(example_row['collateral_token_price'], 2)}, the risk of acquiring bad debt for "
             f"lending protocols is {_get_risk_level(example_row['debt_to_supply_ratio'])}."
         )    
         streamlit.write(
@@ -197,9 +193,6 @@ def main():
                 )
                 streamlit.plotly_chart(figure, True)
 
-    streamlit.header("Loan size distribution")
-    src.histogram.visualization(data=histogram_data)
-
     last_update = src.persistent_state.load_pickle(path=src.persistent_state.LAST_UPDATE_FILENAME)
     last_timestamp = last_update["timestamp"]
     last_block_number = last_update["block_number"]
@@ -208,6 +201,8 @@ def main():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
     streamlit.set_page_config(
         layout="wide",
         page_title="DeRisk by Carmine Finance",

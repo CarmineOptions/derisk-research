@@ -10,7 +10,7 @@ from .celery_conf import app
 # from handlers.loan_states.zklend.run import ZkLendLoanStateComputation
 from handlers.loan_states.nostra_alpha.run import NostraAlphaStateComputation
 # from handlers.loan_states.nostra_mainnet.run import NostraMainnetStateComputation
-from handlers.liquidable_debt.protocols import zklend
+from handlers.liquidable_debt.protocols import zklend, nostra_mainnet, nostra_alpha, hashstack_v0, hashstack_v1
 from handlers.order_books.uniswap_v2.main import UniswapV2OrderBook
 
 connector = DBConnector()
@@ -115,3 +115,31 @@ def run_liquidable_debt_computation_for_zklend():
     logging.info("Starting zkLend liquidable debt computation")
     zklend.run()
     logging.info("zkLend liquidable debt computation finished")
+
+
+@app.task(name="run_liquidable_debt_computation_for_nostra_alpha")
+def run_liquidable_debt_computation_for_nostra_alpha():
+    logging.info("Starting nostra alpha liquidable debt computation")
+    nostra_alpha.run()
+    logging.info("Nostra alpha liquidable debt computation finished")
+
+
+@app.task(name="run_liquidable_debt_computation_for_hashstack_v0")
+def run_liquidable_debt_computation_for_hashstack_v0():
+    logging.info("Starting hashstack v0 liquidable debt computation")
+    hashstack_v0.run()
+    logging.info("Hashstack v0 liquidable debt computation finished")
+
+
+@app.task(name="run_liquidable_debt_computation_for_nostra_mainnet")
+def run_liquidable_debt_computation_for_nostra_mainnet():
+    logging.info("Starting nostra mainnet liquidable debt computation")
+    nostra_mainnet.run()
+    logging.info("Nostra mainnet liquidable debt computation finished")
+
+
+@app.task(name="run_liquidable_debt_computation_for_hashstack_v1")
+def run_liquidable_debt_computation_for_hashstack_v1():
+    logging.info("Starting hashstack v1 liquidable debt computation")
+    hashstack_v1.run()
+    logging.info("Hashstack v1 liquidable debt computation finished")

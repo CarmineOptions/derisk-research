@@ -633,21 +633,21 @@ class HashstackV1State(State):
             debt_tokens = {
                 token
                 for token, token_amount in loan_entity.debt.values.items()
-                if token_amount > decimal.Decimal("0")
+                if decimal.Decimal(token_amount) > decimal.Decimal("0")
             }
             if not debt_token in debt_tokens:
                 continue
 
             # Filter out users with health factor below 1.
             debt_usd = loan_entity.compute_debt_usd(
-                risk_adjusted=False, 
+                risk_adjusted=False,
                 debt_interest_rate_models=self.debt_interest_rate_models,
                 prices=changed_prices,
             )
             health_factor = loan_entity.compute_health_factor(
                 standardized=False,
                 collateral_interest_rate_models=self.collateral_interest_rate_models,
-                prices=changed_prices, 
+                prices=changed_prices,
                 debt_usd=debt_usd,
             )
             # TODO: Does this parameter still hold?
