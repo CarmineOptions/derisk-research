@@ -11,14 +11,14 @@ def run():
 
     data = handler.calculate_health_ratio()
 
-    for id_, health_ratio in data.items():
+    for health_ratio in data:
         instance = HealthRatioLevel(
             timestamp=health_ratio[TIMESTAMP_FIELD_NAME],
             user_id=health_ratio[USER_FIELD_NAME],
             value=health_ratio[HEALTH_FACTOR_FIELD_NAME],
             protocol_id=ProtocolIDs.ZKLEND.value
         )
-        handler.CONNECTOR.write_to_db(instance)
+        handler.db_connector.write_to_db(instance)
 
 
 if __name__ == '__main__':
