@@ -21,8 +21,6 @@ class BaseHealthRatioHandler:
     """
     A base handler class that collects data from DB,
     computes health_ratio level and stores it in the database.
-
-    :cvar CONNECTOR: A DB connection object.
     """
 
     def __init__(self, state_class: Type[State], loan_entity_class: Type[LoanEntity]):
@@ -139,8 +137,6 @@ class NostrAlphaHealthRatioHandler(BaseHealthRatioHandler):
     """
     A Nostra Alha handler that collects data from DB,
     computes health_ratio level and stores it in the database.
-
-    :cvar CONNECTOR: A DB connection object.
     """
 
     def __init__(self):
@@ -201,8 +197,6 @@ class NostrMainnetHealthRatioHandler(BaseHealthRatioHandler):
     """
     A Nostra Mainnet handler that collects data from DB,
     computes health_ratio level and stores it in the database.
-
-    :cvar CONNECTOR: A DB connection object.
     """
 
     def __init__(self):
