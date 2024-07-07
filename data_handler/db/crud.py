@@ -3,7 +3,7 @@ from typing import List, Optional, Type, TypeVar
 
 from sqlalchemy import create_engine, func, select, and_, desc
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import scoped_session, sessionmaker, Session, aliased
+from sqlalchemy.orm import scoped_session, sessionmaker, Session, aliased, Query
 
 from db.database import SQLALCHEMY_DATABASE_URL
 from db.models import Base, LoanState, OrderBookModel, InterestRate
@@ -107,7 +107,11 @@ class DBConnector:
             .subquery()
         )
 
-    def get_latest_block_loans(self):
+    def get_latest_block_loans(self) -> Query:
+        """
+        Returns a lastt block query
+        :return: Last block query
+        """
         session = self.Session()
         subquery = self._get_subquery()
 
@@ -301,7 +305,7 @@ class DBConnector:
             db.close()
 
     def get_last_interest_rate_record_by_protocol_id(
-        self, protocol_id: ProtocolIDs.value
+        self, protocol_id: ProtocolIDs
     ) -> InterestRate:
         """
         Retrieves the last interest rate record by protocol ID.
@@ -319,10 +323,11 @@ class DBConnector:
         finally:
             db.close()
 
-    def get_all_block_records(self, model: Type[ModelType] = None):
+    def get_all_block_records(self, model: Type[ModelType] = None) -> Query:
         """
         Retrieves all rows of given model in descending order.
         :param model: Type - The model to get data from.
+        :return: Query - The query of all block records.
         """
         db = self.Session()
         try:
