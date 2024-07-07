@@ -6,7 +6,7 @@ from slowapi.util import get_remote_address
 from slowapi.middleware import SlowAPIMiddleware
 
 from db.schemas import LoanStateResponse, InterestRateModel
-from tools.constants import ProtocolIDs
+from handler_tools.constants import ProtocolIDs
 from db.models import LoanState, InterestRate
 from db.database import Base, engine, get_database
 
