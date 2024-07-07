@@ -1,4 +1,5 @@
 from uuid import uuid4
+from decimal import Decimal
 
 from sqlalchemy import UUID, BigInteger, Column, MetaData, String, DECIMAL
 from sqlalchemy.orm import DeclarativeBase, Mapped
@@ -50,6 +51,12 @@ class InterestRate(BaseState):
 
     __tablename__ = "interest_rate"
 
+    def get_json_deserialized(self) -> tuple[dict[str, Decimal], dict[str, Decimal]]:
+        """Deserialize the JSON fields of the model from str to the Decimal type."""
+        collateral = {token_name: Decimal(value) for token_name, value in self.collateral.items()}
+        debt = {token_name: Decimal(value) for token_name, value in self.debt.items()}
+        return collateral, debt
+
 
 class LiquidableDebt(Base):
     """
@@ -79,3 +86,15 @@ class OrderBookModel(Base):
     current_price = Column(DECIMAL, nullable=True)
     asks = Column(JSON, nullable=True)
     bids = Column(JSON, nullable=True)
+
+
+class HealthRatioLevel(Base):
+    """
+    SQLAlchemy model for the health ratio level table.
+    """
+    __tablename__ = "health_ratio_level"
+
+    timestamp = Column(BigInteger, index=True)
+    user_id = Column(String, index=True)
+    value = Column(DECIMAL, nullable=False)
+    protocol_id = Column(ChoiceType(ProtocolIDs, impl=String()), nullable=False)

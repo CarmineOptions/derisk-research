@@ -8,7 +8,6 @@ from handler_tools.constants import ProtocolIDs
 from db.crud import DBConnector
 from db.models import LoanState, InterestRate
 from handlers.state import State
-from handler_tools.constants import FIRST_RUNNING_MAPPING
 from handler_tools.api_connector import DeRiskAPIConnector
 
 logger = logging.getLogger(__name__)
