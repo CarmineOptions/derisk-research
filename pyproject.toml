@@ -19,6 +19,7 @@ matplotlib = { version = "3.8.0", optional = true }
 tqdm = { version = "4.65.0", optional = true }
 yfinance = { version = "0.2.38", optional = true }
 
+dill = "^0.3.8"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

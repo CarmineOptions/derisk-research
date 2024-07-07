@@ -51,6 +51,12 @@ class InterestRate(BaseState):
 
     __tablename__ = "interest_rate"
 
+    def get_json_deserialized(self) -> tuple[dict[str, Decimal], dict[str, Decimal]]:
+        """Deserialize the JSON fields of the model from str to the Decimal type."""
+        collateral = {token_name: Decimal(value) for token_name, value in self.collateral.items()}
+        debt = {token_name: Decimal(value) for token_name, value in self.debt.items()}
+        return collateral, debt
+
 
 class LiquidableDebt(Base):
     """

@@ -1,4 +1,3 @@
-import math
 import pandas
  
 import plotly.express 
@@ -88,6 +87,7 @@ def get_main_chart_figure(
     data: pandas.DataFrame,
     collateral_token: str,
     debt_token: str,
+    collateral_token_price: float,
 ) -> plotly.graph_objs.Figure:
     # Define the AMMs and their color mappings
     amms = src.swap_amm.AMMS
@@ -115,11 +115,6 @@ def get_main_chart_figure(
     figure.update_xaxes(title_text=f"{collateral_token} Price (USD)")
     figure.update_yaxes(title_text="Volume (USD)")
 
-    collateral_token_underlying_address = src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[collateral_token]
-    collateral_token_decimals = int(math.log10(src.settings.TOKEN_SETTINGS[collateral_token].decimal_factor))
-    underlying_addresses_to_decimals = {collateral_token_underlying_address: collateral_token_decimals}
-    prices = src.helpers.get_prices(token_decimals = underlying_addresses_to_decimals)
-    collateral_token_price = prices[collateral_token_underlying_address]
     figure.add_vline(
         x=collateral_token_price,
         line_width=2,
