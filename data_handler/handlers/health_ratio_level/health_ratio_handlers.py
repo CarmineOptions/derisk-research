@@ -9,7 +9,7 @@ from handlers.helpers import TokenValues
 from handlers.loan_states.zklend.events import ZkLendState, ZkLendLoanEntity
 from handler_tools.constants import ProtocolIDs
 from handlers.liquidable_debt.utils import Prices
-from handlers.liquidable_debt.values import USER_FIELD_NAME, HEALTH_FACTOR_FIELD_NAME, TIMESTAMP_FIELD_NAME, PROTOCOL_FIELD_NAME
+from handlers.liquidable_debt.values import USER_FIELD_NAME, HEALTH_FACTOR_FIELD_NAME, TIMESTAMP_FIELD_NAME
 
 
 class ZkLendHealthRatioHandler:
@@ -94,8 +94,7 @@ class ZkLendHealthRatioHandler:
                         f"{uuid.uuid4()}": {
                             USER_FIELD_NAME: user_id,
                             HEALTH_FACTOR_FIELD_NAME: health_ratio_level,
-                            TIMESTAMP_FIELD_NAME: datetime.now().timestamp(),
-                            PROTOCOL_FIELD_NAME: ProtocolIDs.ZKLEND.value
+                            TIMESTAMP_FIELD_NAME: datetime.now().timestamp()
                         }
                     })
 
