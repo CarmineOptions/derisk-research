@@ -1,5 +1,5 @@
-from decimal import Decimal
 from uuid import uuid4
+from decimal import Decimal
 
 from sqlalchemy import UUID, BigInteger, Column, MetaData, String, DECIMAL
 from sqlalchemy.orm import DeclarativeBase, Mapped
@@ -86,3 +86,15 @@ class OrderBookModel(Base):
     current_price = Column(DECIMAL, nullable=False)
     asks = Column(JSON, nullable=True)
     bids = Column(JSON, nullable=True)
+
+
+class HealthRatioLevel(Base):
+    """
+    SQLAlchemy model for the health ratio level table.
+    """
+    __tablename__ = "health_ratio_level"
+
+    timestamp = Column(BigInteger, index=True)
+    user_id = Column(String, index=True)
+    value = Column(DECIMAL, nullable=False)
+    protocol_id = Column(ChoiceType(ProtocolIDs, impl=String()), nullable=False)
