@@ -2,6 +2,7 @@ import requests
 
 
 def braavos_get_tokens_prices(token_names_list: list[str]) -> list | dict:
+    """Get token prices from the Braavos API."""
     if not token_names_list:
         return {"error": "No tokens provided"}
     token_names = ",".join(token_names_list) if len(token_names_list) > 1 else token_names_list[0]

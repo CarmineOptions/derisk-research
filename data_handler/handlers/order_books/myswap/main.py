@@ -18,11 +18,18 @@ MAX_MYSWAP_TICK = Decimal("1774532")
 
 
 class MySwapOrderBook(OrderBookBase):
+    """Class for MySwap order book."""
     DEX = "MySwap"
     MIN_PRICE_RANGE = Decimal("0.1")
     MAX_PRICE_RANGE = Decimal("1.3")
 
     def __init__(self, token_a: str, token_b: str, apply_filtering: bool = False):
+        """
+        Initialize the MySwap order book.
+        :param token_a: str - The base token address in hexadecimal.
+        :param token_b: str - The quote token address in hexadecimal.
+        :param apply_filtering: bool - Apply filtering to the order book.
+        """
         super().__init__(token_a, token_b)
         self.token_a_name = None
         self.token_b_name = None
@@ -35,7 +42,7 @@ class MySwapOrderBook(OrderBookBase):
         self._set_usd_price()
 
     def _set_token_names(self):
-        token_a_info, token_b_info = self.get_tokens_configs()
+        token_a_info, token_b_info = self.get_token_configs()
         self.token_a_name = token_a_info.name
         self.token_b_name = token_b_info.name
 
@@ -51,16 +58,19 @@ class MySwapOrderBook(OrderBookBase):
         return pd.read_json(url, compression="gzip")
 
     async def _async_fetch_price_and_liquidity(self) -> None:
+        """Fetch price and liquidity data from the MySwap CLMM service."""
         all_pools = self.connector.get_pools_data()
         filtered_pools = self._filter_pools_data(all_pools)
         for pool in filtered_pools:
             await self._calculate_order_book(pool["poolkey"])
 
     def fetch_price_and_liquidity(self) -> None:
+        """Sync wrapper for the async fetch_price_and_liquidity method."""
         # TODO: Create new event loop if not running
         asyncio.run(self._async_fetch_price_and_liquidity())
 
-    def _set_usd_price(self):
+    def _set_usd_price(self) -> None:
+        """Set USD price for TVL calculation."""
         if not self.token_a_name:
             raise ValueError("Base token name is not defined.")
         token_info = braavos_get_tokens_prices([self.token_a_name.lower()])
@@ -132,6 +142,12 @@ class MySwapOrderBook(OrderBookBase):
         )
 
     def add_asks(self, pool_asks: pd.DataFrame, pool_liquidity: Decimal, price_range: tuple[Decimal, Decimal]) -> None:
+        """
+        Add asks data to the order book.
+        :param pool_asks: pd.DataFrame - Asks in the pool.
+        :param pool_liquidity: Decimal - The pool liquidity.
+        :param price_range: tuple[Decimal, Decimal] - The price range for filtering.
+        """
         if pool_asks.empty:
             return
         local_asks = []
@@ -157,11 +173,16 @@ class MySwapOrderBook(OrderBookBase):
             )
             local_asks.append((current_price, y))
         if self.apply_filtering:
-            self.bids.extend([bid for bid in local_asks if price_range[0] < bid[0] < price_range[1]])
+            self.asks.extend([ask for ask in local_asks if price_range[0] < ask[0] < price_range[1]])
             return
         self.asks.extend(local_asks)
 
     def add_bids(self, pool_bids: pd.DataFrame, price_range: tuple[Decimal, Decimal]) -> None:
+        """
+        Add asks data to the order book.
+        :param pool_bids: pd.DataFrame - Bids in the pool.
+        :param price_range: tuple[Decimal, Decimal] - The price range for filtering.
+        """
         if pool_bids.empty:
             return
         local_bids = []
