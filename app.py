@@ -191,7 +191,6 @@ def main():
         collateral_token=collateral_token_underlying_address,
         debt_token=debt_token_underlying_address,
     )
-    streamlit.dataframe(main_chart_data)
     # TODO: Add Ekubo end
     figure = src.main_chart.get_main_chart_figure(
         data=main_chart_data,
