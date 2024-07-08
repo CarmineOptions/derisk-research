@@ -14,14 +14,15 @@ from handlers.order_books.myswap.api_connection.data_collectors import braavos_g
 
 
 MYSWAP_CL_MM_ADDRESS = "0x01114c7103e12c2b2ecbd3a2472ba9c48ddcbf702b1c242dd570057e26212111"
+
+# The maximum tick value available in liqmap.json.gz from MySwap Data Service
 MAX_MYSWAP_TICK = Decimal("1774532")
 
 
 class MySwapOrderBook(OrderBookBase):
     """Class for MySwap order book."""
     DEX = "MySwap"
-    MIN_PRICE_RANGE = Decimal("0.1")
-    MAX_PRICE_RANGE = Decimal("1.6")
+    MYSWAP_URL = "https://myswap-cl-charts.s3.amazonaws.com/data/pools/{pool_id}/liqmap.json.gz"
 
     def __init__(self, token_a: str, token_b: str, apply_filtering: bool = False):
         """
@@ -31,21 +32,13 @@ class MySwapOrderBook(OrderBookBase):
         :param apply_filtering: bool - Apply filtering to the order book.
         """
         super().__init__(token_a, token_b)
-        self.token_a_name = None
-        self.token_b_name = None
         self.connector = MySwapAPIConnector()
         self.apply_filtering = apply_filtering
         self.logger = get_logger("MySwap", Path().resolve().joinpath("./logs"))
+        self.token_a_name, self.token_b_name = map(lambda info: info.name, self.get_token_configs())
         self._usd_price = Decimal("0")
         self._decimals_diff = Decimal(10 ** (self.token_a_decimal - self.token_b_decimal))
-        self._set_token_names()
         self._set_usd_price()
-
-    def _set_token_names(self) -> None:
-        """Set token names based on the token config."""
-        token_a_info, token_b_info = self.get_token_configs()
-        self.token_a_name = token_a_info.name
-        self.token_b_name = token_b_info.name
 
     def _read_liquidity_data(self, pool_id: str) -> pd.DataFrame:
         """
@@ -55,8 +48,7 @@ class MySwapOrderBook(OrderBookBase):
         The structure of the data:
         Columns: tick(numpy.int64), liq(numpy.int64)
         """
-        url = f"https://myswap-cl-charts.s3.amazonaws.com/data/pools/{pool_id}/liqmap.json.gz"
-        return pd.read_json(url, compression="gzip")
+        return pd.read_json(self.MYSWAP_URL.format(pool_id=pool_id), compression="gzip")
 
     async def _async_fetch_price_and_liquidity(self) -> None:
         """Fetch price and liquidity data from the MySwap CLMM service."""
@@ -95,8 +87,8 @@ class MySwapOrderBook(OrderBookBase):
         Get ticks range based on the current price range.
         return: tuple[Decimal, Decimal] - The minimum and maximum ticks.
         """
-        price_range = self.calculate_price_range()
-        return self._price_to_tick(price_range[0]), self._price_to_tick(price_range[1])
+        price_range_from, price_range_to = self.calculate_price_range()
+        return self._price_to_tick(price_range_from), self._price_to_tick(price_range_to)
 
     def _price_to_tick(self, price: Decimal) -> Decimal:
         """
@@ -242,7 +234,8 @@ class MySwapOrderBook(OrderBookBase):
 
 if __name__ == '__main__':
     order_book = MySwapOrderBook(
-        "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+        "0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d",
+        # "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
         "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"
     )
     order_book.fetch_price_and_liquidity()
