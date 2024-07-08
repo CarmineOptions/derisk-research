@@ -108,7 +108,8 @@ def update_data(zklend_state: src.zklend.ZkLendState):
 
     t3 = time.time()
     for pair, state in itertools.product(src.settings.PAIRS, states):
-        logging.info(f"Preparing main chart data for pair = {pair}.")
+        protocol = src.protocol_parameters.get_protocol(state=state)
+        logging.info(f"Preparing main chart data for protocol = {protocol} and pair = {pair}.")
         # TODO: Decipher `pair` in a smarter way.
         collateral_token_underlying_symbol, debt_token_underlying_symbol = pair.split("-")
         _ = src.main_chart.get_main_chart_data(
@@ -119,7 +120,6 @@ def update_data(zklend_state: src.zklend.ZkLendState):
             debt_token_underlying_symbol=debt_token_underlying_symbol,
             save_data=True,
         )
-        protocol = src.protocol_parameters.get_protocol(state=state)
         logging.info(f"Main chart data for protocol = {protocol} and pair = {pair} prepared in {time.time() - t3}s")
     logging.info(f"updated graphs in {time.time() - t3}s")
 
