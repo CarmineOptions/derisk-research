@@ -28,8 +28,10 @@ def load_pickle(path: str) -> src.zklend.ZkLendState:
             # TODO: When loanding the pickled state, `'': decimal.Decimal('0')`` is added to every Portfolio. Remove these items.
             if PERSISTENT_STATE_FILENAME in path:
                 for loan_entity in state.loan_entities.values():
-                    del loan_entity.collateral['']
-                    del loan_entity.debt['']
+                    if '' in loan_entity.collateral:
+                        del loan_entity.collateral['']
+                    if ''  in loan_entity.debt:
+                        del loan_entity.debt['']
             return state
         except dill.UnpicklingError as e:
             logging.info(f"Failed to unpickle the data: {e}.")
