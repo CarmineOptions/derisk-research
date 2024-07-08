@@ -141,7 +141,10 @@ class ZkLendLoanEntity(src.types.LoanEntity):
             - collateral_token_parameters[collateral_token_underlying_address].collateral_factor *
             (1 + collateral_token_parameters[collateral_token_underlying_address].liquidation_bonus)
         )
-        return numerator / denominator
+        max_debt_to_be_liquidated = numerator / denominator
+        # The liquidator can't liquidate more debt than what is available.
+        debt_to_be_liquidated = min(float(self.debt[debt_token_underlying_address]), max_debt_to_be_liquidated)
+        return debt_to_be_liquidated
 
 
 @dataclasses.dataclass
