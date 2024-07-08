@@ -4,6 +4,7 @@ import math
 import multiprocessing
 import os
 import requests
+import time
 
 import pandas
 import plotly.express
@@ -51,7 +52,11 @@ def add_ekubo_liquidity(
 
     if response.status_code == 200:
         liquidity = response.json()
-        bid_prices, bid_quantities = zip(*liquidity["bids"])
+        try:
+            bid_prices, bid_quantities = zip(*liquidity["bids"])
+        except ValueError:
+            time.sleep(5)
+            add_ekubo_liquidity(data=data, collateral_token=collateral_token, debt_token=debt_token)
         bids = pandas.DataFrame(
             {
                 'price': bid_prices,
@@ -82,7 +87,11 @@ def add_ekubo_liquidity(
 
     if response.status_code == 200:
         liquidity = response.json()
-        ask_prices, ask_quantities = zip(*liquidity["asks"])
+        try:
+            ask_prices, ask_quantities = zip(*liquidity["asks"])
+        except ValueError:
+            time.sleep(5)
+            add_ekubo_liquidity(data=data, collateral_token=collateral_token, debt_token=debt_token)
         asks = pandas.DataFrame(
             {
                 'price': ask_prices,
