@@ -1,4 +1,3 @@
-import uuid
 import asyncio
 from datetime import datetime
 from decimal import Decimal

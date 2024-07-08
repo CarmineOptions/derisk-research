@@ -1,13 +1,14 @@
 from typing import List, Optional
-from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi import FastAPI, Depends, HTTPException, Request, Path, Query, status
 from sqlalchemy.orm import Session
+from sqlalchemy import desc
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.middleware import SlowAPIMiddleware
 
 from db.schemas import LoanStateResponse, InterestRateModel, OrderBookResponseModel
 from handler_tools.constants import ProtocolIDs
-from db.models import LoanState, InterestRate, OrderBookModel
+from db.models import LoanState, InterestRate, OrderBookModel, HealthRatioLevel
 from db.database import Base, engine, get_database
 
 # Create the database tables
@@ -101,6 +102,42 @@ def get_last_interest_rate_by_block(
 
     return last_record
 
+
+@limiter.limit("10/second")
+@app.get("/health-ratio-per-user/{protocol}/")
+async def get_health_ratio_per_user(
+        request: Request,
+        protocol: str = Path(...,),
+        user_id: str = Query(...,),
+        db: Session = Depends(get_database)
+):
+    """
+    Returns the health ratio by user id provided.
+    :param request: The request object.
+    :param protocol: The protocol ID to filter by.
+    :param user_id: The user id.
+    :param db: The database session.
+    :return: The health ratio by user id.
+    """
+    if protocol is None:
+        raise HTTPException(status_code=400, detail="Protocol ID is required")
+
+    if protocol not in ProtocolIDs.choices():
+        raise HTTPException(status_code=400, detail="Invalid protocol ID")
+
+    if not user_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User ID is required")
+
+    row = db.query(HealthRatioLevel).filter(
+        HealthRatioLevel.protocol_id == protocol,
+                HealthRatioLevel.user_id == user_id
+    ).order_by(desc(HealthRatioLevel.timestamp)).first()
+
+    if not row:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail="Health ratio with user ID provided not found")
+
+    return row.value
 
 @app.get("/orderbook/", response_model=OrderBookResponseModel)
 def get_orderbook(
