@@ -7,29 +7,33 @@ import src.nostra_alpha
 import src.nostra_mainnet
 import src.protocol_parameters
 import src.state
+import src.types
 
 
 
 def get_loans_table_data(
     state: src.state.State,
-    prices: src.helpers.TokenValues,
+    prices: src.types.Prices,
     save_data: bool = False,
 ) -> pandas.DataFrame:
     data = []
     for loan_entity_id, loan_entity in state.loan_entities.items():
         collateral_usd = loan_entity.compute_collateral_usd(
             risk_adjusted=False,
-            collateral_interest_rate_models=state.collateral_interest_rate_models,
+            collateral_token_parameters=state.token_parameters.collateral,
+            collateral_interest_rate_model=state.interest_rate_models.collateral,
             prices=prices,
         )
         risk_adjusted_collateral_usd = loan_entity.compute_collateral_usd(
             risk_adjusted=True,
-            collateral_interest_rate_models=state.collateral_interest_rate_models,
+            collateral_token_parameters=state.token_parameters.collateral,
+            collateral_interest_rate_model=state.interest_rate_models.collateral,
             prices=prices,
         )
         debt_usd = loan_entity.compute_debt_usd(
             risk_adjusted=False,
-            debt_interest_rate_models=state.debt_interest_rate_models,
+            debt_token_parameters=state.token_parameters.debt,
+            debt_interest_rate_model=state.interest_rate_models.debt,
             prices=prices,
         )
         if (
@@ -38,7 +42,8 @@ def get_loans_table_data(
         ):
             risk_adjusted_debt_usd = loan_entity.compute_debt_usd(
                 risk_adjusted=True,
-                debt_interest_rate_models=state.debt_interest_rate_models,
+                debt_token_parameters=state.token_parameters.debt,
+                debt_interest_rate_model=state.interest_rate_models.debt,
                 prices=prices,
             )
             health_factor = loan_entity.compute_health_factor(
@@ -48,6 +53,7 @@ def get_loans_table_data(
             )
             standardized_health_factor = loan_entity.compute_health_factor(
                 standardized=True,
+                collateral_token_parameters=state.token_parameters.collateral,
                 risk_adjusted_collateral_usd=risk_adjusted_collateral_usd,
                 risk_adjusted_debt_usd=risk_adjusted_debt_usd,
             )
@@ -93,9 +99,13 @@ def get_loans_table_data(
                 "Health factor": health_factor,
                 "Standardized health factor": standardized_health_factor,
                 "Collateral": loan_entity.get_collateral_str(
-                    collateral_interest_rate_models = state.collateral_interest_rate_models,
+                    collateral_token_parameters = state.token_parameters.collateral,
+                    collateral_interest_rate_model = state.interest_rate_models.collateral,
                 ),
-                "Debt": loan_entity.get_debt_str(debt_interest_rate_models = state.debt_interest_rate_models),
+                "Debt": loan_entity.get_debt_str(
+                    debt_token_parameters = state.token_parameters.debt,
+                    debt_interest_rate_model = state.interest_rate_models.debt,
+                ),
             }
         )
     data = pandas.DataFrame(data)

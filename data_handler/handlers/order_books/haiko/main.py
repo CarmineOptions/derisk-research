@@ -4,7 +4,7 @@ from pathlib import Path
 from handlers.order_books.abstractions import OrderBookBase
 from handlers.order_books.constants import TOKEN_MAPPING
 from handlers.order_books.haiko.api_connector import HaikoAPIConnector, HaikoBlastAPIConnector
-from data_handler.handlers.order_books.commons import get_logger
+from handlers.order_books.haiko.logger import get_logger
 
 
 class HaikoOrderBook(OrderBookBase):
@@ -105,7 +105,7 @@ class HaikoOrderBook(OrderBookBase):
             self._calculate_order_book(market_depth_list, Decimal(market["currPrice"]))
 
         self.sort_asks_bids()
-        self.current_price = self.token_a_price / self.token_b_price if self.token_b_price else Decimal(0)
+        self.current_price = max(tokens_markets, key=lambda x: Decimal(x["tvl"]))["currPrice"]
 
     def _calculate_order_book(
         self, market_ticks_liquidity: list, current_price: Decimal
@@ -244,7 +244,7 @@ if __name__ == "__main__":
     # token_1 = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"  # ETH
     # token_0 = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"  # ETH
     # token_1 = "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"  # USDC
-    token_0 = "0x42b8f0484674ca266ac5d08e4ac6a3fe65bd3129795def2dca5c34ecc5f96d2"  # wstETH
+    token_0 = "0x042b8f0484674ca266ac5d08e4ac6a3fe65bd3129795def2dca5c34ecc5f96d2"  # wstETH
     token_1 = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"  # ETH
     # token_0 = "0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d"  # STRK
     # token_1 = "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"  # USDC

@@ -6,7 +6,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import scoped_session, sessionmaker, Session, aliased
 
 from db.database import SQLALCHEMY_DATABASE_URL
-from db.models import Base, LoanState, InterestRate, OrderBookModel
+from db.models import Base, LoanState, OrderBookModel, InterestRate
 from handler_tools.constants import ProtocolIDs
 
 
@@ -110,7 +110,7 @@ class DBConnector:
         try:
             query = db.query(model)
             if protocol:
-                query = query.filter(model.protocol == protocol)
+                query = query.filter(model.protocol_id == protocol)
             if user:
                 query = query.filter(model.user == user)
             if start_block is not None:

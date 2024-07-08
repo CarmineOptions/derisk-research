@@ -23,7 +23,7 @@ class UniswapV2OrderBook(OrderBookBase):
 
     def _set_token_names(self) -> None:
         """Get token names from token addresses."""
-        token_a_info, token_b_info = self.get_tokens_configs()
+        token_a_info, token_b_info = self.get_token_configs()
         self.token_a_name = token_a_info.name
         self.token_b_name = token_b_info.name
 
