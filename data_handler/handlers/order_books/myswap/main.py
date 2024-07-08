@@ -21,7 +21,7 @@ class MySwapOrderBook(OrderBookBase):
     """Class for MySwap order book."""
     DEX = "MySwap"
     MIN_PRICE_RANGE = Decimal("0.1")
-    MAX_PRICE_RANGE = Decimal("1.3")
+    MAX_PRICE_RANGE = Decimal("1.6")
 
     def __init__(self, token_a: str, token_b: str, apply_filtering: bool = False):
         """
@@ -41,7 +41,8 @@ class MySwapOrderBook(OrderBookBase):
         self._set_token_names()
         self._set_usd_price()
 
-    def _set_token_names(self):
+    def _set_token_names(self) -> None:
+        """Set token names based on the token config."""
         token_a_info, token_b_info = self.get_token_configs()
         self.token_a_name = token_a_info.name
         self.token_b_name = token_b_info.name
