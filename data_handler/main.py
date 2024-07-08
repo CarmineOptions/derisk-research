@@ -8,11 +8,7 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from db.schemas import LoanStateResponse, InterestRateModel, OrderBookResponseModel
 from handler_tools.constants import ProtocolIDs
-<<<<<<< HEAD
-from db.models import LoanState, InterestRate, HealthRatioLevel
-=======
-from db.models import LoanState, InterestRate, OrderBookModel
->>>>>>> master
+from db.models import LoanState, InterestRate, OrderBookModel, HealthRatioLevel
 from db.database import Base, engine, get_database
 
 # Create the database tables
