@@ -10,8 +10,8 @@ from db.schemas import OrderBookResponseModel
 
 class OrderBookBase(ABC):
     DEX: str = None
-    MIN_PRICE_RANGE = Decimal("0.1")
-    MAX_PRICE_RANGE = Decimal("1.90")
+    MIN_PRICE_RANGE = Decimal("0.0001")
+    MAX_PRICE_RANGE = Decimal("100.0")
 
     def __init__(self, token_a: str, token_b: str):
         self.token_a = token_a
