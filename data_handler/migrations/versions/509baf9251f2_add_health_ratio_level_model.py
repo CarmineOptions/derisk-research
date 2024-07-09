@@ -16,7 +16,7 @@ from handler_tools.constants import ProtocolIDs
 
 # revision identifiers, used by Alembic.
 revision: str = "509baf9251f2"
-down_revision: Union[str, None] = "d271a1dc6633"
+down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
