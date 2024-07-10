@@ -6,9 +6,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-GS_BUCKET_NAME = os.environ.get("GS_BUCKET_NAME", "")
-GS_BUCKET_URL = os.environ.get("GS_BUCKET_URL", "")
-
+HEALTH_RATIO_ENDPOINT_DOMAIN = os.environ.get("DATA_HANDLER_URL", "")
+HEALTH_RATIO_ENDPOINT_URL = f"{HEALTH_RATIO_ENDPOINT_DOMAIN}/health-ratio-per-user/{{protocol}}/?user_id={{user_id}}"
 DEBT_USD_COLUMN_NAME = "Debt (USD)"
 USER_COLUMN_NAME = "User"
 RISK_ADJUSTED_COLLATERAL_USD_COLUMN_NAME = "Risk-adjusted collateral (USD)"
@@ -49,7 +48,8 @@ class MiddlewaresValues:
 
 class ProtocolIDs(Enum):
     HASHSTACK: str = "Hashstack"
-    NOSTRA: str = "Nostra"
+    NOSTRA_ALPHA: str = "Nostra_alpha"
+    NOSTRA_MAINNET: str = "Nostra_mainnet"
     ZKLEND: str = "zkLend"
 
 
@@ -59,8 +59,5 @@ class ProtocolIDCodeNames(Enum):
     ZKLEND: str = "zklend"
 
 
-
-CURRENTLY_AVAILABLE_PROTOCOLS: tuple[str, ...] = ("zklend",)
-CURRENTLY_AVAILABLE_PROTOCOLS_IDS: tuple[str, ...] = ("zkLend",)
+CURRENTLY_AVAILABLE_PROTOCOLS_IDS: tuple[str, ...] = ("zkLend", "Nostra_alpha", "Nostra_mainnet")
 HEALTH_RATIO_LEVEL_ALERT_VALUE: float = 0.1
-

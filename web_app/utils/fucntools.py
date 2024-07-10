@@ -1,20 +1,20 @@
 import os
 import shutil
-from threading import Thread
-from typing import Callable
+import time
+from decimal import Decimal
+from uuid import UUID
 
 import dask.dataframe as dd
 import pandas as pd
+import requests
 from fastapi import Request
 
 from database.crud import DBConnector
 from database.models import NotificationData
 from utils.exceptions import ProtocolExistenceError
-from utils.state import InterestRateModels
-from utils.values import (CURRENTLY_AVAILABLE_PROTOCOLS, DEBT_USD_COLUMN_NAME,
-                          GS_BUCKET_NAME, GS_BUCKET_URL,
+from utils.values import (DEBT_USD_COLUMN_NAME, CURRENTLY_AVAILABLE_PROTOCOLS_IDS,
                           RISK_ADJUSTED_COLLATERAL_USD_COLUMN_NAME,
-                          USER_COLUMN_NAME, ProtocolIDCodeNames)
+                          USER_COLUMN_NAME, ProtocolIDCodeNames, HEALTH_RATIO_ENDPOINT_URL)
 from utils.zklend import ZkLendLoanEntity, ZkLendState
 
 
@@ -35,8 +35,8 @@ def get_client_ip(request: Request) -> str:
 
 
 def download_parquet_file(
-    protocol_name: str = None,
-    bucket_name: str | None = GS_BUCKET_NAME,
+        protocol_name: str = None,
+        bucket_name: str | None = ...,
 ) -> None:
     """
     Downloads parquet file to local storage from Google Cloud Storage
@@ -48,7 +48,7 @@ def download_parquet_file(
         raise ProtocolExistenceError(protocol=protocol_name)
 
     data = dd.read_parquet(
-        GS_BUCKET_URL.format(protocol_name=protocol_name, bucket_name=bucket_name)
+        ....format(protocol_name=protocol_name, bucket_name=bucket_name)
     )
     dd.to_parquet(df=data, path=f"utils/loans/{protocol_name}_data/")
 
@@ -62,7 +62,7 @@ def delete_parquet_file(protocol_name: str = None) -> None:
     shutil.rmtree(f"utils/loans/{protocol_name}_data/")
 
 
-def update_data(protocol_names: str = CURRENTLY_AVAILABLE_PROTOCOLS) -> None:
+def update_data(protocol_names: str = CURRENTLY_AVAILABLE_PROTOCOLS_IDS) -> None:
     """
     Updates loans data from Google Cloud Storage
     :param protocol_names: str = None
@@ -74,7 +74,7 @@ def update_data(protocol_names: str = CURRENTLY_AVAILABLE_PROTOCOLS) -> None:
 
         os.mkdir(f"utils/loans/{name}_data/")
 
-    for protocol in CURRENTLY_AVAILABLE_PROTOCOLS:
+    for protocol in CURRENTLY_AVAILABLE_PROTOCOLS_IDS:
         download_parquet_file(protocol_name=protocol)
 
 
@@ -104,7 +104,7 @@ def get_user_row_number(user: dict[str, dict[int, str]] = None) -> int:
 
 
 def get_debt_usd(
-    user_data: dict[str, dict[int, str]] = None, user_row_number: int = None
+        user_data: dict[str, dict[int, str]] = None, user_row_number: int = None
 ) -> float | None:
     """
     Returns debt usd value from user_data parameter
@@ -121,7 +121,7 @@ def get_debt_usd(
 
 
 def get_risk_adjusted_collateral_usd(
-    user_data: dict[str, dict[int, str]] = None, user_row_number: int = None
+        user_data: dict[str, dict[int, str]] = None, user_row_number: int = None
 ) -> float | None:
     """
     Returns risk adjusted collateral usd value from user_data parameter
@@ -145,14 +145,40 @@ def get_all_activated_subscribers_from_db() -> list[NotificationData]:
     return list(DBConnector().get_all_activated_subscribers(model=NotificationData))
 
 
-def calculate_difference(a: float = None, b: float = None) -> float:
+def calculate_difference(a: float | Decimal = None, b: float | Decimal = None) -> float:
     """
     Calculates difference between two numbers
     """
+    a = Decimal(a)
+    b = Decimal(b)
     if a >= b:
         return a - b
     else:
         return b - a
+
+
+def get_health_ratio_level_from_endpoint(user_id: str, protocol_id: str) -> Decimal:
+    """
+    Returns health ratio level from endpoint URL
+    :param user_id: str
+    :param protocol_id: str
+    :return: Decimal
+    """
+    url = HEALTH_RATIO_ENDPOINT_URL.format(protocol=protocol_id, user_id=user_id)
+
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+
+        return Decimal(response.text)
+
+    except Exception:
+        time.sleep(10)
+
+        response = requests.get(url)
+        response.raise_for_status()
+
+        return Decimal(response.text)
 
 
 def compute_health_ratio_level(user_id: str = None, protocol_name: str = None) -> float:
