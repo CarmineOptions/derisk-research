@@ -1,3 +1,4 @@
+import logging
 from decimal import Decimal, getcontext
 import pandas as pd
 from handlers.order_books.abstractions import OrderBookBase
@@ -19,7 +20,7 @@ class EkuboOrderBook(OrderBookBase):
         super().__init__(token_a, token_b)
         self.connector = EkuboAPIConnector()
 
-    def set_current_price(self) -> str:
+    def set_current_price(self) -> None:
         """
         Get the current price of the pair.
         :return: str - The current price of the pair.
@@ -137,6 +138,9 @@ class EkuboOrderBook(OrderBookBase):
         :param liquidity_data: liquidity data list of dict with tick and net_liquidity_delta_diff
         :param row: pool row data
         """
+        if not self.current_price:
+            logging.log(logging.INFO, "Can't convert bids to base token.")
+            return
         bid_ticks = [i for i in liquidity_data if i["tick"] <= row["tick"]][::-1]
         if not bid_ticks:
             return
@@ -153,7 +157,7 @@ class EkuboOrderBook(OrderBookBase):
             ((glob_liq * prev_sqrt) - (glob_liq * next_sqrt)) / 10**self.token_b_decimal
         )
         price = self.tick_to_price(prev_tick)
-        self.bids.append((price, supply))
+        self.bids.append((price, supply / self.current_price))
 
         for index, tick in enumerate(bid_ticks):
             if index == 0:
@@ -170,7 +174,7 @@ class EkuboOrderBook(OrderBookBase):
                 / 10**self.token_b_decimal
             )
             price = self.tick_to_price(prev_tick)
-            self.bids.append((price, supply))
+            self.bids.append((price, supply / self.current_price))
 
     def _get_pure_sqrt_ratio(self, tick: Decimal) -> Decimal:
         """
