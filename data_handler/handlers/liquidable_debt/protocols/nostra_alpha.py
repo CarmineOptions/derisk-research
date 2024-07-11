@@ -1,12 +1,12 @@
 from db.models import LiquidableDebt
-
-from handlers.loan_states.nostra_alpha.events import NostraAlphaState, NostraAlphaLoanEntity
-from handlers.liquidable_debt.debt_handlers import GCloudLiquidableDebtDataHandler
-from handlers.liquidable_debt.values import (GS_BUCKET_NAME, GS_BUCKET_URL, USER_FIELD_NAME,
-                                             PROTOCOL_FIELD_NAME, LIQUIDABLE_DEBT_FIELD_NAME,
-                                             HEALTH_FACTOR_FIELD_NAME, COLLATERAL_FIELD_NAME,
-                                             RISK_ADJUSTED_COLLATERAL_USD_FIELD_NAME, DEBT_FIELD_NAME,
-                                             DEBT_USD_FIELD_NAME, PRICE_FIELD_NAME, LendingProtocolNames)
+from handlers.liquidable_debt.values import (COLLATERAL_FIELD_NAME,
+                                             DEBT_FIELD_NAME, GS_BUCKET_NAME,
+                                             GS_BUCKET_URL,
+                                             LIQUIDABLE_DEBT_FIELD_NAME,
+                                             PRICE_FIELD_NAME,
+                                             LendingProtocolNames)
+from handlers.loan_states.nostra_alpha.events import (NostraAlphaLoanEntity,
+                                                      NostraAlphaState)
 
 
 def run() -> None:

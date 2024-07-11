@@ -1,7 +1,10 @@
 import datetime
 import logging
+import math
 import multiprocessing
 import os
+import requests
+import time
 
 import pandas
 import plotly.express
@@ -19,6 +22,95 @@ import update_data
 
 logging.basicConfig(level=logging.INFO)
 
+
+
+def _remove_leading_zeros(address: str) -> str:
+    while address[2] == '0':
+        address = f'0x{address[3:]}'
+    return address
+
+
+def _get_available_liquidity(data: pandas.DataFrame, price: float, price_diff: float, bids: bool) -> float:
+    price_lower_bound = max(0.95 * price, price - price_diff) if bids else price
+    price_upper_bound = price if bids else min(1.05 * price, price + price_diff)
+    return data.loc[data["price"].between(price_lower_bound, price_upper_bound), "quantity"].sum()
+
+
+def add_ekubo_liquidity(
+    data: pandas.DataFrame,
+    collateral_token: str,
+    debt_token: str,
+) -> float:
+    URL = "http://35.187.112.169/orderbook/"
+    DEX = 'Ekubo'
+    params = {
+        "base_token": _remove_leading_zeros(collateral_token),
+        "quote_token": _remove_leading_zeros(debt_token),
+        "dex": DEX,
+    }
+    response = requests.get(URL, params=params)
+
+    if response.status_code == 200:
+        liquidity = response.json()
+        try:
+            bid_prices, bid_quantities = zip(*liquidity["bids"])
+        except ValueError:
+            time.sleep(5)
+            add_ekubo_liquidity(data=data, collateral_token=collateral_token, debt_token=debt_token)
+        bids = pandas.DataFrame(
+            {
+                'price': bid_prices,
+                'quantity': bid_quantities,
+            },
+        )
+        bids = bids.astype(float)
+        bids.sort_values('price', inplace = True)
+        price_diff = data['collateral_token_price'].diff().max()
+        data['Ekubo_debt_token_supply'] = data['collateral_token_price'].apply(
+            lambda x: _get_available_liquidity(
+                data=bids,
+                price=x,
+                price_diff=price_diff,
+                bids=True,
+            )
+        )
+        data['debt_token_supply'] += data['Ekubo_debt_token_supply']
+        return data
+
+    logging.warning('Using collateral token as base token and debt token as quote token.')
+    params = {
+        "base_token": _remove_leading_zeros(debt_token),
+        "quote_token": _remove_leading_zeros(collateral_token),
+        "dex": DEX,
+    }
+    response = requests.get(URL, params=params)
+
+    if response.status_code == 200:
+        liquidity = response.json()
+        try:
+            ask_prices, ask_quantities = zip(*liquidity["asks"])
+        except ValueError:
+            time.sleep(5)
+            add_ekubo_liquidity(data=data, collateral_token=collateral_token, debt_token=debt_token)
+        asks = pandas.DataFrame(
+            {
+                'price': ask_prices,
+                'quantity': ask_quantities,
+            },
+        )
+        asks = asks.astype(float)
+        asks.sort_values('price', inplace = True)
+        data['Ekubo_debt_token_supply'] = data['collateral_token_price'].apply(
+            lambda x: _get_available_liquidity(
+                data=asks,
+                price=x,
+                bids=False,
+            )
+        )
+        data['debt_token_supply'] += data['Ekubo_debt_token_supply']
+        return data
+
+    return data
 
 
 def main():
@@ -95,10 +187,25 @@ def main():
 
     # Plot the liquidable debt against the available supply.
     collateral_token, debt_token = current_pair.split("-")
+    collateral_token_underlying_address = src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[collateral_token]
+    collateral_token_decimals = int(math.log10(src.settings.TOKEN_SETTINGS[collateral_token].decimal_factor))
+    underlying_addresses_to_decimals = {collateral_token_underlying_address: collateral_token_decimals}
+    prices = src.helpers.get_prices(token_decimals = underlying_addresses_to_decimals)
+    collateral_token_price = prices[collateral_token_underlying_address]
+    # TODO: Add Ekubo start
+    main_chart_data = main_chart_data.astype(float)
+    debt_token_underlying_address = src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[debt_token]
+    main_chart_data = add_ekubo_liquidity(
+        data=main_chart_data,
+        collateral_token=collateral_token_underlying_address,
+        debt_token=debt_token_underlying_address,
+    )
+    # TODO: Add Ekubo end
     figure = src.main_chart.get_main_chart_figure(
-        data=main_chart_data.astype(float),
+        data=main_chart_data,
         collateral_token=collateral_token,
         debt_token=debt_token,
+        collateral_token_price=collateral_token_price,
     )
     streamlit.plotly_chart(figure_or_data=figure, use_container_width=True)
 
@@ -106,7 +213,8 @@ def main():
         main_chart_data['liquidable_debt_at_interval'] / main_chart_data['debt_token_supply']
     )
     example_row = main_chart_data[
-        main_chart_data['debt_to_supply_ratio'] > 0.75
+        (main_chart_data['debt_to_supply_ratio'] > 0.75)
+        & (main_chart_data['collateral_token_price'] <= collateral_token_price)
     ].sort_values('collateral_token_price').iloc[-1]
 
     if not example_row.empty:
@@ -120,7 +228,7 @@ def main():
             return 'very high'
 
         streamlit.subheader(
-            f":warning: At price of {int(example_row['collateral_token_price']):,}, the risk of acquiring bad debt for "
+            f":warning: At price of {round(example_row['collateral_token_price'], 2)}, the risk of acquiring bad debt for "
             f"lending protocols is {_get_risk_level(example_row['debt_to_supply_ratio'])}."
         )    
         streamlit.write(
@@ -185,8 +293,6 @@ def main():
                 )
                 streamlit.plotly_chart(figure, True)
 
-    streamlit.header("Loan size distribution")
-
     last_update = src.persistent_state.load_pickle(path=src.persistent_state.LAST_UPDATE_FILENAME)
     last_timestamp = last_update["timestamp"]
     last_block_number = last_update["block_number"]
@@ -203,11 +309,4 @@ if __name__ == "__main__":
         page_icon="https://carmine.finance/assets/logo.svg",
     )
 
-    if os.environ.get("UPDATE_RUNNING") is None:
-        os.environ["UPDATE_RUNNING"] = "True"
-        logging.info("Spawning the updating process.")
-        update_data_process = multiprocessing.Process(
-            target=update_data.update_data_continuously, daemon=True
-        )
-        update_data_process.start()
     main()

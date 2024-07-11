@@ -47,17 +47,11 @@ def zklend_get_events(start_block_number: int = 0) -> pandas.DataFrame:
     )
 
 
-def _zklend_collateral_enabled_default() -> bool:
-    return False
-
-
 class ZkLendCollateralEnabled(collections.defaultdict):
     """ A class that describes which tokens are eligible to be counted as collateral. """
 
-    def __init__(self) -> None:
-        # TODO: this is a workaround, without it, the class can't be pickled. Remove after we don't store the results as pickles anymore
-        super().__init__(_zklend_collateral_enabled_default)
-        # super().__init__(lambda: False)
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(lambda: False, *args[1:], **kwargs)
 
 
 class ZkLendLoanEntity(src.types.LoanEntity):
@@ -147,7 +141,10 @@ class ZkLendLoanEntity(src.types.LoanEntity):
             - collateral_token_parameters[collateral_token_underlying_address].collateral_factor *
             (1 + collateral_token_parameters[collateral_token_underlying_address].liquidation_bonus)
         )
-        return numerator / denominator
+        max_debt_to_be_liquidated = numerator / denominator
+        # The liquidator can't liquidate more debt than what is available.
+        debt_to_be_liquidated = min(float(self.debt[debt_token_underlying_address]), max_debt_to_be_liquidated)
+        return debt_to_be_liquidated
 
 
 @dataclasses.dataclass

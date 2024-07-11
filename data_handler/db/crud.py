@@ -108,10 +108,10 @@ class DBConnector:
             .subquery()
         )
 
-    def get_latest_block_loans(self) -> list[tuple[LoanState]]:
+    def get_latest_block_loans(self) -> Query:
         """
-        Returns latest loan state for all loan states.
-        :return: list[tuple[LoanState]]
+        Returns a lastt block query
+        :return: Last block query
         """
         session = self.Session()
         subquery = self._get_subquery()
@@ -328,6 +328,7 @@ class DBConnector:
         """
         Retrieves all rows of given model in descending order.
         :param model: Type - The model to get data from.
+        :return: Query - The query of all block records.
         """
         db = self.Session()
         try:

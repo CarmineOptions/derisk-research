@@ -8,7 +8,6 @@ from handler_tools.constants import ProtocolIDs
 from db.crud import DBConnector
 from db.models import LoanState, InterestRate
 from handlers.state import State
-from handler_tools.constants import FIRST_RUNNING_MAPPING
 from handler_tools.api_connector import DeRiskAPIConnector
 
 logger = logging.getLogger(__name__)
@@ -83,6 +82,7 @@ class LoanStateComputationBase(ABC):
                 and event["key_name"] in self.INTEREST_RATES_KEYS
             ):
                 self.process_interest_rate_event(instance_state, event)
+                return
 
             if block_number and block_number >= self.last_block:
                 self.last_block = block_number
@@ -90,7 +90,7 @@ class LoanStateComputationBase(ABC):
                 if method:
                     method(event)
                 else:
-                    logger.info(
+                    logger.debug(
                         f"No method named {method_name} found for processing event."
                     )
         except Exception as e:
