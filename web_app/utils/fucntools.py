@@ -6,7 +6,7 @@ from fastapi import Request
 
 from database.crud import DBConnector
 from database.models import NotificationData
-from utils.values import HEALTH_RATIO_ENDPOINT_URL
+from utils.values import HEALTH_RATIO_URL
 
 
 def get_client_ip(request: Request) -> str:
@@ -39,10 +39,8 @@ def calculate_difference(a: float | Decimal = None, b: float | Decimal = None) -
     """
     a = Decimal(a)
     b = Decimal(b)
-    if a >= b:
-        return a - b
-    else:
-        return b - a
+
+    return abs(a - b)
 
 
 def get_health_ratio_level_from_endpoint(user_id: str, protocol_id: str) -> Decimal:
@@ -52,7 +50,7 @@ def get_health_ratio_level_from_endpoint(user_id: str, protocol_id: str) -> Deci
     :param protocol_id: str
     :return: Decimal
     """
-    url = HEALTH_RATIO_ENDPOINT_URL.format(protocol=protocol_id, user_id=user_id)
+    url = HEALTH_RATIO_URL.format(protocol=protocol_id, user_id=user_id)
 
     try:
         response = requests.get(url)

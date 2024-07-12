@@ -6,8 +6,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-HEALTH_RATIO_ENDPOINT_DOMAIN = os.environ.get("DATA_HANDLER_URL", "")
-HEALTH_RATIO_ENDPOINT_URL = f"{HEALTH_RATIO_ENDPOINT_DOMAIN}/health-ratio-per-user/{{protocol}}/?user_id={{user_id}}"
+DATA_HANDLER_ENDPOINT = os.environ.get("DATA_HANDLER_URL", "")
+HEALTH_RATIO_URL = f"{DATA_HANDLER_ENDPOINT}/health-ratio-per-user/{{protocol}}/?user_id={{user_id}}"
 DEBT_USD_COLUMN_NAME = "Debt (USD)"
 USER_COLUMN_NAME = "User"
 RISK_ADJUSTED_COLLATERAL_USD_COLUMN_NAME = "Risk-adjusted collateral (USD)"
