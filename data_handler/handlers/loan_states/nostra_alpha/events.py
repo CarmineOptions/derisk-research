@@ -186,7 +186,8 @@ class NostraAlphaLoanEntity(LoanEntity):
             max_liquidation_percentage = min(
                 max_liquidation_percentage, decimal.Decimal("1")
             )
-            max_liquidation_amount = max_liquidation_percentage * debt_token_debt_amount
+            max_liquidation_amount = (decimal.Decimal(max_liquidation_percentage)
+                                      * decimal.Decimal(debt_token_debt_amount))
             max_liquidation_amount_usd = (
                 max_liquidation_amount
                 * debt_token_price
