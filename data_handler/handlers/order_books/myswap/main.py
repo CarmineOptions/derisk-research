@@ -59,7 +59,6 @@ class MySwapOrderBook(OrderBookBase):
 
     def fetch_price_and_liquidity(self) -> None:
         """Sync wrapper for the async fetch_price_and_liquidity method."""
-        # TODO: Create new event loop if not running
         asyncio.run(self._async_fetch_price_and_liquidity())
 
     def _set_usd_price(self) -> None:
