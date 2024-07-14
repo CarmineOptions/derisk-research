@@ -15,7 +15,7 @@ class LoanStateBase(BaseModel):
     deposit: Optional[Dict]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class LoanStateResponse(LoanStateBase):
@@ -32,14 +32,14 @@ class InterestRateModel(BaseModel):
     collateral: Dict[str, float]
 
 
-class OrderBookModel(BaseModel):
+class OrderBookResponseModel(BaseModel):
     """
     A data model class that validates data user entered
     """
 
     token_a: str
     token_b: str
-    block: int
+    block: Optional[int]
     timestamp: int
     dex: str
     current_price: Decimal
@@ -56,3 +56,14 @@ class OrderBookModel(BaseModel):
         :return: list of tuples of float values
         """
         return [(float(a), float(b)) for a, b in value]
+
+    @field_validator("block")
+    def validate_block(cls, value: int| None) -> int:
+        """
+        Validate block number
+        :param value: block number
+        :return: block number
+        """
+        if value is None:
+            return 0
+        return value

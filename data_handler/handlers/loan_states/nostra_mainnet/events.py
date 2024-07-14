@@ -13,15 +13,6 @@ from handlers.state import NostraAlphaSpecificTokenSettings, NOSTRA_ALPHA_SPECIF
 
 # Source: https://docs.nostra.finance/lend/deployed-contracts/lend-mainnet#asset-contracts.
 ADDRESSES_TO_TOKENS: dict[str, str] = {
-    "0x01fecadfe7cda2487c66291f2970a629be8eecdcb006ba4e71d1428c2b7605c7": "ETH",
-    "0x002fc2d4b41cc1f03d185e6681cbd40cced61915d4891517a042658d61cba3b1": "USDC",
-    "0x0360f9786a6595137f84f2d6931aaec09ceec476a94a98dcad2bb092c6c06701": "USDT",
-    "0x022ccca3a16c9ef0df7d56cbdccd8c4a6f98356dfd11abc61a112483b242db90": "DAI",
-    "0x0735d0f09a4e8bf8a17005fa35061b5957dcaa56889fc75df9e94530ff6991ea": "wBTC",
-    "0x00ca44c79a77bcb186f8cdd1a0cd222cc258bebc3bec29a0a020ba20fdca40e9": "wstETH",
-    "0x0507eb06dd372cb5885d3aaf18b980c41cd3cd4691cfd3a820339a6c0cec2674": "LORDS",
-    "0x026c5994c2462770bbf940552c5824fb0e0920e2a8a5ce1180042da1b3e489db": "STRK",
-    "0x078a40c85846e3303bf7982289ca7def68297d4b609d5f588208ac553cff3a18": "nstSTRK",
     "0x044debfe17e4d9a5a1e226dabaf286e72c9cc36abbe71c5b847e669da4503893": "ETH",
     "0x05f296e1b9f4cf1ab452c218e72e02a8713cee98921dad2d3b5706235e128ee4": "USDC",
     "0x0514bd7ee8c97d4286bd481c54aa0793e43edbfb7e1ab9784c4b30469dcf9313": "USDT",
@@ -52,15 +43,6 @@ ADDRESSES_TO_TOKENS: dict[str, str] = {
 }
 # Source: https://docs.nostra.finance/lend/deployed-contracts/lend-mainnet#asset-contracts.
 ADDRESSES_TO_EVENTS: dict[str, str] = {
-    "0x01fecadfe7cda2487c66291f2970a629be8eecdcb006ba4e71d1428c2b7605c7": "interest_bearing_deposit",
-    "0x002fc2d4b41cc1f03d185e6681cbd40cced61915d4891517a042658d61cba3b1": "interest_bearing_deposit",
-    "0x0360f9786a6595137f84f2d6931aaec09ceec476a94a98dcad2bb092c6c06701": "interest_bearing_deposit",
-    "0x022ccca3a16c9ef0df7d56cbdccd8c4a6f98356dfd11abc61a112483b242db90": "interest_bearing_deposit",
-    "0x0735d0f09a4e8bf8a17005fa35061b5957dcaa56889fc75df9e94530ff6991ea": "interest_bearing_deposit",
-    "0x00ca44c79a77bcb186f8cdd1a0cd222cc258bebc3bec29a0a020ba20fdca40e9": "interest_bearing_deposit",
-    "0x0507eb06dd372cb5885d3aaf18b980c41cd3cd4691cfd3a820339a6c0cec2674": "interest_bearing_deposit",
-    "0x026c5994c2462770bbf940552c5824fb0e0920e2a8a5ce1180042da1b3e489db": "interest_bearing_deposit",
-    "0x078a40c85846e3303bf7982289ca7def68297d4b609d5f588208ac553cff3a18": "interest_bearing_deposit",
     "0x044debfe17e4d9a5a1e226dabaf286e72c9cc36abbe71c5b847e669da4503893": "non_interest_bearing_collateral",
     "0x05f296e1b9f4cf1ab452c218e72e02a8713cee98921dad2d3b5706235e128ee4": "non_interest_bearing_collateral",
     "0x0514bd7ee8c97d4286bd481c54aa0793e43edbfb7e1ab9784c4b30469dcf9313": "non_interest_bearing_collateral",

@@ -1,9 +1,9 @@
 import uuid
 from typing import List, Optional, Type, TypeVar
 
-from sqlalchemy import create_engine, func, select, and_
+from sqlalchemy import create_engine, func, select, and_, desc
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import scoped_session, sessionmaker, Session, aliased
+from sqlalchemy.orm import scoped_session, sessionmaker, Session, aliased, Query
 
 from db.database import SQLALCHEMY_DATABASE_URL
 from db.models import Base, LoanState, OrderBookModel, InterestRate
@@ -92,6 +92,42 @@ class DBConnector:
 
         finally:
             db.close()
+
+    def _get_subquery(self):
+        """
+        Returns subquery for loan state last blocks query
+        """
+        session = self.Session()
+        return (
+            session.query(
+                LoanState.user,
+                func.max(LoanState.block).label('latest_block')
+            )
+            .group_by(LoanState.user)
+            .subquery()
+        )
+
+    def get_latest_block_loans(self) -> Query:
+        """
+        Returns a lastt block query
+        :return: Last block query
+        """
+        session = self.Session()
+        subquery = self._get_subquery()
+
+        result = (
+            session.query(LoanState)
+            .join(
+                subquery,
+                and_(
+                    LoanState.user == subquery.c.user,
+                    LoanState.block == subquery.c.latest_block
+                )
+            )
+            .all()
+        )
+
+        return result
 
     def get_loans(
         self,
@@ -284,5 +320,21 @@ class DBConnector:
                 .order_by(InterestRate.block.desc())
                 .first()
             )
+        finally:
+            db.close()
+
+    def get_all_block_records(self, model: Type[ModelType] = None) -> Query:
+        """
+        Retrieves all rows of given model in descending order.
+        :param model: Type - The model to get data from.
+        :return: Query - The query of all block records.
+        """
+        db = self.Session()
+        try:
+            return db.query(
+                model.user,
+                model.collateral,
+                model.debt,
+            ).order_by(desc(model.block))
         finally:
             db.close()
