@@ -4,6 +4,7 @@ from decimal import Decimal
 from pathlib import Path
 
 from db.crud import DBConnector
+from db.models import OrderBookModel
 from handlers.blockchain_call import func_call
 from handlers.order_books.abstractions import OrderBookBase
 
@@ -225,4 +226,4 @@ if __name__ == '__main__':
     order_book.fetch_price_and_liquidity()
     order_book_serialized = order_book.serialize().model_dump()
     connector = DBConnector()
-    connector.write_to_db(**order_book_serialized)
+    connector.write_to_db(OrderBookModel(**order_book_serialized))
