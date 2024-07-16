@@ -3,6 +3,7 @@ import math
 from decimal import Decimal
 from pathlib import Path
 
+from db.crud import DBConnector
 from handlers.blockchain_call import func_call
 from handlers.order_books.abstractions import OrderBookBase
 
@@ -10,7 +11,6 @@ import pandas as pd
 
 from handlers.order_books.commons import get_logger
 from handlers.order_books.myswap.api_connection.api_connector import MySwapAPIConnector
-from handlers.order_books.myswap.api_connection.data_collectors import braavos_get_tokens_prices
 
 
 MYSWAP_CL_MM_ADDRESS = "0x01114c7103e12c2b2ecbd3a2472ba9c48ddcbf702b1c242dd570057e26212111"
@@ -24,21 +24,19 @@ class MySwapOrderBook(OrderBookBase):
     DEX = "MySwap"
     MYSWAP_URL = "https://myswap-cl-charts.s3.amazonaws.com/data/pools/{pool_id}/liqmap.json.gz"
 
-    def __init__(self, token_a: str, token_b: str, apply_filtering: bool = False):
+    def __init__(self, base_token: str, quote_token: str, apply_filtering: bool = False):
         """
         Initialize the MySwap order book.
-        :param token_a: str - The base token address in hexadecimal.
-        :param token_b: str - The quote token address in hexadecimal.
+        :param base_token: str - The base token address in hexadecimal.
+        :param quote_token: str - The quote token address in hexadecimal.
         :param apply_filtering: bool - Apply filtering to the order book.
         """
-        super().__init__(token_a, token_b)
+        super().__init__(base_token, quote_token)
         self.connector = MySwapAPIConnector()
         self.apply_filtering = apply_filtering
-        self.logger = get_logger("MySwap", Path().resolve().joinpath("./logs"))
-        self.token_a_name, self.token_b_name = map(lambda info: info.name, self.get_token_configs())
-        self._usd_price = Decimal("0")
+        self.logger = get_logger("MySwap", Path.cwd().joinpath("./logs"))
+        self.base_token_name = self.get_token_configs()[0].name
         self._decimals_diff = Decimal(10 ** (self.token_a_decimal - self.token_b_decimal))
-        self._set_usd_price()
 
     def _read_liquidity_data(self, pool_id: str) -> pd.DataFrame:
         """
@@ -60,15 +58,6 @@ class MySwapOrderBook(OrderBookBase):
     def fetch_price_and_liquidity(self) -> None:
         """Sync wrapper for the async fetch_price_and_liquidity method."""
         asyncio.run(self._async_fetch_price_and_liquidity())
-
-    def _set_usd_price(self) -> None:
-        """Set USD price for TVL calculation."""
-        if not self.token_a_name:
-            raise ValueError("Base token name is not defined.")
-        token_info = braavos_get_tokens_prices([self.token_a_name.lower()])
-        if not token_info or isinstance(token_info, dict):
-            raise RuntimeError(f"Couldn't get token usd price: {token_info.get('error', 'Unknown error')}")
-        self._usd_price = Decimal(token_info[0]["price"])
 
     def _filter_pools_data(self, all_pools: dict) -> list:
         """
@@ -96,6 +85,7 @@ class MySwapOrderBook(OrderBookBase):
         :return: Decimal - The unsigned tick value.
         Signed tick calculation formula:
         round(log(price / (2 ** 128 * decimals_diff)) / log(1.0001))
+        Formula was derived from provided in tick_to_price.
         """
         signed_tick = round(
             Decimal(math.log(
@@ -121,87 +111,76 @@ class MySwapOrderBook(OrderBookBase):
         min_tick, max_tick = self._get_ticks_range()
 
         # Prepare data for processing
-        data = data.loc[(min_tick < data["tick"]) & (data["tick"] <= max_tick)]
+        if self.apply_filtering:
+            data = data.loc[data["tick"].between(min_tick, max_tick, inclusive="right")]
         asks, bids = data[data["tick"] >= current_tick], data[data["tick"] < current_tick]
         bids = bids.sort_values("tick", ascending=True)
 
         # Add asks and bids to the order book
-        self.add_bids(bids, (min_tick, max_tick))
-        self.add_asks(asks, bids.iloc[0]["liq"], (min_tick, max_tick))
-        tvl = (
-                (sum([bid[1] for bid in self.bids]) * self._usd_price) +
-                (sum([ask[1] for ask in self.asks]) * self._usd_price)
-        )
+        self.add_bids(pool_bids=bids)
+        self.add_asks(pool_asks=asks, pool_liquidity=bids.iloc[0]["liq"])
 
-    def add_asks(self, pool_asks: pd.DataFrame, pool_liquidity: Decimal, price_range: tuple[Decimal, Decimal]) -> None:
+    def add_asks(self, pool_asks: pd.DataFrame, pool_liquidity: Decimal) -> None:
         """
         Add asks data to the order book.
         :param pool_asks: pd.DataFrame - Asks in the pool.
         :param pool_liquidity: Decimal - The pool liquidity.
-        :param price_range: tuple[Decimal, Decimal] - The price range for filtering.
         """
         if pool_asks.empty:
             return
         local_asks = []
-        prev_tick = Decimal(pool_asks.iloc[0]['tick'].item())
-        prev_price = self.tick_to_price(prev_tick)
+        next_tick = Decimal(pool_asks.iloc[0]['tick'].item())
+        next_price = self.tick_to_price(next_tick)
         y = self._get_token_amount(
-            pool_liquidity,
-            self.current_price.sqrt(),
-            prev_price.sqrt(),
+            current_liq=pool_liquidity,
+            current_sqrt=self.current_price.sqrt(),
+            next_sqrt=next_price.sqrt(),
             is_ask=False
         )
-        local_asks.append((prev_price, y))
+        local_asks.append((next_price, y))
         for index, bid_info in enumerate(pool_asks.iloc[::-1].itertuples(index=False)):
             if index == 0:
                 continue
             current_tick = Decimal(pool_asks.iloc[index - 1]['tick'].item())
             current_price = self.tick_to_price(current_tick)
             y = self._get_token_amount(
-                Decimal(pool_asks.iloc[index - 1]['liq'].item()),
-                current_price.sqrt(),
-                Decimal(self.tick_to_price(pool_asks.iloc[index]['tick'].item())).sqrt(),
+                current_liq=Decimal(pool_asks.iloc[index - 1]['liq'].item()),
+                current_sqrt=current_price.sqrt(),
+                next_sqrt=Decimal(self.tick_to_price(pool_asks.iloc[index]['tick'].item())).sqrt(),
                 is_ask=False
             )
             local_asks.append((current_price, y))
-        if self.apply_filtering:
-            self.asks.extend([ask for ask in local_asks if price_range[0] < ask[0] < price_range[1]])
-            return
         self.asks.extend(local_asks)
 
-    def add_bids(self, pool_bids: pd.DataFrame, price_range: tuple[Decimal, Decimal]) -> None:
+    def add_bids(self, pool_bids: pd.DataFrame) -> None:
         """
         Add asks data to the order book.
         :param pool_bids: pd.DataFrame - Bids in the pool.
-        :param price_range: tuple[Decimal, Decimal] - The price range for filtering.
         """
         if pool_bids.empty:
             return
         local_bids = []
-        prev_tick = Decimal(pool_bids.iloc[0]['tick'].item())
-        prev_price = self.tick_to_price(prev_tick)
+        next_tick = Decimal(pool_bids.iloc[0]['tick'].item())
+        next_price = self.tick_to_price(next_tick)
         y = self._get_token_amount(
             Decimal(pool_bids.iloc[0]['liq'].item()),
             self.current_price.sqrt(),
-            prev_price.sqrt(),
+            next_price.sqrt(),
             is_ask=False
         )
-        local_bids.append((prev_price, y))
+        local_bids.append((next_price, y))
         for index, bid_info in enumerate(pool_bids.iloc[::-1].itertuples(index=False)):
             if index == 0:
                 continue
             current_tick = Decimal(pool_bids.iloc[index - 1]['tick'].item())
             current_price = self.tick_to_price(current_tick)
             y = self._get_token_amount(
-                Decimal(pool_bids.iloc[index]['liq'].item()),
-                current_price.sqrt(),
-                Decimal(self.tick_to_price(pool_bids.iloc[index]['tick'].item())).sqrt(),
+                current_liq=Decimal(pool_bids.iloc[index]['liq'].item()),
+                current_sqrt=current_price.sqrt(),
+                next_sqrt=Decimal(self.tick_to_price(pool_bids.iloc[index]['tick'].item())).sqrt(),
                 is_ask=False
             )
             local_bids.append((current_price, y))
-        if self.apply_filtering:
-            self.bids.extend([bid for bid in local_bids if price_range[0] < bid[0] < price_range[1]])
-            return
         self.bids.extend(local_bids)
 
     def _get_token_amount(
@@ -223,6 +202,12 @@ class MySwapOrderBook(OrderBookBase):
         return amount / self._decimals_diff
 
     def tick_to_price(self, tick: Decimal) -> Decimal:
+        """
+        Convert tick value to price.
+        :param tick: Decimal - Tick value
+        Formula derived from base Uniswap V3 formula - 1.0001 ** tick. Ticks in MySwap are unsigned values,
+        so we convert them to signed by subtracting max tick.
+        """
         return Decimal("1.0001") ** (tick - MAX_MYSWAP_TICK) * Decimal(2 ** 128) * self._decimals_diff
 
     def calculate_liquidity_amount(self, tick, liquidity_pair_total) -> Decimal:
@@ -234,7 +219,10 @@ class MySwapOrderBook(OrderBookBase):
 if __name__ == '__main__':
     order_book = MySwapOrderBook(
         "0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d",
-        # "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
-        "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"
+        "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8",
+        apply_filtering=True,
     )
     order_book.fetch_price_and_liquidity()
+    order_book_serialized = order_book.serialize().model_dump()
+    connector = DBConnector()
+    connector.write_to_db(**order_book_serialized)
