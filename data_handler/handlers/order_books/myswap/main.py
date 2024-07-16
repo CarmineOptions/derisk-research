@@ -164,9 +164,9 @@ class MySwapOrderBook(OrderBookBase):
         next_tick = Decimal(pool_bids.iloc[0]['tick'].item())
         next_price = self.tick_to_price(next_tick)
         y = self._get_token_amount(
-            Decimal(pool_bids.iloc[0]['liq'].item()),
-            self.current_price.sqrt(),
-            next_price.sqrt(),
+            current_liq=Decimal(pool_bids.iloc[0]['liq'].item()),
+            current_sqrt=self.current_price.sqrt(),
+            next_sqrt=next_price.sqrt(),
             is_ask=False
         )
         local_bids.append((next_price, y))
