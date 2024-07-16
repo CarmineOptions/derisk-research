@@ -147,11 +147,23 @@ def main():
             # options=["zkLend", "Hashstack V0", "Hashstack V1", "Nostra Alpha", "Nostra Mainnet"],
             # default=["zkLend", "Hashstack V0", "Hashstack V1", "Nostra Alpha", "Nostra Mainnet"],
         )
-        current_pair = streamlit.selectbox(
-            label="Select collateral-loan pair:",
-            options=src.settings.PAIRS,
+        collateral_token = streamlit.selectbox(
+            label="Select collateral token:",
+            options=src.settings.COLLATERAL_TOKENS,
             index=0,
         )
+        
+        debt_token = streamlit.selectbox(
+            label="Select debt token:",
+            options=src.settings.DEBT_TOKENS,
+            index=0,
+        )
+        
+    if(debt_token == collateral_token):
+        streamlit.subheader(
+            f":warning: You are selecting the same token for both collateral and debt.")   
+        
+    current_pair = f"{collateral_token}-{debt_token}"
 
     main_chart_data = pandas.DataFrame()
     # histogram_data = pandas.DataFrame()
