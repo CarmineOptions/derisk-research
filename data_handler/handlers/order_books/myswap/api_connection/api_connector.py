@@ -30,3 +30,16 @@ class MySwapAPIConnector(AbstractionAPIConnector):
         }
         """
         return cls.send_get_request("/data/pools/all.json")
+
+    @classmethod
+    def get_liquidity(cls, pool_id: str) -> list[dict[str, int]]:
+        """
+        Get liquidity data from MyhSwap for specific pool.
+        :param pool_id: ID of the pool in hexadecimal.
+        :return list[dict[str]] - The liquidity data.
+        The structure of list is as follows:
+        [
+            {"tick": 0, "liq": 0}, ...
+        ]
+        """
+        return cls.send_get_request(f"/data/pools/{pool_id}/liqmap.json.gz")  # type: ignore
