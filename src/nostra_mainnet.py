@@ -77,7 +77,22 @@ NOSTRA_MAINNET_TOKEN_ADDRESSES: list[str] = [
     '0x06726ec97bae4e28efa8993a8e0853bd4bad0bd71de44c23a1cd651b026b00e7',  # dDAI V2
 ]
 
-NOSTRA_MAINNET_CDP_MANAGER: str = "0x073f6addc9339de9822cab4dac8c9431779c09077f02ba7bc36904ea342dd9eb"
+NOSTRA_MAINNET_CDP_MANAGER_ADDRESS: str = "0x073f6addc9339de9822cab4dac8c9431779c09077f02ba7bc36904ea342dd9eb"
+
+
+NOSTRA_MAINNET_EVENTS_TO_METHODS_MAPPING: dict[tuple[str, str], str] = copy.deepcopy(
+    src.nostra_alpha.NOSTRA_ALPHA_EVENTS_TO_METHODS_MAPPING
+)
+NOSTRA_MAINNET_EVENTS_TO_METHODS_MAPPING.extend(
+	{
+        ("collateral", "Transfer"): "process_collateral_transfer_event",
+        ("collateral", "openzeppelin::token::erc20_v070::erc20::ERC20::Transfer"): "process_collateral_transfer_event",
+        ("collateral", "openzeppelin::token::erc20::erc20::ERC20Component::Transfer"): "process_collateral_transfer_event",
+        ("debt", "Transfer"): "process_debt_transfer_event",
+        ("debt", "openzeppelin::token::erc20_v070::erc20::ERC20::Transfer"): "process_debt_transfer_event",
+        ("debt", "openzeppelin::token::erc20::erc20::ERC20Component::Transfer"): "process_debt_transfer_event",
+    }
+)
 
 
 
@@ -85,12 +100,7 @@ NOSTRA_MAINNET_CDP_MANAGER: str = "0x073f6addc9339de9822cab4dac8c9431779c09077f0
 def nostra_mainnet_get_events(start_block_number: int = 0) -> pandas.DataFrame:
     user_events = src.helpers.get_events(
         addresses=tuple(NOSTRA_MAINNET_TOKEN_ADDRESSES),
-        event_names=(
-            "Burn",
-            "Mint",
-            "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Burn",
-            "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Mint",
-        ),
+        event_names = (x[1] for x in NOSTRA_MAINNET_EVENTS_TO_METHODS_MAPPING.keys()),
         start_block_number=start_block_number,
     )
     interest_rate_events = src.helpers.get_events(
@@ -104,10 +114,12 @@ def nostra_mainnet_get_events(start_block_number: int = 0) -> pandas.DataFrame:
     events["order"] = events["key_name"].map(
         {
             "InterestStateUpdated": 0,
-            'Burn': 1, 
-            'Mint': 3,
-            'nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Burn': 2,
-            'nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Mint': 4,
+            "nostra::lending::interest_rate_model::interest_rate_model::InterestRateModel::InterestStateUpdated": 1,
+            'Burn': 2, 
+            'Mint': 4,
+            'Transfer': 6,
+            'nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Burn': 3,
+            'nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Mint': 5,
         },
     )
     events.sort_values(["block_number", "transaction_hash", "order"], inplace=True)
@@ -189,7 +201,8 @@ class NostraMainnetState(src.nostra_alpha.NostraAlphaState):
 
     TOKEN_ADDRESSES: list[str] = NOSTRA_MAINNET_TOKEN_ADDRESSES
     INTEREST_RATE_MODEL_ADDRESS: str = NOSTRA_MAINNET_INTEREST_RATE_MODEL_ADDRESS
-    CDP_MANAGER: str = NOSTRA_MAINNET_CDP_MANAGER
+    CDP_MANAGER_ADDRESS: str = NOSTRA_MAINNET_CDP_MANAGER_ADDRESS
+
     IGNORE_USERS: set[str] = {
         # This seems to be a magical address, it's first event is a withdrawal.
         '0x5fc7053cca20fcb38550d7554c84fa6870e2b9e7ebd66398a67697ba440f12b',
@@ -233,7 +246,7 @@ class NostraMainnetState(src.nostra_alpha.NostraAlphaState):
                 try:
                     # The order of the arguments is: `index`, `collateral_factor`, ``, `price_oracle`.
                     collateral_data = await src.blockchain_call.func_call(
-                        addr=self.CDP_MANAGER,
+                        addr=self.CDP_MANAGER_ADDRESS,
                         selector="collateral_data",
                         calldata=[underlying_token_address],
                     )
@@ -244,7 +257,7 @@ class NostraMainnetState(src.nostra_alpha.NostraAlphaState):
 
                 # The order of the arguments is: `protocol_fee`, ``, `protocol_fee_recipient`.
                 liquidation_settings = await src.blockchain_call.func_call(
-                    addr=self.CDP_MANAGER,
+                    addr=self.CDP_MANAGER_ADDRESS,
                     selector="liquidation_settings",
                     calldata=[underlying_token_address],
                 )
@@ -263,7 +276,7 @@ class NostraMainnetState(src.nostra_alpha.NostraAlphaState):
             else:
                 # The order of the arguments is: `index`, `debt_tier`, `debt_factor`, ``, `price_oracle`.
                 debt_data = await src.blockchain_call.func_call(
-                    addr=self.CDP_MANAGER,
+                    addr=self.CDP_MANAGER_ADDRESS,
                     selector="debt_data",
                     calldata=[token_address],
                 )
