@@ -46,7 +46,7 @@ NOSTRA_ALPHA_TOKEN_ADDRESSES: list[str] = [
     '0x065c6c7119b738247583286021ea05acc6417aa86d391dcdda21843c1fc6e9c6',  # dUSDT
 ]
 
-NOSTRA_ALPHA_CDP_MANAGER: str = '0x06d272e18e66289eeb874d0206a23afba148ef35f250accfdfdca085a478aec0'
+NOSTRA_ALPHA_CDP_MANAGER_ADDRESS: str = '0x06d272e18e66289eeb874d0206a23afba148ef35f250accfdfdca085a478aec0'
 
 
 # Keys are tuples of event types and names, values are names of the respective methods that process the given event.
@@ -67,12 +67,7 @@ NOSTRA_ALPHA_EVENTS_TO_METHODS_MAPPING: dict[tuple[str, str], str] = {
 def nostra_alpha_get_events(start_block_number: int = 0) -> pandas.DataFrame:
     user_events = src.helpers.get_events(
         addresses = tuple(NOSTRA_ALPHA_TOKEN_ADDRESSES),
-        event_names = (
-            'Burn', 
-            'Mint',
-            'nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Burn',
-            'nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Mint',
-        ),
+        event_names = (x[1] for x in NOSTRA_ALPHA_EVENTS_TO_METHODS_MAPPING.keys()),
         start_block_number = start_block_number,
     )
     interest_rate_events = src.helpers.get_events(
@@ -218,12 +213,19 @@ class NostraAlphaState(src.state.State):
 
     TOKEN_ADDRESSES: list[str] = NOSTRA_ALPHA_TOKEN_ADDRESSES
     INTEREST_RATE_MODEL_ADDRESS: str = NOSTRA_ALPHA_INTEREST_RATE_MODEL_ADDRESS
-    CDP_MANAGER: str = NOSTRA_ALPHA_CDP_MANAGER
+    CDP_MANAGER_ADDRESS: str = NOSTRA_ALPHA_CDP_MANAGER_ADDRESS
+
     EVENTS_TO_METHODS_MAPPING: dict[str, str] = NOSTRA_ALPHA_EVENTS_TO_METHODS_MAPPING
+
     IGNORE_USERS: set[str] = {
         # This seems to be a magical address, it's first event is a withdrawal.
         '0x5a0042fa9bb87ed72fbee4d5a2da416528ebc84a569081ad02e9ad60b0af7d7',
     }
+
+    # These variables are missing the leading 0's on purpose, because they're missing in the raw event keys, too.
+    INTEREST_STATE_UPDATED_KEY = '0x33db1d611576200c90997bde1f948502469d333e65e87045c250e6efd2e42c7'
+    MINT_KEY = '0x34e55c1cd55f1338241b50d352f0e91c7e4ffad0e4271d64eb347589ebdfd16'
+    BURN_KEY = '0x243e1de00e8a6bc1dfa3e950e6ade24c52e4a25de4dee7fb5affe918ad1e744'
 
     def __init__(
         self,
@@ -279,7 +281,7 @@ class NostraAlphaState(src.state.State):
             if event == 'collateral':
                 # The order of the arguments is: `id`, `asset`, `collateralFactor`, ``, `priceOracle`.
                 collateral_data = await src.blockchain_call.func_call(
-                    addr=self.CDP_MANAGER,
+                    addr=self.CDP_MANAGER_ADDRESS,
                     selector="getCollateralData",
                     calldata=[underlying_token_address],
                 )
@@ -288,7 +290,7 @@ class NostraAlphaState(src.state.State):
                 # The order of the arguments is: `protocolFee`, ``, `protocolFeeRecipient`, `liquidatorFeeBeta`, ``, 
                 # `liquidatorFeeMax`, ``.
                 liquidation_settings = await src.blockchain_call.func_call(
-                    addr=self.CDP_MANAGER,
+                    addr=self.CDP_MANAGER_ADDRESS,
                     selector="getLiquidationSettings",
                     calldata=[underlying_token_address],
                 )
@@ -311,7 +313,7 @@ class NostraAlphaState(src.state.State):
             else:
                 # The order of the arguments is: `id`, `debtTier`, `debtToken`, `debtFactor`, ``, `priceOracle`.
                 debt_data = await src.blockchain_call.func_call(
-                    addr=self.CDP_MANAGER,
+                    addr=self.CDP_MANAGER_ADDRESS,
                     selector="getDebtData",
                     calldata=[token_address],
                 )
@@ -353,27 +355,37 @@ class NostraAlphaState(src.state.State):
         getattr(self, self.EVENTS_TO_METHODS_MAPPING[(event_type, event["key_name"])])(event=event)
 
     def process_interest_rate_model_event(self, event: pandas.Series) -> None:
-        # The order of the values in the `data` column is: `debtToken`, `lendingRate`, ``, `borrowRate`, ``, 
-        # `lendIndex`, ``, `borrowIndex`, ``.
-        # Example: https://starkscan.co/event/0x05e95588e281d7cab6f89aa266057c4c9bcadf3ff0bb85d4feea40a4faa94b09_4.
-        token = src.helpers.add_leading_zeros(event["data"][0])
-        collateral_token = self.debt_token_addresses_to_interest_bearing_collateral_token_addresses[token]
-        collateral_interest_rate_index = decimal.Decimal(str(int(event["data"][5], base=16))) / decimal.Decimal("1e18")
-        debt_interest_rate_index = decimal.Decimal(str(int(event["data"][7], base=16))) / decimal.Decimal("1e18")
+        if event["keys"] == [self.INTEREST_STATE_UPDATED_KEY]:
+            # The order of the values in the `data` column is: `debtToken`, `lendingRate`, ``, `borrowRate`, ``, 
+            # `lendIndex`, ``, `borrowIndex`, ``.
+            # Example: https://starkscan.co/event/0x05e95588e281d7cab6f89aa266057c4c9bcadf3ff0bb85d4feea40a4faa94b09_4.
+            debt_token = src.helpers.add_leading_zeros(event["data"][0])
+            collateral_interest_rate_index = decimal.Decimal(str(int(event["data"][5], base=16))) / decimal.Decimal("1e18")
+            debt_interest_rate_index = decimal.Decimal(str(int(event["data"][7], base=16))) / decimal.Decimal("1e18")
+        elif len(event["keys"]) == 2 and event["keys"][0] == self.INTEREST_STATE_UPDATED_KEY:
+            # The order of the values in the `data` column is: `lendingRate`, ``, `borrowingRate`, ``, `lendingIndex`,
+            # ``, `borrowingIndex`, ``.
+            # Example: https://starkscan.co/event/0x046d972ab22bd443534b32fdeabb1e4751ae6fa92610e9e2d4833764367d08f8_10.
+            debt_token = src.helpers.add_leading_zeros(event["keys"][1])
+            collateral_interest_rate_index = decimal.Decimal(str(int(event["data"][4], base=16))) / decimal.Decimal("1e18")
+            debt_interest_rate_index = decimal.Decimal(str(int(event["data"][6], base=16))) / decimal.Decimal("1e18")
+        else:
+            raise ValueError('Event = {} has an unexpected structure.'.format(event))
+        collateral_token = self.debt_token_addresses_to_interest_bearing_collateral_token_addresses.get(debt_token, None)
         # The indices are saved under the respective collateral or debt token address.
-        self.interest_rate_models.collateral[collateral_token] = collateral_interest_rate_index
-        self.interest_rate_models.debt[token] = debt_interest_rate_index
+        if collateral_token:
+            self.interest_rate_models.collateral[collateral_token] = collateral_interest_rate_index
+        self.interest_rate_models.debt[debt_token] = debt_interest_rate_index
 
     def process_collateral_mint_event(self, event: pandas.Series) -> None:
-        # The order of the values in the `data` column is: `user`, `amount`, ``.
-        # Example: https://starkscan.co/event/0x015dccf7bc9a434bcc678cf730fa92641a2f6bcbfdb61cbe7a1ef7d0a614d1ac_3.
-        if event["keys"] == ['0x34e55c1cd55f1338241b50d352f0e91c7e4ffad0e4271d64eb347589ebdfd16']:   
+        if event["keys"] == [self.MINT_KEY]:   
+            # The order of the values in the `data` column is: `user`, `amount`, ``.
+            # Example: https://starkscan.co/event/0x015dccf7bc9a434bcc678cf730fa92641a2f6bcbfdb61cbe7a1ef7d0a614d1ac_3.
             user = src.helpers.add_leading_zeros(event["data"][0])
             face_amount = decimal.Decimal(str(int(event["data"][1], base=16)))
-        elif (
-            len(event["keys"]) == 2
-            and event["keys"][0] == '0x34e55c1cd55f1338241b50d352f0e91c7e4ffad0e4271d64eb347589ebdfd16'
-        ):
+        elif len(event["keys"]) == 2 and event["keys"][0] == self.MINT_KEY:
+            # The order of the values in the `data` column is: `amount`, ``.
+            # Example: https://starkscan.co/event/0x01ebb29750907134804218ef5fc5f1688796a1a283e7d94aea87fa9a118f578a_4.
             user = src.helpers.add_leading_zeros(event["keys"][1])
             face_amount = decimal.Decimal(str(int(event["data"][0], base=16)))
         else:
@@ -397,15 +409,14 @@ class NostraAlphaState(src.state.State):
             )
 
     def process_collateral_burn_event(self, event: pandas.Series) -> None:
-        # The order of the values in the `data` column is: `user`, `amount`, ``.
-        # Example: https://starkscan.co/event/0x00744177ee88dd3d96dda1784e2dff50f0c989b7fd48755bc42972af2e951dd6_1.
-        if event["keys"] == ['0x243e1de00e8a6bc1dfa3e950e6ade24c52e4a25de4dee7fb5affe918ad1e744']:   
+        if event["keys"] == [self.BURN_KEY]:   
+            # The order of the values in the `data` column is: `user`, `amount`, ``.
+            # Example: https://starkscan.co/event/0x00744177ee88dd3d96dda1784e2dff50f0c989b7fd48755bc42972af2e951dd6_1.
             user = src.helpers.add_leading_zeros(event["data"][0])
             face_amount = decimal.Decimal(str(int(event["data"][1], base=16)))
-        elif (
-            len(event["keys"]) == 2
-            and event["keys"][0] == '0x243e1de00e8a6bc1dfa3e950e6ade24c52e4a25de4dee7fb5affe918ad1e744'
-        ):
+        elif len(event["keys"]) == 2 and event["keys"][0] == self.BURN_KEY:
+            # The order of the values in the `data` column is: `amount`, ``.
+            # Example: https://starkscan.co/event/0x060e74cec0b2af4a0a885dd0c2019ae0af4cbc32fd36443286d03f8e1072028f_6.
             user = src.helpers.add_leading_zeros(event["keys"][1])
             face_amount = decimal.Decimal(str(int(event["data"][0], base=16)))
         else:
@@ -429,15 +440,14 @@ class NostraAlphaState(src.state.State):
             )
     
     def process_debt_mint_event(self, event: pandas.Series) -> None:
-        # The order of the values in the `data` column is: `user`, `amount`, ``.
-        # Example: https://starkscan.co/event/0x030d23c4769917bc673875e107ebdea31711e2bdc45e658125dbc2e988945f69_4.
-        if event["keys"] == ['0x34e55c1cd55f1338241b50d352f0e91c7e4ffad0e4271d64eb347589ebdfd16']:   
+        if event["keys"] == [self.MINT_KEY]:   
+            # The order of the values in the `data` column is: `user`, `amount`, ``.
+            # Example: https://starkscan.co/event/0x030d23c4769917bc673875e107ebdea31711e2bdc45e658125dbc2e988945f69_4.
             user = src.helpers.add_leading_zeros(event["data"][0])
             face_amount = decimal.Decimal(str(int(event["data"][1], base=16)))
-        elif (
-            len(event["keys"]) == 2
-            and event["keys"][0] == '0x34e55c1cd55f1338241b50d352f0e91c7e4ffad0e4271d64eb347589ebdfd16'
-        ):
+        elif len(event["keys"]) == 2 and event["keys"][0] == self.MINT_KEY:
+            # The order of the values in the `data` column is: `amount`, ``.
+            # Example: https://starkscan.co/event/0x02a7c2cf0263bebe38bbaace9c789ba600a1bd9ddd8f4341d618c0894048b28e_7.
             user = src.helpers.add_leading_zeros(event["keys"][1])
             face_amount = decimal.Decimal(str(int(event["data"][0], base=16)))
         else:
@@ -457,15 +467,14 @@ class NostraAlphaState(src.state.State):
             )
 
     def process_debt_burn_event(self, event: pandas.Series) -> None:
-        # The order of the values in the `data` column is: `user`, `amount`, ``.
-        # Example: https://starkscan.co/event/0x002e4ee376785f687f32715d8bbed787b6d0fa9775dc9329ca2185155a139ca3_5.
-        if event["keys"] == ['0x243e1de00e8a6bc1dfa3e950e6ade24c52e4a25de4dee7fb5affe918ad1e744']:   
+        if event["keys"] == [self.BURN_KEY]:   
+            # The order of the values in the `data` column is: `user`, `amount`, ``.
+            # Example: https://starkscan.co/event/0x002e4ee376785f687f32715d8bbed787b6d0fa9775dc9329ca2185155a139ca3_5.
             user = src.helpers.add_leading_zeros(event["data"][0])
             face_amount = decimal.Decimal(str(int(event["data"][1], base=16)))
-        elif (
-            len(event["keys"]) == 2
-            and event["keys"][0] == '0x243e1de00e8a6bc1dfa3e950e6ade24c52e4a25de4dee7fb5affe918ad1e744'
-        ):
+        elif len(event["keys"]) == 2 and event["keys"][0] == self.BURN_KEY:
+            # The order of the values in the `data` column is: `amount`, ``.
+            # Example: https://starkscan.co/event/0x0580b701b7501058aa97a6e73670ca5530fdfe77e754a185378d85ebdac33034_5.
             user = src.helpers.add_leading_zeros(event["keys"][1])
             face_amount = decimal.Decimal(str(int(event["data"][0], base=16)))
         else:
