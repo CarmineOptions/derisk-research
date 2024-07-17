@@ -34,7 +34,7 @@ class MySwapAPIConnector(AbstractionAPIConnector):
     @classmethod
     def get_liquidity(cls, pool_id: str) -> list[dict[str, int]]:
         """
-        Get liquidity data from MyhSwap for specific pool.
+        Get liquidity data from MySwap for specific pool.
         :param pool_id: ID of the pool in hexadecimal.
         :return list[dict[str]] - The liquidity data.
         The structure of list is as follows:
