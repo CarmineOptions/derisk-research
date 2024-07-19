@@ -25,6 +25,7 @@ def get_events(
     event_names: tuple[str, ...],
     start_block_number: int = 0,
 ) -> pandas.DataFrame:
+    # TODO: Set up monitoring for new key names. Alert when new key names are found? Holds for all protocols.
     connection = src.db.establish_connection()
     events = pandas.read_sql(
         sql=f"""
