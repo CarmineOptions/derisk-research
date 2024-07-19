@@ -80,6 +80,9 @@ NOSTRA_MAINNET_TOKEN_ADDRESSES: list[str] = [
 
 NOSTRA_MAINNET_CDP_MANAGER_ADDRESS: str = "0x073f6addc9339de9822cab4dac8c9431779c09077f02ba7bc36904ea342dd9eb"
 
+# This seems to be a magical address, it's first event is a withdrawal. Ignore it's loan state changes.
+NOSTRA_MAINNET_DEFERRED_BATCH_CALL_ADAPTER_ADDRESS: str = '0x05fc7053cca20fcb38550d7554c84fa6870e2b9e7ebd66398a67697ba440f12b'
+
 
 # Keys are tuples of event types and names, values are names of the respective methods that process the given event.
 NOSTRA_MAINNET_EVENTS_TO_METHODS = {
@@ -87,13 +90,17 @@ NOSTRA_MAINNET_EVENTS_TO_METHODS = {
     ("collateral", "openzeppelin::token::erc20_v070::erc20::ERC20::Transfer"): "process_collateral_transfer_event",
     ("collateral", "openzeppelin::token::erc20::erc20::ERC20Component::Transfer"): "process_collateral_transfer_event",
     ("collateral", "Mint"): "process_collateral_mint_event",
+    ("collateral", "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Mint"): "process_collateral_mint_event",
     ("collateral", "Burn"): "process_collateral_burn_event",
+    ("collateral", "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Burn"): "process_collateral_burn_event",
     ("debt", "Transfer"): "process_debt_transfer_event",
     ("debt", "openzeppelin::token::erc20_v070::erc20::ERC20::Transfer"): "process_debt_transfer_event",
     ("debt", "openzeppelin::token::erc20::erc20::ERC20Component::Transfer"): "process_debt_transfer_event",        
     ("debt", "nstr::openzeppelin::token::erc20_v070::erc20::ERC20Starkgate::Transfer"): "process_debt_transfer_event",
     ("debt", "Mint"): "process_debt_mint_event",
+    ("debt", "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Mint"): "process_debt_mint_event",
     ("debt", "Burn"): "process_debt_burn_event",
+    ("debt", "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Burn"): "process_debt_burn_event",
 }
 
 # Keys are event names, values denote the order in which the given events should be processed.
@@ -115,7 +122,7 @@ NOSTRA_MAINNET_EVENTS_TO_ORDER: dict[str, str] = {
 def nostra_mainnet_get_events(start_block_number: int = 0) -> pandas.DataFrame:
     user_events = src.helpers.get_events(
         addresses=tuple(NOSTRA_MAINNET_TOKEN_ADDRESSES),
-        event_names = (x[1] for x in NOSTRA_MAINNET_EVENTS_TO_METHODS.keys()),
+        event_names = tuple(x[1] for x in NOSTRA_MAINNET_EVENTS_TO_METHODS),
         start_block_number=start_block_number,
     )
     interest_rate_events = src.helpers.get_events(
@@ -207,13 +214,9 @@ class NostraMainnetState(src.nostra_alpha.NostraAlphaState):
     TOKEN_ADDRESSES: list[str] = NOSTRA_MAINNET_TOKEN_ADDRESSES
     INTEREST_RATE_MODEL_ADDRESS: str = NOSTRA_MAINNET_INTEREST_RATE_MODEL_ADDRESS
     CDP_MANAGER_ADDRESS: str = NOSTRA_MAINNET_CDP_MANAGER_ADDRESS
+    DEFERRED_BATCH_CALL_ADAPTER_ADDRESS: str = NOSTRA_MAINNET_DEFERRED_BATCH_CALL_ADAPTER_ADDRESS
 
     EVENTS_TO_METHODS: dict[str, str] = NOSTRA_MAINNET_EVENTS_TO_METHODS
-
-    IGNORE_USERS: set[str] = {
-        # This seems to be a magical address, it's first event is a withdrawal.
-        '0x5fc7053cca20fcb38550d7554c84fa6870e2b9e7ebd66398a67697ba440f12b',
-    }
 
     def __init__(
         self,
@@ -316,6 +319,29 @@ class NostraMainnetState(src.nostra_alpha.NostraAlphaState):
                     interest_bearing_collateral_token_addresses[0]
                 )
 
+    def process_interest_rate_model_event(self, event: pandas.Series) -> None:
+        if event["keys"] == [self.INTEREST_STATE_UPDATED_KEY]:
+            # The order of the values in the `data` column is: `debtToken`, `lendingRate`, ``, `borrowRate`, ``, 
+            # `lendIndex`, ``, `borrowIndex`, ``.
+            # Example: https://starkscan.co/event/0x0735fc1d2fdd75ec049af40073a09ffc948c45467752d3123eb2b8c1d3f46edb_7.
+            debt_token = src.helpers.add_leading_zeros(event["data"][0])
+            collateral_interest_rate_index = decimal.Decimal(str(int(event["data"][5], base=16))) / decimal.Decimal("1e18")
+            debt_interest_rate_index = decimal.Decimal(str(int(event["data"][7], base=16))) / decimal.Decimal("1e18")
+        elif len(event["keys"]) == 2 and event["keys"][0] == self.INTEREST_STATE_UPDATED_KEY:
+            # The order of the values in the `data` column is: `lendingRate`, ``, `borrowingRate`, ``, `lendingIndex`,
+            # ``, `borrowingIndex`, ``.
+            # Example: https://starkscan.co/event/0x046d972ab22bd443534b32fdeabb1e4751ae6fa92610e9e2d4833764367d08f8_10.
+            debt_token = src.helpers.add_leading_zeros(event["keys"][1])
+            collateral_interest_rate_index = decimal.Decimal(str(int(event["data"][4], base=16))) / decimal.Decimal("1e18")
+            debt_interest_rate_index = decimal.Decimal(str(int(event["data"][6], base=16))) / decimal.Decimal("1e18")
+        else:
+            raise ValueError('Event = {} has an unexpected structure.'.format(event))
+        collateral_token = self.debt_token_addresses_to_interest_bearing_collateral_token_addresses.get(debt_token, None)
+        # The indices are saved under the respective collateral or debt token address.
+        if collateral_token:
+            self.interest_rate_models.collateral[collateral_token] = collateral_interest_rate_index
+        self.interest_rate_models.debt[debt_token] = debt_interest_rate_index
+
     def process_collateral_transfer_event(self, event: pandas.Series) -> None:
         if event["keys"] == [self.TRANSFER_KEY]:   
             # The order of the values in the `data` column is: `sender`, `recipient`, `value`, ``. Alternatively, 
@@ -335,9 +361,9 @@ class NostraMainnetState(src.nostra_alpha.NostraAlphaState):
         if self.ZERO_ADDRESS in {sender, recipient}:
             return
         token = src.helpers.add_leading_zeros(event["from_address"])
-        if not sender in self.IGNORE_USERS:
+        if sender != self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
             self.loan_entities[sender].collateral.increase_value(token=token, value=-raw_amount)
-        if not recipient in self.IGNORE_USERS:
+        if recipient != self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
             self.loan_entities[recipient].collateral.increase_value(token=token, value=raw_amount)
         if self.verbose_user in {sender, recipient}:
             logging.info(
@@ -348,6 +374,68 @@ class NostraMainnetState(src.nostra_alpha.NostraAlphaState):
                     token,
                     sender,
                     recipient,
+                )
+            )
+
+    def process_collateral_mint_event(self, event: pandas.Series) -> None:
+        if event["keys"] == [self.MINT_KEY]:   
+            # The order of the values in the `data` column is: `user`, `amount`, ``.
+            # Example: https://starkscan.co/event/0x0477258515240a6d24c7b8b9a5d0c1c387b925186efd250c6f278245b40b442d_9.
+            user = src.helpers.add_leading_zeros(event["data"][0])
+            face_amount = decimal.Decimal(str(int(event["data"][1], base=16)))
+        elif len(event["keys"]) == 2 and event["keys"][0] == self.MINT_KEY:
+            # The order of the values in the `data` column is: `amount`, ``.
+            # Example: https://starkscan.co/event/0x01ebb29750907134804218ef5fc5f1688796a1a283e7d94aea87fa9a118f578a_4.
+            user = src.helpers.add_leading_zeros(event["keys"][1])
+            face_amount = decimal.Decimal(str(int(event["data"][0], base=16)))
+        else:
+            raise ValueError('Event = {} has an unexpected structure.'.format(event))
+        if user == self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
+            return
+        token = src.helpers.add_leading_zeros(event["from_address"])
+        if self.token_parameters.collateral[token].is_interest_bearing:
+            raw_amount = face_amount / self.interest_rate_models.collateral[token]
+        else:
+            raw_amount = face_amount
+        self.loan_entities[user].collateral.increase_value(token=token, value=raw_amount)
+        if user == self.verbose_user:
+            logging.info(
+                'In block number = {}, collateral of raw amount = {} of token = {} was added.'
+                .format(
+                    event["block_number"],
+                    raw_amount,
+                    token,
+                )
+            )
+
+    def process_collateral_burn_event(self, event: pandas.Series) -> None:
+        if event["keys"] == [self.BURN_KEY]:   
+            # The order of the values in the `data` column is: `user`, `amount`, ``.
+            # Example: https://starkscan.co/event/0x02eb8bbac79765f948cb49f91d2ffb85ffcf0e98a9292d9fdfbb426f69fd712f_1.
+            user = src.helpers.add_leading_zeros(event["data"][0])
+            face_amount = decimal.Decimal(str(int(event["data"][1], base=16)))
+        elif len(event["keys"]) == 2 and event["keys"][0] == self.BURN_KEY:
+            # The order of the values in the `data` column is: `amount`, ``.
+            # Example: https://starkscan.co/event/0x060e74cec0b2af4a0a885dd0c2019ae0af4cbc32fd36443286d03f8e1072028f_6.
+            user = src.helpers.add_leading_zeros(event["keys"][1])
+            face_amount = decimal.Decimal(str(int(event["data"][0], base=16)))
+        else:
+            raise ValueError('Event = {} has an unexpected structure.'.format(event))
+        if user == self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
+            return
+        token = src.helpers.add_leading_zeros(event["from_address"])
+        if self.token_parameters.collateral[token].is_interest_bearing:
+            raw_amount = face_amount / self.interest_rate_models.collateral[token]
+        else:
+            raw_amount = face_amount
+        self.loan_entities[user].collateral.increase_value(token=token, value=-raw_amount)
+        if user == self.verbose_user:
+            logging.info(
+                'In block number = {}, collateral of raw amount = {} of token = {} was withdrawn.'
+                .format(
+                    event["block_number"],
+                    raw_amount,
+                    token,
                 )
             )
 
@@ -370,9 +458,9 @@ class NostraMainnetState(src.nostra_alpha.NostraAlphaState):
         if self.ZERO_ADDRESS in {sender, recipient}:
             return
         token = src.helpers.add_leading_zeros(event["from_address"])
-        if not sender in self.IGNORE_USERS:
+        if sender != self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
             self.loan_entities[sender].debt.increase_value(token=token, value=-raw_amount)
-        if not recipient in self.IGNORE_USERS:
+        if recipient != self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
             self.loan_entities[recipient].debt.increase_value(token=token, value=raw_amount)
         if self.verbose_user in {sender, recipient}:
             logging.info(
@@ -383,6 +471,60 @@ class NostraMainnetState(src.nostra_alpha.NostraAlphaState):
                     token,
                     sender,
                     recipient,
+                )
+            )
+
+    def process_debt_mint_event(self, event: pandas.Series) -> None:
+        if event["keys"] == [self.MINT_KEY]:   
+            # The order of the values in the `data` column is: `user`, `amount`, ``.
+            # Example: https://starkscan.co/event/0x018092d8bf2b31834f6cc3dd0e00b6ebb71352c30b1c4549ac445c58cbce05fa_7.
+            user = src.helpers.add_leading_zeros(event["data"][0])
+            face_amount = decimal.Decimal(str(int(event["data"][1], base=16)))
+        elif len(event["keys"]) == 2 and event["keys"][0] == self.MINT_KEY:
+            # The order of the values in the `data` column is: `amount`, ``.
+            # Example: https://starkscan.co/event/0x02a7c2cf0263bebe38bbaace9c789ba600a1bd9ddd8f4341d618c0894048b28e_7.
+            user = src.helpers.add_leading_zeros(event["keys"][1])
+            face_amount = decimal.Decimal(str(int(event["data"][0], base=16)))
+        else:
+            raise ValueError('Event = {} has an unexpected structure.'.format(event))
+        if user == self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
+            return
+        token = src.helpers.add_leading_zeros(event["from_address"])
+        raw_amount = face_amount / self.interest_rate_models.debt[token]
+        self.loan_entities[user].debt.increase_value(token=token, value=raw_amount)
+        if user == self.verbose_user:
+            logging.info(
+                'In block number = {}, raw amount = {} of token = {} was borrowed.'.format(
+                    event["block_number"],
+                    raw_amount,
+                    token,
+                )
+            )
+
+    def process_debt_burn_event(self, event: pandas.Series) -> None:
+        if event["keys"] == [self.BURN_KEY]:   
+            # The order of the values in the `data` column is: `user`, `amount`, ``.
+            # Example: https://starkscan.co/event/0x045561da020c693288386c92a4aaafae30ed1ddcdaa02373246d556b806662c1_7.
+            user = src.helpers.add_leading_zeros(event["data"][0])
+            face_amount = decimal.Decimal(str(int(event["data"][1], base=16)))
+        elif len(event["keys"]) == 2 and event["keys"][0] == self.BURN_KEY:
+            # The order of the values in the `data` column is: `amount`, ``.
+            # Example: https://starkscan.co/event/0x0580b701b7501058aa97a6e73670ca5530fdfe77e754a185378d85ebdac33034_5.
+            user = src.helpers.add_leading_zeros(event["keys"][1])
+            face_amount = decimal.Decimal(str(int(event["data"][0], base=16)))
+        else:
+            raise ValueError('Event = {} has an unexpected structure.'.format(event))
+        if user == self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
+            return
+        token = src.helpers.add_leading_zeros(event["from_address"])
+        raw_amount = face_amount / self.interest_rate_models.debt[token]
+        self.loan_entities[user].debt.increase_value(token=token, value=-raw_amount)
+        if user == self.verbose_user:
+            logging.info(
+                'In block number = {}, raw amount = {} of token = {} was repayed.'.format(
+                    event["block_number"],
+                    raw_amount,
+                    token,
                 )
             )
 
