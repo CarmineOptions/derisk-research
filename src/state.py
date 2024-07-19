@@ -12,7 +12,7 @@ class State(abc.ABC):
     A class that describes the state of all loan entities of the given lending protocol.
     """
 
-    EVENTS_TO_METHODS_MAPPING: dict[str, str] = {}
+    EVENTS_TO_METHODS: dict[str, str] = {}
 
     def __init__(
         self,
@@ -31,7 +31,7 @@ class State(abc.ABC):
         # TODO: Save the timestamp of each update?
         assert event["block_number"] >= self.last_block_number
         self.last_block_number = event["block_number"]
-        getattr(self, self.EVENTS_TO_METHODS_MAPPING[event["key_name"]])(event=event)
+        getattr(self, self.EVENTS_TO_METHODS[event["key_name"]])(event=event)
 
     @abc.abstractmethod
     def collect_token_parameters(self):
