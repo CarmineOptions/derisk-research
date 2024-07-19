@@ -245,7 +245,7 @@ TOKEN_SETTINGS: dict[str, TokenSettings] = {
 
 
 # Keys are event names, values are names of the respective methods that process the given event.
-EVENTS_TO_METHODS_MAPPING: dict[str, str] = {
+EVENTS_TO_METHODS: dict[str, str] = {
     "new_loan": "process_new_loan_event",
     "collateral_added": "process_collateral_added_event",
     "loan_spent": "process_loan_spent_event",
@@ -253,30 +253,29 @@ EVENTS_TO_METHODS_MAPPING: dict[str, str] = {
     "loan_repaid": "process_loan_repaid_event",
 }
 
+# Keys are event names, values denote the order in which the given events should be processed.
+HASHSTACK_V1_EVENTS_TO_ORDER: dict[str, str] = {
+    "new_loan": 0,
+    "loan_transferred": 1,
+    "loan_spent": 2,
+    "loan_repaid": 3,
+    "collateral_added": 4,
+}
+
 
 
 def get_events(start_block_number: int = 0) -> pandas.DataFrame:
     events = src.helpers.get_events(
         addresses = tuple(ADDRESSES_TO_TOKENS),
-        event_names = tuple(EVENTS_TO_METHODS_MAPPING),
+        event_names = tuple(EVENTS_TO_METHODS),
         start_block_number = start_block_number,
     )
     # Ensure we're processing `loan_repaid` after other loan-altering events and the other events in a logical order. 
     # Sometimes, when a user deposits tokens, borrows against them and then e.g. spends the borrowed funds in the same 
     # block, the whole operation is split into multiple transactions. Since we don't have any way to order transactions
     # themselves, we need to order strictly according to our own `order` column.
-    events["order"] = events["key_name"].map(
-        {
-            "new_loan": 0,
-            "loan_repaid": 4,
-            "loan_spent": 1,
-            "loan_transferred": 0.5,
-            "collateral_added": 6,
-        },
-    )
-    events.sort_values(
-        ["block_number", "order"], inplace=True
-    )
+    events["order"] = events["key_name"].map(HASHSTACK_V1_EVENTS_TO_ORDER)
+    events.sort_values(["block_number", "order"], inplace=True)
     return events
 
 
@@ -360,7 +359,7 @@ class HashstackV1State(src.state.State):
     """
 
     ADDRESSES_TO_TOKENS: dict[str, str] = ADDRESSES_TO_TOKENS
-    EVENTS_TO_METHODS_MAPPING: dict[str, str] = EVENTS_TO_METHODS_MAPPING
+    EVENTS_TO_METHODS: dict[str, str] = EVENTS_TO_METHODS
 
     def __init__(
         self,
