@@ -1,6 +1,7 @@
 import copy
 import dataclasses
 import decimal
+import logging
 
 import pandas
 import starknet_py.net.client_errors
@@ -80,27 +81,41 @@ NOSTRA_MAINNET_TOKEN_ADDRESSES: list[str] = [
 NOSTRA_MAINNET_CDP_MANAGER_ADDRESS: str = "0x073f6addc9339de9822cab4dac8c9431779c09077f02ba7bc36904ea342dd9eb"
 
 
-NOSTRA_MAINNET_EVENTS_TO_METHODS_MAPPING: dict[tuple[str, str], str] = copy.deepcopy(
-    src.nostra_alpha.NOSTRA_ALPHA_EVENTS_TO_METHODS_MAPPING
-)
-NOSTRA_MAINNET_EVENTS_TO_METHODS_MAPPING.extend(
-	{
-        ("collateral", "Transfer"): "process_collateral_transfer_event",
-        ("collateral", "openzeppelin::token::erc20_v070::erc20::ERC20::Transfer"): "process_collateral_transfer_event",
-        ("collateral", "openzeppelin::token::erc20::erc20::ERC20Component::Transfer"): "process_collateral_transfer_event",
-        ("debt", "Transfer"): "process_debt_transfer_event",
-        ("debt", "openzeppelin::token::erc20_v070::erc20::ERC20::Transfer"): "process_debt_transfer_event",
-        ("debt", "openzeppelin::token::erc20::erc20::ERC20Component::Transfer"): "process_debt_transfer_event",
-    }
-)
+# Keys are tuples of event types and names, values are names of the respective methods that process the given event.
+NOSTRA_MAINNET_EVENTS_TO_METHODS = {
+    ("collateral", "Transfer"): "process_collateral_transfer_event",
+    ("collateral", "openzeppelin::token::erc20_v070::erc20::ERC20::Transfer"): "process_collateral_transfer_event",
+    ("collateral", "openzeppelin::token::erc20::erc20::ERC20Component::Transfer"): "process_collateral_transfer_event",
+    ("collateral", "Mint"): "process_collateral_mint_event",
+    ("collateral", "Burn"): "process_collateral_burn_event",
+    ("debt", "Transfer"): "process_debt_transfer_event",
+    ("debt", "openzeppelin::token::erc20_v070::erc20::ERC20::Transfer"): "process_debt_transfer_event",
+    ("debt", "openzeppelin::token::erc20::erc20::ERC20Component::Transfer"): "process_debt_transfer_event",        
+    ("debt", "nstr::openzeppelin::token::erc20_v070::erc20::ERC20Starkgate::Transfer"): "process_debt_transfer_event",
+    ("debt", "Mint"): "process_debt_mint_event",
+    ("debt", "Burn"): "process_debt_burn_event",
+}
+
+# Keys are event names, values denote the order in which the given events should be processed.
+NOSTRA_MAINNET_EVENTS_TO_ORDER: dict[str, str] = {
+    "InterestStateUpdated": 0,
+    "nostra::lending::interest_rate_model::interest_rate_model::InterestRateModel::InterestStateUpdated": 1,
+    'Transfer': 2,
+    'openzeppelin::token::erc20_v070::erc20::ERC20::Transfer': 3,
+    'openzeppelin::token::erc20::erc20::ERC20Component::Transfer': 4,
+    'nstr::openzeppelin::token::erc20_v070::erc20::ERC20Starkgate::Transfer': 5,
+    'Burn': 6,
+    'nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Burn': 7,
+    'Mint': 8,
+    'nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Mint': 9,
+}
 
 
 
-# TODO: Load and process transfers as well.
 def nostra_mainnet_get_events(start_block_number: int = 0) -> pandas.DataFrame:
     user_events = src.helpers.get_events(
         addresses=tuple(NOSTRA_MAINNET_TOKEN_ADDRESSES),
-        event_names = (x[1] for x in NOSTRA_MAINNET_EVENTS_TO_METHODS_MAPPING.keys()),
+        event_names = (x[1] for x in NOSTRA_MAINNET_EVENTS_TO_METHODS.keys()),
         start_block_number=start_block_number,
     )
     interest_rate_events = src.helpers.get_events(
@@ -111,17 +126,7 @@ def nostra_mainnet_get_events(start_block_number: int = 0) -> pandas.DataFrame:
     events = pandas.concat([user_events, interest_rate_events])
 
     # Ensure we're processing `InterestStateUpdated` before other events.
-    events["order"] = events["key_name"].map(
-        {
-            "InterestStateUpdated": 0,
-            "nostra::lending::interest_rate_model::interest_rate_model::InterestRateModel::InterestStateUpdated": 1,
-            'Burn': 2, 
-            'Mint': 4,
-            'Transfer': 6,
-            'nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Burn': 3,
-            'nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Mint': 5,
-        },
-    )
+    events["order"] = events["key_name"].map(NOSTRA_MAINNET_EVENTS_TO_ORDER)
     events.sort_values(["block_number", "transaction_hash", "order"], inplace=True)
     events.drop(columns = ["order"], inplace = True)
     return events
@@ -202,6 +207,8 @@ class NostraMainnetState(src.nostra_alpha.NostraAlphaState):
     TOKEN_ADDRESSES: list[str] = NOSTRA_MAINNET_TOKEN_ADDRESSES
     INTEREST_RATE_MODEL_ADDRESS: str = NOSTRA_MAINNET_INTEREST_RATE_MODEL_ADDRESS
     CDP_MANAGER_ADDRESS: str = NOSTRA_MAINNET_CDP_MANAGER_ADDRESS
+
+    EVENTS_TO_METHODS: dict[str, str] = NOSTRA_MAINNET_EVENTS_TO_METHODS
 
     IGNORE_USERS: set[str] = {
         # This seems to be a magical address, it's first event is a withdrawal.
@@ -308,6 +315,76 @@ class NostraMainnetState(src.nostra_alpha.NostraAlphaState):
                 self.debt_token_addresses_to_interest_bearing_collateral_token_addresses[debt_token_parameters.address] = (
                     interest_bearing_collateral_token_addresses[0]
                 )
+
+    def process_collateral_transfer_event(self, event: pandas.Series) -> None:
+        if event["keys"] == [self.TRANSFER_KEY]:   
+            # The order of the values in the `data` column is: `sender`, `recipient`, `value`, ``. Alternatively, 
+            # `from_`, `to`, `value`, ``.
+            # Example: https://starkscan.co/event/0x00489af46e28392d1c3e4007476328ba4ccf4bd84f4f5565fda0888d5518a70b_3.
+            sender = src.helpers.add_leading_zeros(event["data"][0])
+            recipient = src.helpers.add_leading_zeros(event["data"][1])
+            raw_amount = decimal.Decimal(str(int(event["data"][2], base=16)))
+        elif len(event["keys"]) == 3 and event["keys"][0] == self.TRANSFER_KEY:
+            # The order of the values in the `data` column is: `value`, ``.
+            # Example: https://starkscan.co/event/0x0476bd5d00fa21ad5f4b6c02352770ec869b66659de4e784a77bf293dc1010a5_0.
+            sender = src.helpers.add_leading_zeros(event["keys"][1])
+            recipient = src.helpers.add_leading_zeros(event["keys"][2])
+            raw_amount = decimal.Decimal(str(int(event["data"][0], base=16)))
+        else:
+            raise ValueError('Event = {} has an unexpected structure.'.format(event))
+        if self.ZERO_ADDRESS in {sender, recipient}:
+            return
+        token = src.helpers.add_leading_zeros(event["from_address"])
+        if not sender in self.IGNORE_USERS:
+            self.loan_entities[sender].collateral.increase_value(token=token, value=-raw_amount)
+        if not recipient in self.IGNORE_USERS:
+            self.loan_entities[recipient].collateral.increase_value(token=token, value=raw_amount)
+        if self.verbose_user in {sender, recipient}:
+            logging.info(
+                'In block number = {}, collateral of raw amount = {} of token = {} was transferred from user = {} to user = {}.'
+                .format(
+                    event["block_number"],
+                    raw_amount,
+                    token,
+                    sender,
+                    recipient,
+                )
+            )
+
+    def process_debt_transfer_event(self, event: pandas.Series) -> None:
+        if event["keys"] == [self.TRANSFER_KEY]:   
+            # The order of the values in the `data` column is: `sender`, `recipient`, `value`, ``. Alternatively, 
+            # `from_`, `to`, `value`, ``.
+            # Example: https://starkscan.co/event/0x070f2c92bda051dc9f4daaef5582c7c2727b1ab07f04484c1f6a6109e1f9a0f6_2.
+            sender = src.helpers.add_leading_zeros(event["data"][0])
+            recipient = src.helpers.add_leading_zeros(event["data"][1])
+            raw_amount = decimal.Decimal(str(int(event["data"][2], base=16)))
+        elif len(event["keys"]) == 3 and event["keys"][0] == self.TRANSFER_KEY:
+            # The order of the values in the `data` column is: `value`, ``.
+            # Example: https://starkscan.co/event/0x051aca058e0f4e6193f4bc78eabe870bfc07d477e803f89c8293fc97118d523a_4.
+            sender = src.helpers.add_leading_zeros(event["keys"][1])
+            recipient = src.helpers.add_leading_zeros(event["keys"][2])
+            raw_amount = decimal.Decimal(str(int(event["data"][0], base=16)))
+        else:
+            raise ValueError('Event = {} has an unexpected structure.'.format(event))
+        if self.ZERO_ADDRESS in {sender, recipient}:
+            return
+        token = src.helpers.add_leading_zeros(event["from_address"])
+        if not sender in self.IGNORE_USERS:
+            self.loan_entities[sender].debt.increase_value(token=token, value=-raw_amount)
+        if not recipient in self.IGNORE_USERS:
+            self.loan_entities[recipient].debt.increase_value(token=token, value=raw_amount)
+        if self.verbose_user in {sender, recipient}:
+            logging.info(
+                'In block number = {}, debt of raw amount = {} of token = {} was transferred from user = {} to user = {}.'
+                .format(
+                    event["block_number"],
+                    raw_amount,
+                    token,
+                    sender,
+                    recipient,
+                )
+            )
 
     # TODO: This method looks very similar to that of zkLend.
     def compute_liquidable_debt_at_price(
