@@ -38,6 +38,14 @@ class MySwapOrderBook(OrderBookBase):
         self.apply_filtering = apply_filtering
         self.logger = get_logger("MySwap", Path.cwd().joinpath("./logs"))
         self._decimals_diff = Decimal(10 ** (self.token_a_decimal - self.token_b_decimal))
+        self._normalize_addresses()
+
+    def _normalize_addresses(self):
+        try:
+            self.token_a, self.token_b = hex(int(self.token_a, base=16)), hex(int(self.token_b, base=16))
+        except ValueError:
+            self.logger.error("Couldn't remove leading zeroes from addresses.")
+            raise
 
     async def _async_fetch_price_and_liquidity(self) -> None:
         """Fetch price and liquidity data from the MySwap CLMM service."""
