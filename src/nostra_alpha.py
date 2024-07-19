@@ -48,6 +48,9 @@ NOSTRA_ALPHA_TOKEN_ADDRESSES: list[str] = [
 
 NOSTRA_ALPHA_CDP_MANAGER_ADDRESS: str = '0x06d272e18e66289eeb874d0206a23afba148ef35f250accfdfdca085a478aec0'
 
+# This seems to be a magical address, it's first event is a withdrawal. Ignore it's loan state changes.
+NOSTRA_ALPHA_DEFERRED_BATCH_CALL_ADAPTER_ADDRESS: str = '0x05a0042fa9bb87ed72fbee4d5a2da416528ebc84a569081ad02e9ad60b0af7d7'
+
 
 # Keys are tuples of event types and names, values are names of the respective methods that process the given event.
 NOSTRA_ALPHA_EVENTS_TO_METHODS: dict[tuple[str, str], str] = {
@@ -75,12 +78,12 @@ NOSTRA_ALPHA_EVENTS_TO_ORDER: dict[str, str] = {
 def nostra_alpha_get_events(start_block_number: int = 0) -> pandas.DataFrame:
     user_events = src.helpers.get_events(
         addresses = tuple(NOSTRA_ALPHA_TOKEN_ADDRESSES),
-        event_names = (x[1] for x in NOSTRA_ALPHA_EVENTS_TO_METHODS.keys()),
+        event_names = tuple(x[1] for x in NOSTRA_ALPHA_EVENTS_TO_METHODS),
         start_block_number = start_block_number,
     )
     interest_rate_events = src.helpers.get_events(
         addresses = (NOSTRA_ALPHA_INTEREST_RATE_MODEL_ADDRESS, ''),
-        event_names = ('InterestStateUpdated'),
+        event_names = ('InterestStateUpdated', ''),
         start_block_number = start_block_number,
     )
     events = pandas.concat([user_events, interest_rate_events])
@@ -214,13 +217,9 @@ class NostraAlphaState(src.state.State):
     TOKEN_ADDRESSES: list[str] = NOSTRA_ALPHA_TOKEN_ADDRESSES
     INTEREST_RATE_MODEL_ADDRESS: str = NOSTRA_ALPHA_INTEREST_RATE_MODEL_ADDRESS
     CDP_MANAGER_ADDRESS: str = NOSTRA_ALPHA_CDP_MANAGER_ADDRESS
+    DEFERRED_BATCH_CALL_ADAPTER_ADDRESS: str = NOSTRA_ALPHA_DEFERRED_BATCH_CALL_ADAPTER_ADDRESS
 
     EVENTS_TO_METHODS: dict[str, str] = NOSTRA_ALPHA_EVENTS_TO_METHODS
-
-    IGNORE_USERS: set[str] = {
-        # This seems to be a magical address, it's first event is a withdrawal.
-        '0x5a0042fa9bb87ed72fbee4d5a2da416528ebc84a569081ad02e9ad60b0af7d7',
-    }
 
     # These variables are missing the leading 0's on purpose, because they're missing in the raw event keys, too.
     INTEREST_STATE_UPDATED_KEY = '0x33db1d611576200c90997bde1f948502469d333e65e87045c250e6efd2e42c7'
@@ -367,13 +366,6 @@ class NostraAlphaState(src.state.State):
             debt_token = src.helpers.add_leading_zeros(event["data"][0])
             collateral_interest_rate_index = decimal.Decimal(str(int(event["data"][5], base=16))) / decimal.Decimal("1e18")
             debt_interest_rate_index = decimal.Decimal(str(int(event["data"][7], base=16))) / decimal.Decimal("1e18")
-        elif len(event["keys"]) == 2 and event["keys"][0] == self.INTEREST_STATE_UPDATED_KEY:
-            # The order of the values in the `data` column is: `lendingRate`, ``, `borrowingRate`, ``, `lendingIndex`,
-            # ``, `borrowingIndex`, ``.
-            # Example: https://starkscan.co/event/0x046d972ab22bd443534b32fdeabb1e4751ae6fa92610e9e2d4833764367d08f8_10.
-            debt_token = src.helpers.add_leading_zeros(event["keys"][1])
-            collateral_interest_rate_index = decimal.Decimal(str(int(event["data"][4], base=16))) / decimal.Decimal("1e18")
-            debt_interest_rate_index = decimal.Decimal(str(int(event["data"][6], base=16))) / decimal.Decimal("1e18")
         else:
             raise ValueError('Event = {} has an unexpected structure.'.format(event))
         collateral_token = self.debt_token_addresses_to_interest_bearing_collateral_token_addresses.get(debt_token, None)
@@ -395,9 +387,9 @@ class NostraAlphaState(src.state.State):
         if self.ZERO_ADDRESS in {sender, recipient}:
             return
         token = src.helpers.add_leading_zeros(event["from_address"])
-        if not sender in self.IGNORE_USERS:
+        if sender != self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
             self.loan_entities[sender].collateral.increase_value(token=token, value=-raw_amount)
-        if not recipient in self.IGNORE_USERS:
+        if recipient != self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
             self.loan_entities[recipient].collateral.increase_value(token=token, value=raw_amount)
         if self.verbose_user in {sender, recipient}:
             logging.info(
@@ -417,14 +409,9 @@ class NostraAlphaState(src.state.State):
             # Example: https://starkscan.co/event/0x015dccf7bc9a434bcc678cf730fa92641a2f6bcbfdb61cbe7a1ef7d0a614d1ac_3.
             user = src.helpers.add_leading_zeros(event["data"][0])
             face_amount = decimal.Decimal(str(int(event["data"][1], base=16)))
-        elif len(event["keys"]) == 2 and event["keys"][0] == self.MINT_KEY:
-            # The order of the values in the `data` column is: `amount`, ``.
-            # Example: https://starkscan.co/event/0x01ebb29750907134804218ef5fc5f1688796a1a283e7d94aea87fa9a118f578a_4.
-            user = src.helpers.add_leading_zeros(event["keys"][1])
-            face_amount = decimal.Decimal(str(int(event["data"][0], base=16)))
         else:
             raise ValueError('Event = {} has an unexpected structure.'.format(event))
-        if user in self.IGNORE_USERS:
+        if user == self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
             return
         token = src.helpers.add_leading_zeros(event["from_address"])
         if self.token_parameters.collateral[token].is_interest_bearing:
@@ -448,14 +435,9 @@ class NostraAlphaState(src.state.State):
             # Example: https://starkscan.co/event/0x00744177ee88dd3d96dda1784e2dff50f0c989b7fd48755bc42972af2e951dd6_1.
             user = src.helpers.add_leading_zeros(event["data"][0])
             face_amount = decimal.Decimal(str(int(event["data"][1], base=16)))
-        elif len(event["keys"]) == 2 and event["keys"][0] == self.BURN_KEY:
-            # The order of the values in the `data` column is: `amount`, ``.
-            # Example: https://starkscan.co/event/0x060e74cec0b2af4a0a885dd0c2019ae0af4cbc32fd36443286d03f8e1072028f_6.
-            user = src.helpers.add_leading_zeros(event["keys"][1])
-            face_amount = decimal.Decimal(str(int(event["data"][0], base=16)))
         else:
             raise ValueError('Event = {} has an unexpected structure.'.format(event))
-        if user in self.IGNORE_USERS:
+        if user == self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
             return
         token = src.helpers.add_leading_zeros(event["from_address"])
         if self.token_parameters.collateral[token].is_interest_bearing:
@@ -486,9 +468,9 @@ class NostraAlphaState(src.state.State):
         if self.ZERO_ADDRESS in {sender, recipient}:
             return
         token = src.helpers.add_leading_zeros(event["from_address"])
-        if not sender in self.IGNORE_USERS:
+        if sender != self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
             self.loan_entities[sender].debt.increase_value(token=token, value=-raw_amount)
-        if not recipient in self.IGNORE_USERS:
+        if recipient != self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
             self.loan_entities[recipient].debt.increase_value(token=token, value=raw_amount)
         if self.verbose_user in {sender, recipient}:
             logging.info(
@@ -508,14 +490,9 @@ class NostraAlphaState(src.state.State):
             # Example: https://starkscan.co/event/0x030d23c4769917bc673875e107ebdea31711e2bdc45e658125dbc2e988945f69_4.
             user = src.helpers.add_leading_zeros(event["data"][0])
             face_amount = decimal.Decimal(str(int(event["data"][1], base=16)))
-        elif len(event["keys"]) == 2 and event["keys"][0] == self.MINT_KEY:
-            # The order of the values in the `data` column is: `amount`, ``.
-            # Example: https://starkscan.co/event/0x02a7c2cf0263bebe38bbaace9c789ba600a1bd9ddd8f4341d618c0894048b28e_7.
-            user = src.helpers.add_leading_zeros(event["keys"][1])
-            face_amount = decimal.Decimal(str(int(event["data"][0], base=16)))
         else:
             raise ValueError('Event = {} has an unexpected structure.'.format(event))
-        if user in self.IGNORE_USERS:
+        if user == self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
             return
         token = src.helpers.add_leading_zeros(event["from_address"])
         raw_amount = face_amount / self.interest_rate_models.debt[token]
@@ -535,14 +512,9 @@ class NostraAlphaState(src.state.State):
             # Example: https://starkscan.co/event/0x002e4ee376785f687f32715d8bbed787b6d0fa9775dc9329ca2185155a139ca3_5.
             user = src.helpers.add_leading_zeros(event["data"][0])
             face_amount = decimal.Decimal(str(int(event["data"][1], base=16)))
-        elif len(event["keys"]) == 2 and event["keys"][0] == self.BURN_KEY:
-            # The order of the values in the `data` column is: `amount`, ``.
-            # Example: https://starkscan.co/event/0x0580b701b7501058aa97a6e73670ca5530fdfe77e754a185378d85ebdac33034_5.
-            user = src.helpers.add_leading_zeros(event["keys"][1])
-            face_amount = decimal.Decimal(str(int(event["data"][0], base=16)))
         else:
             raise ValueError('Event = {} has an unexpected structure.'.format(event))
-        if user in self.IGNORE_USERS:
+        if user == self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
             return
         token = src.helpers.add_leading_zeros(event["from_address"])
         raw_amount = face_amount / self.interest_rate_models.debt[token]
