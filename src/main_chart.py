@@ -1,5 +1,4 @@
 import pandas
- 
 import plotly.express 
 import plotly.graph_objs
 
@@ -80,7 +79,6 @@ def get_main_chart_data(
         path = f"{directory}/{collateral_token_underlying_address}-{debt_token_underlying_address}.parquet"
         src.helpers.save_dataframe(data=data, path=path)
     return data
-
 
 
 def get_main_chart_figure(
