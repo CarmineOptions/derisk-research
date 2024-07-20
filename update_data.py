@@ -66,8 +66,6 @@ def update_data(zklend_state: src.zklend.ZkLendState):
     asyncio.run(zklend_state.collect_token_parameters())
     # asyncio.run(hashstack_v0_state.collect_token_parameters())
     # asyncio.run(hashstack_v1_state.collect_token_parameters())
-    # # asyncio.run(nostra_alpha_state.collect_token_parameters())  # TODO: already done in init
-    # # asyncio.run(nostra_mainnet_state.collect_token_parameters())  # TODO: already done in init
     logging.info(f"collected token parameters in {time.time() - t2}s")
 
     # Get prices of the underlying tokens.
