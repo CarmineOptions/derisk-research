@@ -15,6 +15,7 @@ import src.types
 # Source: https://docs.nostra.finance/lend/deployed-contracts/lend-mainnet#core-contracts.
 NOSTRA_MAINNET_INTEREST_RATE_MODEL_ADDRESS: str = '0x059a943ca214c10234b9a3b61c558ac20c005127d183b86a99a8f3c60a08b4ff'
 
+# TODO: add missing contracts to the db
 # The commented addresses are non-collateral deposits which might be useful later. Source: 
 # https://docs.nostra.finance/lend/deployed-contracts/lend-mainnet#asset-contracts.
 NOSTRA_MAINNET_TOKEN_ADDRESSES: list[str] = [
@@ -140,7 +141,10 @@ def nostra_mainnet_get_events(start_block_number: int = 0) -> pandas.DataFrame:
 
 
 class NostraMainnetLoanEntity(src.nostra_alpha.NostraAlphaLoanEntity):
-    """ A class that describes the Nostra Mainnet loan entity. """
+    """
+    A class that describes the Nostra Mainnet loan entity. Compared to `src.nostra_alpha.NostraAlphaLoanEntity`, it 
+    implements the `compute_debt_to_be_liquidated` method differently because of the different liquidation mechanism.
+    """
 
     # TODO: fetch from chain
     TARGET_HEALTH_FACTOR = 1.25
@@ -313,6 +317,7 @@ class NostraMainnetState(src.nostra_alpha.NostraAlphaState):
                     and collateral_token_parameters.underlying_address == debt_token_parameters.underlying_address
                 )
             ]
+            # TODO: check DAI V2
             if interest_bearing_collateral_token_addresses:
                 assert len(interest_bearing_collateral_token_addresses) == 1
                 self.debt_token_addresses_to_interest_bearing_collateral_token_addresses[debt_token_parameters.address] = (
