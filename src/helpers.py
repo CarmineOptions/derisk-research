@@ -60,9 +60,9 @@ def get_collateral_token_range(
 ) -> list[float]:
     # TODO: improve
     STEPS = {
-        "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7": 100.0,  # ETH
-        "0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac": 2_000.0,  # WBTC
-        "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d": 0.025,  # STRK
+        "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7": 50.0,  # ETH
+        "0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac": 1_000.0,  # WBTC
+        "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d": 0.01,  # STRK
     }
     return list(
         float_range(
