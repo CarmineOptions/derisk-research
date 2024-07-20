@@ -23,7 +23,7 @@ class State(abc.ABC):
         self.verbose_user: str | None = verbose_user
         self.loan_entities: collections.defaultdict = collections.defaultdict(self.loan_entity_class)
         self.interest_rate_models: src.types.CollateralAndDebtInterestRateModels = src.types.CollateralAndDebtInterestRateModels()
-        self.token_parameters: src.types.CollateralAndDebtTokenParameters = src.types.CollateralAndDebtTokenParameters()
+        self.token_parameters: src.types.CollateralAndDebtTokenParameters = src.types.CollateralAndDebtTokenParameters()  # TODO: move outside of State?
         self.last_block_number: int = 0
 
     # TODO: This method will likely differ across protocols. -> Leave undefined?
