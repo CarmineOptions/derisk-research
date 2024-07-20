@@ -96,12 +96,7 @@ def nostra_alpha_get_events(start_block_number: int = 0) -> pandas.DataFrame:
 
 
 class NostraAlphaLoanEntity(src.types.LoanEntity):
-    """
-    A class that describes the Nostra Alpha loan entity. On top of the abstract `LoanEntity`, it implements the 
-    `non_interest_bearing_collateral` and `interest_bearing_collateral` attributes in order to help with accounting for
-    the changes in collateral. This is because Nostra Alpha allows the user to decide the amount of collateral that 
-    earns interest and the amount that doesn't. We keep all balances in raw amounts.
-    """
+    """ A class that describes the Nostra Alpha loan entity. """
 
     # TODO: fetch from chain
     LIQUIDATION_HEALTH_FACTOR_THRESHOLD = 1.0
