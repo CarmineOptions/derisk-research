@@ -55,7 +55,7 @@ def add_ekubo_liquidity(
         try:
             bid_prices, bid_quantities = zip(*liquidity["bids"])
         except ValueError:
-            time.sleep(5)
+            time.sleep(300)
             add_ekubo_liquidity(data=data, collateral_token=collateral_token, debt_token=debt_token)
         bids = pandas.DataFrame(
             {
