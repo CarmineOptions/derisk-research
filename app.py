@@ -1,8 +1,6 @@
 import datetime
 import logging
 import math
-import multiprocessing
-import os
 import requests
 import time
 
@@ -11,16 +9,10 @@ import plotly.express
 import streamlit
 
 import src.helpers
-import src.histogram
 import src.main_chart
 import src.persistent_state
 import src.settings
 import src.swap_amm
-import update_data
-
-
-
-logging.basicConfig(level=logging.INFO)
 
 
 
