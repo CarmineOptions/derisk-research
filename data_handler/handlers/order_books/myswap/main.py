@@ -1,9 +1,8 @@
 import asyncio
 import math
+import os
+import logging
 from decimal import Decimal
-from pathlib import Path
-
-import requests
 
 from db.crud import DBConnector
 from db.models import OrderBookModel
@@ -36,14 +35,13 @@ class MySwapOrderBook(OrderBookBase):
         super().__init__(base_token, quote_token)
         self.connector = MySwapAPIConnector()
         self.apply_filtering = apply_filtering
-        self.logger = get_logger("MySwap", Path.cwd().joinpath("./logs"))
+        self.logger = get_logger("MySwap", os.getcwd() + "/logs")
         self._decimals_diff = Decimal(10 ** (self.token_a_decimal - self.token_b_decimal))
-        self._normalize_addresses()
 
-    def _normalize_addresses(self) -> None:
+    def _get_clean_addresses(self) -> tuple[str, str]:
         """Remove leading zeroes from token addresses. Raise Value Error if address can't be converted to int."""
         try:
-            self.token_a, self.token_b = hex(int(self.token_a, base=16)), hex(int(self.token_b, base=16))
+            return hex(int(self.token_a, base=16)), hex(int(self.token_b, base=16))
         except ValueError:
             self.logger.error("Couldn't remove leading zeroes from addresses.")
             raise
@@ -52,6 +50,8 @@ class MySwapOrderBook(OrderBookBase):
         """Fetch price and liquidity data from the MySwap CLMM service."""
         all_pools = self.connector.get_pools_data()
         filtered_pools = self._filter_pools_data(all_pools)
+        if not filtered_pools:
+            self.logger.info(f"No pools for pair: {self.token_a} - {self.token_b}")
         for pool in filtered_pools:
             await self._calculate_order_book(pool["poolkey"])
 
@@ -65,8 +65,9 @@ class MySwapOrderBook(OrderBookBase):
         :param all_pools: dict - All pools data.
         :return: list - Pools for current pair.
         """
+        base_token, quote_token = self._get_clean_addresses()
         return list(filter(
-            lambda pool: pool["token0"]["address"] == self.token_a and pool["token1"]["address"] == self.token_b,
+            lambda pool: pool["token0"]["address"] == base_token and pool["token1"]["address"] == quote_token,
             all_pools["pools"]
         ))
 
@@ -221,13 +222,23 @@ class MySwapOrderBook(OrderBookBase):
 
 
 if __name__ == '__main__':
-    order_book = MySwapOrderBook(
-        "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d",
-        # "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
-        "0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8",
-        apply_filtering=True,
-    )
-    order_book.fetch_price_and_liquidity()
-    order_book_serialized = order_book.serialize().model_dump()
+    all_tokens = {
+        "0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8",  # USDC
+        '0x068f5c6a61780768455de69077e07e89787839bf8166decfbf92b645209c0fb8',  # USDT
+        '0x00da114221cb83fa859dbdb4c44beeaa0bb37c7537ad5ae66fe5e0efd20e6eb3',  # DAI
+        '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',  # ETH
+        '0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac',  # WBTC
+        '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d',  # STRK
+    }
     connector = DBConnector()
-    connector.write_to_db(OrderBookModel(**order_book_serialized))
+    for base_token in all_tokens:
+        current_tokens = all_tokens - {base_token}
+        for quote_token in current_tokens:
+            try:
+                order_book = MySwapOrderBook(base_token, quote_token, apply_filtering=True)
+                order_book.fetch_price_and_liquidity()
+                if order_book.asks or order_book.bids:
+                    serialized_data = order_book.serialize()
+                    connector.write_to_db(OrderBookModel(**serialized_data.model_dump()))
+            except Exception as e:
+                logging.info(f"With token pair: {base_token} and {quote_token} something happened: {e}")
