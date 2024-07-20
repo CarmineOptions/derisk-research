@@ -37,6 +37,7 @@ class State(abc.ABC):
     def collect_token_parameters(self):
         pass
 
+    # TODO: most of what the individual methods implement could be done within `LoanEntity`
     @abc.abstractmethod
     def compute_liquidable_debt_at_price(self):
         pass

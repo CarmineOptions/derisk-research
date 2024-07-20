@@ -39,6 +39,7 @@ class BaseTokenParameters:
     symbol: str
     underlying_symbol: str
     underlying_address: str
+    # TODO: add underlying_decimals?
 
 
 class TokenParameters(collections.defaultdict):
@@ -76,6 +77,7 @@ class Portfolio(collections.defaultdict):
     """ A class that describes holdings of tokens. """
 
     # TODO: Update the values.
+    # TODO: Add values for hashstack v0 and hashstack v1 tokens
     MAX_ROUNDING_ERRORS: collections.defaultdict = collections.defaultdict(
         lambda: decimal.Decimal("5e12"),
         **{
@@ -227,6 +229,7 @@ class LoanEntity(abc.ABC):
     def compute_health_factor(self):
         pass
 
+    # TODO: rename to liquidable debt?
     @abc.abstractmethod
     def compute_debt_to_be_liquidated(self):
         pass
