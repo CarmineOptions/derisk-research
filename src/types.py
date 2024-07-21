@@ -73,6 +73,7 @@ class CollateralAndDebtTokenParameters:
         self.debt: TokenParameters = TokenParameters()  # TODO: add `debt_factor`
 
 
+# TODO: start using ints?
 class Portfolio(collections.defaultdict):
     """ A class that describes holdings of tokens. """
 
