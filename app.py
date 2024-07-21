@@ -1,8 +1,6 @@
 import datetime
 import logging
 import math
-import multiprocessing
-import os
 import requests
 import time
 
@@ -11,16 +9,10 @@ import plotly.express
 import streamlit
 
 import src.helpers
-import src.histogram
 import src.main_chart
 import src.persistent_state
 import src.settings
 import src.swap_amm
-import update_data
-
-
-
-logging.basicConfig(level=logging.INFO)
 
 
 
@@ -55,7 +47,7 @@ def add_ekubo_liquidity(
         try:
             bid_prices, bid_quantities = zip(*liquidity["bids"])
         except ValueError:
-            time.sleep(5)
+            time.sleep(300)
             add_ekubo_liquidity(data=data, collateral_token=collateral_token, debt_token=debt_token)
         bids = pandas.DataFrame(
             {

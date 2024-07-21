@@ -17,7 +17,7 @@ ZKLEND_MARKET: str = "0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345
 
 
 # Keys are event names, values are names of the respective methods that process the given event.
-ZKLEND_EVENTS_TO_METHODS_MAPPING: dict[str, str] = {
+ZKLEND_EVENTS_TO_METHODS: dict[str, str] = {
     "AccumulatorsSync": "process_accumulators_sync_event",
     "zklend::market::Market::AccumulatorsSync": "process_accumulators_sync_event",
     "Deposit": "process_deposit_event",
@@ -42,7 +42,7 @@ ZKLEND_EVENTS_TO_METHODS_MAPPING: dict[str, str] = {
 def zklend_get_events(start_block_number: int = 0) -> pandas.DataFrame:
     return src.helpers.get_events(
         addresses=(ZKLEND_MARKET, ""),
-        event_names=tuple(ZKLEND_EVENTS_TO_METHODS_MAPPING),
+        event_names=tuple(ZKLEND_EVENTS_TO_METHODS),
         start_block_number=start_block_number,
     )
 
@@ -164,7 +164,7 @@ class ZkLendState(src.state.State):
     relevant event.
     """
 
-    EVENTS_TO_METHODS_MAPPING: dict[str, str] = ZKLEND_EVENTS_TO_METHODS_MAPPING
+    EVENTS_TO_METHODS: dict[str, str] = ZKLEND_EVENTS_TO_METHODS
 
     def __init__(
         self,

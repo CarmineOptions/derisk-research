@@ -12,7 +12,7 @@ class State(abc.ABC):
     A class that describes the state of all loan entities of the given lending protocol.
     """
 
-    EVENTS_TO_METHODS_MAPPING: dict[str, str] = {}
+    EVENTS_TO_METHODS: dict[str, str] = {}
 
     def __init__(
         self,
@@ -23,7 +23,7 @@ class State(abc.ABC):
         self.verbose_user: str | None = verbose_user
         self.loan_entities: collections.defaultdict = collections.defaultdict(self.loan_entity_class)
         self.interest_rate_models: src.types.CollateralAndDebtInterestRateModels = src.types.CollateralAndDebtInterestRateModels()
-        self.token_parameters: src.types.CollateralAndDebtTokenParameters = src.types.CollateralAndDebtTokenParameters()
+        self.token_parameters: src.types.CollateralAndDebtTokenParameters = src.types.CollateralAndDebtTokenParameters()  # TODO: move outside of State?
         self.last_block_number: int = 0
 
     # TODO: This method will likely differ across protocols. -> Leave undefined?
@@ -31,12 +31,13 @@ class State(abc.ABC):
         # TODO: Save the timestamp of each update?
         assert event["block_number"] >= self.last_block_number
         self.last_block_number = event["block_number"]
-        getattr(self, self.EVENTS_TO_METHODS_MAPPING[event["key_name"]])(event=event)
+        getattr(self, self.EVENTS_TO_METHODS[event["key_name"]])(event=event)
 
     @abc.abstractmethod
     def collect_token_parameters(self):
         pass
 
+    # TODO: most of what the individual methods implement could be done within `LoanEntity`
     @abc.abstractmethod
     def compute_liquidable_debt_at_price(self):
         pass

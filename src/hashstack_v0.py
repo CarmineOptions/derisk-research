@@ -64,7 +64,7 @@ TOKEN_SETTINGS: dict[str, TokenSettings] = {
 
 
 # Keys are event names, values are names of the respective methods that process the given event.
-EVENTS_TO_METHODS_MAPPING: dict[str, str] = {
+EVENTS_TO_METHODS: dict[str, str] = {
     "new_loan": "process_new_loan_event",
     "collateral_added": "process_collateral_added_event",
     "collateral_withdrawal": "process_collateral_withdrawal_event",
@@ -75,30 +75,29 @@ EVENTS_TO_METHODS_MAPPING: dict[str, str] = {
     "liquidated": "process_liquidated_event",
 }
 
+# Keys are event names, values denote the order in which the given events should be processed.
+HASHSTACK_V0_EVENTS_TO_ORDER: dict[str, str] = {
+    "new_loan": 0,
+    "loan_swap": 1,
+    "liquidated": 2,
+    "loan_withdrawal": 3,
+    "loan_repaid": 4,
+    "loan_interest_deducted": 5,
+    "collateral_added": 6,
+    "collateral_withdrawal": 7,
+}
+
 
 
 def get_events(start_block_number: int = 0) -> pandas.DataFrame:
     events = src.helpers.get_events(
         addresses = (ADDRESS, ''),
-        event_names = tuple(EVENTS_TO_METHODS_MAPPING),
+        event_names = tuple(EVENTS_TO_METHODS),
         start_block_number = start_block_number,
     )
     # Ensure we're processing `loan_repaid` after other loan-altering events and the other events in a logical order.
-    events["order"] = events["key_name"].map(
-        {
-            "new_loan": 0,
-            "loan_withdrawal": 3,
-            "loan_repaid": 4,
-            "loan_swap": 1,
-            "collateral_added": 6,
-            "collateral_withdrawal": 7,
-            "loan_interest_deducted": 5,
-            "liquidated": 2,
-        },
-    )
-    events.sort_values(
-        ["block_number", "transaction_hash", "order"], inplace=True
-    )
+    events["order"] = events["key_name"].map(HASHSTACK_V0_EVENTS_TO_ORDER)
+    events.sort_values(["block_number", "transaction_hash", "order"], inplace=True)
     events.drop(columns = ["order"], inplace = True)
     return events
 
@@ -186,7 +185,7 @@ class HashstackV0State(src.state.State):
     debt, thus we always rewrite the balances whenever they are updated. 
     """
 
-    EVENTS_TO_METHODS_MAPPING: dict[str, str] = EVENTS_TO_METHODS_MAPPING
+    EVENTS_TO_METHODS: dict[str, str] = EVENTS_TO_METHODS
 
     def __init__(
         self,
