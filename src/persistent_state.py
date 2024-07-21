@@ -10,8 +10,9 @@ import src.zklend
 
 
 
-PERSISTENT_STATE_FILENAME = "persistent-state.pkl"
 LAST_UPDATE_FILENAME = "last_update.json"
+PERSISTENT_STATE_FILENAME = "persistent-state.pkl"
+PERSISTENT_STATE_LOAN_ENTITIES_FILENAME = "persistent-state-loan-entities.parquet"
 
 
 
@@ -46,17 +47,3 @@ def upload_object_as_pickle(object: Any, path: str):
         dill.dump(object, out_file)
     src.helpers.upload_file_to_bucket(source_path=path, target_path=path)
     os.remove(path)
-
-
-def update_persistent_state_manually():
-    zklend_events = src.zklend.zklend_get_events()
-
-    zklend_state = src.zklend.ZkLendState()
-    for _, zklend_event in zklend_events.iterrows():
-        zklend_state.process_event(event=zklend_event)
-
-    upload_object_as_pickle(object = zklend_state, path = PERSISTENT_STATE_FILENAME)
-    
-    logging.info(
-        f"Created and saved a new persistent state under the latest block = {zklend_state.last_block_number}."
-    )
