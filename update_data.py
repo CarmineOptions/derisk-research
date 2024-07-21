@@ -7,7 +7,6 @@ import time
 import src.hashstack_v0
 import src.hashstack_v1
 import src.helpers
-import src.histogram
 import src.loans_table
 import src.main_chart
 import src.nostra_alpha
