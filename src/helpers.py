@@ -133,7 +133,7 @@ def get_prices(token_decimals: dict[str, int]) -> dict[str, float]:
 
             # Perform sanity checks.
             assert len(token_info) == 1
-            assert decimals == token_info['decimals']
+            assert decimals == token_info[0]['decimals']
 
             prices[token] = token_info[0]['currentPrice']
         return prices
