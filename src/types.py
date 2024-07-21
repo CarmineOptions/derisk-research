@@ -86,10 +86,11 @@ class Portfolio(collections.defaultdict):
             "0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac": decimal.Decimal("1e2"),  # WBTC
             "0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8": decimal.Decimal("1e4"),  # USDC
             "0x00da114221cb83fa859dbdb4c44beeaa0bb37c7537ad5ae66fe5e0efd20e6eb3": decimal.Decimal("1e16"),  # DAI
+            "0x05574eb6b8789a91466f902c380d978e472db68170ff82a5b650b95a58ddf4ad": decimal.Decimal("1e16"),  # DAI V2
             "0x068f5c6a61780768455de69077e07e89787839bf8166decfbf92b645209c0fb8": decimal.Decimal("1e4"),  # USDT
             "0x042b8f0484674ca266ac5d08e4ac6a3fe65bd3129795def2dca5c34ecc5f96d2": decimal.Decimal("5e12"),  # wstETH
-            "0x0124aeb495b947201f5fac96fd1138e326ad86195b98df6dec9009158a533b49": decimal.Decimal("5e12"),  # LORDS
             "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d": decimal.Decimal("5e12"),  # STRK
+            "0x00585c32b625999e6e5e78645ff8df7a9001cf5cf3eb6b80ccdd16cb64bd3a34": decimal.Decimal("5e12"),  # ZEND
             # Tokens allowed by Nostra Alpha.
             '0x00687b5d9e591844169bc6ad7d7256c4867a10cee6599625b9d78ea17a7caef9': decimal.Decimal("1e2"),  # iWBTC-c
             '0x06b59e2a746e141f90ec8b6e88e695265567ab3bdcf27059b4a15c89b0b7bd53': decimal.Decimal("1e2"),  # nWBTC-c
@@ -162,15 +163,15 @@ class Portfolio(collections.defaultdict):
         return new_portfolio
 
     # TODO: Find a better solution to fix the discrepancies.
-    def round_small_value_to_zero(self, token: str):
+    def round_small_value_to_zero(self, token: str) ->  None:
         if abs(self[token]) < self.MAX_ROUNDING_ERRORS[token]:
             self[token] = decimal.Decimal("0")
 
-    def increase_value(self, token: str, value: decimal.Decimal):
+    def increase_value(self, token: str, value: decimal.Decimal) -> None:
         self[token] += value
         self.round_small_value_to_zero(token=token)
 
-    def set_value(self, token: str, value: decimal.Decimal):
+    def set_value(self, token: str, value: decimal.Decimal) -> None:
         self[token] = value
         self.round_small_value_to_zero(token=token)
 
