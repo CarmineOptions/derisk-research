@@ -36,8 +36,9 @@ class State(abc.ABC):
         if loan_entities.empty:
             return
 
-        # Clear `self.loan entities``, just in case they were not empty.
-        self.clear_loan_entities()
+        # Clear `self.loan entities` in case they were not empty.
+        if len(self.loan_entities) > 0:
+            self.clear_loan_entities()
 
         # Fill up `self.loan_entities` with `loan_entities`.
         for _, loan_entity in loan_entities.iterrows():
