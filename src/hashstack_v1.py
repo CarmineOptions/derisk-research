@@ -382,7 +382,7 @@ class HashstackV1State(src.state.State):
         loan_id = int(event["data"][0], base=16)
         collateral_loan_id = int(event["data"][12], base=16)
         assert loan_id == collateral_loan_id
-        user = event["data"][1]
+        user = src.helpers.add_leading_zeros(event["data"][1])
 
         debt_token = self.ADDRESSES_TO_TOKENS[src.helpers.add_leading_zeros(event["data"][2])]
         debt_face_amount = decimal.Decimal(str(int(event["data"][3], base=16)))
@@ -471,10 +471,10 @@ class HashstackV1State(src.state.State):
         # `state`, `l3_integration`, `l3_category`, `created_at`, [`timestamp`] `timestamp`.
         # Example: https://starkscan.co/event/0x0051f75ef1e08f70d1c8efe7866384d026aa0ca092ded8bd1c903aac0478b990_25.
         old_loan_id = int(event["data"][0], base = 16)
-        old_user = event["data"][1]
+        old_user = src.helpers.add_leading_zeros(event["data"][1])
         assert self.loan_entities[old_loan_id].user == old_user
         new_loan_id = int(event["data"][12], base=16)
-        new_user = event["data"][13]
+        new_user = src.helpers.add_leading_zeros(event["data"][13])
         # TODO: Does this always have to hold?
         assert new_loan_id == old_loan_id
         # TODO: Does this always have to hold?
@@ -522,9 +522,9 @@ class HashstackV1State(src.state.State):
         # `reciever`, [`timestamp`] `timestamp`.
         # Example: https://starkscan.co/event/0x028ea2b3cb9759214c7ea18e86a2d1b33a4bf3f87b4b0b4eb75919c9ab87a62e_5.
         loan_id = int(event["data"][0], base = 16)
-        old_user = event["data"][1]
+        old_user = src.helpers.add_leading_zeros(event["data"][1])
         assert self.loan_entities[loan_id].user == old_user
-        new_user = event["data"][2]
+        new_user = src.helpers.add_leading_zeros(event["data"][2])
         self.loan_entities[loan_id].user = new_user
         if self.verbose_user in {old_user, self.loan_entities[loan_id].user}:
             logging.info(
@@ -544,10 +544,10 @@ class HashstackV1State(src.state.State):
         # `timestamp`.
         # Example: https://starkscan.co/event/0x0069ff177c728aae4248ba8625322f75f0c5df918215f9e5dee10fe22c1fa26c_53.
         old_loan_id = int(event["data"][0], base = 16)
-        old_user = event["data"][1]
+        old_user = src.helpers.add_leading_zeros(event["data"][1])
         assert self.loan_entities[old_loan_id].user == old_user
         new_loan_id = int(event["data"][12], base=16)
-        new_user = event["data"][13]
+        new_user = src.helpers.add_leading_zeros(event["data"][13])
         # TODO: Does this always have to hold?
         assert new_loan_id == old_loan_id
         # TODO: Does this always have to hold?

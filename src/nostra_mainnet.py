@@ -527,7 +527,7 @@ class NostraMainnetState(src.nostra_alpha.NostraAlphaState):
         self.loan_entities[user].debt.increase_value(token=token, value=-raw_amount)
         if user == self.verbose_user:
             logging.info(
-                'In block number = {}, raw amount = {} of token = {} was repayed.'.format(
+                'In block number = {}, raw amount = {} of token = {} was repaid.'.format(
                     event["block_number"],
                     raw_amount,
                     token,
