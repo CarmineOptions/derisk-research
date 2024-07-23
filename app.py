@@ -216,12 +216,14 @@ def main():
     main_chart_data['debt_to_supply_ratio'] = (
         main_chart_data['liquidable_debt_at_interval'] / main_chart_data['debt_token_supply']
     )
-    example_row = main_chart_data[
+    example_rows = main_chart_data[
         (main_chart_data['debt_to_supply_ratio'] > 0.75)
         & (main_chart_data['collateral_token_price'] <= collateral_token_price)
-    ].sort_values('collateral_token_price').iloc[-1]
+    ]
 
-    if not example_row.empty:
+    if not example_rows.empty:
+        example_row = example_rows.sort_values('collateral_token_price').iloc[-1]
+
         def _get_risk_level(debt_to_supply_ratio: float) -> str:
             if debt_to_supply_ratio < 0.2:
                 return 'low'
