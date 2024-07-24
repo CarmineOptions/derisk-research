@@ -206,7 +206,7 @@ class HashstackV0State(src.state.State):
         # `timelock_validity`, `is_timelock_activated`, `activation_time`, [`timestamp`] `timestamp`.
         # Example: https://starkscan.co/event/0x04ff9acb9154603f1fc14df328a3ea53a6c58087aaac0bfbe9cc7f2565777db8_2.
         loan_id = int(event["data"][0], base=16)
-        user = event["data"][1]
+        user = src.helpers.add_leading_zeros(event["data"][1])
         debt_token = src.helpers.get_symbol(event["data"][2])
         debt_face_amount = decimal.Decimal(str(int(event["data"][4], base=16)))
         borrowed_collateral_token = src.helpers.get_symbol(event["data"][6])
@@ -331,7 +331,7 @@ class HashstackV0State(src.state.State):
         # `l3_integration`, `created_at`, [`amount_withdrawn`] `amount_withdrawn`, ``, [`timestamp`] `timestamp`.
         # Example: https://starkscan.co/event/0x05bb8614095fac1ac9b405c27e7ce870804e85aa5924ef2494fec46792b6b8dc_2.
         loan_id = int(event["data"][0], base = 16)
-        user = event["data"][1]
+        user = src.helpers.add_leading_zeros(event["data"][1])
         # TODO: Is this assert needed?
         assert self.loan_entities[loan_id].user == user
         debt_token = src.helpers.get_symbol(event["data"][2])
@@ -377,7 +377,7 @@ class HashstackV0State(src.state.State):
         # `l3_integration`, `created_at`, [`timestamp`] `timestamp`.
         # Example: https://starkscan.co/event/0x07731e48d33f6b916f4e4e81e9cee1d282e20e970717e11ad440f73cc1a73484_1.
         loan_id = int(event["data"][0], base = 16)
-        user = event["data"][1]
+        user = src.helpers.add_leading_zeros(event["data"][1])
         assert self.loan_entities[loan_id].user == user
         debt_token = src.helpers.get_symbol(event["data"][2])
         # This prevents repaid loans to appear as not repaid.
@@ -427,10 +427,10 @@ class HashstackV0State(src.state.State):
         # `created_at`, [`timestamp`] `timestamp`.
         # Example: https://starkscan.co/event/0x00ad0b6b00ce68a1d7f5b79cd550d7f4a15b1708b632b88985a4f6faeb42d5b1_7.
         old_loan_id = int(event["data"][0], base = 16)
-        old_user = event["data"][1]
+        old_user = src.helpers.add_leading_zeros(event["data"][1])
         assert self.loan_entities[old_loan_id].user == old_user
         new_loan_id = int(event["data"][14], base=16)
-        new_user = event["data"][15]
+        new_user = src.helpers.add_leading_zeros(event["data"][15])
         # TODO: Does this always have to hold?
         assert new_loan_id == old_loan_id
         # TODO: Does this always have to hold?
@@ -514,7 +514,7 @@ class HashstackV0State(src.state.State):
         # `l3_integration`, `created_at`, [`liquidator`] `liquidator`, [`timestamp`] `timestamp`.
         # Example: https://starkscan.co/event/0x0774bebd15505d3f950c362d813dc81c6320ae92cb396b6469fd1ac5d8ff62dc_8.
         loan_id = int(event["data"][0], base = 16)
-        user = event["data"][1]
+        user = src.helpers.add_leading_zeros(event["data"][1])
         assert self.loan_entities[loan_id].user == user
         debt_token = src.helpers.get_symbol(event["data"][2])
         # This prevents liquidated loans to appear as not repaid.

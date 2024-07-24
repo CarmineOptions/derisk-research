@@ -90,13 +90,14 @@ NOSTRA_MAINNET_EVENTS_TO_METHODS = {
     ("collateral", "Transfer"): "process_collateral_transfer_event",
     ("collateral", "openzeppelin::token::erc20_v070::erc20::ERC20::Transfer"): "process_collateral_transfer_event",
     ("collateral", "openzeppelin::token::erc20::erc20::ERC20Component::Transfer"): "process_collateral_transfer_event",
+    ("collateral", "nstr::openzeppelin::token::erc20_v070::erc20::ERC20Starkgate::Transfer"): "process_collateral_transfer_event",
     ("collateral", "Mint"): "process_collateral_mint_event",
     ("collateral", "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Mint"): "process_collateral_mint_event",
     ("collateral", "Burn"): "process_collateral_burn_event",
     ("collateral", "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Burn"): "process_collateral_burn_event",
     ("debt", "Transfer"): "process_debt_transfer_event",
     ("debt", "openzeppelin::token::erc20_v070::erc20::ERC20::Transfer"): "process_debt_transfer_event",
-    ("debt", "openzeppelin::token::erc20::erc20::ERC20Component::Transfer"): "process_debt_transfer_event",        
+    ("debt", "openzeppelin::token::erc20::erc20::ERC20Component::Transfer"): "process_debt_transfer_event",
     ("debt", "nstr::openzeppelin::token::erc20_v070::erc20::ERC20Starkgate::Transfer"): "process_debt_transfer_event",
     ("debt", "Mint"): "process_debt_mint_event",
     ("debt", "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Mint"): "process_debt_mint_event",
@@ -526,7 +527,7 @@ class NostraMainnetState(src.nostra_alpha.NostraAlphaState):
         self.loan_entities[user].debt.increase_value(token=token, value=-raw_amount)
         if user == self.verbose_user:
             logging.info(
-                'In block number = {}, raw amount = {} of token = {} was repayed.'.format(
+                'In block number = {}, raw amount = {} of token = {} was repaid.'.format(
                     event["block_number"],
                     raw_amount,
                     token,
