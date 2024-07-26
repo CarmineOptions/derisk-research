@@ -1,4 +1,5 @@
 import asyncio
+import itertools
 import math
 import os
 import logging
@@ -51,7 +52,7 @@ class MySwapOrderBook(OrderBookBase):
         all_pools = self.connector.get_pools_data()
         filtered_pools = self._filter_pools_data(all_pools)
         if not filtered_pools:
-            self.logger.info(f"No pools for pair: {self.token_a} - {self.token_b}")
+            self.logger.warning(f"No pools for pair: {self.token_a} - {self.token_b}")
         for pool in filtered_pools:
             await self._calculate_order_book(pool["poolkey"])
 
@@ -231,14 +232,13 @@ if __name__ == '__main__':
         '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d',  # STRK
     }
     connector = DBConnector()
-    for base_token in all_tokens:
-        current_tokens = all_tokens - {base_token}
-        for quote_token in current_tokens:
-            try:
-                order_book = MySwapOrderBook(base_token, quote_token, apply_filtering=True)
-                order_book.fetch_price_and_liquidity()
-                if order_book.asks or order_book.bids:
-                    serialized_data = order_book.serialize()
-                    connector.write_to_db(OrderBookModel(**serialized_data.model_dump()))
-            except Exception as e:
-                logging.info(f"With token pair: {base_token} and {quote_token} something happened: {e}")
+    for base_token, quote_token in itertools.combinations(all_tokens, 2):
+        try:
+            order_book = MySwapOrderBook(base_token, quote_token, apply_filtering=True)
+            order_book.fetch_price_and_liquidity()
+            if order_book.asks or order_book.bids:
+                print(f"{base_token} - {quote_token}")
+                serialized_data = order_book.serialize()
+                connector.write_to_db(OrderBookModel(**serialized_data.model_dump()))
+        except Exception as e:
+            logging.error(f"With token pair: {base_token} and {quote_token} something happened: {e}")
