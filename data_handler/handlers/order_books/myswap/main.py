@@ -237,7 +237,7 @@ if __name__ == '__main__':
             order_book = MySwapOrderBook(base_token, quote_token, apply_filtering=True)
             order_book.fetch_price_and_liquidity()
             if order_book.asks or order_book.bids:
-                print(f"{base_token} - {quote_token}")
+                logging.info(f"Pair processed successfully: {base_token} - {quote_token}")
                 serialized_data = order_book.serialize()
                 connector.write_to_db(OrderBookModel(**serialized_data.model_dump()))
         except Exception as e:
