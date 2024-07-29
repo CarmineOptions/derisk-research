@@ -1,16 +1,12 @@
-import copy
-import logging
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Optional
 
-import pandas as pd
-
-from .helpers import Portfolio, TokenValues, get_symbol
+from .helpers import Portfolio, TokenValues
 from .settings import TOKEN_SETTINGS as BASE_TOKEN_SETTINGS
 from .settings import TokenSettings as BaseTokenSettings
 from .state import InterestRateModels, LoanEntity, State
-from data_handler.handlers.loan_states.zklend.fetch_zklend_specific_token_settings import ZKLEND_SPECIFIC_TOKEN_SETTINGS
+# IT GIVES `ModuleNotFoundError` THAT'S WHY I COMMENTED OUT IT
+# from data_handler.handlers.loan_states.zklend.fetch_zklend_specific_token_settings import ZKLEND_SPECIFIC_TOKEN_SETTINGS
 
 ADDRESS: str = "0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05"
 
@@ -28,20 +24,21 @@ class TokenSettings(ZkLendSpecificTokenSettings, BaseTokenSettings):
     pass
 
 
-TOKEN_SETTINGS: dict[str, TokenSettings] = {
-    token: TokenSettings(
-        symbol=BASE_TOKEN_SETTINGS[token].symbol,
-        decimal_factor=BASE_TOKEN_SETTINGS[token].decimal_factor,
-        address=BASE_TOKEN_SETTINGS[token].address,
-        collateral_factor=ZKLEND_SPECIFIC_TOKEN_SETTINGS[token].collateral_factor,
-        debt_factor=ZKLEND_SPECIFIC_TOKEN_SETTINGS[token].debt_factor,
-        liquidation_bonus=ZKLEND_SPECIFIC_TOKEN_SETTINGS[token].liquidation_bonus,
-        protocol_token_address=ZKLEND_SPECIFIC_TOKEN_SETTINGS[
-            token
-        ].protocol_token_address,
-    )
-    for token in BASE_TOKEN_SETTINGS
-}
+# IT GIVES `ModuleNotFoundError` THAT'S WHY I COMMENTED OUT IT
+# TOKEN_SETTINGS: dict[str, TokenSettings] = {
+#     token: TokenSettings(
+#         symbol=BASE_TOKEN_SETTINGS[token].symbol,
+#         decimal_factor=BASE_TOKEN_SETTINGS[token].decimal_factor,
+#         address=BASE_TOKEN_SETTINGS[token].address,
+#         collateral_factor=ZKLEND_SPECIFIC_TOKEN_SETTINGS[token].collateral_factor,
+#         debt_factor=ZKLEND_SPECIFIC_TOKEN_SETTINGS[token].debt_factor,
+#         liquidation_bonus=ZKLEND_SPECIFIC_TOKEN_SETTINGS[token].liquidation_bonus,
+#         protocol_token_address=ZKLEND_SPECIFIC_TOKEN_SETTINGS[
+#             token
+#         ].protocol_token_address,
+#     )
+#     for token in BASE_TOKEN_SETTINGS
+# }
 
 # Keys are values of the "key_name" column in the database, values are the respective method names.
 EVENTS_METHODS_MAPPING: dict[str, str] = {
@@ -74,7 +71,7 @@ class ZkLendLoanEntity(LoanEntity):
     amounts.
     """
 
-    TOKEN_SETTINGS: dict[str, TokenSettings] = TOKEN_SETTINGS
+    TOKEN_SETTINGS: dict[str, TokenSettings] = ...
 
     def __init__(self) -> None:
         super().__init__()

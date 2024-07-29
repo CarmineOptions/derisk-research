@@ -155,7 +155,7 @@ class DBConnector:
                 .filter(
                     func.char_length(model.telegram_id)
                     >= NotificationValidationValues.telegram_id_min_length,
-                    model.protocol_id in CURRENTLY_AVAILABLE_PROTOCOLS_IDS,
+                    model.protocol_id.in_(CURRENTLY_AVAILABLE_PROTOCOLS_IDS),
                 )
                 .all()
             )
