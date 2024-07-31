@@ -107,8 +107,7 @@ def get_main_chart_figure(
         color_discrete_map={**color_map, "liquidable_debt_at_interval": "#FFD700"},
     )
     figure.update_traces(hovertemplate=("<b>Price:</b> %{x}<br>" "<b>Volume:</b> %{y}"))
-    for amm in amms:
-        figure.update_traces(selector={"name": f"{amm}_debt_token_supply"}, name=f"{amm} {debt_token} supply")
+    figure.update_traces(selector={"name": f"debt_token_supply"}, name=f"{debt_token} available liquidity")
     figure.update_traces(selector={"name": "liquidable_debt_at_interval"}, name=f"Liquidable {debt_token} debt")
     figure.update_xaxes(title_text=f"{collateral_token} Price (USD)")
     figure.update_yaxes(title_text="Volume (USD)")
