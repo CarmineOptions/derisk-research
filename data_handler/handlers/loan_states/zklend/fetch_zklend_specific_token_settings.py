@@ -3,7 +3,7 @@ import asyncio
 from dataclasses import dataclass
 
 from handlers.settings import TOKEN_SETTINGS, TokenSettings
-from tools.constants import ProtocolAddresses
+from handler_tools.constants import ProtocolAddresses
 from src import blockchain_call
 
 

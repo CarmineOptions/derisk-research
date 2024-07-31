@@ -1,12 +1,12 @@
 import uuid
 from typing import List, Optional, Type, TypeVar
 
-from sqlalchemy import create_engine, func, select, and_
+from sqlalchemy import create_engine, func, select, and_, desc, Subquery
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import scoped_session, sessionmaker, Session, aliased
+from sqlalchemy.orm import scoped_session, sessionmaker, Session, aliased, Query
 
 from db.database import SQLALCHEMY_DATABASE_URL
-from db.models import Base, LoanState, InterestRate
+from db.models import Base, LoanState, OrderBookModel, InterestRate
 from handler_tools.constants import ProtocolIDs
 
 
@@ -93,6 +93,43 @@ class DBConnector:
         finally:
             db.close()
 
+    def _get_subquery(self) -> Subquery:
+        """
+        Returns subquery for loan state last blocks query
+        :return: Subquery
+        """
+        session = self.Session()
+        return (
+            session.query(
+                LoanState.user,
+                func.max(LoanState.block).label('latest_block')
+            )
+            .group_by(LoanState.user)
+            .subquery()
+        )
+
+    def get_latest_block_loans(self) -> Query:
+        """
+        Returns a lastt block query
+        :return: Last block query
+        """
+        session = self.Session()
+        subquery = self._get_subquery()
+
+        result = (
+            session.query(LoanState)
+            .join(
+                subquery,
+                and_(
+                    LoanState.user == subquery.c.user,
+                    LoanState.block == subquery.c.latest_block
+                )
+            )
+            .all()
+        )
+
+        return result
+
     def get_loans(
         self,
         model: Type[Base],
@@ -110,7 +147,7 @@ class DBConnector:
         try:
             query = db.query(model)
             if protocol:
-                query = query.filter(model.protocol == protocol)
+                query = query.filter(model.protocol_id == protocol)
             if user:
                 query = query.filter(model.user == user)
             if start_block is not None:
@@ -204,6 +241,35 @@ class DBConnector:
         finally:
             db.close()
 
+    def get_latest_order_book(self, dex: str, token_a: str, token_b: str) -> OrderBookModel | None:
+        """
+        Retrieves the latest order book for a given pair of tokens and DEX.
+        :param dex: str - The DEX name.
+        :param token_a: str - The base token address.
+        :param token_b: str - The quote token address.
+        :return: OrderBookModel instance or None.
+        """
+        db = self.Session()
+        try:
+            order_book_condition = and_(
+                OrderBookModel.dex == dex,
+                OrderBookModel.token_a == token_a,
+                OrderBookModel.token_b == token_b,
+            )
+            max_timestamp = (
+                select(func.max(OrderBookModel.timestamp))
+                .where(order_book_condition).
+                scalar_subquery()
+            )
+            return db.execute(
+                select(OrderBookModel).where(
+                    OrderBookModel.timestamp == max_timestamp,
+                    order_book_condition
+                )
+            ).scalar()
+        finally:
+            db.close()
+
     def get_unique_users_last_block_objects(
         self, protocol_id: ProtocolIDs
     ) -> LoanState:
@@ -255,5 +321,21 @@ class DBConnector:
                 .order_by(InterestRate.block.desc())
                 .first()
             )
+        finally:
+            db.close()
+
+    def get_all_block_records(self, model: Type[ModelType] = None) -> Query:
+        """
+        Retrieves all rows of given model in descending order.
+        :param model: Type - The model to get data from.
+        :return: Query - The query of all block records.
+        """
+        db = self.Session()
+        try:
+            return db.query(
+                model.user,
+                model.collateral,
+                model.debt,
+            ).order_by(desc(model.block))
         finally:
             db.close()

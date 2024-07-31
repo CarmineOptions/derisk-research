@@ -1,4 +1,5 @@
 from uuid import uuid4
+from decimal import Decimal
 
 from sqlalchemy import UUID, BigInteger, Column, MetaData, String, DECIMAL
 from sqlalchemy.orm import DeclarativeBase, Mapped
@@ -50,6 +51,12 @@ class InterestRate(BaseState):
 
     __tablename__ = "interest_rate"
 
+    def get_json_deserialized(self) -> tuple[dict[str, Decimal], dict[str, Decimal]]:
+        """Deserialize the JSON fields of the model from str to the Decimal type."""
+        collateral = {token_name: Decimal(value) for token_name, value in self.collateral.items()}
+        debt = {token_name: Decimal(value) for token_name, value in self.debt.items()}
+        return collateral, debt
+
 
 class LiquidableDebt(Base):
     """
@@ -58,14 +65,11 @@ class LiquidableDebt(Base):
 
     __tablename__ = "liquidable_debt"
 
-    protocol = Column(ChoiceType(LendingProtocolNames, impl=String()), nullable=False)
-    user = Column(String, index=True, nullable=False)
     liquidable_debt = Column(DECIMAL, nullable=False)
-    health_factor = Column(DECIMAL, nullable=False)
-    collateral = Column(JSON, nullable=False)
-    risk_adjusted_collateral = Column(DECIMAL, nullable=False)
-    debt = Column(JSON, nullable=False)
-    debt_usd = Column(DECIMAL, nullable=False)
+    protocol_name = Column(ChoiceType(LendingProtocolNames, impl=String()), nullable=False)
+    collateral_token_price = Column(DECIMAL, nullable=False)
+    collateral_token = Column(String, nullable=False)
+    debt_token = Column(String, nullable=False)
 
 
 class OrderBookModel(Base):
@@ -79,5 +83,18 @@ class OrderBookModel(Base):
     timestamp = Column(BigInteger, nullable=False)
     block = Column(BigInteger, nullable=False)
     dex = Column(String, nullable=False, index=True)
+    current_price = Column(DECIMAL, nullable=True)
     asks = Column(JSON, nullable=True)
     bids = Column(JSON, nullable=True)
+
+
+class HealthRatioLevel(Base):
+    """
+    SQLAlchemy model for the health ratio level table.
+    """
+    __tablename__ = "health_ratio_level"
+
+    timestamp = Column(BigInteger, index=True)
+    user_id = Column(String, index=True)
+    value = Column(DECIMAL, nullable=False)
+    protocol_id = Column(ChoiceType(ProtocolIDs, impl=String()), nullable=False)
