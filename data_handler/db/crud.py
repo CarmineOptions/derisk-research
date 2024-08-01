@@ -1,7 +1,7 @@
 import uuid
 from typing import List, Optional, Type, TypeVar
 
-from sqlalchemy import create_engine, func, select, and_, desc
+from sqlalchemy import create_engine, func, select, and_, desc, Subquery
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import scoped_session, sessionmaker, Session, aliased, Query
 
@@ -93,9 +93,10 @@ class DBConnector:
         finally:
             db.close()
 
-    def _get_subquery(self):
+    def _get_subquery(self) -> Subquery:
         """
         Returns subquery for loan state last blocks query
+        :return: Subquery
         """
         session = self.Session()
         return (

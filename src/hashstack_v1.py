@@ -245,7 +245,7 @@ TOKEN_SETTINGS: dict[str, TokenSettings] = {
 
 
 # Keys are event names, values are names of the respective methods that process the given event.
-EVENTS_TO_METHODS_MAPPING: dict[str, str] = {
+EVENTS_TO_METHODS: dict[str, str] = {
     "new_loan": "process_new_loan_event",
     "collateral_added": "process_collateral_added_event",
     "loan_spent": "process_loan_spent_event",
@@ -253,30 +253,29 @@ EVENTS_TO_METHODS_MAPPING: dict[str, str] = {
     "loan_repaid": "process_loan_repaid_event",
 }
 
+# Keys are event names, values denote the order in which the given events should be processed.
+HASHSTACK_V1_EVENTS_TO_ORDER: dict[str, str] = {
+    "new_loan": 0,
+    "loan_transferred": 1,
+    "loan_spent": 2,
+    "loan_repaid": 3,
+    "collateral_added": 4,
+}
+
 
 
 def get_events(start_block_number: int = 0) -> pandas.DataFrame:
     events = src.helpers.get_events(
         addresses = tuple(ADDRESSES_TO_TOKENS),
-        event_names = tuple(EVENTS_TO_METHODS_MAPPING),
+        event_names = tuple(EVENTS_TO_METHODS),
         start_block_number = start_block_number,
     )
     # Ensure we're processing `loan_repaid` after other loan-altering events and the other events in a logical order. 
     # Sometimes, when a user deposits tokens, borrows against them and then e.g. spends the borrowed funds in the same 
     # block, the whole operation is split into multiple transactions. Since we don't have any way to order transactions
     # themselves, we need to order strictly according to our own `order` column.
-    events["order"] = events["key_name"].map(
-        {
-            "new_loan": 0,
-            "loan_repaid": 4,
-            "loan_spent": 1,
-            "loan_transferred": 0.5,
-            "collateral_added": 6,
-        },
-    )
-    events.sort_values(
-        ["block_number", "order"], inplace=True
-    )
+    events["order"] = events["key_name"].map(HASHSTACK_V1_EVENTS_TO_ORDER)
+    events.sort_values(["block_number", "order"], inplace=True)
     return events
 
 
@@ -360,7 +359,7 @@ class HashstackV1State(src.state.State):
     """
 
     ADDRESSES_TO_TOKENS: dict[str, str] = ADDRESSES_TO_TOKENS
-    EVENTS_TO_METHODS_MAPPING: dict[str, str] = EVENTS_TO_METHODS_MAPPING
+    EVENTS_TO_METHODS: dict[str, str] = EVENTS_TO_METHODS
 
     def __init__(
         self,
@@ -383,7 +382,7 @@ class HashstackV1State(src.state.State):
         loan_id = int(event["data"][0], base=16)
         collateral_loan_id = int(event["data"][12], base=16)
         assert loan_id == collateral_loan_id
-        user = event["data"][1]
+        user = src.helpers.add_leading_zeros(event["data"][1])
 
         debt_token = self.ADDRESSES_TO_TOKENS[src.helpers.add_leading_zeros(event["data"][2])]
         debt_face_amount = decimal.Decimal(str(int(event["data"][3], base=16)))
@@ -472,10 +471,10 @@ class HashstackV1State(src.state.State):
         # `state`, `l3_integration`, `l3_category`, `created_at`, [`timestamp`] `timestamp`.
         # Example: https://starkscan.co/event/0x0051f75ef1e08f70d1c8efe7866384d026aa0ca092ded8bd1c903aac0478b990_25.
         old_loan_id = int(event["data"][0], base = 16)
-        old_user = event["data"][1]
+        old_user = src.helpers.add_leading_zeros(event["data"][1])
         assert self.loan_entities[old_loan_id].user == old_user
         new_loan_id = int(event["data"][12], base=16)
-        new_user = event["data"][13]
+        new_user = src.helpers.add_leading_zeros(event["data"][13])
         # TODO: Does this always have to hold?
         assert new_loan_id == old_loan_id
         # TODO: Does this always have to hold?
@@ -523,9 +522,9 @@ class HashstackV1State(src.state.State):
         # `reciever`, [`timestamp`] `timestamp`.
         # Example: https://starkscan.co/event/0x028ea2b3cb9759214c7ea18e86a2d1b33a4bf3f87b4b0b4eb75919c9ab87a62e_5.
         loan_id = int(event["data"][0], base = 16)
-        old_user = event["data"][1]
+        old_user = src.helpers.add_leading_zeros(event["data"][1])
         assert self.loan_entities[loan_id].user == old_user
-        new_user = event["data"][2]
+        new_user = src.helpers.add_leading_zeros(event["data"][2])
         self.loan_entities[loan_id].user = new_user
         if self.verbose_user in {old_user, self.loan_entities[loan_id].user}:
             logging.info(
@@ -545,10 +544,10 @@ class HashstackV1State(src.state.State):
         # `timestamp`.
         # Example: https://starkscan.co/event/0x0069ff177c728aae4248ba8625322f75f0c5df918215f9e5dee10fe22c1fa26c_53.
         old_loan_id = int(event["data"][0], base = 16)
-        old_user = event["data"][1]
+        old_user = src.helpers.add_leading_zeros(event["data"][1])
         assert self.loan_entities[old_loan_id].user == old_user
         new_loan_id = int(event["data"][12], base=16)
-        new_user = event["data"][13]
+        new_user = src.helpers.add_leading_zeros(event["data"][13])
         # TODO: Does this always have to hold?
         assert new_loan_id == old_loan_id
         # TODO: Does this always have to hold?

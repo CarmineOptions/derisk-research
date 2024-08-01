@@ -17,7 +17,7 @@ ZKLEND_MARKET: str = "0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345
 
 
 # Keys are event names, values are names of the respective methods that process the given event.
-ZKLEND_EVENTS_TO_METHODS_MAPPING: dict[str, str] = {
+ZKLEND_EVENTS_TO_METHODS: dict[str, str] = {
     "AccumulatorsSync": "process_accumulators_sync_event",
     "zklend::market::Market::AccumulatorsSync": "process_accumulators_sync_event",
     "Deposit": "process_deposit_event",
@@ -42,7 +42,7 @@ ZKLEND_EVENTS_TO_METHODS_MAPPING: dict[str, str] = {
 def zklend_get_events(start_block_number: int = 0) -> pandas.DataFrame:
     return src.helpers.get_events(
         addresses=(ZKLEND_MARKET, ""),
-        event_names=tuple(ZKLEND_EVENTS_TO_METHODS_MAPPING),
+        event_names=tuple(ZKLEND_EVENTS_TO_METHODS),
         start_block_number=start_block_number,
     )
 
@@ -164,7 +164,7 @@ class ZkLendState(src.state.State):
     relevant event.
     """
 
-    EVENTS_TO_METHODS_MAPPING: dict[str, str] = ZKLEND_EVENTS_TO_METHODS_MAPPING
+    EVENTS_TO_METHODS: dict[str, str] = ZKLEND_EVENTS_TO_METHODS
 
     def __init__(
         self,
@@ -191,7 +191,7 @@ class ZkLendState(src.state.State):
     def process_deposit_event(self, event: pandas.Series) -> None:
         # The order of the values in the `data` column is: `user`, `token`, `face_amount`.
         # Example: https://starkscan.co/event/0x036185142bb51e2c1f5bfdb1e6cef81f8ea87fd4d777990014249bf5435fd31b_3.
-        user = event["data"][0]
+        user = src.helpers.add_leading_zeros(event["data"][0])
         token = src.helpers.add_leading_zeros(event["data"][1])
         face_amount = decimal.Decimal(str(int(event["data"][2], base=16)))
         raw_amount = face_amount / self.interest_rate_models.collateral[token]
@@ -212,7 +212,7 @@ class ZkLendState(src.state.State):
     def process_collateral_enabled_event(self, event: pandas.Series) -> None:
         # The order of the values in the `data` column is: `user`, `token`.
         # Example: https://starkscan.co/event/0x036185142bb51e2c1f5bfdb1e6cef81f8ea87fd4d777990014249bf5435fd31b_6.
-        user = event["data"][0]
+        user = src.helpers.add_leading_zeros(event["data"][0])
         token = src.helpers.add_leading_zeros(event["data"][1])
         self.loan_entities[user].collateral_enabled[token] = True
         self.loan_entities[user].collateral.set_value(
@@ -230,7 +230,7 @@ class ZkLendState(src.state.State):
     def process_collateral_disabled_event(self, event: pandas.Series) -> None:
         # The order of the values in the `data` column is: `user`, `token`.
         # Example: https://starkscan.co/event/0x0049b445bed84e0118795dbd22d76610ccac2ad626f8f04a1fc7e38113c2afe7_0.
-        user = event["data"][0]
+        user = src.helpers.add_leading_zeros(event["data"][0])
         token = src.helpers.add_leading_zeros(event["data"][1])
         self.loan_entities[user].collateral_enabled[token] = False
         self.loan_entities[user].collateral.set_value(
@@ -247,7 +247,7 @@ class ZkLendState(src.state.State):
     def process_withdrawal_event(self, event: pandas.Series) -> None:
         # The order of the values in the `data` column is: `user`, `token`, `face_amount`.
         # Example: https://starkscan.co/event/0x03472cf7511687a55bc7247f8765c4bbd2c18b70e09b2a10a77c61f567bfd2cb_4.
-        user = event["data"][0]
+        user = src.helpers.add_leading_zeros(event["data"][0])
         token = src.helpers.add_leading_zeros(event["data"][1])
         face_amount = decimal.Decimal(str(int(event["data"][2], base=16)))
         raw_amount = face_amount / self.interest_rate_models.collateral[token]
@@ -268,7 +268,7 @@ class ZkLendState(src.state.State):
     def process_borrowing_event(self, event: pandas.Series) -> None:
         # The order of the values in the `data` column is: `user`, `token`, `raw_amount`, `face_amount`.
         # Example: https://starkscan.co/event/0x076b1615750528635cf0b63ca80986b185acbd20fa37f0f2b5368a4f743931f8_3.
-        user = event["data"][0]
+        user = src.helpers.add_leading_zeros(event["data"][0])
         token = src.helpers.add_leading_zeros(event["data"][1])
         raw_amount = decimal.Decimal(str(int(event["data"][2], base=16)))
         self.loan_entities[user].debt.increase_value(token=token, value=raw_amount)
@@ -285,13 +285,13 @@ class ZkLendState(src.state.State):
         # The order of the values in the `data` column is: `repayer`, `beneficiary`, `token`, `raw_amount`,
         # `face_amount`.
         # Example: https://starkscan.co/event/0x06fa3dd6e12c9a66aeacd2eefa5a2ff2915dd1bb4207596de29bd0e8cdeeae66_5.
-        user = event["data"][1]
+        user = src.helpers.add_leading_zeros(event["data"][1])
         token = src.helpers.add_leading_zeros(event["data"][2])
         raw_amount = decimal.Decimal(str(int(event["data"][3], base=16)))
         self.loan_entities[user].debt.increase_value(token=token, value=-raw_amount)
         if user == self.verbose_user:
             logging.info(
-                "In block number = {}, raw amount = {} of token = {} was repayed.".format(
+                "In block number = {}, raw amount = {} of token = {} was repaid.".format(
                     event["block_number"],
                     raw_amount,
                     token,
@@ -302,7 +302,7 @@ class ZkLendState(src.state.State):
         # The order of the arguments is: `liquidator`, `user`, `debt_token`, `debt_raw_amount`, `debt_face_amount`,
         # `collateral_token`, `collateral_amount`.
         # Example: https://starkscan.co/event/0x07b8ec709df1066d9334d56b426c45440ca1f1bb841285a5d7b33f9d1008f256_5.
-        user = event["data"][1]
+        user = src.helpers.add_leading_zeros(event["data"][1])
         debt_token = src.helpers.add_leading_zeros(event["data"][2])
         debt_raw_amount = decimal.Decimal(str(int(event["data"][3], base=16)))
         collateral_token = src.helpers.add_leading_zeros(event["data"][5])

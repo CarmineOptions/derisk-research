@@ -1,8 +1,6 @@
 import datetime
 import logging
 import math
-import multiprocessing
-import os
 import requests
 import time
 
@@ -11,16 +9,10 @@ import plotly.express
 import streamlit
 
 import src.helpers
-import src.histogram
 import src.main_chart
 import src.persistent_state
 import src.settings
 import src.swap_amm
-import update_data
-
-
-
-logging.basicConfig(level=logging.INFO)
 
 
 
@@ -55,27 +47,28 @@ def add_ekubo_liquidity(
         try:
             bid_prices, bid_quantities = zip(*liquidity["bids"])
         except ValueError:
-            time.sleep(5)
+            time.sleep(300)
             add_ekubo_liquidity(data=data, collateral_token=collateral_token, debt_token=debt_token)
-        bids = pandas.DataFrame(
-            {
-                'price': bid_prices,
-                'quantity': bid_quantities,
-            },
-        )
-        bids = bids.astype(float)
-        bids.sort_values('price', inplace = True)
-        price_diff = data['collateral_token_price'].diff().max()
-        data['Ekubo_debt_token_supply'] = data['collateral_token_price'].apply(
-            lambda x: _get_available_liquidity(
-                data=bids,
-                price=x,
-                price_diff=price_diff,
-                bids=True,
+        else:
+            bids = pandas.DataFrame(
+                {
+                    'price': bid_prices,
+                    'quantity': bid_quantities,
+                },
             )
-        )
-        data['debt_token_supply'] += data['Ekubo_debt_token_supply']
-        return data
+            bids = bids.astype(float)
+            bids.sort_values('price', inplace = True)
+            price_diff = data['collateral_token_price'].diff().max()
+            data['Ekubo_debt_token_supply'] = data['collateral_token_price'].apply(
+                lambda x: _get_available_liquidity(
+                    data=bids,
+                    price=x,
+                    price_diff=price_diff,
+                    bids=True,
+                )
+            )
+            data['debt_token_supply'] += data['Ekubo_debt_token_supply']
+            return data
 
     logging.warning('Using collateral token as base token and debt token as quote token.')
     params = {
@@ -92,23 +85,24 @@ def add_ekubo_liquidity(
         except ValueError:
             time.sleep(5)
             add_ekubo_liquidity(data=data, collateral_token=collateral_token, debt_token=debt_token)
-        asks = pandas.DataFrame(
-            {
-                'price': ask_prices,
-                'quantity': ask_quantities,
-            },
-        )
-        asks = asks.astype(float)
-        asks.sort_values('price', inplace = True)
-        data['Ekubo_debt_token_supply'] = data['collateral_token_price'].apply(
-            lambda x: _get_available_liquidity(
-                data=asks,
-                price=x,
-                bids=False,
+        else:
+            asks = pandas.DataFrame(
+                {
+                    'price': ask_prices,
+                    'quantity': ask_quantities,
+                },
             )
-        )
-        data['debt_token_supply'] += data['Ekubo_debt_token_supply']
-        return data
+            asks = asks.astype(float)
+            asks.sort_values('price', inplace = True)
+            data['Ekubo_debt_token_supply'] = data['collateral_token_price'].apply(
+                lambda x: _get_available_liquidity(
+                    data=asks,
+                    price=x,
+                    bids=False,
+                )
+            )
+            data['debt_token_supply'] += data['Ekubo_debt_token_supply']
+            return data
 
     return data
 
@@ -147,11 +141,23 @@ def main():
             # options=["zkLend", "Hashstack V0", "Hashstack V1", "Nostra Alpha", "Nostra Mainnet"],
             # default=["zkLend", "Hashstack V0", "Hashstack V1", "Nostra Alpha", "Nostra Mainnet"],
         )
-        current_pair = streamlit.selectbox(
-            label="Select collateral-loan pair:",
-            options=src.settings.PAIRS,
+        collateral_token = streamlit.selectbox(
+            label="Select collateral token:",
+            options=src.settings.COLLATERAL_TOKENS,
             index=0,
         )
+        
+        debt_token = streamlit.selectbox(
+            label="Select debt token:",
+            options=src.settings.DEBT_TOKENS,
+            index=0,
+        )
+        
+    if(debt_token == collateral_token):
+        streamlit.subheader(
+            f":warning: You are selecting the same token for both collateral and debt.")   
+        
+    current_pair = f"{collateral_token}-{debt_token}"
 
     main_chart_data = pandas.DataFrame()
     # histogram_data = pandas.DataFrame()
@@ -212,12 +218,14 @@ def main():
     main_chart_data['debt_to_supply_ratio'] = (
         main_chart_data['liquidable_debt_at_interval'] / main_chart_data['debt_token_supply']
     )
-    example_row = main_chart_data[
+    example_rows = main_chart_data[
         (main_chart_data['debt_to_supply_ratio'] > 0.75)
         & (main_chart_data['collateral_token_price'] <= collateral_token_price)
-    ].sort_values('collateral_token_price').iloc[-1]
+    ]
 
-    if not example_row.empty:
+    if not example_rows.empty:
+        example_row = example_rows.sort_values('collateral_token_price').iloc[-1]
+
         def _get_risk_level(debt_to_supply_ratio: float) -> str:
             if debt_to_supply_ratio < 0.2:
                 return 'low'
