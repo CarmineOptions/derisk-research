@@ -6,7 +6,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import scoped_session, sessionmaker, Session, aliased, Query
 
 from db.database import SQLALCHEMY_DATABASE_URL
-from db.models import Base, LoanState, OrderBookModel, InterestRate
+from db.models import Base, LoanState, OrderBookModel, InterestRate, ZkLendCollateralDebt
 from handler_tools.constants import ProtocolIDs
 
 
@@ -338,3 +338,83 @@ class DBConnector:
             ).order_by(desc(model.block))
         finally:
             db.close()
+
+
+class ZkLendDBConnector:
+    """
+    Provides database connection and CRUD operations for ZkLendCollateralDebt.
+
+    Methods:
+    - get_by_user_id: Retrieves ZkLendCollateralDebt record by user_id.
+    - update_by_user_id: Updates the collateral and debt by user_id.
+    """
+
+    def __init__(self, db_url: str = SQLALCHEMY_DATABASE_URL):
+        """
+        Initialize the database connection and session factory.
+        :param db_url: Database connection URL.
+        """
+        self.engine = create_engine(db_url)
+        Base.metadata.create_all(self.engine)
+        self.session_factory = sessionmaker(bind=self.engine)
+        self.Session = scoped_session(self.session_factory)
+
+    def get_by_user_ids(self, user_ids: List[str]) -> List[ZkLendCollateralDebt]:
+        """
+        Retrieve ZkLendCollateralDebt records by user_ids.
+        :param user_ids: A list of user IDs to filter by.
+        :return: A list of ZkLendCollateralDebt objects.
+        """
+        session = self.Session()
+        try:
+            return session.query(ZkLendCollateralDebt).filter(ZkLendCollateralDebt.user_id.in_(user_ids)).all()
+        finally:
+            session.close()
+
+    @staticmethod
+    def _convert_decimal_to_float(data: dict | None) -> dict | None:
+        """
+        Convert Decimal values to float for a given dictionary.
+        :param data: The dictionary to convert.
+        :return: The converted dictionary or None
+        """
+        if data:
+            return {k: float(v) for k, v in data.items()}
+
+        return None
+
+    def save_collateral_enabled_by_user(self, user_id: str, collateral_enabled: dict, collateral: dict = None, debt: dict = None, ) -> None:
+        """
+        Update the collateral and debt for a given user_id.
+        :param user_id: The user ID to update.
+        :param collateral: The new collateral data.
+        :param debt: The new debt data.
+        :param collateral_enabled: The new collateral enabled data.
+
+        :return: None
+        """
+        session = self.Session()
+        collateral = self._convert_decimal_to_float(collateral)
+        debt = self._convert_decimal_to_float(debt)
+        try:
+            record = session.query(ZkLendCollateralDebt).filter_by(user_id=user_id).first()
+            if record:
+                # Update existing record
+                if collateral is not None:
+                    record.collateral = collateral
+                if debt is not None:
+                    record.debt = debt
+                record.collateral_enabled = collateral_enabled
+            else:
+                # Create new record
+                new_record = ZkLendCollateralDebt(
+                    user_id=user_id,
+                    collateral=collateral if collateral is not None else {},
+                    debt=debt if debt is not None else {},
+                    deposit={},
+                    collateral_enabled=collateral_enabled
+                )
+                session.add(new_record)
+            session.commit()
+        finally:
+            session.close()
