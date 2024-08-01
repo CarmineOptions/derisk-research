@@ -98,3 +98,17 @@ class HealthRatioLevel(Base):
     user_id = Column(String, index=True)
     value = Column(DECIMAL, nullable=False)
     protocol_id = Column(ChoiceType(ProtocolIDs, impl=String()), nullable=False)
+
+
+class ZkLendCollateralDebt(Base):
+    """
+    SQLAlchemy model for the liquidable debt table for ZkLend.
+    """
+
+    __tablename__ = "zklend_collateral_debt"
+
+    user_id = Column(String, nullable=False, index=True)
+    collateral = Column(JSON, nullable=True)
+    debt = Column(JSON, nullable=True)
+    deposit = Column(JSON, nullable=True)
+    collateral_enabled = Column(JSON, nullable=False)
