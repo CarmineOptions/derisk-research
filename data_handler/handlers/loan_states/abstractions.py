@@ -185,10 +185,14 @@ class LoanStateComputationBase(ABC):
         """
         # Create a DataFrame with the loan state
         loan_entities_values = loan_entities.values()
+        if hasattr(loan_entities_values, "update_deposit"):
+            for loan_entity in loan_entities_values:
+                loan_entity.update_deposit()
+
         result_df = pd.DataFrame(
             {
                 "protocol": [self.PROTOCOL_TYPE for _ in loan_entities.keys()],
-                "user": [user for user in loan_entities],
+                "user": [loan_entity.user for loan_entity in loan_entities.values()],
                 "collateral": [
                     {
                         token: float(amount)
