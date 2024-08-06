@@ -6,7 +6,14 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import scoped_session, sessionmaker, Session, aliased, Query
 
 from db.database import SQLALCHEMY_DATABASE_URL
-from db.models import Base, LoanState, OrderBookModel, InterestRate, ZkLendCollateralDebt
+from db.models import (
+    Base,
+    LoanState,
+    OrderBookModel,
+    InterestRate,
+    ZkLendCollateralDebt,
+    HashtackCollateralDebt,
+)
 from handler_tools.constants import ProtocolIDs
 
 
@@ -101,8 +108,7 @@ class DBConnector:
         session = self.Session()
         return (
             session.query(
-                LoanState.user,
-                func.max(LoanState.block).label('latest_block')
+                LoanState.user, func.max(LoanState.block).label("latest_block")
             )
             .group_by(LoanState.user)
             .subquery()
@@ -122,8 +128,8 @@ class DBConnector:
                 subquery,
                 and_(
                     LoanState.user == subquery.c.user,
-                    LoanState.block == subquery.c.latest_block
-                )
+                    LoanState.block == subquery.c.latest_block,
+                ),
             )
             .all()
         )
@@ -241,7 +247,9 @@ class DBConnector:
         finally:
             db.close()
 
-    def get_latest_order_book(self, dex: str, token_a: str, token_b: str) -> OrderBookModel | None:
+    def get_latest_order_book(
+        self, dex: str, token_a: str, token_b: str
+    ) -> OrderBookModel | None:
         """
         Retrieves the latest order book for a given pair of tokens and DEX.
         :param dex: str - The DEX name.
@@ -258,13 +266,12 @@ class DBConnector:
             )
             max_timestamp = (
                 select(func.max(OrderBookModel.timestamp))
-                .where(order_book_condition).
-                scalar_subquery()
+                .where(order_book_condition)
+                .scalar_subquery()
             )
             return db.execute(
                 select(OrderBookModel).where(
-                    OrderBookModel.timestamp == max_timestamp,
-                    order_book_condition
+                    OrderBookModel.timestamp == max_timestamp, order_book_condition
                 )
             ).scalar()
         finally:
@@ -341,7 +348,7 @@ class DBConnector:
             db.close()
 
 
-class ZkLendDBConnector:
+class InitializerDBConnector:
     """
     Provides database connection and CRUD operations for ZkLendCollateralDebt.
 
@@ -368,7 +375,11 @@ class ZkLendDBConnector:
         """
         session = self.Session()
         try:
-            return session.query(ZkLendCollateralDebt).filter(ZkLendCollateralDebt.user_id.in_(user_ids)).all()
+            return (
+                session.query(ZkLendCollateralDebt)
+                .filter(ZkLendCollateralDebt.user_id.in_(user_ids))
+                .all()
+            )
         finally:
             session.close()
 
@@ -384,7 +395,13 @@ class ZkLendDBConnector:
 
         return None
 
-    def save_collateral_enabled_by_user(self, user_id: str, collateral_enabled: dict, collateral: dict = None, debt: dict = None, ) -> None:
+    def save_collateral_enabled_by_user(
+        self,
+        user_id: str,
+        collateral_enabled: dict,
+        collateral: dict = None,
+        debt: dict = None,
+    ) -> None:
         """
         Update the collateral and debt for a given user_id.
         :param user_id: The user ID to update.
@@ -398,7 +415,9 @@ class ZkLendDBConnector:
         collateral = self._convert_decimal_to_float(collateral)
         debt = self._convert_decimal_to_float(debt)
         try:
-            record = session.query(ZkLendCollateralDebt).filter_by(user_id=user_id).first()
+            record = (
+                session.query(ZkLendCollateralDebt).filter_by(user_id=user_id).first()
+            )
             if record:
                 # Update existing record
                 if collateral is not None:
@@ -413,7 +432,51 @@ class ZkLendDBConnector:
                     collateral=collateral if collateral is not None else {},
                     debt=debt if debt is not None else {},
                     deposit={},
-                    collateral_enabled=collateral_enabled
+                    collateral_enabled=collateral_enabled,
+                )
+                session.add(new_record)
+            session.commit()
+        finally:
+            session.close()
+
+    def save_debt_category(
+        self,
+        user_id: str,
+        debt_category: str,
+        collateral: dict,
+        debt: dict,
+        original_collateral: dict,
+        borrowed_collateral: dict,
+    ) -> None:
+        """
+        Update the debt category for a given user_id.
+        :param user_id: The user ID to update.
+        :param debt_category: The new debt category.
+        :param collateral: The new collateral data.
+        :param debt: The new debt data.
+        :param original_collateral: The new original collateral data.
+        :param borrowed_collateral: The new borrowed collateral data.
+        :return: None
+        """
+        session = self.Session()
+        try:
+            record = (
+                session.query(HashtackCollateralDebt).filter_by(user_id=user_id).first()
+            )
+            if record:
+                record.debt_category = debt_category
+            else:
+                new_record = HashtackCollateralDebt(
+                    user_id=user_id,
+                    collateral=collateral if collateral is not None else {},
+                    debt=debt if debt is not None else {},
+                    original_collateral=(
+                        original_collateral if original_collateral is not None else {}
+                    ),
+                    borrowed_collateral=(
+                        borrowed_collateral if borrowed_collateral is not None else {}
+                    ),
+                    debt_category=debt_category,
                 )
                 session.add(new_record)
             session.commit()
