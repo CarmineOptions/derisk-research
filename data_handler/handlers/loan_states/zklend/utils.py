@@ -1,5 +1,5 @@
 import pandas as pd
-from db.crud import ZkLendDBConnector
+from db.crud import InitializerDBConnector
 from db.models import ZkLendCollateralDebt
 from decimal import Decimal
 
@@ -17,7 +17,7 @@ class ZkLendInitializer:
     )
 
     def __init__(self, zklend_state: "ZkLendState"):
-        self.db_connector = ZkLendDBConnector()
+        self.db_connector = InitializerDBConnector()
         self.zklend_state = zklend_state
 
     @staticmethod
@@ -39,14 +39,14 @@ class ZkLendInitializer:
         :param df: The DataFrame to extract the user ids from.
         :return: The list of user ids.
         """
-        return df.apply(self._select_element, axis=1).to_list()
+        result = df.apply(self._select_element, axis=1).to_list()
+        return list(set(result))
 
     def set_last_loan_states_per_users(self, users_ids: list[str]) -> None:
         """
         Sets the last loan states for the given users.
 
         :param users_ids: The list of user ids to set the loan states for.
-        :param zklend_state: The zkLend state object.
         """
         loan_states = self.db_connector.get_by_user_ids(users_ids)
         for loan_state in loan_states:
