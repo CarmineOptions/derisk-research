@@ -17,6 +17,16 @@ class HashtackV0StateComputation(LoanStateComputationBase):
     PROTOCOL_TYPE = ProtocolIDs.HASHSTACK_V0.value
     PROTOCOL_ADDRESSES = ProtocolAddresses().HASHSTACK_V0_ADDRESSES
 
+    def process_interest_rate_event(self, instance_state: "State", event: pd.Series) -> None:
+        """
+        Processes the interest rate event.
+
+        :param instance_state: The instance of the state class to call the method on.
+        :type instance_state: object
+        :param event: The event data as a pandas Series.
+        """
+        pass
+
     def process_data(self, data: list[dict]) -> pd.DataFrame:
         """
         Processes the data retrieved from the DeRisk API.
@@ -39,6 +49,40 @@ class HashtackV0StateComputation(LoanStateComputationBase):
 
         result_df = self.get_result_df(hashtack_v0_state.loan_entities)
         return result_df
+
+    def run(self) -> None:
+        """
+        Runs the loan state computation for the specific protocol.
+        """
+        max_retries = 10000
+        retry = 0
+        self.last_block = 0
+
+        logger.info(f"Default last block: {self.last_block}")
+        while retry < max_retries:
+            # FIXME add interest rate data
+            data = self.get_addresses_data(self.PROTOCOL_ADDRESSES, self.last_block)
+
+            if not data:
+                logger.info(f"No data for block {self.last_block}")
+                self.last_block += self.PAGINATION_SIZE
+                retry += 1
+                continue
+
+            # Process the data
+            processed_data = self.process_data(data)
+
+            # Save the processed data and  interest rate data
+            self.save_data(processed_data)
+            # self.save_interest_rate_data()
+
+            # Update the last block
+            self.last_block += self.PAGINATION_SIZE
+            logger.info(f"Processed data up to block {self.last_block}")
+            retry = 0  # Reset retry counter if data is found and processed
+
+        if retry == max_retries:
+            logger.info(f"Reached max retries for block: {self.last_block}")
 
 
 def run_loan_states_computation_for_hashstack_v0() -> None:
