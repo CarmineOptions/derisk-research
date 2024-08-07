@@ -189,6 +189,8 @@ class LoanStateComputationBase(ABC):
             for loan_entity in loan_entities_values:
                 loan_entity.update_deposit()
 
+        # remove objects from loan_entities_values if the object has `has_skip` attribute
+        loan_entities_values = [loan_entity for loan_entity in loan_entities_values if not hasattr(loan_entity, "has_skip")]
         result_df = pd.DataFrame(
             {
                 "protocol": [self.PROTOCOL_TYPE for _ in loan_entities.keys()],
