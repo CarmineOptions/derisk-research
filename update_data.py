@@ -4,10 +4,11 @@ import logging
 import math
 import time
 
+import pandas
+
 import src.hashstack_v0
 import src.hashstack_v1
 import src.helpers
-import src.histogram
 import src.loans_table
 import src.main_chart
 import src.nostra_alpha
@@ -66,8 +67,6 @@ def update_data(zklend_state: src.zklend.ZkLendState):
     asyncio.run(zklend_state.collect_token_parameters())
     # asyncio.run(hashstack_v0_state.collect_token_parameters())
     # asyncio.run(hashstack_v1_state.collect_token_parameters())
-    # # asyncio.run(nostra_alpha_state.collect_token_parameters())  # TODO: already done in init
-    # # asyncio.run(nostra_mainnet_state.collect_token_parameters())  # TODO: already done in init
     logging.info(f"collected token parameters in {time.time() - t2}s")
 
     # Get prices of the underlying tokens.
@@ -147,14 +146,24 @@ def update_data(zklend_state: src.zklend.ZkLendState):
     max_timestamp = zklend_events["timestamp"].max()
     last_update = {"timestamp": str(max_timestamp), "block_number": str(max_block_number)}
     src.persistent_state.upload_object_as_pickle(last_update, path=src.persistent_state.LAST_UPDATE_FILENAME)
+    zklend_state.save_loan_entities(path=src.persistent_state.PERSISTENT_STATE_LOAN_ENTITIES_FILENAME)
+    zklend_state.clear_loan_entities()
     src.persistent_state.upload_object_as_pickle(zklend_state, path=src.persistent_state.PERSISTENT_STATE_FILENAME)
-
+    loan_entities = pandas.read_parquet(
+        f"gs://{src.helpers.GS_BUCKET_NAME}/{src.persistent_state.PERSISTENT_STATE_LOAN_ENTITIES_FILENAME}"
+    )
+    zklend_state.set_loan_entities(loan_entities=loan_entities)
     logging.info(f"Updated CSV data in {time.time() - t0}s")
     return zklend_state
 
 
 def update_data_continuously():
     state = src.persistent_state.load_pickle(path=src.persistent_state.PERSISTENT_STATE_FILENAME)
+    if state.last_block_number > 0:
+        loan_entities = pandas.read_parquet(
+            f"gs://{src.helpers.GS_BUCKET_NAME}/{src.persistent_state.PERSISTENT_STATE_LOAN_ENTITIES_FILENAME}"
+        )
+        state.set_loan_entities(loan_entities=loan_entities)
     while True:
         state = update_data(state)
         logging.info("DATA UPDATED")
@@ -165,4 +174,9 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
     zklend_state = src.persistent_state.load_pickle(path=src.persistent_state.PERSISTENT_STATE_FILENAME)
+    if zklend_state.last_block_number > 0:
+        loan_entities = pandas.read_parquet(
+            f"gs://{src.helpers.GS_BUCKET_NAME}/{src.persistent_state.PERSISTENT_STATE_LOAN_ENTITIES_FILENAME}"
+        )
+        zklend_state.set_loan_entities(loan_entities=loan_entities)
     update_data(zklend_state)

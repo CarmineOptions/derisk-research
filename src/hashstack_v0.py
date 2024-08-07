@@ -64,7 +64,7 @@ TOKEN_SETTINGS: dict[str, TokenSettings] = {
 
 
 # Keys are event names, values are names of the respective methods that process the given event.
-EVENTS_TO_METHODS_MAPPING: dict[str, str] = {
+EVENTS_TO_METHODS: dict[str, str] = {
     "new_loan": "process_new_loan_event",
     "collateral_added": "process_collateral_added_event",
     "collateral_withdrawal": "process_collateral_withdrawal_event",
@@ -75,30 +75,29 @@ EVENTS_TO_METHODS_MAPPING: dict[str, str] = {
     "liquidated": "process_liquidated_event",
 }
 
+# Keys are event names, values denote the order in which the given events should be processed.
+HASHSTACK_V0_EVENTS_TO_ORDER: dict[str, str] = {
+    "new_loan": 0,
+    "loan_swap": 1,
+    "liquidated": 2,
+    "loan_withdrawal": 3,
+    "loan_repaid": 4,
+    "loan_interest_deducted": 5,
+    "collateral_added": 6,
+    "collateral_withdrawal": 7,
+}
+
 
 
 def get_events(start_block_number: int = 0) -> pandas.DataFrame:
     events = src.helpers.get_events(
         addresses = (ADDRESS, ''),
-        event_names = tuple(EVENTS_TO_METHODS_MAPPING),
+        event_names = tuple(EVENTS_TO_METHODS),
         start_block_number = start_block_number,
     )
     # Ensure we're processing `loan_repaid` after other loan-altering events and the other events in a logical order.
-    events["order"] = events["key_name"].map(
-        {
-            "new_loan": 0,
-            "loan_withdrawal": 3,
-            "loan_repaid": 4,
-            "loan_swap": 1,
-            "collateral_added": 6,
-            "collateral_withdrawal": 7,
-            "loan_interest_deducted": 5,
-            "liquidated": 2,
-        },
-    )
-    events.sort_values(
-        ["block_number", "transaction_hash", "order"], inplace=True
-    )
+    events["order"] = events["key_name"].map(HASHSTACK_V0_EVENTS_TO_ORDER)
+    events.sort_values(["block_number", "transaction_hash", "order"], inplace=True)
     events.drop(columns = ["order"], inplace = True)
     return events
 
@@ -186,7 +185,7 @@ class HashstackV0State(src.state.State):
     debt, thus we always rewrite the balances whenever they are updated. 
     """
 
-    EVENTS_TO_METHODS_MAPPING: dict[str, str] = EVENTS_TO_METHODS_MAPPING
+    EVENTS_TO_METHODS: dict[str, str] = EVENTS_TO_METHODS
 
     def __init__(
         self,
@@ -207,7 +206,7 @@ class HashstackV0State(src.state.State):
         # `timelock_validity`, `is_timelock_activated`, `activation_time`, [`timestamp`] `timestamp`.
         # Example: https://starkscan.co/event/0x04ff9acb9154603f1fc14df328a3ea53a6c58087aaac0bfbe9cc7f2565777db8_2.
         loan_id = int(event["data"][0], base=16)
-        user = event["data"][1]
+        user = src.helpers.add_leading_zeros(event["data"][1])
         debt_token = src.helpers.get_symbol(event["data"][2])
         debt_face_amount = decimal.Decimal(str(int(event["data"][4], base=16)))
         borrowed_collateral_token = src.helpers.get_symbol(event["data"][6])
@@ -332,7 +331,7 @@ class HashstackV0State(src.state.State):
         # `l3_integration`, `created_at`, [`amount_withdrawn`] `amount_withdrawn`, ``, [`timestamp`] `timestamp`.
         # Example: https://starkscan.co/event/0x05bb8614095fac1ac9b405c27e7ce870804e85aa5924ef2494fec46792b6b8dc_2.
         loan_id = int(event["data"][0], base = 16)
-        user = event["data"][1]
+        user = src.helpers.add_leading_zeros(event["data"][1])
         # TODO: Is this assert needed?
         assert self.loan_entities[loan_id].user == user
         debt_token = src.helpers.get_symbol(event["data"][2])
@@ -378,7 +377,7 @@ class HashstackV0State(src.state.State):
         # `l3_integration`, `created_at`, [`timestamp`] `timestamp`.
         # Example: https://starkscan.co/event/0x07731e48d33f6b916f4e4e81e9cee1d282e20e970717e11ad440f73cc1a73484_1.
         loan_id = int(event["data"][0], base = 16)
-        user = event["data"][1]
+        user = src.helpers.add_leading_zeros(event["data"][1])
         assert self.loan_entities[loan_id].user == user
         debt_token = src.helpers.get_symbol(event["data"][2])
         # This prevents repaid loans to appear as not repaid.
@@ -428,10 +427,10 @@ class HashstackV0State(src.state.State):
         # `created_at`, [`timestamp`] `timestamp`.
         # Example: https://starkscan.co/event/0x00ad0b6b00ce68a1d7f5b79cd550d7f4a15b1708b632b88985a4f6faeb42d5b1_7.
         old_loan_id = int(event["data"][0], base = 16)
-        old_user = event["data"][1]
+        old_user = src.helpers.add_leading_zeros(event["data"][1])
         assert self.loan_entities[old_loan_id].user == old_user
         new_loan_id = int(event["data"][14], base=16)
-        new_user = event["data"][15]
+        new_user = src.helpers.add_leading_zeros(event["data"][15])
         # TODO: Does this always have to hold?
         assert new_loan_id == old_loan_id
         # TODO: Does this always have to hold?
@@ -515,7 +514,7 @@ class HashstackV0State(src.state.State):
         # `l3_integration`, `created_at`, [`liquidator`] `liquidator`, [`timestamp`] `timestamp`.
         # Example: https://starkscan.co/event/0x0774bebd15505d3f950c362d813dc81c6320ae92cb396b6469fd1ac5d8ff62dc_8.
         loan_id = int(event["data"][0], base = 16)
-        user = event["data"][1]
+        user = src.helpers.add_leading_zeros(event["data"][1])
         assert self.loan_entities[loan_id].user == user
         debt_token = src.helpers.get_symbol(event["data"][2])
         # This prevents liquidated loans to appear as not repaid.

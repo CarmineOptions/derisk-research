@@ -16,7 +16,7 @@ import src.types
 
 
 # TODO: rename
-GS_BUCKET_NAME = "derisk-persistent-state/v2"
+GS_BUCKET_NAME = "derisk-persistent-state/v3"
 
 
 
@@ -25,6 +25,7 @@ def get_events(
     event_names: tuple[str, ...],
     start_block_number: int = 0,
 ) -> pandas.DataFrame:
+    # TODO: Set up monitoring for new key names. Alert when new key names are found? Holds for all protocols.
     connection = src.db.establish_connection()
     events = pandas.read_sql(
         sql=f"""
@@ -59,9 +60,9 @@ def get_collateral_token_range(
 ) -> list[float]:
     # TODO: improve
     STEPS = {
-        "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7": 100.0,  # ETH
-        "0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac": 2_000.0,  # WBTC
-        "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d": 0.025,  # STRK
+        "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7": 50.0,  # ETH
+        "0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac": 1_000.0,  # WBTC
+        "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d": 0.01,  # STRK
     }
     return list(
         float_range(
@@ -115,55 +116,29 @@ async def get_symbol(token_address: str) -> str:
     return starknet_py.cairo.felt.decode_shortstring(symbol[0])
 
 
-def get_price(token: str, decimals: int) -> float:
-    USDC = '0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8'
-    if token == USDC:
-        return 1.0
-
-    # TODO: load NSTSTRK price from somewhere else.
-    NSTSTRK = '0x04619e9ce4109590219c5263787050726be63382148538f3f936c22aa87d2fc2'
-    if token == NSTSTRK:
-        return 0.7
-
-    # TODO: load UNO price from somewhere else.
-    UNO = '0x0719b5092403233201aa822ce928bd4b551d0cdb071a724edd7dc5e5f57b7f34'
-    if token == UNO:
-        return 0.99
-
-    URL = "https://starknet.api.avnu.fi/internal/swap/quotes-with-prices"
-    SELL_AMOUNT_USDC = 10
-    DECIMALS_USDC = 6
-
-    params = {
-        "sellTokenAddress": USDC,
-        "buyTokenAddress": token,
-        "sellAmount": hex(SELL_AMOUNT_USDC * (10 ** DECIMALS_USDC)),
-    }
-    response = requests.get(URL, params=params)
+def get_prices(token_decimals: dict[str, int]) -> dict[str, float]:
+    URL = "https://starknet.impulse.avnu.fi/v1/tokens/short"
+    response = requests.get(URL)
 
     if response.status_code == 200:
-        token_parameters = response.json()['prices']
-        if not token_parameters:
-            # TODO: add retry count?
-            logging.warning('Failed to get prices for token = {}, sleeping and retrying.'.format(token))
-            time.sleep(0.1)
-            return get_price(token = token, decimals = decimals)
+        # Fetch information about tokens.
+        tokens_info = response.json()
 
-        def _compute_token_price(buy_amount: int) -> float:
-            buy_amount_per_usdc = buy_amount / SELL_AMOUNT_USDC / (10 ** decimals)
-            return 1 / buy_amount_per_usdc
+        prices = {}
+        for token, decimals in token_decimals.items():
+            token_info = list(filter(lambda x: (add_leading_zeros(x['address']) == token), tokens_info))
 
-        max_buy_amount = max(int(x['buyAmount'], base = 16) for x in token_parameters)
-        return _compute_token_price(max_buy_amount)
+            # Remove duplicates.
+            token_info = [dict(y) for y in {tuple(x.items()) for x in token_info}]
+
+            # Perform sanity checks.
+            assert len(token_info) == 1
+            assert decimals == token_info[0]['decimals']
+
+            prices[token] = token_info[0]['currentPrice']
+        return prices
     else:
         response.raise_for_status()
-
-
-def get_prices(token_decimals: dict[str, int]) -> dict[str, float]:
-    prices = {}
-    for token, decimals in token_decimals.items():
-        prices[token] = get_price(token = token, decimals = decimals)
-    return prices
 
 
 def upload_file_to_bucket(source_path: str, target_path: str):
