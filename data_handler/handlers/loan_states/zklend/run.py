@@ -6,6 +6,7 @@ from handlers.state import State
 from handlers.loan_states.abstractions import LoanStateComputationBase
 from handlers.loan_states.zklend.events import ZkLendState
 from handler_tools.constants import ProtocolAddresses, ProtocolIDs
+from handlers.loan_states.zklend.utils import ZkLendInitializer
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ class ZkLendLoanStateComputation(LoanStateComputationBase):
     ]
 
     def process_event(
-            self, instance_state: State, method_name: str, event: pd.Series
+        self, instance_state: State, method_name: str, event: pd.Series
     ) -> None:
         """
         Processes an event based on the method name and the event data.
@@ -40,8 +41,8 @@ class ZkLendLoanStateComputation(LoanStateComputationBase):
             block_number = event.get("block_number")
             # For each block number, process the interest rate event
             if (
-                    self.last_block != block_number
-                    and event["key_name"] in self.INTEREST_RATES_KEYS
+                self.last_block != block_number
+                and event["key_name"] in self.INTEREST_RATES_KEYS
             ):
                 self.process_interest_rate_event(instance_state, event)
 
@@ -85,6 +86,10 @@ class ZkLendLoanStateComputation(LoanStateComputationBase):
         events_mapping = zklend_state.EVENTS_METHODS_MAPPING
         # Init DataFrame
         df = pd.DataFrame(data)
+        # Init collateral_enabled state via ZkLendInitializer
+        zklend_initializer = ZkLendInitializer(zklend_state)
+        user_ids = zklend_initializer.get_user_ids_from_df(df)
+        zklend_initializer.set_last_loan_states_per_users(user_ids)
 
         # Filter out events that are not in the mapping
         df_filtered = df[df["key_name"].isin(events_mapping.keys())]
@@ -107,14 +112,16 @@ class ZkLendLoanStateComputation(LoanStateComputationBase):
         """
         max_retries = 5
         retry = 0
-        zklend_protocol_address = self.PROTOCOL_ADDRESSES[0]
+        zklend_protocol_address = self.PROTOCOL_ADDRESSES
 
-        logger.info(f'Default last block: {self.last_block}')
+        logger.info(f"Default last block: {self.last_block}")
         while retry < max_retries:
             data = self.get_data(zklend_protocol_address, self.last_block)
 
             if not data:
-                logger.info(f"No data found for address {zklend_protocol_address} at block {self.last_block}")
+                logger.info(
+                    f"No data found for address {zklend_protocol_address} at block {self.last_block}"
+                )
                 self.last_block += self.PAGINATION_SIZE
                 retry += 1
                 continue
