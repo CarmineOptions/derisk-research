@@ -5,6 +5,7 @@ from time import monotonic
 from handlers.loan_states.abstractions import LoanStateComputationBase
 from handlers.loan_states.hashtack_v0.events import HashstackV0State
 from handler_tools.constants import ProtocolAddresses, ProtocolIDs
+from handlers.loan_states.hashtack_v0.utils import HashtackV0Initializer
 
 logger = logging.getLogger(__name__)
 
@@ -16,8 +17,17 @@ class HashtackV0StateComputation(LoanStateComputationBase):
 
     PROTOCOL_TYPE = ProtocolIDs.HASHSTACK_V0.value
     PROTOCOL_ADDRESSES = ProtocolAddresses().HASHSTACK_V0_ADDRESSES
+    IGNORED_EVENTS = [
+        "collateral_withdrawal",
+        "loan_interest_deducted",
+        "collateral_added",
+        "collateral_withdrawal",
+        "liquidated",
+    ]
 
-    def process_interest_rate_event(self, instance_state: "State", event: pd.Series) -> None:
+    def process_interest_rate_event(
+        self, instance_state: "State", event: pd.Series
+    ) -> None:
         """
         Processes the interest rate event.
 
@@ -41,6 +51,16 @@ class HashtackV0StateComputation(LoanStateComputationBase):
         events_mapping = hashtack_v0_state.EVENTS_METHODS_MAPPING
         # Init DataFrame
         df = pd.DataFrame(data)
+
+        # init HashtackV0Initializer
+        # Get user ids and ignore some specific events because of not having user id
+        user_df = df[df["key_name"].apply(lambda x: x not in self.IGNORED_EVENTS)]
+        user_ids = (
+            user_df["data"].apply(lambda x: x[1] if len(x) > 1 else None).tolist()
+        )
+
+        hashtack_initializer = HashtackV0Initializer(hashtack_v0_state)
+        hashtack_initializer.set_last_loan_states_per_users(list(set(user_ids)))
         # Filter out events that are not in the mapping
         df_filtered = df[df["key_name"].isin(events_mapping.keys())]
         for index, row in df_filtered.iterrows():
@@ -56,7 +76,7 @@ class HashtackV0StateComputation(LoanStateComputationBase):
         """
         max_retries = 10000
         retry = 0
-        self.last_block = 0
+        self.last_block = 21000
 
         logger.info(f"Default last block: {self.last_block}")
         while retry < max_retries:
