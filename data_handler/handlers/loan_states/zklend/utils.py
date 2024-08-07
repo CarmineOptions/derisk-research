@@ -48,7 +48,7 @@ class ZkLendInitializer:
 
         :param users_ids: The list of user ids to set the loan states for.
         """
-        loan_states = self.db_connector.get_by_user_ids(users_ids)
+        loan_states = self.db_connector.get_zklend_by_user_ids(users_ids)
         for loan_state in loan_states:
             self._set_loan_state_per_user(loan_state)
 
