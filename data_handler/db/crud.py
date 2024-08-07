@@ -234,8 +234,6 @@ class DBConnector:
                         or obj.protocol_id != existing_obj.protocol_id
                     ):
                         objects_to_save.append(obj)
-                else:
-                    objects_to_save.append(obj)
 
             # Save the filtered objects
             if objects_to_save:
@@ -367,7 +365,7 @@ class InitializerDBConnector:
         self.session_factory = sessionmaker(bind=self.engine)
         self.Session = scoped_session(self.session_factory)
 
-    def get_by_user_ids(self, user_ids: List[str]) -> List[ZkLendCollateralDebt]:
+    def get_zklend_by_user_ids(self, user_ids: List[str]) -> List[ZkLendCollateralDebt]:
         """
         Retrieve ZkLendCollateralDebt records by user_ids.
         :param user_ids: A list of user IDs to filter by.
@@ -378,6 +376,22 @@ class InitializerDBConnector:
             return (
                 session.query(ZkLendCollateralDebt)
                 .filter(ZkLendCollateralDebt.user_id.in_(user_ids))
+                .all()
+            )
+        finally:
+            session.close()
+
+    def get_hashtackv0_by_user_ids(self, user_ids: List[str]) -> List[HashtackCollateralDebt]:
+        """
+        Retrieve HashtackCollateralDebt records by user_ids.
+        :param user_ids: A list of user IDs to filter by.
+        :return: A list of HashtackCollateralDebt objects.
+        """
+        session = self.Session()
+        try:
+            return (
+                session.query(HashtackCollateralDebt)
+                .filter(HashtackCollateralDebt.user_id.in_(user_ids))
                 .all()
             )
         finally:
@@ -442,6 +456,7 @@ class InitializerDBConnector:
     def save_debt_category(
         self,
         user_id: str,
+        loan_id: str,
         debt_category: str,
         collateral: dict,
         debt: dict,
@@ -459,23 +474,38 @@ class InitializerDBConnector:
         :return: None
         """
         session = self.Session()
+        # convert Decimal to float for JSON serialization
+        collateral = self._convert_decimal_to_float(collateral)
+        debt = self._convert_decimal_to_float(debt)
+        original_collateral = self._convert_decimal_to_float(original_collateral)
+        borrowed_collateral = self._convert_decimal_to_float(borrowed_collateral)
+
         try:
             record = (
                 session.query(HashtackCollateralDebt).filter_by(user_id=user_id).first()
             )
-            if record:
+            # if debt category is the same, update the record
+            if record and record.debt_category == debt_category:
+                return
+            # if record exists, and debt category is different, update the record
+            elif record and record.debt_category != debt_category:
+                record.loan_id = loan_id
                 record.debt_category = debt_category
+                record.collateral = collateral
+                record.debt = debt
+                record.original_collateral = original_collateral
+                record.borrowed_collateral = borrowed_collateral
             else:
+                # Create new record if not yet created for this user
                 new_record = HashtackCollateralDebt(
                     user_id=user_id,
-                    collateral=collateral if collateral is not None else {},
-                    debt=debt if debt is not None else {},
-                    original_collateral=(
-                        original_collateral if original_collateral is not None else {}
-                    ),
-                    borrowed_collateral=(
-                        borrowed_collateral if borrowed_collateral is not None else {}
-                    ),
+                    loan_id=loan_id,
+                    # collateral
+                    collateral=collateral,
+                    original_collateral=original_collateral,
+                    # debt
+                    debt=debt,
+                    borrowed_collateral=borrowed_collateral,
                     debt_category=debt_category,
                 )
                 session.add(new_record)
