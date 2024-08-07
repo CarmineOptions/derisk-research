@@ -1,7 +1,7 @@
 from uuid import uuid4
 from decimal import Decimal
 
-from sqlalchemy import UUID, BigInteger, Column, MetaData, String, DECIMAL
+from sqlalchemy import UUID, BigInteger, Column, MetaData, String, DECIMAL, Integer
 from sqlalchemy.orm import DeclarativeBase, Mapped
 from sqlalchemy.types import JSON
 from sqlalchemy_utils.types.choice import ChoiceType
@@ -112,3 +112,19 @@ class ZkLendCollateralDebt(Base):
     debt = Column(JSON, nullable=True)
     deposit = Column(JSON, nullable=True)
     collateral_enabled = Column(JSON, nullable=False)
+
+
+class HashtackCollateralDebt(Base):
+    """
+    SQLAlchemy model for the liquidable debt table for Hashtack.
+    """
+
+    __tablename__ = "hashtack_collateral_debt"
+
+    user_id = Column(String, nullable=False, index=True)
+    loan_id = Column(Integer, nullable=False)
+    collateral = Column(JSON, nullable=True)
+    debt = Column(JSON, nullable=True)
+    debt_category = Column(Integer, nullable=False)
+    original_collateral = Column(JSON, nullable=False)
+    borrowed_collateral = Column(JSON, nullable=False)
