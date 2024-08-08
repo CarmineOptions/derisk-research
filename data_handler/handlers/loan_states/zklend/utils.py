@@ -27,10 +27,13 @@ class ZkLendInitializer:
         :param row: Series row.
         :return: str
         """
-        if row["key_name"] in "CollateralEnabled":
+        if "TreasuryUpdate" == row["key_name"]:
+            return None
+
+        if row["key_name"] == "CollateralEnabled":
             return row["data"][0]
         else:
-            return row["data"][1]
+            return row["data"][1] if len(row["data"]) > 1 else None
 
     def get_user_ids_from_df(self, df: pd.DataFrame) -> list[str]:
         """
@@ -39,7 +42,7 @@ class ZkLendInitializer:
         :param df: The DataFrame to extract the user ids from.
         :return: The list of user ids.
         """
-        return df.apply(self._select_element, axis=1).to_list()
+        return list(set(df.apply(self._select_element, axis=1).to_list()))
 
     def set_last_loan_states_per_users(self, users_ids: list[str]) -> None:
         """
