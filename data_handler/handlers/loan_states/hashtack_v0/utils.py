@@ -1,3 +1,4 @@
+import pandas as pd
 from db.crud import InitializerDBConnector
 from db.models import HashtackCollateralDebt
 from decimal import Decimal
@@ -5,6 +6,9 @@ from handlers.loan_states.hashtack_v0.events import HashstackV0LoanEntity
 
 
 class HashtackV0Initializer:
+    """
+    A class that initializes the HashstackV0 loan states.
+    """
 
     def __init__(self, hashtack_state: "HashstackV0State"):
         self.db_connector = InitializerDBConnector()

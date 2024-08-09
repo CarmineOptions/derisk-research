@@ -3,7 +3,7 @@ import logging
 import pandas as pd
 from time import monotonic
 from handlers.loan_states.abstractions import LoanStateComputationBase
-from handlers.loan_states.hashtack_v0.events import HashstackV0State
+from handlers.loan_states.hashtack_v0.events import HashstackV0State, LoanEntity
 from handler_tools.constants import ProtocolAddresses, ProtocolIDs
 from handlers.loan_states.hashtack_v0.utils import HashtackV0Initializer
 
@@ -63,7 +63,11 @@ class HashtackV0StateComputation(LoanStateComputationBase):
         hashtack_initializer.set_last_loan_states_per_users(list(set(user_ids)))
         # Filter out events that are not in the mapping
         df_filtered = df[df["key_name"].isin(events_mapping.keys())]
-        for index, row in df_filtered.iterrows():
+        # sorted df by first self.IGNORED_EVENTS and then all the rest
+        df_sorted = df_filtered.sort_values(
+            by=["key_name"], key=lambda x: x.apply(lambda y: y not in self.IGNORED_EVENTS)
+        )
+        for index, row in df_sorted.iterrows():
             method_name = events_mapping.get(row["key_name"], "") or ""
             self.process_event(hashtack_v0_state, method_name, row)
 
