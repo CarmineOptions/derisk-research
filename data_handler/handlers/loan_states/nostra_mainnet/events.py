@@ -2,7 +2,7 @@ from typing import Optional
 import dataclasses
 
 from handlers.loan_states.nostra_alpha.events import (
-    TokenSettings,
+    TOKEN_SETTINGS,
 )
 from handlers.loan_states.nostra_alpha.events import (
     NostraAlphaState,
