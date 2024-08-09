@@ -482,15 +482,16 @@ class HashstackV0State(State):
         original_collateral.values[original_collateral_token] = original_collateral_face_amount
         try:
             self.loan_entities[loan_id].original_collateral = original_collateral
-        except TypeError as exc:
-            logging.getLogger("ErrorHandler").info(f"TypeErrorHandler: {exc}: {loan_id=}")
-        self.loan_entities[loan_id].collateral.values = {
+            self.loan_entities[loan_id].collateral.values = {
             token: (
                 self.loan_entities[loan_id].original_collateral.values[token]
                 + self.loan_entities[loan_id].borrowed_collateral.values[token]
             )
-            for token in TOKEN_SETTINGS
-        }
+                for token in TOKEN_SETTINGS
+            }
+        except TypeError as exc:
+            logging.getLogger("ErrorHandler").info(f"TypeErrorHandler: {exc}: {loan_id=}")
+            return
         # add additional info block and timestamp
         self.loan_entities[loan_id].extra_info.block = event["block_number"]
         self.loan_entities[loan_id].extra_info.timestamp = event["timestamp"]
