@@ -109,9 +109,9 @@ class HashtackV0StateComputation(LoanStateComputationBase):
         """
         Runs the loan state computation for the specific protocol.
         """
-        max_retries = 10000
+        max_retries = 10000 # FIXME change it after first run on the server
         retry = 0
-        self.last_block = 21000
+        self.last_block = 21000 # FIXME change it after first run on the server
 
         logger.info(f"Default last block: {self.last_block}")
         while retry < max_retries:
