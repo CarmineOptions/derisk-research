@@ -236,6 +236,11 @@ def main():
             return 'very high'
 
         streamlit.subheader(
+            f":warning: Liquidity data on this chart is currently inaccurate due to ongoing database migration. "
+            f"We expect this issue to be resolved by Mon Aug 12 2024 14:00 GMT+0000"
+        )
+
+        streamlit.subheader(
             f":warning: At price of {round(example_row['collateral_token_price'], 2)}, the risk of acquiring bad debt for "
             f"lending protocols is {_get_risk_level(example_row['debt_to_supply_ratio'])}."
         )    
