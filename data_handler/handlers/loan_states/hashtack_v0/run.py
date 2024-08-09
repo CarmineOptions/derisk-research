@@ -17,13 +17,6 @@ class HashtackV0StateComputation(LoanStateComputationBase):
 
     PROTOCOL_TYPE = ProtocolIDs.HASHSTACK_V0.value
     PROTOCOL_ADDRESSES = ProtocolAddresses().HASHSTACK_V0_ADDRESSES
-    IGNORED_EVENTS = [
-        "collateral_withdrawal",
-        "loan_interest_deducted",
-        "collateral_added",
-        "collateral_withdrawal",
-        "liquidated",
-    ]
 
     def process_interest_rate_event(
         self, instance_state: "State", event: pd.Series
@@ -53,25 +46,63 @@ class HashtackV0StateComputation(LoanStateComputationBase):
         df = pd.DataFrame(data)
 
         # init HashtackV0Initializer
-        # Get user ids and ignore some specific events because of not having user id
-        user_df = df[df["key_name"].apply(lambda x: x not in self.IGNORED_EVENTS)]
-        user_ids = (
-            user_df["data"].apply(lambda x: x[1] if len(x) > 1 else None).tolist()
-        )
-
         hashtack_initializer = HashtackV0Initializer(hashtack_v0_state)
-        hashtack_initializer.set_last_loan_states_per_users(list(set(user_ids)))
+        loan_ids = hashtack_initializer.get_loan_ids(df)
+        hashtack_initializer.set_last_loan_states_per_loan_ids(list(set(loan_ids)))
+
         # Filter out events that are not in the mapping
         df_filtered = df[df["key_name"].isin(events_mapping.keys())]
-        # sorted df by first self.IGNORED_EVENTS and then all the rest
-        df_sorted = df_filtered.sort_values(
-            by=["key_name"], key=lambda x: x.apply(lambda y: y not in self.IGNORED_EVENTS)
-        )
-        for index, row in df_sorted.iterrows():
+
+        for index, row in df_filtered.iterrows():
             method_name = events_mapping.get(row["key_name"], "") or ""
             self.process_event(hashtack_v0_state, method_name, row)
 
         result_df = self.get_result_df(hashtack_v0_state.loan_entities)
+        return result_df
+
+    def get_result_df(self, loan_entities: dict) -> pd.DataFrame:
+        """
+        Creates a DataFrame with the loan state based on the loan entities.
+        :param loan_entities: dictionary of loan entities
+        :return: dataframe with loan state
+        """
+
+        filtered_loan_entities: dict = {}
+        # remove objects from loan_entities_values if the object has `has_skip` attribute
+        for loan_id, loan_entity in loan_entities.items():
+            has_skip = getattr(loan_entity, "has_skip", None)
+            if not has_skip:
+                filtered_loan_entities[loan_id] = loan_entity
+
+        # if there are no loan entities, return an empty DataFrame
+        if not loan_entities:
+            return pd.DataFrame()
+        result_dict = {
+            "protocol": [self.PROTOCOL_TYPE for _ in filtered_loan_entities.keys()],
+            "user": [
+                loan_entity.user for loan_entity in filtered_loan_entities.values()
+            ],
+            "collateral": [
+                {
+                    token: float(amount)
+                    for token, amount in loan.collateral.values.items()
+                }
+                for loan in filtered_loan_entities.values()
+            ],
+            "block": [
+                entity.extra_info.block for entity in filtered_loan_entities.values()
+            ],
+            "timestamp": [
+                entity.extra_info.timestamp
+                for entity in filtered_loan_entities.values()
+            ],
+            "debt": [
+                {token: float(amount) for token, amount in loan.debt.values.items()}
+                for loan in filtered_loan_entities.values()
+            ],
+        }
+
+        result_df = pd.DataFrame(result_dict)
         return result_df
 
     def run(self) -> None:
