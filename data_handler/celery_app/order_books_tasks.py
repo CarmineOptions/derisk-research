@@ -24,7 +24,7 @@ def ekubo_order_book():
     filtered_pool_states = [
         pool_state
         for pool_state in pool_states
-        if pool_state["token0"] in TOKEN_MAPPING
+        if isinstance(pool_state, dict) and pool_state["token0"] in TOKEN_MAPPING
         and pool_state["token1"] in TOKEN_MAPPING
     ]
     for pool_state in filtered_pool_states:
