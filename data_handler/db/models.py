@@ -102,7 +102,7 @@ class HealthRatioLevel(Base):
 
 class ZkLendCollateralDebt(Base):
     """
-    SQLAlchemy model for the liquidable debt table for ZkLend.
+    SQLAlchemy model for table with obligation data for ZkLend.
     """
 
     __tablename__ = "zklend_collateral_debt"
