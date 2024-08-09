@@ -1,4 +1,5 @@
 import uuid
+import logging
 from typing import List, Optional, Type, TypeVar
 
 from sqlalchemy import create_engine, func, select, and_, desc, Subquery
@@ -16,7 +17,7 @@ from db.models import (
 )
 from handler_tools.constants import ProtocolIDs
 
-
+logger = logging.getLogger(__name__)
 ModelType = TypeVar("ModelType", bound=Base)
 
 
@@ -239,6 +240,7 @@ class DBConnector:
             if objects_to_save:
                 db.bulk_save_objects(objects_to_save)
                 db.commit()
+                logger.info(f"Saved {len(objects_to_save)} loan states to the database.")
         except SQLAlchemyError as e:
             db.rollback()
             raise e
@@ -510,5 +512,6 @@ class InitializerDBConnector:
                 )
                 session.add(new_record)
             session.commit()
+            logger.info(f"Saved debt category for user {user_id}")
         finally:
             session.close()
