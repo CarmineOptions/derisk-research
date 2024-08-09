@@ -105,7 +105,7 @@ class NostraAlphaStateComputation(LoanStateComputationBase):
         """
         max_retries = 10000
         retry = 0
-        self.last_block = 10800
+        self.last_block = 202336
 
         logger.info(f"Default last block: {self.last_block}")
         while retry < max_retries:
