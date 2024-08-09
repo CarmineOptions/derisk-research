@@ -33,7 +33,7 @@ def add_ekubo_liquidity(
     collateral_token: str,
     debt_token: str,
 ) -> float:
-    URL = "http://35.187.112.169/orderbook/"
+    URL = "http://178.32.172.153/orderbook/"
     DEX = 'Ekubo'
     params = {
         "base_token": _remove_leading_zeros(collateral_token),
