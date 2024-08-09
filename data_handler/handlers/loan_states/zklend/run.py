@@ -113,7 +113,7 @@ class ZkLendLoanStateComputation(LoanStateComputationBase):
         max_retries = 5
         retry = 0
         zklend_protocol_address = self.PROTOCOL_ADDRESSES
-        self.last_block = 21_000
+        self.last_block = 48668
 
         logger.info(f"Default last block: {self.last_block}")
         while retry < max_retries:
