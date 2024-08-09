@@ -95,23 +95,59 @@ def get_main_chart_figure(
                  "JediSwap_debt_token_supply": "#4C83D0"}
 
     # TODO: Align colors with the rest of the app.
-    figure = plotly.express.bar(
-        data_frame=data,
-        x="collateral_token_price",
-        # TODO
-        y=["debt_token_supply", "liquidable_debt_at_interval"],
-        # y=[f"{amm}_debt_token_supply" for amm in amms] + ["liquidable_debt_at_interval"],
-        title=f"Liquidable debt and the corresponding supply of {debt_token} at various price intervals of {collateral_token}",
-        barmode="overlay",
-        opacity=0.65,
-        color_discrete_map={**color_map, "liquidable_debt_at_interval": "#FFD700"},
-    )
-    figure.update_traces(hovertemplate=("<b>Price:</b> %{x}<br>" "<b>Volume:</b> %{y}"))
-    figure.update_traces(selector={"name": f"debt_token_supply"}, name=f"{debt_token} available liquidity")
-    figure.update_traces(selector={"name": "liquidable_debt_at_interval"}, name=f"Liquidable {debt_token} debt")
-    figure.update_xaxes(title_text=f"{collateral_token} Price (USD)")
-    figure.update_yaxes(title_text="Volume (USD)")
+    color_map_protocol = {"liquidable_debt_at_interval_zkLend": "#ff7f0e", # Orange
+                        "liquidable_debt_at_interval_Nostra Alpha": "#2ca02c", # Green
+                        "liquidable_debt_at_interval_Nostra Mainnet": "#d62728"} # Red 
+    color_map_liquidity = {"debt_token_supply": "#1f77b4"} # blue
+    figure = plotly.graph_objs.Figure()
 
+    # Add bars for each protocol and the total liquidable debt
+    for col in color_map_protocol.keys():
+        figure.add_trace(plotly.graph_objs.Bar(
+            x=data["collateral_token_price"],
+            y=data[col],
+            name = col.replace("liquidable_debt_at_interval", f"Liquidable {debt_token} debt").replace("_", " "),
+            marker_color = color_map_protocol[col],
+            opacity = 0.7,
+            customdata=data[["liquidable_debt", "liquidable_debt_zkLend", "liquidable_debt_at_interval_Nostra Alpha", "liquidable_debt_at_interval_Nostra Mainnet"]].values,
+            hovertemplate=(
+                "<b>Price:</b> %{x}<br>"
+                "<b>Total Volume:</b> %{customdata[0]:,.2f}<br>"
+                "<b>ZkLend Volume:</b> %{customdata[1]:,.2f}<br>"
+                "<b>Nostra Alpha Volume:</b> %{customdata[2]:,.2f}<br>"
+                "<b>Nostra Mainnet Volume:</b> %{customdata[3]:,.2f}<br>"
+            ),
+    ))
+    
+    # Add a separate trace for debt_token_supply with overlay mode
+    figure.add_trace(plotly.graph_objs.Bar(
+        x=data["collateral_token_price"],
+        y=data["debt_token_supply"],
+        name=f"{debt_token} available liquidity",
+        marker_color=color_map_liquidity["debt_token_supply"],
+        opacity=0.5,
+        yaxis="y2",
+        hovertemplate=(
+            "<b>Price:</b> %{x}<br>"
+            "<b>Volume:</b> %{y}"
+        )
+    ))
+
+    # Update layout for the stacked bar plot and the separate trace
+    figure.update_layout(
+        barmode="stack",
+        title=f"Liquidable debt and the corresponding supply of {debt_token} at various price intervals of {collateral_token}",
+        xaxis_title=f"{collateral_token} Price (USD)",
+        yaxis_title="Volume (USD)",
+        legend_title="Legend",
+        yaxis2=dict(
+            overlaying='y',
+            side='left',
+            matches="y"
+        )
+    )
+
+    # Add the vertical line and shaded region for the current price
     figure.add_vline(
         x=collateral_token_price,
         line_width=2,
