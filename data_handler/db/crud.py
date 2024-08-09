@@ -383,17 +383,17 @@ class InitializerDBConnector:
         finally:
             session.close()
 
-    def get_hashtackv0_by_user_ids(self, user_ids: List[str]) -> List[HashtackCollateralDebt]:
+    def get_hashtackv0_by_loan_ids(self, loan_ids: List[str]) -> List[HashtackCollateralDebt]:
         """
-        Retrieve HashtackCollateralDebt records by user_ids.
-        :param user_ids: A list of user IDs to filter by.
+        Retrieve HashtackCollateralDebt records by loan_ids.
+        :param loan_ids: A list of user IDs to filter by.
         :return: A list of HashtackCollateralDebt objects.
         """
         session = self.Session()
         try:
             return (
                 session.query(HashtackCollateralDebt)
-                .filter(HashtackCollateralDebt.user_id.in_(user_ids))
+                .filter(HashtackCollateralDebt.loan_id.in_(loan_ids))
                 .all()
             )
         finally:
@@ -484,8 +484,9 @@ class InitializerDBConnector:
 
         try:
             record = (
-                session.query(HashtackCollateralDebt).filter_by(user_id=user_id).first()
+                session.query(HashtackCollateralDebt).filter_by(loan_id=loan_id).first()
             )
+            logger.info(f"Going to save loan_id {loan_id}")
             # if debt category is the same, update the record
             if record and record.debt_category == debt_category:
                 return
@@ -512,6 +513,6 @@ class InitializerDBConnector:
                 )
                 session.add(new_record)
             session.commit()
-            logger.info(f"Saved debt category for user {user_id}")
+            logger.info(f"Saved debt category for loan_id {loan_id}")
         finally:
             session.close()
