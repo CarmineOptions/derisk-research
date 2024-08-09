@@ -190,28 +190,39 @@ class LoanStateComputationBase(ABC):
                 loan_entity.update_deposit()
 
         # remove objects from loan_entities_values if the object has `has_skip` attribute
-        loan_entities_values = [loan_entity for loan_entity in loan_entities_values if not hasattr(loan_entity, "has_skip")]
-        result_df = pd.DataFrame(
-            {
-                "protocol": [self.PROTOCOL_TYPE for _ in loan_entities.keys()],
-                "user": [loan_entity.user for loan_entity in loan_entities.values()],
-                "collateral": [
-                    {
-                        token: float(amount)
-                        for token, amount in loan.collateral.values.items()
-                    }
-                    for loan in loan_entities.values()
-                ],
-                "block": [entity.extra_info.block for entity in loan_entities_values],
-                "timestamp": [
-                    entity.extra_info.timestamp for entity in loan_entities_values
-                ],
-                "debt": [
-                    {token: float(amount) for token, amount in loan.debt.values.items()}
-                    for loan in loan_entities_values
-                ],
-            }
-        )
+        filtered_loan_entities = []
+        for loan_entity in loan_entities_values:
+            has_skip = getattr(loan_entity, "has_skip", None)
+            if not has_skip:
+                filtered_loan_entities.append(loan_entity)
+
+        # if there are no loan entities, return an empty DataFrame
+        if not filtered_loan_entities:
+            return pd.DataFrame()
+        try:
+            result_dict = {
+                    "protocol": [self.PROTOCOL_TYPE for _ in filtered_loan_entities],
+                    "user": [loan_entity.user for loan_entity in filtered_loan_entities],
+                    "collateral": [
+                        {
+                            token: float(amount)
+                            for token, amount in loan.collateral.values.items()
+                        }
+                        for loan in filtered_loan_entities
+                    ],
+                    "block": [entity.extra_info.block for entity in filtered_loan_entities],
+                    "timestamp": [
+                        entity.extra_info.timestamp for entity in filtered_loan_entities
+                    ],
+                    "debt": [
+                        {token: float(amount) for token, amount in loan.debt.values.items()}
+                        for loan in filtered_loan_entities
+                    ],
+                }
+        except AttributeError as e:
+            logger.error(f"Error: {e}")
+            return pd.DataFrame()
+        result_df = pd.DataFrame(result_dict)
         return result_df
 
     def add_interest_rate_data(self, state_instance: State, event: pd.Series) -> None:

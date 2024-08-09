@@ -480,7 +480,10 @@ class HashstackV0State(State):
         original_collateral_face_amount = decimal.Decimal(str(int(event["data"][3], base=16)))
         original_collateral = Portfolio()
         original_collateral.values[original_collateral_token] = original_collateral_face_amount
-        self.loan_entities[loan_id].original_collateral = original_collateral
+        try:
+            self.loan_entities[loan_id].original_collateral = original_collateral
+        except TypeError as exc:
+            logging.getLogger("ErrorHandler").info(f"TypeErrorHandler: {exc}: {loan_id=}")
         self.loan_entities[loan_id].collateral.values = {
             token: (
                 self.loan_entities[loan_id].original_collateral.values[token]
