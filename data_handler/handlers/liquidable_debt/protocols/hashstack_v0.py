@@ -1,33 +1,38 @@
+from handlers.liquidable_debt.debt_handlers import (
+    HashstackV0DBLiquidableDebtDataHandler
+)
+from handlers.liquidable_debt.values import (
+    COLLATERAL_FIELD_NAME, DEBT_FIELD_NAME,
+    LIQUIDABLE_DEBT_FIELD_NAME, PRICE_FIELD_NAME,
+)
+from handlers.loan_states.hashtack_v0.events import HashstackV0State, HashstackV0LoanEntity
+from handler_tools.constants import ProtocolIDs
+
 from db.models import LiquidableDebt
-from handlers.liquidable_debt.values import (COLLATERAL_FIELD_NAME,
-                                             GS_BUCKET_NAME, GS_BUCKET_URL,
-                                             LIQUIDABLE_DEBT_FIELD_NAME,
-                                             PRICE_FIELD_NAME,
-                                             LendingProtocolNames)
-from handlers.loan_states.hashtack_v0.events import HashstackV0State
 
 
 def run() -> None:
     """
-    Runs the liquidable debt computing script for Hashstack v0 protocol.
+    Runs the liquidable debt computing script for zKlend protocol.
     :return: None
     """
-    handler = GCloudLiquidableDebtDataHandler(
+    handler = HashstackV0DBLiquidableDebtDataHandler(
         loan_state_class=HashstackV0State,
-        connection_url=GS_BUCKET_URL,
-        bucket_name=GS_BUCKET_NAME,
+        loan_entity_class=HashstackV0LoanEntity
     )
 
-    data = handler.prepare_data(
-        protocol_name=LendingProtocolNames.HASHSTACK_V0.value,
-    )
+    data = handler.calculate_liquidable_debt(protocol_name=ProtocolIDs.HASHSTACK_V0.value)
 
-    for debt_token, liquidable_debt_info in data.items():
+    for liquidable_debt_info in data:
         db_row = LiquidableDebt(
-            debt_token=debt_token,
+            debt_token=liquidable_debt_info[DEBT_FIELD_NAME],
             liquidable_debt=liquidable_debt_info[LIQUIDABLE_DEBT_FIELD_NAME],
-            protocol_name=LendingProtocolNames.HASHSTACK_V0.value,
+            protocol_name=ProtocolIDs.HASHSTACK_V0.value,
             collateral_token_price=liquidable_debt_info[PRICE_FIELD_NAME],
             collateral_token=liquidable_debt_info[COLLATERAL_FIELD_NAME]
         )
-        handler.CONNECTOR.write_to_db(db_row)
+        handler.db_connector.write_to_db(db_row)
+
+
+if __name__ == '__main__':
+    run()
