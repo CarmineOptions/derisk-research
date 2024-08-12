@@ -8,7 +8,8 @@ import pandas as pd
 from handlers.helpers import Portfolio, TokenValues, get_symbol
 from handlers.loan_states.zklend import TOKEN_SETTINGS, TokenSettings
 from handlers.state import InterestRateModels, LoanEntity, State
-from db.crud import ZkLendDBConnector
+from db.crud import InitializerDBConnector
+
 
 ADDRESS: str = "0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05"
 EVENTS_METHODS_MAPPING: dict[str, str] = {
@@ -123,7 +124,7 @@ class ZkLendState(State):
             loan_entity_class=ZkLendLoanEntity,
             verbose_user=verbose_user,
         )
-        self.db_connector = ZkLendDBConnector()
+        self.db_connector = InitializerDBConnector()
 
     def process_accumulators_sync_event(self, event: pd.Series) -> None:
         # The order of the values in the `data` column is: `token`, `lending_accumulator`, `debt_accumulator`.

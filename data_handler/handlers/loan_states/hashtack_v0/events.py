@@ -9,6 +9,7 @@ import pandas
 from handlers.helpers import Portfolio, TokenValues, get_symbol
 from handlers.settings import TOKEN_SETTINGS, TokenSettings
 from handlers.state import LoanEntity, InterestRateModels, State
+from db.crud import InitializerDBConnector
 
 
 
@@ -163,6 +164,7 @@ class HashstackV0State(State):
         self,
         verbose_user: Optional[str] = None,
     ) -> None:
+        self.db_connector = InitializerDBConnector()
         super().__init__(
             loan_entity_class=HashstackV0LoanEntity,
             verbose_user=verbose_user,
@@ -210,10 +212,21 @@ class HashstackV0State(State):
         }
         debt = Portfolio()
         debt.values[debt_token] = debt_face_amount
-        self.loan_entities[loan_id].debt = debt
+        loan_entity = self.loan_entities[loan_id]
+        loan_entity.debt = debt
         # add additional info block and timestamp
-        self.loan_entities[loan_id].extra_info.block = event["block_number"]
-        self.loan_entities[loan_id].extra_info.timestamp = event["timestamp"]
+        loan_entity.extra_info.block = event["block_number"]
+        loan_entity.extra_info.timestamp = event["timestamp"]
+
+        self.db_connector.save_debt_category(
+            user_id=user,
+            loan_id=loan_id,
+            debt_category=loan_entity.debt_category,
+            collateral=loan_entity.collateral.values,
+            debt=loan_entity.debt.values,
+            original_collateral=loan_entity.original_collateral.values,
+            borrowed_collateral=loan_entity.borrowed_collateral.values,
+        )
         if self.loan_entities[loan_id].user == self.verbose_user:
             logging.info(
                 'In block number = {}, face amount = {} of token = {} was borrowed against original collateral face '
@@ -467,14 +480,18 @@ class HashstackV0State(State):
         original_collateral_face_amount = decimal.Decimal(str(int(event["data"][3], base=16)))
         original_collateral = Portfolio()
         original_collateral.values[original_collateral_token] = original_collateral_face_amount
-        self.loan_entities[loan_id].original_collateral = original_collateral
-        self.loan_entities[loan_id].collateral.values = {
+        try:
+            self.loan_entities[loan_id].original_collateral = original_collateral
+            self.loan_entities[loan_id].collateral.values = {
             token: (
                 self.loan_entities[loan_id].original_collateral.values[token]
                 + self.loan_entities[loan_id].borrowed_collateral.values[token]
             )
-            for token in TOKEN_SETTINGS
-        }
+                for token in TOKEN_SETTINGS
+            }
+        except TypeError as exc:
+            logging.getLogger("ErrorHandler").info(f"TypeErrorHandler: {exc}: {loan_id=}")
+            return
         # add additional info block and timestamp
         self.loan_entities[loan_id].extra_info.block = event["block_number"]
         self.loan_entities[loan_id].extra_info.timestamp = event["timestamp"]

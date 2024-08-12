@@ -185,16 +185,19 @@ class LoanStateComputationBase(ABC):
         """
         # Create a DataFrame with the loan state
         loan_entities_values = loan_entities.values()
-        result_df = pd.DataFrame(
-            {
-                "protocol": [self.PROTOCOL_TYPE for _ in loan_entities.keys()],
-                "user": [user for user in loan_entities],
+        if hasattr(loan_entities_values, "update_deposit"):
+            for loan_entity in loan_entities_values:
+                loan_entity.update_deposit()
+
+        result_dict = {
+                "protocol": [self.PROTOCOL_TYPE for _ in loan_entities_values],
+                "user": [loan_entity.user for loan_entity in loan_entities_values],
                 "collateral": [
                     {
                         token: float(amount)
                         for token, amount in loan.collateral.values.items()
                     }
-                    for loan in loan_entities.values()
+                    for loan in loan_entities_values
                 ],
                 "block": [entity.extra_info.block for entity in loan_entities_values],
                 "timestamp": [
@@ -205,7 +208,7 @@ class LoanStateComputationBase(ABC):
                     for loan in loan_entities_values
                 ],
             }
-        )
+        result_df = pd.DataFrame(result_dict)
         return result_df
 
     def add_interest_rate_data(self, state_instance: State, event: pd.Series) -> None:

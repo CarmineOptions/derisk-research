@@ -33,7 +33,7 @@ def add_ekubo_liquidity(
     collateral_token: str,
     debt_token: str,
 ) -> float:
-    URL = "http://35.187.112.169/orderbook/"
+    URL = "http://178.32.172.153/orderbook/"
     DEX = 'Ekubo'
     params = {
         "base_token": _remove_leading_zeros(collateral_token),
@@ -234,6 +234,11 @@ def main():
             elif debt_to_supply_ratio < 0.6:
                 'high'
             return 'very high'
+
+        streamlit.subheader(
+            f":warning: Liquidity data on this chart is currently inaccurate due to ongoing database migration. "
+            f"We expect this issue to be resolved by Mon Aug 12 2024 14:00 GMT+0000"
+        )
 
         streamlit.subheader(
             f":warning: At price of {round(example_row['collateral_token_price'], 2)}, the risk of acquiring bad debt for "
