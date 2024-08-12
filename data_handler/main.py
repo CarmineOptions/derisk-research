@@ -166,7 +166,7 @@ def get_orderbook(
         .order_by(OrderBookModel.timestamp.desc())
         .first()
     )
-    logger.info(f"Found {len(records)} order book records")
+    logger.info(f"Found {records} order book records")
     if not records:
         raise HTTPException(status_code=404, detail="Records not found")
 
