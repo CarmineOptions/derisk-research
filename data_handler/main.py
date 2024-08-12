@@ -154,6 +154,7 @@ def get_orderbook(
     :param dex: The DEX name.
     :return: A list of order book records.
     """
+    print(f"Fetching order book records for {base_token}/{quote_token} on {dex}")
     logger.info(f"Fetching order book records for {base_token}/{quote_token} on {dex}")
 
     records = (
@@ -166,6 +167,7 @@ def get_orderbook(
         .order_by(OrderBookModel.timestamp.desc())
         .first()
     )
+    print(f"Found {records} order book records")
     logger.info(f"Found {records} order book records")
     if not records:
         raise HTTPException(status_code=404, detail="Records not found")
