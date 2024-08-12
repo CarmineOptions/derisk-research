@@ -1,4 +1,5 @@
 from typing import List, Optional
+import logging
 from fastapi import FastAPI, Depends, HTTPException, Request, Path, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
@@ -10,6 +11,9 @@ from db.schemas import LoanStateResponse, InterestRateModel, OrderBookResponseMo
 from handler_tools.constants import ProtocolIDs
 from db.models import LoanState, InterestRate, OrderBookModel, HealthRatioLevel
 from db.database import Base, engine, get_database
+
+
+logger = logging.getLogger(__name__)
 
 # Create the database tables
 Base.metadata.create_all(bind=engine)
@@ -150,6 +154,8 @@ def get_orderbook(
     :param dex: The DEX name.
     :return: A list of order book records.
     """
+    logger.info(f"Fetching order book records for {base_token}/{quote_token} on {dex}")
+
     records = (
         db.query(OrderBookModel)
         .filter(
@@ -160,7 +166,7 @@ def get_orderbook(
         .order_by(OrderBookModel.timestamp.desc())
         .first()
     )
-
+    logger.info(f"Found {len(records)} order book records")
     if not records:
         raise HTTPException(status_code=404, detail="Records not found")
 
