@@ -23,6 +23,7 @@ class HashtackV0StateComputation(LoanStateComputationBase):
     ) -> None:
         """
         Processes the interest rate event.
+        Will be implemented in the next task related to interest rate computation.
 
         :param instance_state: The instance of the state class to call the method on.
         :type instance_state: object
