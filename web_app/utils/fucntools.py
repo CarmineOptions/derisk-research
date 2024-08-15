@@ -68,11 +68,18 @@ def update_data(protocol_names: str = CURRENTLY_AVAILABLE_PROTOCOLS) -> None:
     :param protocol_names: str = None
     :return: None
     """
-    for name in protocol_names:
-        if f"{name}_data" in os.listdir("utils/loans/"):
-            delete_parquet_file(name)
+    # Ensure the 'utils/loans/' directory exists
+    loan_directory = "utils/loans/"
+    if not os.path.exists(loan_directory):
+        os.makedirs(loan_directory)
 
-        os.mkdir(f"utils/loans/{name}_data/")
+    for name in protocol_names:
+        # Check if the specific subdirectory exists
+        subdirectory_path = f"{loan_directory}{name}_data/"
+        if os.path.exists(subdirectory_path):
+            delete_parquet_file(name)
+        else:
+            os.mkdir(subdirectory_path)
 
     for protocol in CURRENTLY_AVAILABLE_PROTOCOLS:
         download_parquet_file(protocol_name=protocol)
