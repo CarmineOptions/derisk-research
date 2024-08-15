@@ -1,5 +1,6 @@
 from typing import Optional
 import copy
+import logging
 import dataclasses
 import decimal
 import logging
@@ -9,6 +10,8 @@ import pandas as pd
 from handlers.helpers import Portfolio, MAX_ROUNDING_ERRORS, TokenValues, add_leading_zeros, get_symbol
 from handlers.settings import TokenSettings, TOKEN_SETTINGS
 from handlers.state import LoanEntity, InterestRateModels, State
+
+logger = logging.getLogger(__name__)
 
 
 R_TOKENS: dict[str, str] = {
@@ -248,6 +251,8 @@ EVENTS_METHODS_MAPPING: dict[str, str] = {
     "loan_spent": "process_loan_spent_event",
     "loan_transferred": "process_loan_transferred_event",
     "loan_repaid": "process_loan_repaid_event",
+    "updated_supply_token_price": "process_updated_supply_token_price_event",
+    "updated_debt_token_price": "process_updated_debt_token_price_event",
 }
 
 
@@ -389,6 +394,37 @@ class HashstackV1State(State):
     # TODO: There appears to be some overlap with HashstackV0State. Can we simplify the code?
     # TODO: Reduce most of the events processing to `rewrite_original_collateral`, `rewrite_borrowed_collateral`, and 
     # `rewrite_debt`?
+
+    def process_updated_supply_token_price_event(self, event: pd.Series) -> None:
+        """
+        Example of transaction: https://starkscan.co/tx/0x028050442976bffce8d858a759f195e206c2d4424f93479b83665094236712f8#events
+        data column structure:
+           - 0 - token_supply # doesn't work for us
+           - 1 - underlying_asset # is applicable for `get_symbol`
+           - 2 - total_supply
+           - 4 - total_assets
+           - 6 - timestamp
+        :param event: pd.Series with event data
+        :return: None
+        """
+        try:
+            token = get_symbol(event["data"][1])
+        except KeyError:
+            logger.info(f"Token with address {event['data'][0]} is not supported.")
+            return None
+        # Convert total_supply and total_assets from hex to Decimal
+        total_supply = decimal.Decimal(str(int(event["data"][2], base=16)))
+        total_assets = decimal.Decimal(str(int(event["data"][4], base=16)))
+
+        # Calculate the cumulative interest rate
+        cumulative_interest_rate = total_assets / total_supply
+
+        # Store the interest rate in the collateral_interest_rate_models attribute
+
+        self.collateral_interest_rate_models.values[token] = cumulative_interest_rate
+
+    def process_updated_debt_token_price_event(self, event: pd.Series) -> None:
+        print()
 
     def process_new_loan_event(self, event: pd.Series) -> None:
         # The order of the values in the `data` column is: [`loan_record`] `loan_id`, `borrower`, `market`, `amount`, 
