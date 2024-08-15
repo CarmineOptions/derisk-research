@@ -7,6 +7,7 @@ from utils.fucntools import (
     calculate_difference,
     compute_health_ratio_level,
     get_all_activated_subscribers_from_db,
+    update_data,
 )
 from utils.values import HEALTH_RATIO_LEVEL_ALERT_VALUE
 
@@ -20,6 +21,7 @@ notificator = TelegramNotifications(db_connector=connector)
 
 @app.task(name="check_health_ratio_level_changes")
 def check_health_ratio_level_changes():
+    update_data()
 
     subscribers = get_all_activated_subscribers_from_db()
 

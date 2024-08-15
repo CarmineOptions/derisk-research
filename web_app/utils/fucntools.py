@@ -63,7 +63,7 @@ def delete_parquet_file(protocol_name: str = None) -> None:
 
 
 def update_data(protocol_names: str = CURRENTLY_AVAILABLE_PROTOCOLS) -> None:
-    """update_data
+    """
     Updates loans data from Google Cloud Storage
     :param protocol_names: str = None
     :return: None
