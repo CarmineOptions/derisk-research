@@ -57,7 +57,7 @@ def download_parquet_file(
     logger.info(f"Downloaded {protocol_name} data from Google Cloud Storage")
     # check if file is downloaded
     if os.path.exists(f"utils/loans/{protocol_name}_data/"):
-        logger.info(f"File {protocol_name}_data downloaded successfully")
+        logger.info(f"File {protocol_name}_data downloaded successfully: {os.listdir('utils/loans/{protocol_name}_data/')}")
     else:
         logger.info(f"File {protocol_name}_data not downloaded: {os.listdir('utils/loans/{protocol_name}_data/')}")
 
