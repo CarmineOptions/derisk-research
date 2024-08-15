@@ -30,10 +30,10 @@ def check_health_ratio_level_changes():
             protocol_name=subscriber.protocol_id, user_id=subscriber.id
         )
 
-        if (
-            calculate_difference(health_ratio_level, subscriber.health_ratio_level)
-            <= HEALTH_RATIO_LEVEL_ALERT_VALUE
-        ):
-            notificator.send_notification(notification_id=subscriber.id)
+        # if (
+        #     calculate_difference(health_ratio_level, subscriber.health_ratio_level)
+        #     <= HEALTH_RATIO_LEVEL_ALERT_VALUE
+        # ):
+        notificator.send_notification(notification_id=subscriber.id)
 
     asyncio.run(notificator(is_infinity=True))
