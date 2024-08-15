@@ -56,10 +56,11 @@ def download_parquet_file(
     dd.to_parquet(df=data, path=f"utils/loans/{protocol_name}_data/")
     logger.info(f"Downloaded {protocol_name} data from Google Cloud Storage")
     # check if file is downloaded
-    if os.path.exists(f"utils/loans/{protocol_name}_data/"):
-        logger.info(f"File {protocol_name}_data downloaded successfully: {os.listdir('utils/loans/{protocol_name}_data/')}")
+    folder_path = f"utils/loans/{protocol_name}_data/"
+    if os.path.exists(folder_path):
+        logger.info(f"File {protocol_name}_data downloaded successfully: {os.listdir(folder_path)}")
     else:
-        logger.info(f"File {protocol_name}_data not downloaded: {os.listdir('utils/loans/{protocol_name}_data/')}")
+        logger.info(f"File {protocol_name}_data not downloaded: {os.listdir(folder_path)}")
 
 
 def delete_parquet_file(protocol_name: str = None) -> None:
