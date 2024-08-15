@@ -119,7 +119,8 @@ def fetch_user_loans(user_id: str = None, protocol_name: str = None) -> pd.DataF
     :return: pd.DataFrame
     """
     file_path = f"utils/loans/{protocol_name}_data/part.0.parquet"
-
+    logger.info("Time sleep")
+    time.sleep(2)
     # Ensure the file exists
     if not os.path.exists(file_path):
         logger.info(f"File does not exist 1: {file_path}")
