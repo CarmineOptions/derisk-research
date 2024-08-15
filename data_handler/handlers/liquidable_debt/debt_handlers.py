@@ -309,12 +309,12 @@ class HashstackV0DBLiquidableDebtDataHandler(BaseDBLiquidableDebtDataHandler):
 
         return loan_data, interest_rate_models
 
-    def initialize_loan_entities(self, state: State, data: dict = None) -> State:
+    def initialize_loan_entities(self, state: State, data: dict = None):
         """
         Initializes the loan entities in a state instance.
         :param state: State
         :param data: dict
-        :return: State
+        :return: None
         """
 
         for instance in data:
@@ -332,8 +332,6 @@ class HashstackV0DBLiquidableDebtDataHandler(BaseDBLiquidableDebtDataHandler):
                 }
             )
 
-        return state
-
     def calculate_liquidable_debt(self, protocol_name: str = None) -> list:
         """
         Calculates liquidable debt based on data provided and updates an existing data.
@@ -343,7 +341,7 @@ class HashstackV0DBLiquidableDebtDataHandler(BaseDBLiquidableDebtDataHandler):
         """
         data, interest_rate_models = self.fetch_data(protocol_name=protocol_name)
         state = self.state_class()
-        state = self.initialize_loan_entities(state=state, data=data)
+        self.initialize_loan_entities(state=state, data=data)
 
         # Set up collateral and debt interest rate models
         state.collateral_interest_rate_models = TokenValues(
