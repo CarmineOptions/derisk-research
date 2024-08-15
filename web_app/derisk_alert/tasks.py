@@ -10,10 +10,6 @@ from utils.fucntools import (
     update_data,
 )
 from utils.values import HEALTH_RATIO_LEVEL_ALERT_VALUE
-from web_app.order_books.ekubo.api_connector import EkuboAPIConnector
-from web_app.order_books.constants import TOKEN_MAPPING
-from web_app.order_books.ekubo.main import EkuboOrderBook
-from web_app.order_books.haiko.main import HaikoOrderBook
 
 
 from .celery_conf import app
