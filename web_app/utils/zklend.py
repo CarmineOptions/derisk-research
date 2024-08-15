@@ -73,6 +73,7 @@ ZKLEND_SPECIFIC_TOKEN_SETTINGS: dict[str, ZkLendSpecificTokenSettings] = {
     ),
 }
 
+
 @dataclass
 class TokenSettings(ZkLendSpecificTokenSettings, BaseTokenSettings):
     pass
