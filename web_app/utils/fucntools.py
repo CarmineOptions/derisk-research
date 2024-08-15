@@ -1,7 +1,6 @@
 import os
 import shutil
-from threading import Thread
-from typing import Callable
+import logging
 
 import dask.dataframe as dd
 import pandas as pd
@@ -10,13 +9,14 @@ from fastapi import Request
 from database.crud import DBConnector
 from database.models import NotificationData
 from utils.exceptions import ProtocolExistenceError
-from utils.state import InterestRateModels
 from utils.values import (CURRENTLY_AVAILABLE_PROTOCOLS, DEBT_USD_COLUMN_NAME,
                           GS_BUCKET_NAME, GS_BUCKET_URL,
                           RISK_ADJUSTED_COLLATERAL_USD_COLUMN_NAME,
                           USER_COLUMN_NAME, ProtocolIDCodeNames)
 from utils.zklend import ZkLendLoanEntity, ZkLendState
 
+
+logger = logging.getLogger(__name__)
 
 def get_client_ip(request: Request) -> str:
     """
@@ -59,7 +59,12 @@ def delete_parquet_file(protocol_name: str = None) -> None:
     :param protocol_name: str = None
     :return: None
     """
-    shutil.rmtree(f"utils/loans/{protocol_name}_data/")
+    directory_path = f"utils/loans/{protocol_name}_data/"
+
+    if os.path.exists(directory_path):
+        shutil.rmtree(directory_path)
+    else:
+        logger.info(f"Directory {directory_path} does not exist, skipping deletion.")
 
 
 def update_data(protocol_names: str = CURRENTLY_AVAILABLE_PROTOCOLS) -> None:
