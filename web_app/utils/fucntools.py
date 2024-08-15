@@ -61,10 +61,17 @@ def delete_parquet_file(protocol_name: str = None) -> None:
     """
     directory_path = f"utils/loans/{protocol_name}_data/"
 
-    if os.path.exists(directory_path):
-        shutil.rmtree(directory_path)
-    else:
-        logger.info(f"Directory {directory_path} does not exist, skipping deletion.")
+    try:
+        if os.path.exists(directory_path):
+            shutil.rmtree(directory_path)
+        else:
+            logger.info(f"Directory {directory_path} does not exist, skipping deletion.")
+    except FileNotFoundError:
+        # This will handle cases where the directory is deleted between the check and the rmtree call.
+        logger.info(f"Directory {directory_path} was not found, likely already deleted.")
+    except Exception as e:
+        # Handle other potential exceptions, like permission errors.
+        logger.info(f"An error occurred while deleting {directory_path}: {e}")
 
 
 def update_data(protocol_names: str = CURRENTLY_AVAILABLE_PROTOCOLS) -> None:
