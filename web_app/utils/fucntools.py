@@ -49,10 +49,17 @@ def download_parquet_file(
     if protocol_name not in [item.value for item in ProtocolIDCodeNames]:
         raise ProtocolExistenceError(protocol=protocol_name)
 
+    logger.info(f"Downloading {protocol_name} data from Google Cloud Storage")
     data = dd.read_parquet(
         GS_BUCKET_URL.format(protocol_name=protocol_name, bucket_name=bucket_name)
     )
     dd.to_parquet(df=data, path=f"utils/loans/{protocol_name}_data/")
+    logger.info(f"Downloaded {protocol_name} data from Google Cloud Storage")
+    # check if file is downloaded
+    if os.path.exists(f"utils/loans/{protocol_name}_data/"):
+        logger.info(f"File {protocol_name}_data downloaded successfully")
+    else:
+        logger.info(f"File {protocol_name}_data not downloaded")
 
 
 def delete_parquet_file(protocol_name: str = None) -> None:
