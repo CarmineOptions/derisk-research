@@ -30,7 +30,7 @@ def check_health_ratio_level_changes():
     logger.info(f"Found {len(subscribers)} subscribers")
     for subscriber in subscribers:
         health_ratio_level = compute_health_ratio_level(
-            protocol_name=subscriber.protocol_id, user_id=subscriber.id
+            protocol_name=subscriber.protocol_id.value, user_id=subscriber.id
         )
 
         # if (
