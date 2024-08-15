@@ -26,18 +26,8 @@ app.conf.beat_schedule = {
         "task": "check_health_ratio_level_changes",
         "schedule": CHECK_DATA_CHANGES_PERIOD,
     },
-    "ekubo-order-book": {
-        "task": "ekubo_order_book",
-        "schedule": ORDER_BOOK_TIME_INTERVAL,
-    },
-    "haiko-order-book": {
-        "task": "haiko_order_book",
-        "schedule": ORDER_BOOK_TIME_INTERVAL,
-    },
 }
 
 from .tasks import (
     check_health_ratio_level_changes,
-    ekubo_order_book,
-    haiko_order_book
 )
