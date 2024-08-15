@@ -59,7 +59,7 @@ def download_parquet_file(
     if os.path.exists(f"utils/loans/{protocol_name}_data/"):
         logger.info(f"File {protocol_name}_data downloaded successfully")
     else:
-        logger.info(f"File {protocol_name}_data not downloaded")
+        logger.info(f"File {protocol_name}_data not downloaded: {os.listdir('utils/loans/{protocol_name}_data/')}")
 
 
 def delete_parquet_file(protocol_name: str = None) -> None:
