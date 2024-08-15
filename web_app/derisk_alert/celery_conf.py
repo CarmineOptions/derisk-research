@@ -11,7 +11,7 @@ REDIS_PORT = os.environ.get("REDIS_PORT", 6379)
 
 # Tasks settings
 CHECK_DATA_CHANGES_PERIOD = int(
-    os.environ.get("CHECK_DATA_CHANGES_PERIOD", 60 * 30)
+    os.environ.get("CHECK_DATA_CHANGES_PERIOD", 60 * 2) # FIXME 2 minutes
 )  # in seconds
 ORDER_BOOK_TIME_INTERVAL = int(os.environ.get("ORDER_BOOK_TIME_INTERVAL", 5))  # in seconds
 
