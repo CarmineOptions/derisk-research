@@ -59,7 +59,10 @@ def download_parquet_file(
     # check if file is downloaded
     folder_path = f"utils/loans/{protocol_name}_data/"
     if os.path.exists(folder_path):
-        logger.info(f"File {protocol_name}_data downloaded successfully: {os.listdir(folder_path)}")
+        # Get the list of files in the directory with their full paths
+        full_file_paths = [os.path.join(folder_path, file) for file in os.listdir(folder_path)]
+        # Log the full paths
+        logger.info(f"File {protocol_name}_data downloaded successfully: {full_file_paths}")
     else:
         logger.info(f"File {protocol_name}_data not downloaded: {os.listdir(folder_path)}")
 
