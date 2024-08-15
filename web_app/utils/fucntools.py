@@ -1,4 +1,5 @@
 import os
+import time
 import shutil
 import logging
 
@@ -114,8 +115,17 @@ def fetch_user_loans(user_id: str = None, protocol_name: str = None) -> pd.DataF
     :param protocol_name: Protocol name
     :return: pd.DataFrame
     """
+    file_path = f"utils/loans/{protocol_name}_data/part.0.parquet"
+
+    # Ensure the file exists
+    if not os.path.exists(file_path):
+        print(f"File does not exist: {file_path}")
+        time.sleep(2)  # Wait for 1 second and check again
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"File not found: {file_path}")
+
     data = pd.read_parquet(
-        path=f"utils/loans/{protocol_name}_data/part.0.parquet",
+        path=file_path,
     )
     user = data[data[USER_COLUMN_NAME] == user_id]
     return user.to_dict()
