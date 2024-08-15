@@ -17,6 +17,8 @@ from utils.zklend import ZkLendLoanEntity, ZkLendState
 
 
 logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+
 
 def get_client_ip(request: Request) -> str:
     """
@@ -97,15 +99,15 @@ def update_data(protocol_names: str = CURRENTLY_AVAILABLE_PROTOCOLS) -> None:
         download_parquet_file(protocol_name=protocol)
 
 
-def fetch_user_loans(user_id: str = None, protcol_name: str = None) -> pd.DataFrame:
+def fetch_user_loans(user_id: str = None, protocol_name: str = None) -> pd.DataFrame:
     """
     Fetches user loans data from `.parquet` file
     :param user_id: User wallet ID
-    :param protcol_name: Protocol name
+    :param protocol_name: Protocol name
     :return: pd.DataFrame
     """
     data = pd.read_parquet(
-        path=f"utils/loans/{protcol_name}_data/part.0.parquet",
+        path=f"utils/loans/{protocol_name}_data/part.0.parquet",
     )
     user = data[data[USER_COLUMN_NAME] == user_id]
     return user.to_dict()
@@ -183,7 +185,7 @@ def compute_health_ratio_level(user_id: str = None, protocol_name: str = None) -
     """
 
     # Get only needed User from the whole file
-    user_data = fetch_user_loans(user_id=user_id, protcol_name=protocol_name)
+    user_data = fetch_user_loans(user_id=user_id, protocol_name=protocol_name)
 
     # Getting all data needed for the final calculation
     user_row_number = get_user_row_number(user_data)
