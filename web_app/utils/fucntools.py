@@ -122,8 +122,9 @@ def fetch_user_loans(user_id: str = None, protocol_name: str = None) -> pd.DataF
 
     # Ensure the file exists
     if not os.path.exists(file_path):
-        print(f"File does not exist: {file_path}")
+        logger.info(f"File does not exist 1: {file_path}")
         time.sleep(2)  # Wait for 1 second and check again
+        logger.info("Checking again")
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"File not found: {file_path}")
 
