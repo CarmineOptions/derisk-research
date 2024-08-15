@@ -77,6 +77,7 @@ def delete_parquet_file(protocol_name: str = None) -> None:
 
     try:
         if os.path.exists(directory_path):
+            logger.info(f"Deleting the directory {directory_path}")
             shutil.rmtree(directory_path)
         else:
             logger.info(f"Directory {directory_path} does not exist, skipping deletion.")
