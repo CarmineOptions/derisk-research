@@ -7,7 +7,6 @@ from utils.fucntools import (
     calculate_difference,
     compute_health_ratio_level,
     get_all_activated_subscribers_from_db,
-    update_data,
 )
 from utils.values import HEALTH_RATIO_LEVEL_ALERT_VALUE
 
@@ -20,35 +19,12 @@ connector = DBConnector()
 notificator = TelegramNotifications(db_connector=connector)
 
 
-# @app.task(name="check_health_ratio_level_changes")
-# def check_health_ratio_level_changes():
-#     logger.info("Checking health ratio level changes")
-#     # update_data()
-#     logger.info("Data updated")
-#
-#     subscribers = get_all_activated_subscribers_from_db()
-#     logger.info(f"Found {len(subscribers)} subscribers")
-#     for subscriber in subscribers:
-#         health_ratio_level = compute_health_ratio_level(
-#             protocol_name=subscriber.protocol_id.value, user_id=subscriber.wallet_id
-#         )
-#
-#         # if (
-#         #         calculate_difference(health_ratio_level, subscriber.health_ratio_level)
-#         #         <= HEALTH_RATIO_LEVEL_ALERT_VALUE
-#         # ):
-#         print(f"Subscriber {subscriber.id} has health ratio level {health_ratio_level}")
-#         logger.info(f"Subscriber {subscriber.id} has health ratio level {health_ratio_level}")
-#         notificator.send_notification(notification_id=subscriber.id)
-#     logger.info("Health ratio level changes checked")
-#     asyncio.run(notificator(is_infinity=True))
-
 @app.task(name="check_health_ratio_level_changes")
 def check_health_ratio_level_changes():
-    logger.info("Checking health ratio level changes")
-    # update_data()
-    logger.info("Data updated")
-
+    """
+    Check health ratio level changes and send notifications if needed
+    :return:
+    """
     subscribers = get_all_activated_subscribers_from_db()
     logger.info(f"Found {len(subscribers)} subscribers")
 
@@ -56,10 +32,15 @@ def check_health_ratio_level_changes():
         health_ratio_level = compute_health_ratio_level(
             protocol_name=subscriber.protocol_id.value, user_id=subscriber.wallet_id
         )
+        if health_ratio_level and (
+            calculate_difference(health_ratio_level, subscriber.health_ratio_level)
+            <= HEALTH_RATIO_LEVEL_ALERT_VALUE
+        ):
+            logger.info(
+                f"Subscriber {subscriber.id} has health ratio level {health_ratio_level}"
+            )
 
-        logger.info(f"Subscriber {subscriber.id} has health ratio level {health_ratio_level}")
-
-        await notificator.send_notification(notification_id=subscriber.id)
+            await notificator.send_notification(notification_id=subscriber.id)
 
     loop = asyncio.get_event_loop()
     tasks = [process_subscriber(subscriber) for subscriber in subscribers]
@@ -67,30 +48,3 @@ def check_health_ratio_level_changes():
 
     logger.info("Health ratio level changes checked")
     asyncio.run(notificator(is_infinity=True))
-
-
-# def check_health_ratio_level_changes():
-#     logger.info("Checking health ratio level changes")
-#     # update_data()
-#     logger.info("Data updated")
-#
-#     subscribers = get_all_activated_subscribers_from_db()
-#     logger.info(f"Found {len(subscribers)} subscribers")
-#     for subscriber in subscribers:
-#         health_ratio_level = compute_health_ratio_level(
-#             protocol_name=subscriber.protocol_id.value, user_id=subscriber.wallet_id
-#         )
-#
-#         # if (
-#         #         calculate_difference(health_ratio_level, subscriber.health_ratio_level)
-#         #         <= HEALTH_RATIO_LEVEL_ALERT_VALUE
-#         # ):
-#         print(f"Subscriber {subscriber.id} has health ratio level {health_ratio_level}")
-#         logger.info(f"Subscriber {subscriber.id} has health ratio level {health_ratio_level}")
-#         notificator.send_notification(notification_id=subscriber.id)
-#     logger.info("Health ratio level changes checked")
-#     asyncio.run(notificator(is_infinity=True))
-#
-#
-# if __name__ == "__main__":
-#     check_health_ratio_level_changes()
