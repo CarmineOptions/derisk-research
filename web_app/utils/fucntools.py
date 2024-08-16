@@ -1,21 +1,17 @@
-import os
-import time
-import shutil
 import logging
-import requests
-from io import BytesIO
-
-import dask.dataframe as dd
 import pandas as pd
 from fastapi import Request
 
 from database.crud import DBConnector
 from database.models import NotificationData
-from utils.exceptions import ProtocolExistenceError
-from utils.values import (CURRENTLY_AVAILABLE_PROTOCOLS, DEBT_USD_COLUMN_NAME,
-                          GS_BUCKET_NAME, GS_BUCKET_URL,
-                          RISK_ADJUSTED_COLLATERAL_USD_COLUMN_NAME,
-                          USER_COLUMN_NAME, ProtocolIDCodeNames)
+from utils.values import (
+    CURRENTLY_AVAILABLE_PROTOCOLS,
+    DEBT_USD_COLUMN_NAME,
+    GS_BUCKET_NAME,
+    RISK_ADJUSTED_COLLATERAL_USD_COLUMN_NAME,
+    USER_COLUMN_NAME,
+    ProtocolIDCodeNames,
+)
 from utils.zklend import ZkLendLoanEntity, ZkLendState
 
 
@@ -39,81 +35,6 @@ def get_client_ip(request: Request) -> str:
     return ip
 
 
-def download_parquet_file(
-    protocol_name: str = None,
-    bucket_name: str | None = GS_BUCKET_NAME,
-) -> None:
-    """
-    Downloads parquet file to local storage from Google Cloud Storage
-    :param protocol_name: Protocol name
-    :param bucket_name: Google Cloud Storage bucket name
-    :return: None
-    """
-    if protocol_name not in [item.value for item in ProtocolIDCodeNames]:
-        raise ProtocolExistenceError(protocol=protocol_name)
-
-    logger.info(f"Downloading {protocol_name} data from Google Cloud Storage")
-    data = dd.read_parquet(
-        GS_BUCKET_URL.format(protocol_name=protocol_name, bucket_name=bucket_name)
-    )
-    dd.to_parquet(df=data, path=f"utils/loans/{protocol_name}_data/")
-    logger.info(f"Downloaded {protocol_name} data from Google Cloud Storage")
-    # check if file is downloaded
-    folder_path = f"utils/loans/{protocol_name}_data/"
-    if os.path.exists(folder_path):
-        # Get the list of files in the directory with their full paths
-        full_file_paths = [os.path.join(folder_path, file) for file in os.listdir(folder_path)]
-        # Log the full paths
-        logger.info(f"File {protocol_name}_data downloaded successfully: {full_file_paths}")
-    else:
-        logger.info(f"File {protocol_name}_data not downloaded: {os.listdir(folder_path)}")
-
-
-def delete_parquet_file(protocol_name: str = None) -> None:
-    """
-    Deletes parquet file from local storage
-    :param protocol_name: str = None
-    :return: None
-    """
-    directory_path = f"utils/loans/{protocol_name}_data/"
-
-    try:
-        if os.path.exists(directory_path):
-            logger.info(f"Deleting the directory {directory_path}")
-            shutil.rmtree(directory_path)
-        else:
-            logger.info(f"Directory {directory_path} does not exist, skipping deletion.")
-    except FileNotFoundError:
-        # This will handle cases where the directory is deleted between the check and the rmtree call.
-        logger.info(f"Directory {directory_path} was not found, likely already deleted.")
-    except Exception as e:
-        # Handle other potential exceptions, like permission errors.
-        logger.info(f"An error occurred while deleting {directory_path}: {e}")
-
-
-def update_data(protocol_names: str = CURRENTLY_AVAILABLE_PROTOCOLS) -> None:
-    """
-    Updates loans data from Google Cloud Storage
-    :param protocol_names: str = None
-    :return: None
-    """
-    # Ensure the 'utils/loans/' directory exists
-    loan_directory = "utils/loans/"
-    if not os.path.exists(loan_directory):
-        os.makedirs(loan_directory)
-
-    for name in protocol_names:
-        # Check if the specific subdirectory exists
-        subdirectory_path = f"{loan_directory}{name}_data/"
-        if os.path.exists(subdirectory_path):
-            delete_parquet_file(name)
-        else:
-            os.mkdir(subdirectory_path)
-
-    for protocol in CURRENTLY_AVAILABLE_PROTOCOLS:
-        download_parquet_file(protocol_name=protocol)
-
-
 def fetch_user_loans(user_id: str = None, protocol_name: str = None) -> pd.DataFrame:
     """
     Fetches user loans data from `.parquet` file
@@ -121,6 +42,10 @@ def fetch_user_loans(user_id: str = None, protocol_name: str = None) -> pd.DataF
     :param protocol_name: Protocol name
     :return: pd.DataFrame
     """
+    if protocol_name.lower() not in CURRENTLY_AVAILABLE_PROTOCOLS:
+        logger.error(f"Protocol {protocol_name} is not available")
+        return None
+
     logger.info(f"Reading {protocol_name} data from local storage")
     file_url = f"https://storage.googleapis.com/{GS_BUCKET_NAME}/{protocol_name.lower()}_data/loans.parquet"
     try:
@@ -203,7 +128,9 @@ def calculate_difference(a: float = None, b: float = None) -> float:
         return b - a
 
 
-def compute_health_ratio_level(user_id: str = None, protocol_name: str = None) -> float|None:
+def compute_health_ratio_level(
+    user_id: str = None, protocol_name: str = None
+) -> float | None:
     """
     Computes health ratio level based on user wallet ID and protocol name
     :param user_id: User wallet ID
