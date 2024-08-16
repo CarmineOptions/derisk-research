@@ -129,11 +129,12 @@ def fetch_user_loans(user_id: str = None, protocol_name: str = None) -> pd.DataF
     #     logger.info("Checking again")
     #     if not os.path.exists(file_path):
     #         raise FileNotFoundError(f"File not found: {file_path}")
+    logger.info(f"Reading {protocol_name} data from local storage")
 
-    data = pd.read_parquet(
-        GS_BUCKET_URL.format(protocol_name=protocol_name, bucket_name=GS_BUCKET_NAME)
-    )
-    user = data[data[USER_COLUMN_NAME] == user_id]
+    file_url = f"https://storage.googleapis.com/{GS_BUCKET_NAME}/{protocol_name}_data/loans.parquet"
+    logger.info(f"URL: {file_url}")
+    df = pd.read_parquet(file_url)
+    user = df[df[USER_COLUMN_NAME] == user_id]
     return user.to_dict()
 
 
