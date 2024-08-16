@@ -2,6 +2,8 @@ import os
 import time
 import shutil
 import logging
+import requests
+from io import BytesIO
 
 import dask.dataframe as dd
 import pandas as pd
@@ -119,23 +121,30 @@ def fetch_user_loans(user_id: str = None, protocol_name: str = None) -> pd.DataF
     :param protocol_name: Protocol name
     :return: pd.DataFrame
     """
-    # file_path = f"utils/loans/{protocol_name}_data/part.0.parquet"
-    # logger.info("Time sleep")
-    # time.sleep(2)
-    # # Ensure the file exists
-    # if not os.path.exists(file_path):
-    #     logger.info(f"File does not exist 1: {file_path}")
-    #     time.sleep(2)  # Wait for 1 second and check again
-    #     logger.info("Checking again")
-    #     if not os.path.exists(file_path):
-    #         raise FileNotFoundError(f"File not found: {file_path}")
     logger.info(f"Reading {protocol_name} data from local storage")
-
+    df = pd.DataFrame()
     file_url = f"https://storage.googleapis.com/{GS_BUCKET_NAME}/{protocol_name}_data/loans.parquet"
-    logger.info(f"URL: {file_url}")
-    df = pd.read_parquet(file_url)
-    user = df[df[USER_COLUMN_NAME] == user_id]
-    return user.to_dict()
+    try:
+
+        logger.info(f"URL: {file_url}")
+        df = pd.read_parquet(file_url)
+
+    except Exception as e:
+        logger.info(f"Failed to read the file. Error: {e}")
+        # Send GET request with SSL verification disabled
+        response = requests.get(file_url, verify=False)
+
+        # Check if the request was successful
+        if response.status_code == 200:
+            # Load the Parquet file into a DataFrame
+            df = pd.read_parquet(BytesIO(response.content))
+        else:
+            logger.info(f"Failed to retrieve the file. Status code: {response.status_code}")
+
+    if not df.empty:
+        user = df[df[USER_COLUMN_NAME] == user_id]
+        return user.to_dict()
+
 
 
 def get_user_row_number(user: dict[str, dict[int, str]] = None) -> int:
