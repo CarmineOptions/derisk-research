@@ -122,29 +122,17 @@ def fetch_user_loans(user_id: str = None, protocol_name: str = None) -> pd.DataF
     :return: pd.DataFrame
     """
     logger.info(f"Reading {protocol_name} data from local storage")
-    df = pd.DataFrame()
-    file_url = f"https://storage.googleapis.com/{GS_BUCKET_NAME}/{protocol_name}_data/loans.parquet"
+    file_url = f"https://storage.googleapis.com/{GS_BUCKET_NAME}/{protocol_name.lower()}_data/loans.parquet"
     try:
 
         logger.info(f"URL: {file_url}")
         df = pd.read_parquet(file_url)
-
+        user_data = df[df[USER_COLUMN_NAME] == user_id]
+        return user_data.to_dict()
     except Exception as e:
-        logger.info(f"Failed to read the file. Error: {e}")
-        # Send GET request with SSL verification disabled
-        response = requests.get(file_url, verify=False)
+        logger.error(f"Error reading {protocol_name} data: {e}")
+        return
 
-        # Check if the request was successful
-        if response.status_code == 200:
-            # Load the Parquet file into a DataFrame
-            df = pd.read_parquet(BytesIO(response.content))
-        else:
-            logger.info(f"Failed to retrieve the file. Status code: {response.status_code}")
-
-    if not df.empty:
-        user = df[df[USER_COLUMN_NAME] == user_id]
-        logger.info(f"Successfully read data for user: {user}")
-        return user.to_dict()
 
 
 def get_user_row_number(user: dict[str, dict[int, str]] = None) -> int:
@@ -210,7 +198,7 @@ def calculate_difference(a: float = None, b: float = None) -> float:
         return b - a
 
 
-def compute_health_ratio_level(user_id: str = None, protocol_name: str = None) -> float:
+def compute_health_ratio_level(user_id: str = None, protocol_name: str = None) -> float|None:
     """
     Computes health ratio level based on user wallet ID and protocol name
     :param user_id: User wallet ID
@@ -220,7 +208,8 @@ def compute_health_ratio_level(user_id: str = None, protocol_name: str = None) -
 
     # Get only needed User from the whole file
     user_data = fetch_user_loans(user_id=user_id, protocol_name=protocol_name)
-
+    if not user_data:
+        return
     # Getting all data needed for the final calculation
     user_row_number = get_user_row_number(user_data)
     debt_usd = get_debt_usd(user_data, user_row_number)
