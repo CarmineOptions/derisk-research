@@ -23,7 +23,7 @@ notificator = TelegramNotifications(db_connector=connector)
 @app.task(name="check_health_ratio_level_changes")
 def check_health_ratio_level_changes():
     logger.info("Checking health ratio level changes")
-    update_data()
+    # update_data()
     logger.info("Data updated")
 
     subscribers = get_all_activated_subscribers_from_db()
