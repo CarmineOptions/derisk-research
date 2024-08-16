@@ -45,7 +45,7 @@ app.conf.beat_schedule = {
     # },
     f'run_liquidable_debt_computation_for_zklend_every_{CRONTAB_TIME}_mins': {
         'task': 'run_liquidable_debt_computation_for_zklend',
-        'schedule': crontab(minute=f'*/{CRONTAB_TIME}'),
+        'schedule': crontab(minute=f'*/1'), # FIXME - CRONTAB_TIME
     },
     # "constant_product_market_makers_order_book": {
     #     "task": "uniswap_v2_order_book",
