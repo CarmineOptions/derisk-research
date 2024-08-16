@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from asyncio.queues import Queue, QueueFull
 from contextlib import suppress
 from uuid import UUID
@@ -13,6 +14,9 @@ from .bot import bot
 DEFAULT_MESSAGE_TEMPLATE = (
     "Warning. Your health ratio is too low for wallet_id {wallet_id}"
 )
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 
 async def get_subscription_link(ident: UUID) -> str:
@@ -53,6 +57,7 @@ class TelegramNotifications:
 
         :param notification_id: Unique identifier of the NotificationData.id, which will be added to the queue for sending via Telegram.
         """
+        logger.info(f"Telegram: send notification: {notification_id}")
         await cls.__queue_to_send.put(notification_id)
 
     async def log_send(self, notification_id: UUID, text: str, is_succesfully: bool):
@@ -98,11 +103,14 @@ class TelegramNotifications:
                    This parameter is effective only when is_infinity is set to True.
                    Defaults to 0.05 seconds.
         """
+        logger.info("Telegram: start sending notifications")
         while notification_id := await self.__queue_to_send.get():
+            logger.info(f"Telegram: send notification: {notification_id}")
             # Retrieve notification data from the database based on its ID
             notification = self.db_connector.get_object(
                 NotificationData, notification_id
             )
+            logger.info(f"Telegram: notification: {notification} class")
             if notification is None:
                 continue  # skip is not valid notification_id
             is_succesfully = False
@@ -110,6 +118,7 @@ class TelegramNotifications:
             text = self.text.format(wallet_id=notification.wallet_id)
 
             try:
+                logger.info(f"Check notification.telegram_id: {notification.telegram_id}")
                 # Check if the notification has a Telegram ID and send the message
                 if notification.telegram_id:
                     await bot.send_message(
