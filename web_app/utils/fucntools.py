@@ -131,7 +131,7 @@ def fetch_user_loans(user_id: str = None, protocol_name: str = None) -> pd.DataF
     #         raise FileNotFoundError(f"File not found: {file_path}")
 
     data = pd.read_parquet(
-        file_path=GS_BUCKET_URL.format(protocol_name=protocol_name, bucket_name=GS_BUCKET_NAME)
+        GS_BUCKET_URL.format(protocol_name=protocol_name, bucket_name=GS_BUCKET_NAME)
     )
     user = data[data[USER_COLUMN_NAME] == user_id]
     return user.to_dict()
