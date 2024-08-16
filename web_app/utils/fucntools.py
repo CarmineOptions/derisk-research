@@ -134,7 +134,7 @@ def fetch_user_loans(user_id: str = None, protocol_name: str = None) -> pd.DataF
         return
 
 
-def get_user_row_number(user: dict[str, dict[int, str]] = None) -> int:
+def get_user_row_number(user: dict[str, dict[int, str]] = None) -> int | None:
     """
     Returns the user row number in the `.parquet` file.
     :param user: dict[str, dict[int, str]]
@@ -142,9 +142,13 @@ def get_user_row_number(user: dict[str, dict[int, str]] = None) -> int:
     """
     if user and USER_COLUMN_NAME in user:
         # Directly access the first key
-        return list(user[USER_COLUMN_NAME].keys())[0]
+        try:
+            return list(user[USER_COLUMN_NAME].keys())[0]
+        except IndexError:
+            logger.error(f"User data: {user}")
+            return None
     else:
-        raise ValueError(f"User data is missing or {USER_COLUMN_NAME} is not found.")
+        return None
 
 
 def get_debt_usd(
@@ -213,6 +217,8 @@ def compute_health_ratio_level(user_id: str = None, protocol_name: str = None) -
         return
     # Getting all data needed for the final calculation
     user_row_number = get_user_row_number(user_data)
+    if user_row_number is None:
+        return
     debt_usd = get_debt_usd(user_data, user_row_number)
     risk_adjusted_collateral_usd = get_risk_adjusted_collateral_usd(
         user_data, user_row_number
