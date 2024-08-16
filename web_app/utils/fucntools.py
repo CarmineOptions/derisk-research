@@ -134,16 +134,17 @@ def fetch_user_loans(user_id: str = None, protocol_name: str = None) -> pd.DataF
         return
 
 
-
 def get_user_row_number(user: dict[str, dict[int, str]] = None) -> int:
     """
-    Returns user row number in `.parquet` file.
-    According to type annotation for `user` parameter,
-    the row stands for `int` python's data type.
+    Returns the user row number in the `.parquet` file.
     :param user: dict[str, dict[int, str]]
     :return: int
     """
-    return next(iter(user[USER_COLUMN_NAME].keys()))
+    if user and USER_COLUMN_NAME in user:
+        # Directly access the first key
+        return list(user[USER_COLUMN_NAME].keys())[0]
+    else:
+        raise ValueError(f"User data is missing or {USER_COLUMN_NAME} is not found.")
 
 
 def get_debt_usd(
