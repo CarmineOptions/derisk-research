@@ -143,8 +143,8 @@ def fetch_user_loans(user_id: str = None, protocol_name: str = None) -> pd.DataF
 
     if not df.empty:
         user = df[df[USER_COLUMN_NAME] == user_id]
+        logger.info(f"Successfully read data for user: {user}")
         return user.to_dict()
-
 
 
 def get_user_row_number(user: dict[str, dict[int, str]] = None) -> int:
