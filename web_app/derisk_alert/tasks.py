@@ -16,7 +16,6 @@ from .celery_conf import app
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 connector = DBConnector()
-notificator = TelegramNotifications(db_connector=connector)
 
 
 @app.task(name="check_health_ratio_level_changes")
@@ -28,7 +27,7 @@ def check_health_ratio_level_changes():
     subscribers = get_all_activated_subscribers_from_db()
     logger.info(f"Found {len(subscribers)} subscribers")
 
-    async def process_subscriber(subscriber):
+    for subscriber in subscribers:
         health_ratio_level = compute_health_ratio_level(
             protocol_name=subscriber.protocol_id.value, user_id=subscriber.wallet_id
         )
@@ -40,11 +39,6 @@ def check_health_ratio_level_changes():
                 f"Subscriber {subscriber.id} has health ratio level {health_ratio_level}"
             )
 
-            await notificator.send_notification(notification_id=subscriber.id)
-
-    loop = asyncio.get_event_loop()
-    tasks = [process_subscriber(subscriber) for subscriber in subscribers]
-    loop.run_until_complete(asyncio.gather(*tasks))
+            TelegramNotifications.send_notification(notification_id=subscriber.id)
 
     logger.info("Health ratio level changes checked")
-    asyncio.run(notificator(is_infinity=True))

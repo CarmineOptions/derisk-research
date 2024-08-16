@@ -4,8 +4,9 @@ import logging
 from aiogram.types import BotCommand, BotCommandScopeDefault
 
 from . import dp, bot
-from .crud import get_async_sessionmaker
+from .crud import get_async_sessionmaker, TelegramCrud
 from .middleware import DatabaseMiddleware
+from .notifications import TelegramNotifications
 
 
 logger = logging.getLogger(__name__)
@@ -25,7 +26,12 @@ async def bot_start_polling():
     async_sessionmaker = get_async_sessionmaker()
     dp.update.middleware(DatabaseMiddleware(async_sessionmaker))
     logger.info("Database middleware added")
-    await dp.start_polling(bot)
+    # create tasks
+    polling = dp.start_polling(bot)
+    notify = TelegramNotifications(TelegramCrud(async_sessionmaker))
+    # start tasks
+    await asyncio.gather(polling, notify)
+
 
 
 if __name__ == "__main__":
