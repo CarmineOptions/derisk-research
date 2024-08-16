@@ -119,19 +119,19 @@ def fetch_user_loans(user_id: str = None, protocol_name: str = None) -> pd.DataF
     :param protocol_name: Protocol name
     :return: pd.DataFrame
     """
-    file_path = f"utils/loans/{protocol_name}_data/part.0.parquet"
-    logger.info("Time sleep")
-    time.sleep(2)
-    # Ensure the file exists
-    if not os.path.exists(file_path):
-        logger.info(f"File does not exist 1: {file_path}")
-        time.sleep(2)  # Wait for 1 second and check again
-        logger.info("Checking again")
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f"File not found: {file_path}")
+    # file_path = f"utils/loans/{protocol_name}_data/part.0.parquet"
+    # logger.info("Time sleep")
+    # time.sleep(2)
+    # # Ensure the file exists
+    # if not os.path.exists(file_path):
+    #     logger.info(f"File does not exist 1: {file_path}")
+    #     time.sleep(2)  # Wait for 1 second and check again
+    #     logger.info("Checking again")
+    #     if not os.path.exists(file_path):
+    #         raise FileNotFoundError(f"File not found: {file_path}")
 
     data = pd.read_parquet(
-        path=file_path,
+        file_path=GS_BUCKET_URL.format(protocol_name=protocol_name, bucket_name=GS_BUCKET_NAME)
     )
     user = data[data[USER_COLUMN_NAME] == user_id]
     return user.to_dict()
