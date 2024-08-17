@@ -25,6 +25,7 @@ class BaseState(Base):
     """
     Base class for state models.
     """
+
     __abstract__ = True
 
     block = Column(BigInteger, index=True)
@@ -53,7 +54,9 @@ class InterestRate(BaseState):
 
     def get_json_deserialized(self) -> tuple[dict[str, Decimal], dict[str, Decimal]]:
         """Deserialize the JSON fields of the model from str to the Decimal type."""
-        collateral = {token_name: Decimal(value) for token_name, value in self.collateral.items()}
+        collateral = {
+            token_name: Decimal(value) for token_name, value in self.collateral.items()
+        }
         debt = {token_name: Decimal(value) for token_name, value in self.debt.items()}
         return collateral, debt
 
@@ -66,7 +69,9 @@ class LiquidableDebt(Base):
     __tablename__ = "liquidable_debt"
 
     liquidable_debt = Column(DECIMAL, nullable=False)
-    protocol_name = Column(ChoiceType(LendingProtocolNames, impl=String()), nullable=False)
+    protocol_name = Column(
+        ChoiceType(LendingProtocolNames, impl=String()), nullable=False
+    )
     collateral_token_price = Column(DECIMAL, nullable=False)
     collateral_token = Column(String, nullable=False)
     debt_token = Column(String, nullable=False)
@@ -76,6 +81,7 @@ class OrderBookModel(Base):
     """
     Represents an order book entry in the database.
     """
+
     __tablename__ = "orderbook"
 
     token_a = Column(String, nullable=False, index=True)
@@ -92,6 +98,7 @@ class HealthRatioLevel(Base):
     """
     SQLAlchemy model for the health ratio level table.
     """
+
     __tablename__ = "health_ratio_level"
 
     timestamp = Column(BigInteger, index=True)
@@ -128,3 +135,6 @@ class HashtackCollateralDebt(Base):
     debt_category = Column(Integer, nullable=False)
     original_collateral = Column(JSON, nullable=False)
     borrowed_collateral = Column(JSON, nullable=False)
+    version = Column(
+        Integer, nullable=False, index=True
+    )  # we have two versions of Hashtack V0 and V1
