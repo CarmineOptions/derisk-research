@@ -95,9 +95,9 @@ def get_main_chart_figure(
                  "JediSwap_debt_token_supply": "#4C83D0"}
 
     # TODO: Align colors with the rest of the app.
-    color_map_protocol = {"liquidable_debt_at_interval_zkLend": "#ff7f0e", # Orange
-                        "liquidable_debt_at_interval_Nostra Alpha": "#2ca02c", # Green
-                        "liquidable_debt_at_interval_Nostra Mainnet": "#d62728"} # Red 
+    color_map_protocol = {"liquidable_debt_at_interval_zkLend": "#fff7bc", # light yellow
+                        "liquidable_debt_at_interval_Nostra Alpha": "#fec44f", # yellow
+                        "liquidable_debt_at_interval_Nostra Mainnet": "#d95f0e"} # mustard yellow 
     color_map_liquidity = {"debt_token_supply": "#1f77b4"} # blue
     figure = plotly.graph_objs.Figure()
 
