@@ -2,14 +2,15 @@ import logging
 
 import pandas as pd
 from time import monotonic
-from handlers.loan_states.abstractions import LoanStateComputationBase
+from handlers.loan_states.abstractions import HashstackBaseLoanStateComputation
 from handlers.loan_states.hashtack_v1.events import HashstackV1State
 from handler_tools.constants import ProtocolAddresses, ProtocolIDs
+from handlers.loan_states.hashtack_v0.utils import HashtackInitializer
 
 logger = logging.getLogger(__name__)
 
 
-class HashtackV1StateComputation(LoanStateComputationBase):
+class HashtackV1StateComputation(HashstackBaseLoanStateComputation):
     """
     A class that computes the loan states for the HashtackV1 protocol.
     """
@@ -35,10 +36,19 @@ class HashtackV1StateComputation(LoanStateComputationBase):
         events_mapping = hashtack_v1_state.EVENTS_METHODS_MAPPING
         # Init DataFrame
         df = pd.DataFrame(data)
+
+        # init HashtackInitializer
+        hashtack_initializer = HashtackInitializer(hashtack_v1_state)
+        loan_ids = hashtack_initializer.get_loan_ids(df)
+        hashtack_initializer.set_last_loan_states_per_loan_ids(list(set(loan_ids)), version=1)
+
         # Filter out events that are not in the mapping
-        # TODO add sorting so FIRST_EVENTS are processed first
         df_filtered = df[df["key_name"].isin(events_mapping.keys())]
-        for index, row in df_filtered.iterrows():
+
+        # Sort df_filtered so that FIRST_EVENTS come first
+        df_filtered["priority"] = df_filtered["key_name"].apply(lambda x: 0 if x in self.FIRST_EVENTS else 1)
+        df_sorted = df_filtered.sort_values(by="priority")
+        for index, row in df_sorted.iterrows():
             method_name = events_mapping.get(row["key_name"], "") or ""
             self.process_event(hashtack_v1_state, method_name, row)
 
