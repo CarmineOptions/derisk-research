@@ -37,7 +37,9 @@ class LoanStateComputationBase(ABC):
         self.interest_rate_result: list = []
 
     @abstractmethod
-    def process_interest_rate_event(self, instance_state: State, event: pd.Series) -> None:
+    def process_interest_rate_event(
+        self, instance_state: State, event: pd.Series
+    ) -> None:
         """
         Processes an interest rate event.
 
@@ -115,7 +117,9 @@ class LoanStateComputationBase(ABC):
             max_block_number=min_block + self.PAGINATION_SIZE,
         )
 
-    def get_addresses_data(self, from_addresses: list[str], min_block: int) -> list[dict]:
+    def get_addresses_data(
+        self, from_addresses: list[str], min_block: int
+    ) -> list[dict]:
         """
         Fetches data from the DeRisk API endpoint using the defined protocol address.
         This method must be implemented by subclasses to specify how data is retrieved from the API.
@@ -152,7 +156,7 @@ class LoanStateComputationBase(ABC):
                 debt=item["debt"],
                 block=item["block"],
                 timestamp=item["timestamp"],
-                deposit=item.get('deposit')
+                deposit=item.get("deposit"),
             )
             objects_to_write.append(loan)
         self.db_connector.write_loan_states_to_db(objects_to_write)
@@ -190,24 +194,24 @@ class LoanStateComputationBase(ABC):
                 loan_entity.update_deposit()
 
         result_dict = {
-                "protocol": [self.PROTOCOL_TYPE for _ in loan_entities_values],
-                "user": [loan_entity.user for loan_entity in loan_entities_values],
-                "collateral": [
-                    {
-                        token: float(amount)
-                        for token, amount in loan.collateral.values.items()
-                    }
-                    for loan in loan_entities_values
-                ],
-                "block": [entity.extra_info.block for entity in loan_entities_values],
-                "timestamp": [
-                    entity.extra_info.timestamp for entity in loan_entities_values
-                ],
-                "debt": [
-                    {token: float(amount) for token, amount in loan.debt.values.items()}
-                    for loan in loan_entities_values
-                ],
-            }
+            "protocol": [self.PROTOCOL_TYPE for _ in loan_entities_values],
+            "user": [loan_entity.user for loan_entity in loan_entities_values],
+            "collateral": [
+                {
+                    token: float(amount)
+                    for token, amount in loan.collateral.values.items()
+                }
+                for loan in loan_entities_values
+            ],
+            "block": [entity.extra_info.block for entity in loan_entities_values],
+            "timestamp": [
+                entity.extra_info.timestamp for entity in loan_entities_values
+            ],
+            "debt": [
+                {token: float(amount) for token, amount in loan.debt.values.items()}
+                for loan in loan_entities_values
+            ],
+        }
         result_df = pd.DataFrame(result_dict)
         return result_df
 
@@ -240,7 +244,7 @@ class LoanStateComputationBase(ABC):
         default_last_block = self.last_block
         for protocol_address in self.PROTOCOL_ADDRESSES:
             retry = 0
-            logger.info(f'Default last block: {default_last_block}')
+            logger.info(f"Default last block: {default_last_block}")
 
             self.last_block = default_last_block
 
@@ -248,7 +252,9 @@ class LoanStateComputationBase(ABC):
                 data = self.get_data(protocol_address, self.last_block)
 
                 if not data:
-                    logger.info(f"No data found for address {protocol_address} at block {self.last_block}")
+                    logger.info(
+                        f"No data found for address {protocol_address} at block {self.last_block}"
+                    )
                     self.last_block += self.PAGINATION_SIZE
                     retry += 1
                     continue
@@ -262,3 +268,52 @@ class LoanStateComputationBase(ABC):
 
             if retry == max_retries:
                 logger.info(f"Reached max retries for address {protocol_address}")
+
+
+class HashstackBaseLoanStateComputation(LoanStateComputationBase):
+    """Class for computing loan states for the Hashstack V0/V1 protocols."""
+
+    def get_result_df(self, loan_entities: dict) -> pd.DataFrame:
+        """
+        Creates a DataFrame with the loan state based on the loan entities.
+        :param loan_entities: dictionary of loan entities
+        :return: dataframe with loan state
+        """
+
+        filtered_loan_entities: dict = {}
+        # remove objects from loan_entities_values if the object has `has_skip` attribute
+        for loan_id, loan_entity in loan_entities.items():
+            has_skip = getattr(loan_entity, "has_skip", None)
+            if not has_skip:
+                filtered_loan_entities[loan_id] = loan_entity
+
+        # if there are no loan entities, return an empty DataFrame
+        if not loan_entities:
+            return pd.DataFrame()
+        result_dict = {
+            "protocol": [self.PROTOCOL_TYPE for _ in filtered_loan_entities.keys()],
+            "user": [
+                loan_entity.user for loan_entity in filtered_loan_entities.values()
+            ],
+            "collateral": [
+                {
+                    token: float(amount)
+                    for token, amount in loan.collateral.values.items()
+                }
+                for loan in filtered_loan_entities.values()
+            ],
+            "block": [
+                entity.extra_info.block for entity in filtered_loan_entities.values()
+            ],
+            "timestamp": [
+                entity.extra_info.timestamp
+                for entity in filtered_loan_entities.values()
+            ],
+            "debt": [
+                {token: float(amount) for token, amount in loan.debt.values.items()}
+                for loan in filtered_loan_entities.values()
+            ],
+        }
+
+        result_df = pd.DataFrame(result_dict)
+        return result_df
