@@ -27,11 +27,7 @@ def update_data(zklend_state: src.zklend.ZkLendState):
     t0 = time.time()
     # TODO: parallelize per protocol
     # TODO: stream the data, don't wait until we get all events
-    if zklend_state is None:
-        zklend_events = src.zklend.zklend_get_events(start_block_number=1)
-        zklend_state = src.zklend.ZkLendState()
-    else:
-        zklend_events = src.zklend.zklend_get_events(start_block_number = zklend_state.last_block_number + 1)
+    zklend_events = src.zklend.zklend_get_events(start_block_number = zklend_state.last_block_number + 1)
     # hashstack_v0_events = src.hashstack_v0.hashstack_v0_get_events()
     # hashstack_v1_events = src.hashstack_v1.hashstack_v1_get_events()
     nostra_alpha_events = src.nostra_alpha.nostra_alpha_get_events()
@@ -169,7 +165,7 @@ def update_data_continuously():
         )
         state.set_loan_entities(loan_entities=loan_entities)
     while True:
-        state = update_data(None)
+        state = update_data(state)
         logging.info("DATA UPDATED")
         time.sleep(120)
 
@@ -183,4 +179,4 @@ if __name__ == "__main__":
             f"gs://{src.helpers.GS_BUCKET_NAME}/{src.persistent_state.PERSISTENT_STATE_LOAN_ENTITIES_FILENAME}"
         )
         zklend_state.set_loan_entities(loan_entities=loan_entities)
-    update_data(None)
+    update_data(zklend_state)
