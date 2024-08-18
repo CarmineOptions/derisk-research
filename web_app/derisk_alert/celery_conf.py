@@ -25,6 +25,9 @@ app.conf.beat_schedule = {
     "check-health-ratio-level-changes": {
         "task": "check_health_ratio_level_changes",
         "schedule": CHECK_DATA_CHANGES_PERIOD,
+        "options": {
+            "expires": CHECK_DATA_CHANGES_PERIOD
+        }
     },
 }
 

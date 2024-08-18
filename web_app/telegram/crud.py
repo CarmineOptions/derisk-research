@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Sequence, Optional
 from uuid import UUID
 
 from sqlalchemy import update, select, delete
@@ -43,6 +43,35 @@ class TelegramCrud:
             sessionmaker (async_sessionmaker): An asynchronous SQLAlchemy session maker instance.
         """
         self.Session = sessionmaker
+
+    async def create_object(self, obj: Base):
+        """
+        Asynchronously adds a new object to the database and commits the transaction.
+
+        Args:
+            obj (Base): The instance of the object to be added to the database.
+
+        Returns:
+            Base: The object that was added to the database.
+        """
+        async with self.Session() as db:
+            db.add(obj)
+            await db.commit()
+            return obj
+
+    async def get_object(self, model: type[Base], obj_id: UUID) -> Optional[Base]:
+        """
+        Asynchronously retrieves an object from the database by its ID.
+
+        Args:
+            model (type[Base]): The model class of the object to be retrieved.
+            obj_id (UUID): The UUID of the object to be retrieved.
+
+        Returns:
+            Optional[Base]: The object if found, otherwise `None`.
+        """
+        async with self.Session() as db:
+            return await db.get(model, obj_id)
 
     async def delete_object(
         self, model: type[Base] = None, obj_id: UUID | str = None
