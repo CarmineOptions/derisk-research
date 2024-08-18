@@ -1,6 +1,5 @@
 from typing import Optional
 import copy
-import logging
 import dataclasses
 import decimal
 import logging
@@ -10,6 +9,7 @@ import pandas as pd
 from handlers.helpers import Portfolio, MAX_ROUNDING_ERRORS, TokenValues, add_leading_zeros, get_symbol
 from handlers.settings import TokenSettings, TOKEN_SETTINGS
 from handlers.state import LoanEntity, InterestRateModels, State
+from db.crud import InitializerDBConnector
 
 logger = logging.getLogger(__name__)
 
@@ -386,6 +386,8 @@ class HashstackV1State(State):
             loan_entity_class=HashstackV1LoanEntity,
             verbose_user=verbose_user,
         )
+        # Initialize the DB connector.
+        self.db_connector = InitializerDBConnector()
         # These models reflect the interest rates at which users lend/stake funds.
         self.collateral_interest_rate_models: HashstackV1InterestRateModels = HashstackV1InterestRateModels()
         # These models reflect the interest rates at which users borrow funds.
@@ -407,11 +409,7 @@ class HashstackV1State(State):
         :param event: pd.Series with event data
         :return: None
         """
-        try:
-            token = get_symbol(event["data"][1])
-        except KeyError:
-            logger.info(f"Token with address {event['data'][0]} is not supported.")
-            return None
+        token = get_symbol(event["data"][1])
         # Convert total_supply and total_assets from hex to Decimal
         total_supply = decimal.Decimal(str(int(event["data"][2], base=16)))
         total_assets = decimal.Decimal(str(int(event["data"][4], base=16)))
@@ -424,7 +422,30 @@ class HashstackV1State(State):
         self.collateral_interest_rate_models.values[token] = cumulative_interest_rate
 
     def process_updated_debt_token_price_event(self, event: pd.Series) -> None:
-        print()
+        """
+        Example of transaction in starkscan: https://starkscan.co/event/0x0486fea45f212bba4600c959d3aca4108f442c10a3e2e4d2e97ccd8f2e59a834_5
+        Data structure of `event[data]`:
+            - debt_token: 0
+            - underlying_asset: 1
+            - total_supply: 2
+            - total_debt: 3
+            - timestamp: 4
+        :param event: pd.Series with event data
+        :return: None
+        """
+        token = get_symbol(event["data"][1])
+        # Convert total_supply and total_assets from hex to Decimal
+        total_supply = decimal.Decimal(str(int(event["data"][2], base=16)))
+        total_debt = decimal.Decimal(str(int(event["data"][4], base=16)))
+
+        # Calculate the cumulative interest rate
+        if total_debt == decimal.Decimal("0") or total_supply == decimal.Decimal("0"):
+            cumulative_interest_rate = decimal.Decimal("0")
+        else:
+            cumulative_interest_rate = total_debt / total_supply
+
+        # Store the interest rate in the collateral_interest_rate_models attribute
+        self.debt_interest_rate_models.values[token] = cumulative_interest_rate
 
     def process_new_loan_event(self, event: pd.Series) -> None:
         # The order of the values in the `data` column is: [`loan_record`] `loan_id`, `borrower`, `market`, `amount`, 
@@ -466,6 +487,19 @@ class HashstackV1State(State):
         debt = HashstackV1Portfolio()
         debt.values[debt_token] = debt_face_amount
         self.loan_entities[loan_id].debt = debt
+        loan_entity = self.loan_entities[loan_id]
+
+        self.db_connector.save_debt_category(
+            user_id=user,
+            loan_id=loan_id,
+            debt_category=loan_entity.debt_category,
+            collateral=loan_entity.collateral.values,
+            debt=loan_entity.debt.values,
+            original_collateral=loan_entity.original_collateral.values,
+            borrowed_collateral=loan_entity.borrowed_collateral.values,
+            version=1,
+        )
+
         if self.loan_entities[loan_id].user == self.verbose_user:
             logging.info(
                 'In block number = {}, face amount = {} of token = {} was borrowed against original collateral face '
