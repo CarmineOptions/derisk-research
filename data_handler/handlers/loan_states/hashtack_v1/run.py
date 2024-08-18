@@ -16,10 +16,15 @@ class HashtackV1StateComputation(HashstackBaseLoanStateComputation):
     """
 
     PROTOCOL_TYPE = ProtocolIDs.HASHSTACK_V1.value
-    PROTOCOL_ADDRESSES = ProtocolAddresses().HASHSTACK_V1_R_TOKENS | ProtocolAddresses().HASHSTACK_V1_D_TOKENS
+    PROTOCOL_ADDRESSES = (
+        ProtocolAddresses().HASHSTACK_V1_R_TOKENS
+        | ProtocolAddresses().HASHSTACK_V1_D_TOKENS
+    )
     FIRST_EVENTS = ["updated_supply_token_price", "updated_debt_token_price"]
 
-    def process_interest_rate_event(self, state: HashstackV1State, method_name: str, row: pd.Series) -> None:
+    def process_interest_rate_event(
+        self, state: HashstackV1State, method_name: str, row: pd.Series
+    ) -> None:
         pass
 
     def process_data(self, data: list[dict]) -> pd.DataFrame:
@@ -40,13 +45,19 @@ class HashtackV1StateComputation(HashstackBaseLoanStateComputation):
         # init HashtackInitializer
         hashtack_initializer = HashtackInitializer(hashtack_v1_state)
         loan_ids = hashtack_initializer.get_loan_ids(df)
-        hashtack_initializer.set_last_loan_states_per_loan_ids(list(set(loan_ids)), version=1)
+        hashtack_initializer.set_last_loan_states_per_loan_ids(
+            list(set(loan_ids)), version=1
+        )
 
         # Filter out events that are not in the mapping
         df_filtered = df[df["key_name"].isin(events_mapping.keys())]
 
         # Sort df_filtered so that FIRST_EVENTS come first
-        df_filtered["priority"] = df_filtered["key_name"].apply(lambda x: 0 if x in self.FIRST_EVENTS else 1)
+        df_filtered.loc[:, "priority"] = df_filtered["key_name"].apply(
+            lambda x: 0 if x in self.FIRST_EVENTS else 1
+        )
+
+        # Now proceed with sorting and processing
         df_sorted = df_filtered.sort_values(by="priority")
         for index, row in df_sorted.iterrows():
             method_name = events_mapping.get(row["key_name"], "") or ""
