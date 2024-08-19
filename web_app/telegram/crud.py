@@ -1,3 +1,4 @@
+import logging
 from typing import Sequence, Optional
 from uuid import UUID
 
@@ -5,8 +6,11 @@ from sqlalchemy import update, select, delete
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncEngine, create_async_engine
 
 from database.crud import ModelType
-from database.models import NotificationData, Base
+from database.models import NotificationData, Base, TelegramLog
 from telegram.config import DATABASE_URL
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 
 def get_async_engine() -> AsyncEngine:
@@ -72,6 +76,31 @@ class TelegramCrud:
         """
         async with self.Session() as db:
             return await db.get(model, obj_id)
+
+    async def get_new_notification_object(self, notification_id: UUID) -> NotificationData:
+        """
+        Create a new notification object with the given ID.
+
+        Args:
+            notification_id (UUID): The ID of the notification object.
+
+        Returns:
+            NotificationData: The new notification object.
+        """
+        async with self.Session() as db:
+            # First, check if any TelegramLog entries exist for the given notification_id
+            result = await db.execute(
+                select(TelegramLog).filter_by(notification_data_id=notification_id, is_succesfully=True).limit(1)
+            )
+            log_exists = result.scalar_one_or_none()
+            logger.info(f"Log exists: {log_exists}")
+            if log_exists:
+                return None
+
+            # If no logs exist, retrieve the NotificationData instance
+            logger.info(f"Getting new notification object with ID: {notification_id}")
+            notification_instance = await db.get(NotificationData, notification_id)
+            return notification_instance
 
     async def delete_object(
         self, model: type[Base] = None, obj_id: UUID | str = None
