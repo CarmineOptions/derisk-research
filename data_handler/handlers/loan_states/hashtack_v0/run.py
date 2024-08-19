@@ -3,9 +3,10 @@ import logging
 import pandas as pd
 from time import monotonic
 from handlers.loan_states.abstractions import HashstackBaseLoanStateComputation
-from handlers.loan_states.hashtack_v0.events import HashstackV0State
+from handlers.loan_states.hashtack_v0.events import HashstackV0State, InterestRateModels
 from handler_tools.constants import ProtocolAddresses, ProtocolIDs
 from handlers.loan_states.hashtack_v0.utils import HashtackInitializer
+
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +63,48 @@ class HashtackV0StateComputation(HashstackBaseLoanStateComputation):
 
         result_df = self.get_result_df(hashtack_v0_state.loan_entities)
         return result_df
+
+    def process_event(
+            self, instance_state: "State", method_name: str, event: pd.Series
+    ) -> None:
+        """
+        Processes an event based on the method name and the event data.
+
+        Updates the last block processed to ensure data consistency
+        and calls the appropriate method to handle the event.
+
+        :param instance_state: The instance of the state class to call the method on.
+        :type instance_state: object
+        :param method_name: The name of the method to call for processing the event.
+        :param event: The event data as a pandas Series.
+        """
+        try:
+            block_number = event.get("block_number")
+            interest_rate = self.db_connector.get_interest_rate_by_block(block_number, protocol_id=self.PROTOCOL_TYPE)
+
+            if interest_rate:
+                # Deserialize the JSON fields to Decimal types
+                collateral, debt = interest_rate.get_json_deserialized()
+                instance_state.collateral_interest_rate_models = InterestRateModels(
+                    collateral=collateral
+                )
+                instance_state.debt_interest_rate_models = InterestRateModels(
+                    debt=debt
+                )
+                # Process the event
+                if block_number and block_number >= self.last_block:
+                    self.last_block = block_number
+                    method = getattr(instance_state, method_name, None)
+                    if method:
+                        method(event)
+                    else:
+                        logger.debug(
+                            f"No method named {method_name} found for processing event."
+                        )
+            else:
+                logger.debug(f"No InterestRate found for block number {block_number}")
+        except Exception as e:
+            logger.exception(f"Failed to process event due to an error: {e}")
 
     def run(self) -> None:
         """

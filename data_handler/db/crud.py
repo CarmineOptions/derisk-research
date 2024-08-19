@@ -331,6 +331,26 @@ class DBConnector:
         finally:
             db.close()
 
+    def get_interest_rate_by_block(self, block_number: int, protocol_id: str) -> InterestRate:
+        """
+        Fetch the closest InterestRate instance by block number that is less than or equal to the given block number.
+
+        :param protocol_id: The protocol ID to search for.
+        :param block_number: The block number to search for.
+        :return: An instance of InterestRate or None if no such instance exists.
+        """
+        db = self.Session()
+        try:
+            return (
+                db.query(InterestRate)
+                .filter(InterestRate.protocol_id == protocol_id)
+                .filter(InterestRate.block <= block_number)
+                .order_by(desc(InterestRate.block))
+                .first()
+            )
+        finally:
+            db.close()
+
     def get_all_block_records(self, model: Type[ModelType] = None) -> Query:
         """
         Retrieves all rows of given model in descending order.
