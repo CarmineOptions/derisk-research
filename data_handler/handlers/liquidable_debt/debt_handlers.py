@@ -303,21 +303,23 @@ class HashstackV0DBLiquidableDebtDataHandler(BaseDBLiquidableDebtDataHandler):
         """
 
         for instance in data:
-            debt_category = self.db_connector.get_last_hashstack_loan_state(instance.user).debt_category
+            hashstack_loan_state = self.db_connector.get_last_hashstack_loan_state(instance.user)
 
-            loan_entity = self.loan_entity_class(
-                user=instance.user,
-                debt_category=debt_category
-            )
+            if debt_category := hashstack_loan_state.debt_category:
 
-            loan_entity.debt = TokenValues(values=instance.debt)
-            loan_entity.collateral = TokenValues(values=instance.collateral)
+                loan_entity = self.loan_entity_class(
+                    user=instance.user,
+                    debt_category=debt_category
+                )
 
-            state.loan_entities.update(
-                {
-                    instance.user: loan_entity,
-                }
-            )
+                loan_entity.debt = TokenValues(values=instance.debt)
+                loan_entity.collateral = TokenValues(values=instance.collateral)
+
+                state.loan_entities.update(
+                    {
+                        instance.user: loan_entity,
+                    }
+                )
 
     def calculate_liquidable_debt(self, protocol_name: str = None) -> list:
         """
@@ -360,7 +362,7 @@ class HashstackV0DBLiquidableDebtDataHandler(BaseDBLiquidableDebtDataHandler):
                 result_data.append({
                     LIQUIDABLE_DEBT_FIELD_NAME: liquidable_debt,
                     PRICE_FIELD_NAME: hypothetical_price,
-                    COLLATERAL_FIELD_NAME: "STRK",
+                    COLLATERAL_FIELD_NAME: "STRK",  # we use this token by agreement
                     DEBT_FIELD_NAME: "USDC",
                 }
                 )
