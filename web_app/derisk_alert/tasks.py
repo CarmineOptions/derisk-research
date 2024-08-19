@@ -30,12 +30,12 @@ def check_health_ratio_level_changes():
         health_ratio_level = compute_health_ratio_level(
             protocol_name=subscriber.protocol_id.value, user_id=subscriber.wallet_id
         )
-        if health_ratio_level and (
-            calculate_difference(health_ratio_level, subscriber.health_ratio_level)
-            <= HEALTH_RATIO_LEVEL_ALERT_VALUE
-        ):
+        logger.info("Health ratio level computed: %s", health_ratio_level)
+        logger.info(f"User:{subscriber.id}, Health ratio level: {health_ratio_level}")
+
+        if health_ratio_level is not None and subscriber.health_ratio_level < health_ratio_level:
             logger.info(
-                f"Subscriber {subscriber.id} has health ratio level {health_ratio_level}"
+                f"Subscriber {subscriber.id} has health ratio level {health_ratio_level} which is higher than their current level {subscriber.health_ratio_level}. Notification needed."
             )
 
             await TelegramNotifications.send_notification(notification_id=subscriber.id)
