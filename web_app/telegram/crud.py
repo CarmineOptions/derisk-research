@@ -77,9 +77,9 @@ class TelegramCrud:
         async with self.Session() as db:
             return await db.get(model, obj_id)
 
-    async def get_new_notification_object(self, notification_id: UUID) -> NotificationData:
+    async def get_notification_object(self, notification_id: UUID) -> NotificationData:
         """
-        Create a new notification object with the given ID.
+        Get a new notification object with the given ID.
 
         Args:
             notification_id (UUID): The ID of the notification object.

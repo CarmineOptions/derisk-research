@@ -93,9 +93,7 @@ class TelegramNotifications:
         while notification_id := await self.__aqueue_to_send.dequeue():
             logger.info(f"Telegram: send notification: {notification_id}")
             # Retrieve notification data from the database based on its ID
-            notification = await self.crud.get_object(
-                NotificationData, notification_id
-            )
+            notification = await self.crud.get_notification_object(notification_id)
             logger.info(f"Telegram: notification: {notification} class")
             if notification is None:
                 continue  # skip is not valid notification_id
