@@ -48,7 +48,7 @@ class TelegramLog(Base):
     __tablename__ = "telegram_log"
 
     sent_at = Column(DateTime, default=datetime.now(), nullable=False)
-    notification_data_id = Column(ForeignKey(NotificationData.id), nullable=False)
+    notification_data_id = Column(ForeignKey(NotificationData.id, ondelete="CASCADE"), nullable=False)
     is_succesfully = Column(Boolean, nullable=False)
     message = Column(String, server_default="", default="", nullable=False)
 
