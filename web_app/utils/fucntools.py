@@ -1,3 +1,4 @@
+import decimal
 import logging
 import pandas as pd
 from fastapi import Request
@@ -122,6 +123,11 @@ def calculate_difference(a: float = None, b: float = None) -> float:
     """
     Calculates difference between two numbers
     """
+    if isinstance(a, decimal.Decimal):
+        a = float(a)
+    if isinstance(b, decimal.Decimal):
+        b = float(b)
+
     if a >= b:
         return a - b
     else:
