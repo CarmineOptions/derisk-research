@@ -8,7 +8,7 @@ from .crud import TelegramCrud
 from database.models import TelegramLog, NotificationData
 from telegram import bot
 from .config import REDIS_URL
-from .utils import RedisUUIDQueue, AsyncRedisUUIDQueue
+from .utils import AsyncRedisUUIDQueue
 
 
 DEFAULT_MESSAGE_TEMPLATE = (
@@ -34,21 +34,10 @@ class TelegramNotifications:
     Minimal interval 0.05 seconds, 20 messages per second (Limit: 30 messages per second)
     """
 
-    __queue_to_send = RedisUUIDQueue('telegram_notifications_queue', REDIS_URL)
     __aqueue_to_send = AsyncRedisUUIDQueue('telegram_notifications_queue', REDIS_URL)
 
     @classmethod
-    def send_notification(cls, notification_id: UUID) -> None:
-        """
-        Add a Telegram ID to the queue for sending a notification.
-
-        :param notification_id: Unique identifier of the NotificationData.id, which will be added to the queue for sending via Telegram.
-        """
-        logger.info(f"Telegram: send notification: {notification_id}")
-        cls.__queue_to_send.enqueue(notification_id)
-
-    @classmethod
-    async def asend_notification(cls, notification_id: UUID) -> None:
+    async def send_notification(cls, notification_id: UUID) -> None:
         """
         Add a Telegram ID to the queue for sending a notification.
 
@@ -104,9 +93,7 @@ class TelegramNotifications:
         while notification_id := await self.__aqueue_to_send.dequeue():
             logger.info(f"Telegram: send notification: {notification_id}")
             # Retrieve notification data from the database based on its ID
-            notification = self.crud.get_object(
-                NotificationData, notification_id
-            )
+            notification = await self.crud.get_notification_object(notification_id)
             logger.info(f"Telegram: notification: {notification} class")
             if notification is None:
                 continue  # skip is not valid notification_id
