@@ -429,7 +429,7 @@ class HashstackV1State(State):
             - underlying_asset: 1
             - total_supply: 2
             - total_debt: 4
-            - timestamp: 5
+            - timestamp: 6
         :param event: pd.Series with event data
         :return: None
         """
