@@ -428,8 +428,8 @@ class HashstackV1State(State):
             - debt_token: 0
             - underlying_asset: 1
             - total_supply: 2
-            - total_debt: 3
-            - timestamp: 4
+            - total_debt: 4
+            - timestamp: 5
         :param event: pd.Series with event data
         :return: None
         """

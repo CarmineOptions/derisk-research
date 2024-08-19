@@ -280,6 +280,10 @@ class HashstackBaseLoanStateComputation(LoanStateComputationBase):
         :return: dataframe with loan state
         """
 
+        # if there are no loan entities, return an empty DataFrame
+        if not loan_entities:
+            return pd.DataFrame()
+
         filtered_loan_entities: dict = {}
         # remove objects from loan_entities_values if the object has `has_skip` attribute
         for loan_id, loan_entity in loan_entities.items():
@@ -287,9 +291,6 @@ class HashstackBaseLoanStateComputation(LoanStateComputationBase):
             if not has_skip:
                 filtered_loan_entities[loan_id] = loan_entity
 
-        # if there are no loan entities, return an empty DataFrame
-        if not loan_entities:
-            return pd.DataFrame()
         result_dict = {
             "protocol": [self.PROTOCOL_TYPE for _ in filtered_loan_entities.keys()],
             "user": [
