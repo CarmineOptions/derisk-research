@@ -294,21 +294,6 @@ class HashstackV0DBLiquidableDebtDataHandler(BaseDBLiquidableDebtDataHandler):
         self.state_class = loan_state_class
         self.loan_entity_class = loan_entity_class
 
-    def fetch_data(self, protocol_name: ProtocolIDs | str) -> tuple:
-        """
-        Prepares the data for the given protocol.
-        :param protocol_name: Protocol name.
-        :return: tuple
-        """
-        loan_data = self.db_connector.get_loans(
-            model=HashtackCollateralDebt,
-        )
-        interest_rate_models = self.db_connector.get_last_interest_rate_record_by_protocol_id(
-            protocol_id=protocol_name
-        )
-
-        return loan_data, interest_rate_models
-
     def initialize_loan_entities(self, state: State, data: dict = None):
         """
         Initializes the loan entities in a state instance.
@@ -318,9 +303,11 @@ class HashstackV0DBLiquidableDebtDataHandler(BaseDBLiquidableDebtDataHandler):
         """
 
         for instance in data:
+            debt_category = self.db_connector.get_last_hashstack_loan_state(instance.user).debt_category
+
             loan_entity = self.loan_entity_class(
-                user=instance.user_id,
-                debt_category=instance.debt_category
+                user=instance.user,
+                debt_category=debt_category
             )
 
             loan_entity.debt = TokenValues(values=instance.debt)
@@ -328,7 +315,7 @@ class HashstackV0DBLiquidableDebtDataHandler(BaseDBLiquidableDebtDataHandler):
 
             state.loan_entities.update(
                 {
-                    instance.user_id: loan_entity,
+                    instance.user: loan_entity,
                 }
             )
 
