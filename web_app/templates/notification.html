@@ -5,80 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notification</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <link rel="stylesheet" href="{{ url_for('static', path='/notification.css') }}">
+    <style>
+        body {
+            background-color: #051122;
+            color: #fff;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            background-color: #7198AD;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+            max-width: 500px;
+            margin: 40px auto;
+        }
+        .form-label {
+            font-weight: bold;
+        }
+        .btn-primary {
+            background-color: #34495e;
+            border-color: #2c3e50;
+        }
+        .btn-primary:hover {
+            background-color: #2c3e50;
+        }
+    </style>
 </head>
-<style>
-    body{
-        background-color: #051122;
-    }
-
-    .container{
-        background-color: #7198AD;
-        width: max-content;
-        height: max-content;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        border-radius: 10px;
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        box-shadow: 0 0 30px black;
-    }
-
-    .form{
-        display: block;
-    }
-
-    .title{
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font: 2em sans-serif bold;
-        font-size: medium;
-        color: black;
-        padding: 5px;
-    }
-
-    .input-data{
-        display: flex;
-        padding: 5px;
-        padding-right: 10px;
-        padding-left: 10px;
-        height: 4vh;
-    }
-
-    .input-data select{
-        width: 14vw;
-        height: 4vh;
-        padding-bottom: 5px;
-    }
-
-    label{
-        padding-right: 10px;
-        padding-left: 10px;
-        font-size: small;
-        color: black;
-    }
-
-    .submit{
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding-top: 10px;
-        padding-bottom: 5px;
-    }
-
-    .submit button{
-        padding: 5px;
-    }
-</style>
-
 <body>
-    <div class="alert alert-warning">
-        Currently, we update our data once every 30 minutes. Very soon, we will switch to more frequent updates.
-    </div>
     {% if messages %}
         {% for message in messages %}
             <div class="alert alert-{% if message_type == 'error' %}danger{% elif message_type == 'success' %}success{% endif %}">
@@ -88,47 +41,47 @@
     {% endif %}
     {% if activation_link %}
         <div class="alert alert-info">
-            Your activation link: <a href="{{activation_link}}" id="tg_link">Click here!</a>
+            Your activation link: <a href="{{ activation_link }}" id="tg_link">Click here!</a>
         </div>
     {% endif %}
     <div class="container">
-        <div class="form">
-            <form method="post">
-                <input type="text" hidden id="ip_address" name="ip_address" value="{{ ip_address }}">
-                <div class="title">
-                    Create subscription
-                </div>
-                <div>
-                    <label for="wallet_id">Wallet ID:<span style="color: red">*</span></label>
-                </div>
-                <div class="input-data">
-                    <input type="text" id="wallet_id" name="wallet_id" required>
-                </div>
-                <div>
-                    <label for="health_ratio_level">Health ratio level:<span style="color: red">*</span></label>
-                </div>
-                <div class="input-data">
-                    <input type="number" name="health_ratio_level" id="health_ratio_level" required step="any">
-                </div>
-                <div>
-                    <label for="protocol_id">Protocol ID:<span style="color: red">*</span></label>
-                </div>
-                <div class="input-data">
-                    <select id="protocol_id" name="protocol_id">
-                        {% for protocol_id in protocol_ids %}
-                            <option>{{protocol_id}}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="submit">
-                    <button type="submit" value="Submit">Subscribe</button>
-                </div>
-            </form>
+        <div class="alert alert-warning text-center">
+            Currently, we update our data once every 30 minutes. Very soon, we will switch to more frequent updates.
         </div>
+
+        <h2 class="text-center mb-4">Create Subscription</h2>
+
+        <form id="subscribeForm" method="post">
+            <input type="hidden" id="ip_address" name="ip_address" value="{{ ip_address }}">
+
+            <div class="mb-3">
+                <label for="wallet_id" class="form-label">Wallet ID:<span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="wallet_id" name="wallet_id" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="health_ratio_level" class="form-label">Health Ratio Level:<span class="text-danger">*</span></label>
+                <input type="number" class="form-control" name="health_ratio_level" id="health_ratio_level" step="any" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="protocol_id" class="form-label">Protocol ID:<span class="text-danger">*</span></label>
+                <select class="form-select" id="protocol_id" name="protocol_id" required>
+                    {% for protocol_id in protocol_ids %}
+                        <option>{{ protocol_id }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="text-center">
+                <button type="submit" class="btn btn-primary" id="tg-redirect">Subscribe</button>
+            </div>
+        </form>
     </div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-<script>
-    document.getElementById('tg_link').addEventListener('click', function(event) {
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script>
+        document.getElementById('tg_link').addEventListener('click', function(event) {
         event.preventDefault();
 
         const windowWidth = 500;
@@ -141,12 +94,13 @@
 
 
         window.open(
-            '{{activation_link}}',
-            '_blank',
-            `noopener,noreferrer,width=${windowWidth},height=${windowHeight},left=${left},top=${top}`
-        );
-    });
-</script>
+                '{{activation_link}}',
+                '_blank',
+                `noopener,noreferrer,width=${windowWidth},height=${windowHeight},left=${left},top=${top}`
+            );
+        window.location.replace(window.location.href);
+        });
 
+    </script>
 </body>
 </html>
