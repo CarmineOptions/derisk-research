@@ -5,14 +5,15 @@ from uuid import UUID
 from aiogram import exceptions
 
 from .crud import TelegramCrud
-from database.models import TelegramLog, NotificationData
+from database.models import TelegramLog
 from telegram import bot
 from .config import REDIS_URL
 from .utils import AsyncRedisUUIDQueue
 
 
 DEFAULT_MESSAGE_TEMPLATE = (
-    "Warning. Your health ratio is too low for wallet_id {wallet_id}"
+    "Warning. Your health ratio is too low for wallet_id {wallet_id} for the protocol: {protocol_name}"
+    " with health ratio level: {health_ratio_level}"
 )
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -99,7 +100,11 @@ class TelegramNotifications:
                 continue  # skip is not valid notification_id
             is_succesfully = False
             # create text message
-            text = self.text.format(wallet_id=notification.wallet_id)
+            text = self.text.format(
+                wallet_id=notification.wallet_id,
+                protocol_name=notification.protocol_id.value,
+                health_ratio_level=notification.health_ratio_level
+            )
 
             try:
                 logger.info(f"Check notification.telegram_id: {notification.telegram_id}")
