@@ -2,15 +2,15 @@ import logging
 
 import pandas as pd
 from time import monotonic
-from handlers.loan_states.abstractions import LoanStateComputationBase
-from handlers.loan_states.hashtack_v0.events import HashstackV0State, LoanEntity
+from handlers.loan_states.abstractions import HashstackBaseLoanStateComputation
+from handlers.loan_states.hashtack_v0.events import HashstackV0State
 from handler_tools.constants import ProtocolAddresses, ProtocolIDs
-from handlers.loan_states.hashtack_v0.utils import HashtackV0Initializer
+from handlers.loan_states.hashtack_v0.utils import HashtackInitializer
 
 logger = logging.getLogger(__name__)
 
 
-class HashtackV0StateComputation(LoanStateComputationBase):
+class HashtackV0StateComputation(HashstackBaseLoanStateComputation):
     """
     A class that computes the loan states for the HashstackV0 protocol.
     """
@@ -46,10 +46,12 @@ class HashtackV0StateComputation(LoanStateComputationBase):
         # Init DataFrame
         df = pd.DataFrame(data)
 
-        # init HashtackV0Initializer
-        hashtack_initializer = HashtackV0Initializer(hashtack_v0_state)
+        # init HashtackInitializer
+        hashtack_initializer = HashtackInitializer(hashtack_v0_state)
         loan_ids = hashtack_initializer.get_loan_ids(df)
-        hashtack_initializer.set_last_loan_states_per_loan_ids(list(set(loan_ids)))
+        hashtack_initializer.set_last_loan_states_per_loan_ids(
+            list(set(loan_ids)), version=0
+        )
 
         # Filter out events that are not in the mapping
         df_filtered = df[df["key_name"].isin(events_mapping.keys())]
@@ -61,58 +63,13 @@ class HashtackV0StateComputation(LoanStateComputationBase):
         result_df = self.get_result_df(hashtack_v0_state.loan_entities)
         return result_df
 
-    def get_result_df(self, loan_entities: dict) -> pd.DataFrame:
-        """
-        Creates a DataFrame with the loan state based on the loan entities.
-        :param loan_entities: dictionary of loan entities
-        :return: dataframe with loan state
-        """
-
-        filtered_loan_entities: dict = {}
-        # remove objects from loan_entities_values if the object has `has_skip` attribute
-        for loan_id, loan_entity in loan_entities.items():
-            has_skip = getattr(loan_entity, "has_skip", None)
-            if not has_skip:
-                filtered_loan_entities[loan_id] = loan_entity
-
-        # if there are no loan entities, return an empty DataFrame
-        if not loan_entities:
-            return pd.DataFrame()
-        result_dict = {
-            "protocol": [self.PROTOCOL_TYPE for _ in filtered_loan_entities.keys()],
-            "user": [
-                loan_entity.user for loan_entity in filtered_loan_entities.values()
-            ],
-            "collateral": [
-                {
-                    token: float(amount)
-                    for token, amount in loan.collateral.values.items()
-                }
-                for loan in filtered_loan_entities.values()
-            ],
-            "block": [
-                entity.extra_info.block for entity in filtered_loan_entities.values()
-            ],
-            "timestamp": [
-                entity.extra_info.timestamp
-                for entity in filtered_loan_entities.values()
-            ],
-            "debt": [
-                {token: float(amount) for token, amount in loan.debt.values.items()}
-                for loan in filtered_loan_entities.values()
-            ],
-        }
-
-        result_df = pd.DataFrame(result_dict)
-        return result_df
-
     def run(self) -> None:
         """
         Runs the loan state computation for the specific protocol.
         """
-        max_retries = 10000 # FIXME change it after first run on the server
+        max_retries = 10000  # FIXME change it after first run on the server
         retry = 0
-        self.last_block = 21000 # FIXME change it after first run on the server
+        self.last_block = 21000  # FIXME change it after first run on the server
 
         logger.info(f"Default last block: {self.last_block}")
         while retry < max_retries:

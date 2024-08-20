@@ -226,6 +226,7 @@ class HashstackV0State(State):
             debt=loan_entity.debt.values,
             original_collateral=loan_entity.original_collateral.values,
             borrowed_collateral=loan_entity.borrowed_collateral.values,
+            version=0,
         )
         if self.loan_entities[loan_id].user == self.verbose_user:
             logging.info(

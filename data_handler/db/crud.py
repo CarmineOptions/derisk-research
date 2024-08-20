@@ -383,10 +383,11 @@ class InitializerDBConnector:
         finally:
             session.close()
 
-    def get_hashtackv0_by_loan_ids(self, loan_ids: List[str]) -> List[HashtackCollateralDebt]:
+    def get_hashtack_by_loan_ids(self, loan_ids: List[str], version: int) -> List[HashtackCollateralDebt]:
         """
         Retrieve HashtackCollateralDebt records by loan_ids.
         :param loan_ids: A list of user IDs to filter by.
+        :param version: The version of the hashtack.
         :return: A list of HashtackCollateralDebt objects.
         """
         session = self.Session()
@@ -394,6 +395,7 @@ class InitializerDBConnector:
             return (
                 session.query(HashtackCollateralDebt)
                 .filter(HashtackCollateralDebt.loan_id.in_(loan_ids))
+                .filter(HashtackCollateralDebt.version == version)
                 .all()
             )
         finally:
@@ -464,15 +466,18 @@ class InitializerDBConnector:
         debt: dict,
         original_collateral: dict,
         borrowed_collateral: dict,
+        version: int,
     ) -> None:
         """
         Update the debt category for a given user_id.
         :param user_id: The user ID to update.
+        :param loan_id: The loan ID to update.
         :param debt_category: The new debt category.
         :param collateral: The new collateral data.
         :param debt: The new debt data.
         :param original_collateral: The new original collateral data.
         :param borrowed_collateral: The new borrowed collateral data.
+        :param version: The version of the hashtack.
         :return: None
         """
         session = self.Session()
@@ -510,6 +515,7 @@ class InitializerDBConnector:
                     debt=debt,
                     borrowed_collateral=borrowed_collateral,
                     debt_category=debt_category,
+                    version=version,
                 )
                 session.add(new_record)
             session.commit()
