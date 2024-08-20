@@ -66,12 +66,8 @@ DB_HOST=db
 DB_PORT=#
 IP_INFO_TOKEN=#
 TELEGRAM_TOKEN= # token telegram from botfather
-GS_BUCKET_NAME=#
-GS_BUCKET_URL=#
 REDIS_HOST=redis
 REDIS_PORT=6379
-CHECK_DATA_CHANGES_PERIOD=# in seconds
-ORDER_BOOK_TIME_INTERVAL=# in seconds
 DATA_HANDLER_URL=# url to data handler
 ```
 
