@@ -150,7 +150,8 @@ def update_data(zklend_state: src.zklend.ZkLendState):
     zklend_state.clear_loan_entities()
     src.persistent_state.upload_object_as_pickle(zklend_state, path=src.persistent_state.PERSISTENT_STATE_FILENAME)
     loan_entities = pandas.read_parquet(
-        f"gs://{src.helpers.GS_BUCKET_NAME}/{src.persistent_state.PERSISTENT_STATE_LOAN_ENTITIES_FILENAME}"
+        f"gs://{src.helpers.GS_BUCKET_NAME}/{src.persistent_state.PERSISTENT_STATE_LOAN_ENTITIES_FILENAME}",
+        engine='fastparquet',
     )
     zklend_state.set_loan_entities(loan_entities=loan_entities)
     logging.info(f"Updated CSV data in {time.time() - t0}s")
@@ -161,7 +162,8 @@ def update_data_continuously():
     state = src.persistent_state.load_pickle(path=src.persistent_state.PERSISTENT_STATE_FILENAME)
     if state.last_block_number > 0:
         loan_entities = pandas.read_parquet(
-            f"gs://{src.helpers.GS_BUCKET_NAME}/{src.persistent_state.PERSISTENT_STATE_LOAN_ENTITIES_FILENAME}"
+            f"gs://{src.helpers.GS_BUCKET_NAME}/{src.persistent_state.PERSISTENT_STATE_LOAN_ENTITIES_FILENAME}",
+            engine='fastparquet',
         )
         state.set_loan_entities(loan_entities=loan_entities)
     while True:
@@ -176,7 +178,8 @@ if __name__ == "__main__":
     zklend_state = src.persistent_state.load_pickle(path=src.persistent_state.PERSISTENT_STATE_FILENAME)
     if zklend_state.last_block_number > 0:
         loan_entities = pandas.read_parquet(
-            f"gs://{src.helpers.GS_BUCKET_NAME}/{src.persistent_state.PERSISTENT_STATE_LOAN_ENTITIES_FILENAME}"
+            f"gs://{src.helpers.GS_BUCKET_NAME}/{src.persistent_state.PERSISTENT_STATE_LOAN_ENTITIES_FILENAME}",
+            engine='fastparquet',
         )
         zklend_state.set_loan_entities(loan_entities=loan_entities)
     update_data(zklend_state)
