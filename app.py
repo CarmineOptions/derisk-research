@@ -263,11 +263,30 @@ def main():
     )
 
     streamlit.header("Comparison of lending protocols")
-    streamlit.dataframe(pandas.read_parquet(f"gs://{src.helpers.GS_BUCKET_NAME}/data/general_stats.parquet"))
-    streamlit.dataframe(pandas.read_parquet(f"gs://{src.helpers.GS_BUCKET_NAME}/data/utilization_stats.parquet"))
-    supply_stats = pandas.read_parquet(f"gs://{src.helpers.GS_BUCKET_NAME}/data/supply_stats.parquet")
-    collateral_stats = pandas.read_parquet(f"gs://{src.helpers.GS_BUCKET_NAME}/data/collateral_stats.parquet")
-    debt_stats = pandas.read_parquet(f"gs://{src.helpers.GS_BUCKET_NAME}/data/debt_stats.parquet")
+    streamlit.dataframe(
+        pandas.read_parquet(
+            f"gs://{src.helpers.GS_BUCKET_NAME}/data/general_stats.parquet",
+            engine='fastparquet',
+        ),
+    )
+    streamlit.dataframe(
+        pandas.read_parquet(
+            f"gs://{src.helpers.GS_BUCKET_NAME}/data/utilization_stats.parquet",
+            engine='fastparquet',
+        ),
+    )
+    supply_stats = pandas.read_parquet(
+        f"gs://{src.helpers.GS_BUCKET_NAME}/data/supply_stats.parquet",
+        engine='fastparquet',
+    )
+    collateral_stats = pandas.read_parquet(
+        f"gs://{src.helpers.GS_BUCKET_NAME}/data/collateral_stats.parquet",
+        engine='fastparquet',
+    )
+    debt_stats = pandas.read_parquet(
+        f"gs://{src.helpers.GS_BUCKET_NAME}/data/debt_stats.parquet",
+        engine='fastparquet',
+    )
 
     columns = streamlit.columns(4)
     tokens = list(src.settings.TOKEN_SETTINGS.keys())

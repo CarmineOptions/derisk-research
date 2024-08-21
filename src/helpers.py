@@ -94,10 +94,16 @@ def load_data(protocol: str) -> tuple[dict[str, pandas.DataFrame], pandas.DataFr
         debt_token_underlying_address = UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[debt_token_underlying_symbol]
         underlying_addresses_pair = f"{collateral_token_underlying_address}-{debt_token_underlying_address}"
         try:
-            main_chart_data[pair] = pandas.read_parquet(f"gs://{src.helpers.GS_BUCKET_NAME}/{directory}/{underlying_addresses_pair}.parquet")
+            main_chart_data[pair] = pandas.read_parquet(
+                f"gs://{src.helpers.GS_BUCKET_NAME}/{directory}/{underlying_addresses_pair}.parquet",
+                engine='fastparquet',
+            )
         except FileNotFoundError:
             main_chart_data[pair] = pandas.DataFrame()
-    loans_data = pandas.read_parquet(f"gs://{src.helpers.GS_BUCKET_NAME}/{directory}/loans.parquet")
+    loans_data = pandas.read_parquet(
+        f"gs://{src.helpers.GS_BUCKET_NAME}/{directory}/loans.parquet",
+        engine='fastparquet',
+    )
     return main_chart_data, loans_data
 
 
