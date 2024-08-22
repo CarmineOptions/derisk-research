@@ -170,6 +170,23 @@ class DBConnector:
         finally:
             db.close()
 
+    def get_last_hashstack_loan_state(self, user_id: str) -> HashtackCollateralDebt:
+        """
+        Retrieves the last loan state for a given user_id.
+        :param user_id: str - The user ID to filter by.
+        :return: HashtackCollateralDebt | None
+        """
+        db = self.Session()
+        try:
+            return (
+                db.query(HashtackCollateralDebt)
+                .filter(HashtackCollateralDebt.user_id == user_id)
+                .order_by(HashtackCollateralDebt.loan_id.desc())
+                .first()
+            )
+        finally:
+            db.close()
+
     def get_last_block(self, protocol_id: ProtocolIDs) -> int:
         """
         Retrieves the last (highest) block number from the database filtered by protocol_id.
