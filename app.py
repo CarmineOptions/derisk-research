@@ -288,6 +288,40 @@ def main():
         engine='fastparquet',
     )
 
+    usdc_data = pandas.read_parquet(
+        "gs://derisk-persistent-state/zklend_data/ETH-USDC.parquet",
+        engine='fastparquet',
+    )
+    usdt_data = pandas.read_parquet(
+        "gs://derisk-persistent-state/zklend_data/ETH-USDT.parquet",
+        engine='fastparquet',
+    )
+    dai_data = pandas.read_parquet(
+        "gs://derisk-persistent-state/zklend_data/ETH-DAI.parquet",
+        engine='fastparquet',
+    )
+
+    usdc_data['token'] = 'USDC'
+    usdt_data['token'] = 'USDT'
+    dai_data['token'] = 'DAI'
+    
+    stable_coins_merged_data = pandas.concat([usdc_data, usdt_data, dai_data])
+    stable_coins_merged_data['available_liquidity'] = stable_coins_merged_data['debt_token_supply'] * stable_coins_merged_data['collateral_token_price']
+
+    total_liquidable_debt = stable_coins_merged_data['liquidable_debt'].sum()
+    total_available_liquidity = stable_coins_merged_data['available_liquidity'].sum()
+
+    stable_coins_summary_totals = pandas.DataFrame({
+        'Total Liquidable Debt': [total_liquidable_debt],
+        'Total Available Liquidity': [total_available_liquidity]
+    })  
+
+    streamlit.header("Stable Coins Comparison")
+    streamlit.dataframe(stable_coins_merged_data)
+
+    streamlit.header("Summary of Total Liquidable Debt and Available Liquidity for Stable Coins")
+    streamlit.dataframe(stable_coins_summary_totals)
+
     columns = streamlit.columns(4)
     tokens = list(src.settings.TOKEN_SETTINGS.keys())
     for column, token_1, token_2 in zip(columns, tokens[:4], tokens[4:]):
