@@ -19,19 +19,6 @@ class HashtackV0StateComputation(HashstackBaseLoanStateComputation):
     PROTOCOL_TYPE = ProtocolIDs.HASHSTACK_V0.value
     PROTOCOL_ADDRESSES = ProtocolAddresses().HASHSTACK_V0_ADDRESSES
 
-    def process_interest_rate_event(
-        self, instance_state: "State", event: pd.Series
-    ) -> None:
-        """
-        Processes the interest rate event.
-        Will be implemented in the next task related to interest rate computation.
-
-        :param instance_state: The instance of the state class to call the method on.
-        :type instance_state: object
-        :param event: The event data as a pandas Series.
-        """
-        pass
-
     def process_data(self, data: list[dict]) -> pd.DataFrame:
         """
         Processes the data retrieved from the DeRisk API.
@@ -80,27 +67,17 @@ class HashtackV0StateComputation(HashstackBaseLoanStateComputation):
         """
         try:
             block_number = event.get("block_number")
-            interest_rate = self.db_connector.get_interest_rate_by_block(block_number, protocol_id=self.PROTOCOL_TYPE)
-
-            if interest_rate:
-                # Deserialize the JSON fields to Decimal types
-                collateral, debt = interest_rate.get_json_deserialized()
-                instance_state.collateral_interest_rate_models = InterestRateModels(
-                    collateral=collateral
-                )
-                instance_state.debt_interest_rate_models = InterestRateModels(
-                    debt=debt
-                )
-                # Process the event
-                if block_number and block_number >= self.last_block:
-                    self.last_block = block_number
-                    method = getattr(instance_state, method_name, None)
-                    if method:
-                        method(event)
-                    else:
-                        logger.debug(
-                            f"No method named {method_name} found for processing event."
-                        )
+            self.set_interest_rate(instance_state, block_number, self.PROTOCOL_TYPE)
+            # Process the event
+            if block_number and block_number >= self.last_block:
+                self.last_block = block_number
+                method = getattr(instance_state, method_name, None)
+                if method:
+                    method(event)
+                else:
+                    logger.debug(
+                        f"No method named {method_name} found for processing event."
+                    )
             else:
                 logger.debug(f"No InterestRate found for block number {block_number}")
         except Exception as e:
