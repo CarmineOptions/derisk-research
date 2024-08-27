@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.INFO)
 dispatcher = Dispatcher()
 
 
-class TelegramBot:
+class ErrorHandlerBot:
     SESSION_ID = str(uuid4())
     SESSION_MESSAGES = {SESSION_ID: []}
 
@@ -35,6 +35,10 @@ class TelegramBot:
     async def send_message(self, message: str) -> None:
         """
         Send a message to a chat.
+        This method checks if the session has any messages. If not, it sends the message to the error chat
+        and closes the bot. If the session has messages, it checks if the message is unique. If it is,
+        it sends the message to the error chat and closes the bot. If the message is not unique, it adds
+        the message to the session messages but does not send it.
         :param message: str
         :return: None
         """
@@ -53,7 +57,7 @@ class TelegramBot:
             self.SESSION_MESSAGES[self.SESSION_ID].append(Message(text=message, is_sent=False))
 
 
-my_bot = TelegramBot(TELEGRAM_TOKEN)
+BOT = ErrorHandlerBot(TELEGRAM_TOKEN)
 
 if __name__ == '__main__':
-    asyncio.run(dispatcher.start_polling(my_bot.bot))
+    asyncio.run(dispatcher.start_polling(BOT.bot))

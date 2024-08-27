@@ -3,19 +3,6 @@ from enum import Enum
 
 
 @dataclass
-class RedisSetKeys:
-    """
-    Dataclass for async redis queue keys.
-
-    :cvar ERRORS_QUEUE: The error queue key.
-    """
-
-    ERRORS_QUEUE: str = "errors_queue"
-    ERRORS_SET: str = "errors_set"
-    CHATS_SET: str = "chats_set"
-
-
-@dataclass
 class Message:
     text: str
     is_sent: bool
