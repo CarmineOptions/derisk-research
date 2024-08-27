@@ -5,6 +5,7 @@ from typing import Optional
 
 import pandas as pd
 
+from handler_tools.constants import ProtocolIDs
 from handlers.helpers import Portfolio, TokenValues, get_symbol
 from handlers.loan_states.zklend import TOKEN_SETTINGS, TokenSettings
 from handlers.state import InterestRateModels, LoanEntity, State
@@ -135,7 +136,10 @@ class ZkLendState(State):
                 == "0x585c32b625999e6e5e78645ff8df7a9001cf5cf3eb6b80ccdd16cb64bd3a34"
         ):
             return
-        token = get_symbol(event["data"][0])
+        token = get_symbol(
+            address=event["data"][0],
+            protocol=ProtocolIDs.ZKLEND.value
+        )
         collateral_interest_rate_index = decimal.Decimal(
             str(int(event["data"][1], base=16))
         ) / decimal.Decimal("1e27")
@@ -158,7 +162,10 @@ class ZkLendState(State):
                 == "0x585c32b625999e6e5e78645ff8df7a9001cf5cf3eb6b80ccdd16cb64bd3a34"
         ):
             return
-        token = get_symbol(event["data"][1])
+        token = get_symbol(
+            address=event["data"][1],
+            protocol=ProtocolIDs.ZKLEND.value
+        )
         face_amount = decimal.Decimal(str(int(event["data"][2], base=16)))
         raw_amount = face_amount / self.collateral_interest_rate_models.values[token]
 
@@ -184,7 +191,10 @@ class ZkLendState(State):
         # The order of the values in the `data` column is: `user`, `token`.
         # Example: https://starkscan.co/event/0x036185142bb51e2c1f5bfdb1e6cef81f8ea87fd4d777990014249bf5435fd31b_6.
         user = event["data"][0]
-        token = get_symbol(event["data"][1])
+        token = get_symbol(
+            event["data"][1],
+            protocol=ProtocolIDs.ZKLEND.value
+        )
 
         user_loan_entities = self.loan_entities[user]
         # add additional info block and timestamp
@@ -215,7 +225,10 @@ class ZkLendState(State):
         # The order of the values in the `data` column is: `user`, `token`.
         # Example: https://starkscan.co/event/0x0049b445bed84e0118795dbd22d76610ccac2ad626f8f04a1fc7e38113c2afe7_0.
         user = event["data"][0]
-        token = get_symbol(event["data"][1])
+        token = get_symbol(
+            event["data"][1],
+            protocol=ProtocolIDs.ZKLEND.value
+        )
 
         # add additional info block and timestamp
         self.loan_entities[user].extra_info.block = event["block_number"]
@@ -243,7 +256,10 @@ class ZkLendState(State):
                 == "0x585c32b625999e6e5e78645ff8df7a9001cf5cf3eb6b80ccdd16cb64bd3a34"
         ):
             return
-        token = get_symbol(event["data"][1])
+        token = get_symbol(
+            event["data"][1],
+            protocol=ProtocolIDs.ZKLEND.value
+        )
         face_amount = decimal.Decimal(str(int(event["data"][2], base=16)))
         raw_amount = face_amount / self.collateral_interest_rate_models.values[token]
 
@@ -269,7 +285,10 @@ class ZkLendState(State):
         # The order of the values in the `data` column is: `user`, `token`, `raw_amount`, `face_amount`.
         # Example: https://starkscan.co/event/0x076b1615750528635cf0b63ca80986b185acbd20fa37f0f2b5368a4f743931f8_3.
         user = event["data"][0]
-        token = get_symbol(event["data"][1])
+        token = get_symbol(
+            event["data"][1],
+            protocol=ProtocolIDs.ZKLEND.value
+        )
         raw_amount = decimal.Decimal(str(int(event["data"][2], base=16)))
 
         self.loan_entities[user].debt.increase_value(token=token, value=raw_amount)
@@ -290,7 +309,10 @@ class ZkLendState(State):
         # `face_amount`.
         # Example: https://starkscan.co/event/0x06fa3dd6e12c9a66aeacd2eefa5a2ff2915dd1bb4207596de29bd0e8cdeeae66_5.
         user = event["data"][1]
-        token = get_symbol(event["data"][2])
+        token = get_symbol(
+            event["data"][2],
+            protocol=ProtocolIDs.ZKLEND.value
+        )
         raw_amount = decimal.Decimal(str(int(event["data"][3], base=16)))
 
         self.loan_entities[user].debt.increase_value(token=token, value=-raw_amount)
@@ -311,9 +333,15 @@ class ZkLendState(State):
         # `collateral_token`, `collateral_amount`.
         # Example: https://starkscan.co/event/0x07b8ec709df1066d9334d56b426c45440ca1f1bb841285a5d7b33f9d1008f256_5.
         user = event["data"][1]
-        debt_token = get_symbol(event["data"][2])
+        debt_token = get_symbol(
+            event["data"][2],
+            protocol=ProtocolIDs.ZKLEND.value
+        )
         debt_raw_amount = decimal.Decimal(str(int(event["data"][3], base=16)))
-        collateral_token = get_symbol(event["data"][5])
+        collateral_token = get_symbol(
+            event["data"][5],
+            protocol=ProtocolIDs.ZKLEND.value
+        )
         collateral_face_amount = decimal.Decimal(str(int(event["data"][6], base=16)))
         collateral_raw_amount = (
                 collateral_face_amount

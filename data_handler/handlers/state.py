@@ -4,10 +4,14 @@ import dataclasses
 import decimal
 from typing import Optional
 
+import asyncio
 import pandas
 
+from error_handler import BOT
+from error_handler.values import MessageTemplates
 from handlers.helpers import Portfolio, TokenValues, ExtraInfo
 from handlers.settings import TOKEN_SETTINGS, TokenSettings
+from handlers.exceptions import TokenSettingsNotFound
 
 
 @dataclasses.dataclass
@@ -268,7 +272,8 @@ class State(abc.ABC):
     """
     A class that describes the state of all loan entities of the given lending protocol.
     """
-
+    PROTOCOL_NAME: str = None
+    ADDRESSES_TO_TOKENS: dict[str, str] = {}
     EVENTS_METHODS_MAPPING: dict[str, str] = {}
 
     def __init__(
@@ -311,3 +316,23 @@ class State(abc.ABC):
         return sum(
             loan_entity.has_debt() for loan_entity in self.loan_entities.values()
         )
+
+    def get_token_name(self, address: str) -> str | None:
+        """
+        Get the token name from the address.
+        :param address: str
+        :return: str | None
+        """
+        try:
+            token_name = self.ADDRESSES_TO_TOKENS[address]
+        except KeyError:
+            asyncio.run(BOT.send_message(
+                message=MessageTemplates.NEW_TOKEN_MESSAGE.format(
+                    protocol_name=self.PROTOCOL_NAME, address=address
+                )
+            ))
+            raise TokenSettingsNotFound(
+                address=address, protocol=self.PROTOCOL_NAME
+            )
+
+        return token_name

@@ -7,7 +7,7 @@ import asyncio
 import google.cloud.storage
 import pandas
 
-from error_handler.notifications import my_bot
+from error_handler import BOT
 from error_handler.values import MessageTemplates
 from handler_tools.constants import TOKEN_MAPPING, ProtocolIDs
 from handlers.settings import TOKEN_SETTINGS, PAIRS
@@ -235,11 +235,20 @@ def load_data(
 def get_symbol(address: str, protocol: str | None = None) -> str:
     """
     Get the symbol of the token by its address.
+
+    This function takes an address and an optional protocol as input, and returns the symbol of the token.
+    If the address is not found in the symbol table, it raises a KeyError.
+    If a protocol is provided and the address is not found, it also sends an error message to a Telegram bot.
+
     :param address: str - The address of the token.
     :param protocol: str | None - The name of the protocol.
     :return: str - The symbol of the token.
+    :raises KeyError: If the address is not found in the symbol table.
+    :note: If the address is not found and a protocol is provided, an error message will be sent to a Telegram bot.
+
     """
-    
+    # A tuple of that always has this order: `address`, `protocol`.
+    error_info = (address, protocol)
     # you can match addresses as numbers
     n = int(address, base=16)
     symbol_address_map = {
@@ -250,12 +259,9 @@ def get_symbol(address: str, protocol: str | None = None) -> str:
         if int(addr, base=16) == n:
             return symbol
 
-    # A tuple of that always has this order: `address`, `protocol`.
-    error_info = (address, protocol)
-
     if protocol and error_info not in ERROR_LOGS:
         ERROR_LOGS.update({error_info})
-        asyncio.run(my_bot.send_message(
+        asyncio.run(BOT.send_message(
             MessageTemplates.NEW_TOKEN_MESSAGE.format(protocol_name=protocol, address=address)
         ))
 
