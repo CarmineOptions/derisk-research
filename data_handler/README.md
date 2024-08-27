@@ -41,6 +41,7 @@ DB_HOST=db
 DB_PORT=#
 DERISK_API_URL=#
 REDIS_HOST=redis
+ERROR_CHAT_ID=# Actually your telegram id
 ```
 
 ### 5. Build your docker containers
