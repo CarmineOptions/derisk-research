@@ -27,10 +27,13 @@ class ZkLendInitializer:
         :param row: Series row.
         :return: str
         """
-        if row["key_name"] in "CollateralEnabled":
+        if "TreasuryUpdate" == row["key_name"]:
+            return None
+
+        if row["key_name"] == "CollateralEnabled":
             return row["data"][0]
         else:
-            return row["data"][1]
+            return row["data"][1] if len(row["data"]) > 1 else None
 
     def get_user_ids_from_df(self, df: pd.DataFrame) -> list[str]:
         """

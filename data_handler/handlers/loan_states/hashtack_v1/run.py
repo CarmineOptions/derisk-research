@@ -22,11 +22,6 @@ class HashtackV1StateComputation(HashstackBaseLoanStateComputation):
     )
     FIRST_EVENTS = ["updated_supply_token_price", "updated_debt_token_price"]
 
-    def process_interest_rate_event(
-        self, state: HashstackV1State, method_name: str, row: pd.Series
-    ) -> None:
-        pass
-
     def process_data(self, data: list[dict]) -> pd.DataFrame:
         """
         Processes the data retrieved from the DeRisk API.

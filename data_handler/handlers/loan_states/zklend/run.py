@@ -39,9 +39,10 @@ class ZkLendLoanStateComputation(LoanStateComputationBase):
         """
         try:
             block_number = event.get("block_number")
+            self.set_interest_rate(instance_state, block_number, self.PROTOCOL_TYPE)
             # For each block number, process the interest rate event
             if (
-                self.last_block != block_number
+                self.last_block < block_number
                 and event["key_name"] in self.INTEREST_RATES_KEYS
             ):
                 self.process_interest_rate_event(instance_state, event)
@@ -90,7 +91,6 @@ class ZkLendLoanStateComputation(LoanStateComputationBase):
         zklend_initializer = ZkLendInitializer(zklend_state)
         user_ids = zklend_initializer.get_user_ids_from_df(df)
         zklend_initializer.set_last_loan_states_per_users(user_ids)
-
         # Filter out events that are not in the mapping
         df_filtered = df[df["key_name"].isin(events_mapping.keys())]
         sorted_df = df_filtered.sort_values(by=["block_number", "id"])
@@ -104,6 +104,7 @@ class ZkLendLoanStateComputation(LoanStateComputationBase):
             {token: float(amount) for token, amount in loan.deposit.values.items()}
             for loan in zklend_state.loan_entities.values()
         ]
+        logger.info(f"Processed data for block {self.last_block}")
         return result_df
 
     def run(self) -> None:

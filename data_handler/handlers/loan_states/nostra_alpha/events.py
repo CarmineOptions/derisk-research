@@ -7,7 +7,7 @@ import pandas as pd
 
 from error_handler.values import ProtocolIDs
 from handlers.helpers import Portfolio, TokenValues, add_leading_zeros
-from handlers.settings import TokenSettings
+from handlers.settings import TokenSettings, TOKEN_SETTINGS
 from handlers.state import LoanEntity, InterestRateModels, State, NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS
 
 LIQUIDATION_HEALTH_FACTOR_THRESHOLD = decimal.Decimal("1")
