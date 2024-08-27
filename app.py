@@ -107,6 +107,42 @@ def add_ekubo_liquidity(
     return data
 
 
+def create_stablecoin_bundle(data: pandas.DataFrame):
+    for collateral in src.settings.COLLATERAL_TOKENS:
+        relevant_pairs = [pair for pair in data.keys() if collateral in pair and any(stablecoin in pair for stablecoin in src.settings.DEBT_TOKENS[:-1])]
+        combined_df = None
+
+        for pair in relevant_pairs:
+            df = data[pair]
+
+            if 'collateral_token_price' not in df.columns:
+                logging.warning(f"'collateral_token_price' is missing in DataFrame for pair: {pair}")
+                break
+                
+            if combined_df is None:
+                combined_df = df.copy()
+
+            else:
+                if 'collateral_token_price' not in combined_df.columns:
+                    logging.warning("'collateral_token_price' is missing in the combined DataFrame before merging.")  
+                    break
+
+                combined_df = pandas.merge(combined_df, df, on='collateral_token_price', suffixes=('', '_y'))
+
+                for col in ['liquidable_debt', 'liquidable_debt_at_interval', 
+                            '10kSwap_debt_token_supply', 'MySwap_debt_token_supply', 
+                            'SithSwap_debt_token_supply', 'JediSwap_debt_token_supply', 
+                            'debt_token_supply']:
+                    combined_df[col] += combined_df[f'{col}_y']
+
+                combined_df.drop([col for col in combined_df.columns if col.endswith('_y')], axis=1, inplace=True)
+
+        new_pair = f'{collateral}-(All USD Stable Coins)'
+        data[new_pair] = combined_df
+
+    return data
+
+
 def main():
     streamlit.title("DeRisk")
 
@@ -162,7 +198,14 @@ def main():
     main_chart_data = pandas.DataFrame()
     # histogram_data = pandas.DataFrame()
     loans_data = pandas.DataFrame()
+
     protocol_main_chart_data_mapping = {
+        'zkLend': create_stablecoin_bundle(zklend_main_chart_data)[current_pair],
+        # 'Hashstack V0': hashstack_v0_main_chart_data[current_pair],
+        # 'Hashstack V1': hashstack_v1_main_chart_data[current_pair],
+        'Nostra Alpha': create_stablecoin_bundle(nostra_alpha_main_chart_data)[current_pair],
+        'Nostra Mainnet': create_stablecoin_bundle(nostra_mainnet_main_chart_data)[current_pair],
+    } if current_pair == f"{collateral_token}-(All USD Stable Coins)" else {
         'zkLend': zklend_main_chart_data[current_pair],
         # 'Hashstack V0': hashstack_v0_main_chart_data[current_pair],
         # 'Hashstack V1': hashstack_v1_main_chart_data[current_pair],
@@ -287,40 +330,6 @@ def main():
         f"gs://{src.helpers.GS_BUCKET_NAME}/data/debt_stats.parquet",
         engine='fastparquet',
     )
-
-    usdc_data = pandas.read_parquet(
-        "gs://derisk-persistent-state/zklend_data/ETH-USDC.parquet",
-        engine='fastparquet',
-    )
-    usdt_data = pandas.read_parquet(
-        "gs://derisk-persistent-state/zklend_data/ETH-USDT.parquet",
-        engine='fastparquet',
-    )
-    dai_data = pandas.read_parquet(
-        "gs://derisk-persistent-state/zklend_data/ETH-DAI.parquet",
-        engine='fastparquet',
-    )
-
-    usdc_data['token'] = 'USDC'
-    usdt_data['token'] = 'USDT'
-    dai_data['token'] = 'DAI'
-    
-    stable_coins_merged_data = pandas.concat([usdc_data, usdt_data, dai_data])
-    stable_coins_merged_data['available_liquidity'] = stable_coins_merged_data['debt_token_supply'] * stable_coins_merged_data['collateral_token_price']
-
-    total_liquidable_debt = stable_coins_merged_data['liquidable_debt'].sum()
-    total_available_liquidity = stable_coins_merged_data['available_liquidity'].sum()
-
-    stable_coins_summary_totals = pandas.DataFrame({
-        'Total Liquidable Debt': [total_liquidable_debt],
-        'Total Available Liquidity': [total_available_liquidity]
-    })  
-
-    streamlit.header("Stable Coins Comparison")
-    streamlit.dataframe(stable_coins_merged_data)
-
-    streamlit.header("Summary of Total Liquidable Debt and Available Liquidity for Stable Coins")
-    streamlit.dataframe(stable_coins_summary_totals)
 
     columns = streamlit.columns(4)
     tokens = list(src.settings.TOKEN_SETTINGS.keys())
