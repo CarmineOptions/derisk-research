@@ -1,3 +1,4 @@
+import logging
 import uuid
 import logging
 from typing import List, Optional, Type, TypeVar
@@ -263,6 +264,7 @@ class DBConnector:
             raise e
         finally:
             db.close()
+            logging.info("Loan states have been written to the database.")
 
     def get_latest_order_book(
         self, dex: str, token_a: str, token_b: str
