@@ -3,14 +3,18 @@ import os
 from decimal import Decimal
 from typing import Iterator, Optional, Union
 
+import asyncio
 import google.cloud.storage
 import pandas
 
+from error_handler.notifications import my_bot
+from error_handler.values import MessageTemplates
 from handler_tools.constants import TOKEN_MAPPING, ProtocolIDs
-from db.models import InterestRate
 from handlers.settings import TOKEN_SETTINGS, PAIRS
+from db.models import InterestRate
 
 GS_BUCKET_NAME = "derisk-persistent-state"
+ERROR_LOGS = set()
 
 
 class TokenValues:
@@ -228,7 +232,14 @@ def load_data(
 
 
 # TODO: Improve this.
-def get_symbol(address: str) -> str:
+def get_symbol(address: str, protocol: str | None = None) -> str:
+    """
+    Get the symbol of the token by its address.
+    :param address: str - The address of the token.
+    :param protocol: str | None - The name of the protocol.
+    :return: str - The symbol of the token.
+    """
+    
     # you can match addresses as numbers
     n = int(address, base=16)
     symbol_address_map = {
@@ -238,6 +249,16 @@ def get_symbol(address: str) -> str:
     for symbol, addr in symbol_address_map.items():
         if int(addr, base=16) == n:
             return symbol
+
+    # A tuple of that always has this order: `address`, `protocol`.
+    error_info = (address, protocol)
+
+    if protocol and error_info not in ERROR_LOGS:
+        ERROR_LOGS.update({error_info})
+        asyncio.run(my_bot.send_message(
+            MessageTemplates.NEW_TOKEN_MESSAGE.format(protocol_name=protocol, address=address)
+        ))
+
     raise KeyError(f"Address = {address} does not exist in the symbol table.")
 
 
