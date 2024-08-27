@@ -39,9 +39,10 @@ class ZkLendLoanStateComputation(LoanStateComputationBase):
         """
         try:
             block_number = event.get("block_number")
+            self.set_interest_rate(instance_state, block_number, self.PROTOCOL_TYPE)
             # For each block number, process the interest rate event
             if (
-                self.last_block != block_number
+                self.last_block < block_number
                 and event["key_name"] in self.INTEREST_RATES_KEYS
             ):
                 self.process_interest_rate_event(instance_state, event)
