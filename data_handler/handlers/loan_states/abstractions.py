@@ -7,7 +7,7 @@ from handler_tools.constants import ProtocolIDs
 
 from db.crud import DBConnector
 from db.models import LoanState, InterestRate
-from handlers.state import State
+from handlers.state import State, InterestRateModels
 from handler_tools.api_connector import DeRiskAPIConnector
 
 logger = logging.getLogger(__name__)
@@ -36,7 +36,6 @@ class LoanStateComputationBase(ABC):
         self.last_block = self.db_connector.get_last_block(self.PROTOCOL_TYPE)
         self.interest_rate_result: list = []
 
-    @abstractmethod
     def process_interest_rate_event(
         self, instance_state: State, event: pd.Series
     ) -> None:
@@ -78,13 +77,7 @@ class LoanStateComputationBase(ABC):
         """
         try:
             block_number = event.get("block_number")
-            # For each block number, process the interest rate event
-            if (
-                self.last_block != block_number
-                and event["key_name"] in self.INTEREST_RATES_KEYS
-            ):
-                self.process_interest_rate_event(instance_state, event)
-                return
+            self.set_interest_rate(instance_state, block_number, self.PROTOCOL_TYPE)
 
             if block_number and block_number >= self.last_block:
                 self.last_block = block_number
@@ -236,6 +229,26 @@ class LoanStateComputationBase(ABC):
             }
         )
 
+    def set_interest_rate(self, instance_state: State, block: int, protocol_type: str) -> None:
+        """
+        Sets the interest rate for the zkLend protocol.
+
+        :param instance_state: The zkLend|HashtackV0|HashtackV1 state object.
+        :type instance_state: zkLend|HashtackV0|HashtackV1
+        :param protocol_type: The protocol type.
+        :type protocol_type: str
+        :param block: block_number
+        :type block: int
+        """
+        logger.info(f"Setting interest rate for block: {block}, protocol: {protocol_type}")
+        interest_rate_data = self.db_connector.get_interest_rate_by_block(block_number=block,
+                                                                          protocol_id=protocol_type)
+        if interest_rate_data:
+            collateral, debt = interest_rate_data.get_json_deserialized()
+            logger.info(f"Fetching interest rate data for block: {interest_rate_data.block}")
+            instance_state.collateral_interest_rate_models = InterestRateModels(collateral)
+            instance_state.debt_interest_rate_models = InterestRateModels(debt)
+
     def run(self) -> None:
         """
         Runs the loan state computation for the specific protocol.
@@ -268,6 +281,7 @@ class LoanStateComputationBase(ABC):
 
             if retry == max_retries:
                 logger.info(f"Reached max retries for address {protocol_address}")
+
 
 
 class HashstackBaseLoanStateComputation(LoanStateComputationBase):

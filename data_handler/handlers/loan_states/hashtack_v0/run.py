@@ -3,9 +3,10 @@ import logging
 import pandas as pd
 from time import monotonic
 from handlers.loan_states.abstractions import HashstackBaseLoanStateComputation
-from handlers.loan_states.hashtack_v0.events import HashstackV0State
+from handlers.loan_states.hashtack_v0.events import HashstackV0State, InterestRateModels
 from handler_tools.constants import ProtocolAddresses, ProtocolIDs
 from handlers.loan_states.hashtack_v0.utils import HashtackInitializer
+
 
 logger = logging.getLogger(__name__)
 
@@ -17,19 +18,6 @@ class HashtackV0StateComputation(HashstackBaseLoanStateComputation):
 
     PROTOCOL_TYPE = ProtocolIDs.HASHSTACK_V0.value
     PROTOCOL_ADDRESSES = ProtocolAddresses().HASHSTACK_V0_ADDRESSES
-
-    def process_interest_rate_event(
-        self, instance_state: "State", event: pd.Series
-    ) -> None:
-        """
-        Processes the interest rate event.
-        Will be implemented in the next task related to interest rate computation.
-
-        :param instance_state: The instance of the state class to call the method on.
-        :type instance_state: object
-        :param event: The event data as a pandas Series.
-        """
-        pass
 
     def process_data(self, data: list[dict]) -> pd.DataFrame:
         """
@@ -62,6 +50,38 @@ class HashtackV0StateComputation(HashstackBaseLoanStateComputation):
 
         result_df = self.get_result_df(hashtack_v0_state.loan_entities)
         return result_df
+
+    def process_event(
+            self, instance_state: "State", method_name: str, event: pd.Series
+    ) -> None:
+        """
+        Processes an event based on the method name and the event data.
+
+        Updates the last block processed to ensure data consistency
+        and calls the appropriate method to handle the event.
+
+        :param instance_state: The instance of the state class to call the method on.
+        :type instance_state: object
+        :param method_name: The name of the method to call for processing the event.
+        :param event: The event data as a pandas Series.
+        """
+        try:
+            block_number = event.get("block_number")
+            self.set_interest_rate(instance_state, block_number, self.PROTOCOL_TYPE)
+            # Process the event
+            if block_number and block_number >= self.last_block:
+                self.last_block = block_number
+                method = getattr(instance_state, method_name, None)
+                if method:
+                    method(event)
+                else:
+                    logger.debug(
+                        f"No method named {method_name} found for processing event."
+                    )
+            else:
+                logger.debug(f"No InterestRate found for block number {block_number}")
+        except Exception as e:
+            logger.exception(f"Failed to process event due to an error: {e}")
 
     def run(self) -> None:
         """

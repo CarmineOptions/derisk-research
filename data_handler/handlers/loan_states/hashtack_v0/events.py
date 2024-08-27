@@ -484,11 +484,11 @@ class HashstackV0State(State):
         try:
             self.loan_entities[loan_id].original_collateral = original_collateral
             self.loan_entities[loan_id].collateral.values = {
-            token: (
-                self.loan_entities[loan_id].original_collateral.values[token]
-                + self.loan_entities[loan_id].borrowed_collateral.values[token]
-            )
-                for token in TOKEN_SETTINGS
+                token: (
+                    self.loan_entities[loan_id].original_collateral.values[token]
+                    + self.loan_entities[loan_id].borrowed_collateral.values[token]
+                )
+                    for token in TOKEN_SETTINGS
             }
         except TypeError as exc:
             logging.getLogger("ErrorHandler").info(f"TypeErrorHandler: {exc}: {loan_id=}")
