@@ -1,9 +1,7 @@
 from typing import Optional
 import dataclasses
 
-from handlers.loan_states.nostra_alpha.events import (
-    TOKEN_SETTINGS,
-)
+from error_handler.values import ProtocolIDs
 from handlers.loan_states.nostra_alpha.events import (
     NostraAlphaState,
     NostraAlphaLoanEntity,
@@ -149,7 +147,7 @@ class NostraMainnetState(NostraAlphaState):
     A class that describes the state of all Nostra Mainnet loan entities. All methods for correct processing of every
     relevant event are implemented in `src.nostra_alpha.NostraAlphaState`.
     """
-
+    PROTOCOL_NAME = ProtocolIDs.NOSTRA_MAINNET.value
     ADDRESSES_TO_TOKENS: dict[str, str] = ADDRESSES_TO_TOKENS
     ADDRESSES_TO_EVENTS: dict[str, str] = ADDRESSES_TO_EVENTS
     INTEREST_RATE_MODEL_ADDRESS: str = INTEREST_RATE_MODEL_ADDRESS

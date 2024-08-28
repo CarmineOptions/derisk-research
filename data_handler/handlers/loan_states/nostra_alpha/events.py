@@ -5,6 +5,7 @@ import logging
 
 import pandas as pd
 
+from error_handler.values import ProtocolIDs
 from handlers.helpers import Portfolio, TokenValues, add_leading_zeros
 from handlers.settings import TokenSettings, TOKEN_SETTINGS
 from handlers.state import LoanEntity, InterestRateModels, State, NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS
@@ -205,7 +206,7 @@ class NostraAlphaState(State):
     A class that describes the state of all Nostra Alpha loan entities. It implements a method for correct processing
     of every relevant event.
     """
-
+    PROTOCOL_NAME = ProtocolIDs.NOSTRA_ALPHA.value
     ADDRESSES_TO_TOKENS: dict[str, str] = ADDRESSES_TO_TOKENS
     ADDRESSES_TO_EVENTS: dict[str, str] = ADDRESSES_TO_EVENTS
     INTEREST_RATE_MODEL_ADDRESS: str = INTEREST_RATE_MODEL_ADDRESS
@@ -247,7 +248,7 @@ class NostraAlphaState(State):
             == "0x04b036839a8769c04144cc47415c64b083a2b26e4a7daa53c07f6042a0d35792"
         ):
             return
-        token = self.ADDRESSES_TO_TOKENS[token_address]
+        token = self.get_token_name(token_address)
         collateral_interest_rate_index = decimal.Decimal(
             str(int(event["data"][5], base=16))
         ) / decimal.Decimal("1e18")
@@ -282,7 +283,7 @@ class NostraAlphaState(State):
                 self.loan_entities[user].non_interest_bearing_collateral.values[token]
                 + self.loan_entities[user].interest_bearing_collateral.values[token]
             )
-            for token in TOKEN_SETTINGS
+            for token in NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS
         }
         if user == self.verbose_user:
             logging.info(
@@ -316,7 +317,7 @@ class NostraAlphaState(State):
                 self.loan_entities[user].non_interest_bearing_collateral.values[token]
                 + self.loan_entities[user].interest_bearing_collateral.values[token]
             )
-            for token in TOKEN_SETTINGS
+            for token in NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS
         }
         if user == self.verbose_user:
             logging.info(
@@ -348,7 +349,7 @@ class NostraAlphaState(State):
                 self.loan_entities[user].non_interest_bearing_collateral.values[token]
                 + self.loan_entities[user].interest_bearing_collateral.values[token]
             )
-            for token in TOKEN_SETTINGS
+            for token in NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS
         }
         if user == self.verbose_user:
             logging.info(
@@ -380,7 +381,7 @@ class NostraAlphaState(State):
                 self.loan_entities[user].non_interest_bearing_collateral.values[token]
                 + self.loan_entities[user].interest_bearing_collateral.values[token]
             )
-            for token in TOKEN_SETTINGS
+            for token in NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS
         }
         if user == self.verbose_user:
             logging.info(
