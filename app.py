@@ -183,9 +183,13 @@ def main():
         protocol_loans_data = protocol_loans_data_mapping[protocol]
         if main_chart_data.empty:
             main_chart_data = protocol_main_chart_data
+            main_chart_data[f"liquidable_debt_{protocol}"] = protocol_main_chart_data["liquidable_debt"]
+            main_chart_data[f"liquidable_debt_at_interval_{protocol}"] = protocol_main_chart_data["liquidable_debt_at_interval"]
         else:
             main_chart_data["liquidable_debt"] += protocol_main_chart_data["liquidable_debt"]
             main_chart_data["liquidable_debt_at_interval"] += protocol_main_chart_data["liquidable_debt_at_interval"]
+            main_chart_data[f"liquidable_debt_{protocol}"] = protocol_main_chart_data["liquidable_debt"]
+            main_chart_data[f"liquidable_debt_at_interval_{protocol}"] = protocol_main_chart_data["liquidable_debt_at_interval"]
         if loans_data.empty:
             loans_data = protocol_loans_data
         else:
