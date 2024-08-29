@@ -1,6 +1,7 @@
 import datetime
 import logging
 import math
+from typing import Dict
 import requests
 import time
 
@@ -106,40 +107,64 @@ def add_ekubo_liquidity(
 
     return data
 
+def create_stablecoin_bundle(data: Dict[str, pandas.DataFrame]) -> Dict[str, pandas.DataFrame]:
+    """
+    Creates a stablecoin bundle by merging relevant DataFrames for collateral tokens and debt tokens.
+    
+    For each collateral token specified in `src.settings.COLLATERAL_TOKENS`, this function finds the
+    relevant stablecoin pairs from the provided `data` dictionary and merges the corresponding DataFrames
+    based on the 'collateral_token_price' column. It combines the debt and liquidity data for multiple 
+    stablecoin pairs and adds the result back to the `data` dictionary under a new key.
 
-def create_stablecoin_bundle(data: pandas.DataFrame):
+    Parameters:
+    data (Dict[str, pandas.DataFrame]): A dictionary where the keys are token pairs and the values are 
+                                        corresponding DataFrames containing price and supply data.
+
+    Returns:
+    Dict[str, pandas.DataFrame]: The updated dictionary with the newly created stablecoin bundle added.
+    """
+    
+    # Iterate over all collateral tokens defined in the settings
     for collateral in src.settings.COLLATERAL_TOKENS:
-        relevant_pairs = [pair for pair in data.keys() if collateral in pair and any(stablecoin in pair for stablecoin in src.settings.DEBT_TOKENS[:-1])]
-        combined_df = None
+        # Find all relevant pairs that involve the current collateral and one of the debt tokens
+        relevant_pairs = [
+            pair for pair in data.keys() 
+            if collateral in pair and any(stablecoin in pair for stablecoin in src.settings.DEBT_TOKENS[:-1])
+        ]
+        combined_df = None  # Initialize a variable to store the combined DataFrame
 
+        # Loop through each relevant pair
         for pair in relevant_pairs:
-            df = data[pair]
+            df = data[pair]  # Get the DataFrame for the current pair
 
-            if 'collateral_token_price' not in df.columns:
-                logging.warning(f"'collateral_token_price' is missing in DataFrame for pair: {pair}")
-                break
+            if df.empty:
+                # Log a warning if the DataFrame is empty and skip to the next pair
+                logging.warning(f"Empty DataFrame for pair: {pair}")
+                continue
                 
             if combined_df is None:
+                # If this is the first DataFrame being processed, use it as the base for combining
                 combined_df = df.copy()
-
             else:
-                if 'collateral_token_price' not in combined_df.columns:
-                    logging.warning("'collateral_token_price' is missing in the combined DataFrame before merging.")  
-                    break
-
+                # Merge the current DataFrame with the combined one on 'collateral_token_price'
                 combined_df = pandas.merge(combined_df, df, on='collateral_token_price', suffixes=('', '_y'))
 
+                # Sum the columns for debt and liquidity, adding the corresponding '_y' values
                 for col in ['liquidable_debt', 'liquidable_debt_at_interval', 
                             '10kSwap_debt_token_supply', 'MySwap_debt_token_supply', 
                             'SithSwap_debt_token_supply', 'JediSwap_debt_token_supply', 
                             'debt_token_supply']:
                     combined_df[col] += combined_df[f'{col}_y']
 
+                # Drop the '_y' columns after summing the relevant values
                 combined_df.drop([col for col in combined_df.columns if col.endswith('_y')], axis=1, inplace=True)
 
+        # Create a new pair name for the stablecoin bundle
         new_pair = f'{collateral}-(All USD Stable Coins)'
+        # Add the combined DataFrame for this collateral to the data dictionary
         data[new_pair] = combined_df
 
+    # Return the updated data dictionary
     return data
 
 
