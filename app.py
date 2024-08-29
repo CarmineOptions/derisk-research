@@ -213,7 +213,8 @@ def main():
             options=src.settings.DEBT_TOKENS,
             index=0,
         )
-        
+    stable_coin_pair = f"{collateral_token}-{src.settings.STABLECOIN_BUNDLE_NAME}"
+
     if(debt_token == collateral_token):
         streamlit.subheader(
             f":warning: You are selecting the same token for both collateral and debt.")   
@@ -230,7 +231,7 @@ def main():
         # 'Hashstack V1': hashstack_v1_main_chart_data[current_pair],
         'Nostra Alpha': create_stablecoin_bundle(nostra_alpha_main_chart_data)[current_pair],
         'Nostra Mainnet': create_stablecoin_bundle(nostra_mainnet_main_chart_data)[current_pair],
-    } if current_pair == f"{collateral_token}-{src.settings.STABLECOIN_BUNDLE_NAME}" else {
+    } if current_pair == stable_coin_pair else {
         'zkLend': zklend_main_chart_data[current_pair],
         # 'Hashstack V0': hashstack_v0_main_chart_data[current_pair],
         # 'Hashstack V1': hashstack_v1_main_chart_data[current_pair],
@@ -246,6 +247,10 @@ def main():
     }
     for protocol in protocols:
         protocol_main_chart_data = protocol_main_chart_data_mapping[protocol]
+        if protocol_main_chart_data is None:
+            streamlit.subheader(
+                f":warning: No data for STRK and {src.settings.STABLECOIN_BUNDLE_NAME} bundle")   
+            break
         if protocol_main_chart_data.empty:
             continue
         protocol_loans_data = protocol_loans_data_mapping[protocol]
@@ -261,24 +266,52 @@ def main():
 
     # Plot the liquidable debt against the available supply.
     collateral_token, debt_token = current_pair.split("-")
-    collateral_token_underlying_address = src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[collateral_token]
-    collateral_token_decimals = int(math.log10(src.settings.TOKEN_SETTINGS[collateral_token].decimal_factor))
-    underlying_addresses_to_decimals = {collateral_token_underlying_address: collateral_token_decimals}
-    prices = src.helpers.get_prices(token_decimals = underlying_addresses_to_decimals)
-    collateral_token_price = prices[collateral_token_underlying_address]
-    # TODO: Add Ekubo start
-    main_chart_data = main_chart_data.astype(float)
-    debt_token_underlying_address = src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[debt_token]
-    main_chart_data = add_ekubo_liquidity(
-        data=main_chart_data,
-        collateral_token=collateral_token_underlying_address,
-        debt_token=debt_token_underlying_address,
-    )
+
+    if current_pair == stable_coin_pair:
+        for stable_coin in src.settings.DEBT_TOKENS[:-1]:
+            debt_token = stable_coin
+            
+            # Fetch underlying addresses and decimals
+            collateral_token_underlying_address = src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[collateral_token]
+            collateral_token_decimals = int(math.log10(src.settings.TOKEN_SETTINGS[collateral_token].decimal_factor))
+            underlying_addresses_to_decimals = {collateral_token_underlying_address: collateral_token_decimals}
+
+            # Fetch prices
+            prices = src.helpers.get_prices(token_decimals=underlying_addresses_to_decimals)
+            collateral_token_price = prices[collateral_token_underlying_address]
+
+            # TODO: Add Ekubo start
+            main_chart_data = main_chart_data.astype(float)
+            debt_token_underlying_address = src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[debt_token]
+            main_chart_data = add_ekubo_liquidity(
+                data=main_chart_data,
+                collateral_token=collateral_token_underlying_address,
+                debt_token=debt_token_underlying_address,
+            )
+    else:
+        # Fetch underlying addresses and decimals
+        collateral_token_underlying_address = src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[collateral_token]
+        collateral_token_decimals = int(math.log10(src.settings.TOKEN_SETTINGS[collateral_token].decimal_factor))
+        underlying_addresses_to_decimals = {collateral_token_underlying_address: collateral_token_decimals}
+
+        # Fetch prices
+        prices = src.helpers.get_prices(token_decimals=underlying_addresses_to_decimals)
+        collateral_token_price = prices[collateral_token_underlying_address]
+
+        # TODO: Add Ekubo start
+        main_chart_data = main_chart_data.astype(float)
+        debt_token_underlying_address = src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[debt_token]
+        main_chart_data = add_ekubo_liquidity(
+            data=main_chart_data,
+            collateral_token=collateral_token_underlying_address,
+            debt_token=debt_token_underlying_address,
+        )
+
     # TODO: Add Ekubo end
     figure = src.main_chart.get_main_chart_figure(
         data=main_chart_data,
         collateral_token=collateral_token,
-        debt_token=debt_token,
+        debt_token=src.settings.STABLECOIN_BUNDLE_NAME if current_pair == stable_coin_pair else debt_token,
         collateral_token_price=collateral_token_price,
     )
     streamlit.plotly_chart(figure_or_data=figure, use_container_width=True)
