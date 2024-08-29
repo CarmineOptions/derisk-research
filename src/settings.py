@@ -77,3 +77,5 @@ PAIRS: list[str] = [
 COLLATERAL_TOKENS = ['ETH', 'WBTC', 'STRK']
 
 DEBT_TOKENS = ['USDC', 'USDT', 'DAI', 'DAI V2', '(All USD Stable Coins)']
+
+STABLECOIN_BUNDLE_NAME = '(All USD Stable Coins)'

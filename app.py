@@ -160,7 +160,7 @@ def create_stablecoin_bundle(data: Dict[str, pandas.DataFrame]) -> Dict[str, pan
                 combined_df.drop([col for col in combined_df.columns if col.endswith('_y')], axis=1, inplace=True)
 
         # Create a new pair name for the stablecoin bundle
-        new_pair = f'{collateral}-(All USD Stable Coins)'
+        new_pair = f'{collateral}-{src.settings.STABLECOIN_BUNDLE_NAME}'
         # Add the combined DataFrame for this collateral to the data dictionary
         data[new_pair] = combined_df
 
@@ -230,7 +230,7 @@ def main():
         # 'Hashstack V1': hashstack_v1_main_chart_data[current_pair],
         'Nostra Alpha': create_stablecoin_bundle(nostra_alpha_main_chart_data)[current_pair],
         'Nostra Mainnet': create_stablecoin_bundle(nostra_mainnet_main_chart_data)[current_pair],
-    } if current_pair == f"{collateral_token}-(All USD Stable Coins)" else {
+    } if current_pair == f"{collateral_token}-{src.settings.STABLECOIN_BUNDLE_NAME}" else {
         'zkLend': zklend_main_chart_data[current_pair],
         # 'Hashstack V0': hashstack_v0_main_chart_data[current_pair],
         # 'Hashstack V1': hashstack_v1_main_chart_data[current_pair],
