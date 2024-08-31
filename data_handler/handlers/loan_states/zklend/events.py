@@ -3,14 +3,17 @@ import decimal
 import logging
 from typing import Optional
 
+import asyncio
 import pandas as pd
 
 from handler_tools.constants import ProtocolIDs
 from handlers.helpers import Portfolio, TokenValues, get_symbol
 from handlers.loan_states.zklend import TOKEN_SETTINGS, TokenSettings
 from handlers.state import InterestRateModels, LoanEntity, State
+
 from db.crud import InitializerDBConnector
 
+from .fetch_zklend_specific_token_settings import fetch_zklend_specific_token_settings
 
 ADDRESS: str = "0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05"
 EVENTS_METHODS_MAPPING: dict[str, str] = {
@@ -32,6 +35,8 @@ EVENTS_METHODS_MAPPING: dict[str, str] = {
     "zklend::market::Market::Liquidation": "process_liquidation_event",
 }
 
+ZKLEND_SPECIFIC_TOKEN_SETTINGS = asyncio.run(fetch_zklend_specific_token_settings())
+
 
 class ZkLendLoanEntity(LoanEntity):
     """
@@ -43,7 +48,7 @@ class ZkLendLoanEntity(LoanEntity):
     amounts.
     """
 
-    TOKEN_SETTINGS: dict[str, TokenSettings] = TOKEN_SETTINGS
+    TOKEN_SETTINGS: dict[str, TokenSettings] = ZKLEND_SPECIFIC_TOKEN_SETTINGS
 
     def __init__(self) -> None:
         super().__init__()
