@@ -220,11 +220,11 @@ class LoanStateComputationBase(ABC):
                 "timestamp": event["timestamp"],
                 "debt": {
                     token: float(amount)
-                    for token, amount in state_instance.debt_interest_rate_models.values.items()
+                    for token, amount in state_instance.interest_rate_models.debt.items()
                 },
                 "collateral": {
                     token: float(amount)
-                    for token, amount in state_instance.collateral_interest_rate_models.values.items()
+                    for token, amount in state_instance.interest_rate_models.collateral.items()
                 },
             }
         )
@@ -240,14 +240,18 @@ class LoanStateComputationBase(ABC):
         :param block: block_number
         :type block: int
         """
+        if block == instance_state.last_interest_rate_block_number:
+            return
+
         logger.info(f"Setting interest rate for block: {block}, protocol: {protocol_type}")
         interest_rate_data = self.db_connector.get_interest_rate_by_block(block_number=block,
                                                                           protocol_id=protocol_type)
-        if interest_rate_data:
+        if interest_rate_data and instance_state.last_interest_rate_block_number != interest_rate_data.block:
             collateral, debt = interest_rate_data.get_json_deserialized()
             logger.info(f"Fetching interest rate data for block: {interest_rate_data.block}")
-            instance_state.collateral_interest_rate_models = InterestRateModels(collateral)
-            instance_state.debt_interest_rate_models = InterestRateModels(debt)
+            instance_state.interest_rate_models.collateral = InterestRateModels(collateral)
+            instance_state.interest_rate_models.debt = InterestRateModels(debt)
+            instance_state.last_interest_rate_block_number = block
 
     def run(self) -> None:
         """
@@ -281,7 +285,6 @@ class LoanStateComputationBase(ABC):
 
             if retry == max_retries:
                 logger.info(f"Reached max retries for address {protocol_address}")
-
 
 
 class HashstackBaseLoanStateComputation(LoanStateComputationBase):
