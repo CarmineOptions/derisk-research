@@ -1,7 +1,7 @@
 import datetime
 import logging
 import math
-from typing import Dict
+from typing import Dict, Tuple
 import requests
 import time
 
@@ -167,7 +167,7 @@ def create_stablecoin_bundle(data: Dict[str, pandas.DataFrame]) -> Dict[str, pan
     # Return the updated data dictionary
     return data
 
-def process_liquidity(main_chart_data, collateral_token, debt_token):
+def process_liquidity(main_chart_data: pandas.DataFrame, collateral_token: str, debt_token: str) -> Tuple[pandas.DataFrame, float]:
     # Fetch underlying addresses and decimals
     collateral_token_underlying_address = src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[collateral_token]
     collateral_token_decimals = int(math.log10(src.settings.TOKEN_SETTINGS[collateral_token].decimal_factor))
