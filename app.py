@@ -167,6 +167,26 @@ def create_stablecoin_bundle(data: Dict[str, pandas.DataFrame]) -> Dict[str, pan
     # Return the updated data dictionary
     return data
 
+def process_liquidity(main_chart_data, collateral_token, debt_token):
+    # Fetch underlying addresses and decimals
+    collateral_token_underlying_address = src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[collateral_token]
+    collateral_token_decimals = int(math.log10(src.settings.TOKEN_SETTINGS[collateral_token].decimal_factor))
+    underlying_addresses_to_decimals = {collateral_token_underlying_address: collateral_token_decimals}
+
+    # Fetch prices
+    prices = src.helpers.get_prices(token_decimals=underlying_addresses_to_decimals)
+    collateral_token_price = prices[collateral_token_underlying_address]
+
+    # Process main chart data
+    main_chart_data = main_chart_data.astype(float)
+    debt_token_underlying_address = src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[debt_token]
+    main_chart_data = add_ekubo_liquidity(
+        data=main_chart_data,
+        collateral_token=collateral_token_underlying_address,
+        debt_token=debt_token_underlying_address,
+    )
+
+    return main_chart_data, collateral_token_price
 
 def main():
     streamlit.title("DeRisk")
@@ -247,11 +267,8 @@ def main():
     }
     for protocol in protocols:
         protocol_main_chart_data = protocol_main_chart_data_mapping[protocol]
-        if protocol_main_chart_data is None:
-            streamlit.subheader(
-                f":warning: No data for STRK and {src.settings.STABLECOIN_BUNDLE_NAME} bundle")   
-            break
-        if protocol_main_chart_data.empty:
+        if protocol_main_chart_data is None or protocol_main_chart_data.empty:
+            logging.warning(f"No data for pair {debt_token} - {collateral_token} from {protocol}")
             continue
         protocol_loans_data = protocol_loans_data_mapping[protocol]
         if main_chart_data.empty:
@@ -266,46 +283,14 @@ def main():
 
     # Plot the liquidable debt against the available supply.
     collateral_token, debt_token = current_pair.split("-")
+    collateral_token_price = 0
 
     if current_pair == stable_coin_pair:
         for stable_coin in src.settings.DEBT_TOKENS[:-1]:
             debt_token = stable_coin
-            
-            # Fetch underlying addresses and decimals
-            collateral_token_underlying_address = src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[collateral_token]
-            collateral_token_decimals = int(math.log10(src.settings.TOKEN_SETTINGS[collateral_token].decimal_factor))
-            underlying_addresses_to_decimals = {collateral_token_underlying_address: collateral_token_decimals}
-
-            # Fetch prices
-            prices = src.helpers.get_prices(token_decimals=underlying_addresses_to_decimals)
-            collateral_token_price = prices[collateral_token_underlying_address]
-
-            # TODO: Add Ekubo start
-            main_chart_data = main_chart_data.astype(float)
-            debt_token_underlying_address = src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[debt_token]
-            main_chart_data = add_ekubo_liquidity(
-                data=main_chart_data,
-                collateral_token=collateral_token_underlying_address,
-                debt_token=debt_token_underlying_address,
-            )
+            main_chart_data, collateral_token_price = process_liquidity(main_chart_data, collateral_token, debt_token)
     else:
-        # Fetch underlying addresses and decimals
-        collateral_token_underlying_address = src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[collateral_token]
-        collateral_token_decimals = int(math.log10(src.settings.TOKEN_SETTINGS[collateral_token].decimal_factor))
-        underlying_addresses_to_decimals = {collateral_token_underlying_address: collateral_token_decimals}
-
-        # Fetch prices
-        prices = src.helpers.get_prices(token_decimals=underlying_addresses_to_decimals)
-        collateral_token_price = prices[collateral_token_underlying_address]
-
-        # TODO: Add Ekubo start
-        main_chart_data = main_chart_data.astype(float)
-        debt_token_underlying_address = src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[debt_token]
-        main_chart_data = add_ekubo_liquidity(
-            data=main_chart_data,
-            collateral_token=collateral_token_underlying_address,
-            debt_token=debt_token_underlying_address,
-        )
+        main_chart_data, collateral_token_price = process_liquidity(main_chart_data, collateral_token, debt_token)
 
     # TODO: Add Ekubo end
     figure = src.main_chart.get_main_chart_figure(
