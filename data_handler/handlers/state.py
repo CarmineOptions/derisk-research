@@ -13,9 +13,12 @@ from handler_tools.types import (
     InterestRateModels,
     TokenParameters,
     CollateralAndDebtTokenParameters,
+    Portfolio,
+    TokenValues,
+    Prices,
 )
 from error_handler.values import MessageTemplates
-from handlers.helpers import Portfolio, TokenValues, ExtraInfo
+from handlers.helpers import ExtraInfo
 from handlers.settings import TOKEN_SETTINGS, TokenSettings
 from handlers.exceptions import TokenSettingsNotFound
 
@@ -192,23 +195,27 @@ class LoanEntity(abc.ABC):
         self.extra_info: ExtraInfo = ExtraInfo()
 
     def compute_collateral_usd(
-        self,
-        risk_adjusted: bool,
-        collateral_interest_rate_model: InterestRateModels,
-        prices: TokenValues,
-        **kwargs,
-    ) -> decimal.Decimal:
+            self,
+            risk_adjusted: bool,
+            collateral_token_parameters: TokenParameters,
+            collateral_interest_rate_model: InterestRateModels,
+            prices: Prices,
+    ) -> float:
+        """
+        Compute the value of the collateral in USD.
+        :param risk_adjusted: risk adjusted
+        :param collateral_token_parameters: token parameters for collateral
+        :param collateral_interest_rate_model: token parameters for interest rate model
+        :param prices: Prices
+        :return: sum of the value of the collateral in USD
+        """
         return sum(
-            decimal.Decimal(token_amount)
-            / self.TOKEN_SETTINGS[token].decimal_factor
-            * (
-                self.TOKEN_SETTINGS[token].collateral_factor
-                if risk_adjusted
-                else decimal.Decimal("1")
-            )
-            * decimal.Decimal(str(collateral_interest_rate_model.values[token]))
-            * decimal.Decimal(str(prices.values[token]))
-            for token, token_amount in self.collateral.values.items()
+            float(token_amount)
+            / (10 ** collateral_token_parameters[token].decimals)
+            * (collateral_token_parameters[token].collateral_factor if risk_adjusted else 1.0)
+            * float(collateral_interest_rate_model[token])
+            * prices[collateral_token_parameters[token].underlying_address]
+            for token, token_amount in self.collateral.items()
         )
 
     def compute_debt_usd(
@@ -326,6 +333,7 @@ class State(abc.ABC):
         :param address: str
         :return: str | None
         """
+        # FIXME Remove Address to token mapping while doing refactoring for Nostra
         try:
             token_name = self.ADDRESSES_TO_TOKENS[address]
         except KeyError:
