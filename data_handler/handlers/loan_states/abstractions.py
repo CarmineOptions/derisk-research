@@ -249,8 +249,8 @@ class LoanStateComputationBase(ABC):
         if interest_rate_data and instance_state.last_interest_rate_block_number != interest_rate_data.block:
             collateral_interest_rate, debt_interest_rate = interest_rate_data.get_json_deserialized()
             logger.info(f"Fetching interest rate data for block: {interest_rate_data.block}")
-            instance_state.interest_rate_models.collateral = InterestRateModels(collateral)
-            instance_state.interest_rate_models.debt = InterestRateModels(debt)
+            instance_state.interest_rate_models.collateral = InterestRateModels(collateral_interest_rate)
+            instance_state.interest_rate_models.debt = InterestRateModels(debt_interest_rate)
             instance_state.last_interest_rate_block_number = block
 
     def run(self) -> None:
