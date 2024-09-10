@@ -6,7 +6,6 @@ from typing import Optional
 import asyncio
 import pandas as pd
 
-from handler_tools.constants import ProtocolIDs
 from handler_tools.types import (
     TokenParameters,
     ZkLendCollateralEnabled,
@@ -16,12 +15,10 @@ from handler_tools.types import (
 )
 from handlers import blockchain_call
 from handlers.helpers import (
-    Portfolio,
-    TokenValues,
-    get_symbol,
     add_leading_zeros,
     get_async_symbol,
 )
+from handler_tools.types import TokenValues, Portfolio
 from handlers.loan_states.zklend import TokenSettings
 from handlers.state import InterestRateModels, LoanEntity, State
 
@@ -167,11 +164,6 @@ class ZkLendState(State):
         # The order of the values in the `data` column is: `token`, `lending_accumulator`, `debt_accumulator`.
         # Example: https://starkscan.co/event/0x029628b89875a98c1c64ae206e7eb65669cb478a24449f3485f5e98aba6204dc_0.
         # TODO: Integrate the ZEND token once it's allowed to be borrowed or used as collateral.
-        if (
-            event["data"][0]
-            == "0x585c32b625999e6e5e78645ff8df7a9001cf5cf3eb6b80ccdd16cb64bd3a34"
-        ):
-            return
         token = add_leading_zeros(event["data"][0])
         collateral_interest_rate_index = decimal.Decimal(
             str(int(event["data"][1], base=16))
