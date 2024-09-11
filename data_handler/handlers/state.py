@@ -8,8 +8,17 @@ import asyncio
 import pandas
 
 from error_handler import BOT
+from handler_tools.types import (
+    CollateralAndDebtInterestRateModels,
+    InterestRateModels,
+    TokenParameters,
+    CollateralAndDebtTokenParameters,
+    Portfolio,
+    TokenValues,
+    Prices,
+)
 from error_handler.values import MessageTemplates
-from handlers.helpers import Portfolio, TokenValues, ExtraInfo
+from handlers.helpers import ExtraInfo
 from handlers.settings import TOKEN_SETTINGS, TokenSettings
 from handlers.exceptions import TokenSettingsNotFound
 
@@ -171,16 +180,6 @@ TOKEN_SETTINGS: dict[str, TokenSettings] = {
 }
 
 
-class InterestRateModels(TokenValues):
-    """
-    A class that describes the state of the interest rate indices which help transform face amounts into raw amounts.
-    Raw amount is the amount that would have been accumulated into the face amount if it were deposited at genesis.
-    """
-
-    def __init__(self, init_value=decimal.Decimal("1"), *args, **kwargs) -> None:
-        super().__init__(init_value=init_value, *args, **kwargs)
-
-
 class LoanEntity(abc.ABC):
     """
     A class that describes and entity which can hold collateral, borrow debt and be liquidable. For example, on
@@ -198,88 +197,93 @@ class LoanEntity(abc.ABC):
     def compute_collateral_usd(
             self,
             risk_adjusted: bool,
-            collateral_interest_rate_models: InterestRateModels,
-            prices: TokenValues,
-    ) -> decimal.Decimal:
+            collateral_token_parameters: TokenParameters,
+            collateral_interest_rate_model: InterestRateModels,
+            prices: Prices,
+    ) -> float:
+        """
+        Compute the value of the collateral in USD.
+        :param risk_adjusted: risk adjusted
+        :param collateral_token_parameters: token parameters for collateral
+        :param collateral_interest_rate_model: token parameters for interest rate model
+        :param prices: Prices
+        :return: sum of the value of the collateral in USD
+        """
         return sum(
-            decimal.Decimal(token_amount)
-            / self.TOKEN_SETTINGS[token].decimal_factor
-            * (
-                self.TOKEN_SETTINGS[token].collateral_factor
-                if risk_adjusted
-                else decimal.Decimal("1")
-            )
-            * decimal.Decimal(str(collateral_interest_rate_models.values[token]))
-            * decimal.Decimal(str(prices.values[token]))
-            for token, token_amount in self.collateral.values.items()
+            float(token_amount)
+            / (10 ** collateral_token_parameters[token].decimals)
+            * (collateral_token_parameters[token].collateral_factor if risk_adjusted else 1.0)
+            * float(collateral_interest_rate_model[token])
+            * prices[collateral_token_parameters[token].underlying_address]
+            for token, token_amount in self.collateral.items()
         )
 
     def compute_debt_usd(
-            self,
-            risk_adjusted: bool,
-            debt_interest_rate_models: InterestRateModels,
-            prices: TokenValues,
+        self,
+        risk_adjusted: bool,
+        debt_token_parameters: TokenParameters,
+        debt_interest_rate_model: InterestRateModels,
+        prices: TokenValues,
     ) -> decimal.Decimal:
         return sum(
-            decimal.Decimal(token_amount)
-            / self.TOKEN_SETTINGS[token].decimal_factor
-            / (
-                self.TOKEN_SETTINGS[token].debt_factor
-                if risk_adjusted
-                else decimal.Decimal("1")
-            )
-            * decimal.Decimal(str(decimal.Decimal(str(debt_interest_rate_models.values[token]))))
-            * decimal.Decimal(str(decimal.Decimal(str(prices.values[token]))))
-            for token, token_amount in self.debt.values.items()
+            float(token_amount)
+            / (10 ** debt_token_parameters[token].decimals)
+            / (debt_token_parameters[token].debt_factor if risk_adjusted else 1.0)
+            * float(debt_interest_rate_model[token])
+            * prices[debt_token_parameters[token].underlying_address]
+            for token, token_amount in self.debt.items()
         )
 
     @abc.abstractmethod
-    def compute_health_factor(self):
+    def compute_health_factor(self, *args, **kwargs):
         pass
 
     @abc.abstractmethod
-    def compute_debt_to_be_liquidated(self):
+    def compute_debt_to_be_liquidated(self, *args, **kwargs):
         pass
 
     def get_collateral_str(
-            self, collateral_interest_rate_models: InterestRateModels
+        self,
+        collateral_token_parameters: TokenParameters,
+        collateral_interest_rate_model: InterestRateModels,
     ) -> str:
         return ", ".join(
-            f"{token}: {round(token_amount / self.TOKEN_SETTINGS[token].decimal_factor * collateral_interest_rate_models.values[token], 4)}"
-            for token, token_amount in self.collateral.values.items()
+            f"{token}: {round(token_amount / (10 ** collateral_token_parameters[token].decimals) * collateral_interest_rate_model[token], 4)}"
+            for token, token_amount in self.collateral.items()
             if token_amount > decimal.Decimal("0")
         )
 
-    def get_debt_str(self, debt_interest_rate_models: InterestRateModels) -> str:
+    def get_debt_str(
+        self,
+        debt_token_parameters: TokenParameters,
+        debt_interest_rate_model: InterestRateModels,
+    ) -> str:
         return ", ".join(
-            f"{token}: {round(token_amount / self.TOKEN_SETTINGS[token].decimal_factor * debt_interest_rate_models.values[token], 4)}"
-            for token, token_amount in self.debt.values.items()
+            f"{token}: {round(token_amount / (10 ** debt_token_parameters[token].decimals) * debt_interest_rate_model[token], 4)}"
+            for token, token_amount in self.debt.items()
             if token_amount > decimal.Decimal("0")
         )
 
     def has_collateral(self) -> bool:
-        if any(token_amount for token_amount in self.collateral.values.values()):
-            return True
-        return False
+        return any(token_amount for token_amount in self.collateral.values())
 
     def has_debt(self) -> bool:
-        if any(token_amount for token_amount in self.debt.values.values()):
-            return True
-        return False
+        return any(token_amount for token_amount in self.debt.values())
 
 
 class State(abc.ABC):
     """
     A class that describes the state of all loan entities of the given lending protocol.
     """
+
     PROTOCOL_NAME: str = None
     ADDRESSES_TO_TOKENS: dict[str, str] = {}
     EVENTS_METHODS_MAPPING: dict[str, str] = {}
 
     def __init__(
-            self,
-            loan_entity_class: LoanEntity,
-            verbose_user: Optional[str] = None,
+        self,
+        loan_entity_class: LoanEntity,
+        verbose_user: Optional[str] = None,
     ) -> None:
         self.loan_entity_class: LoanEntity = loan_entity_class
         self.verbose_user: Optional[str] = verbose_user
@@ -287,10 +291,16 @@ class State(abc.ABC):
             self.loan_entity_class
         )
         # These models reflect the interest rates at which users lend/stake funds.
-        self.collateral_interest_rate_models: InterestRateModels = InterestRateModels()
+        self.interest_rate_models: CollateralAndDebtInterestRateModels = (
+            CollateralAndDebtInterestRateModels()
+        )
         # These models reflect the interest rates at which users borrow funds.
         self.debt_interest_rate_models: InterestRateModels = InterestRateModels()
+        self.token_parameters: CollateralAndDebtTokenParameters = (
+            CollateralAndDebtTokenParameters()
+        )
         self.last_block_number: int = 0
+        self.last_interest_rate_block_number: int = 0
 
     def process_event(self, method_name: str, event: pandas.Series) -> None:
         # TODO: Save the timestamp of each update?
@@ -323,16 +333,17 @@ class State(abc.ABC):
         :param address: str
         :return: str | None
         """
+        # FIXME Remove Address to token mapping while doing refactoring for Nostra
         try:
             token_name = self.ADDRESSES_TO_TOKENS[address]
         except KeyError:
-            asyncio.run(BOT.send_message(
-                message=MessageTemplates.NEW_TOKEN_MESSAGE.format(
-                    protocol_name=self.PROTOCOL_NAME, address=address
+            asyncio.run(
+                BOT.send_message(
+                    message=MessageTemplates.NEW_TOKEN_MESSAGE.format(
+                        protocol_name=self.PROTOCOL_NAME, address=address
+                    )
                 )
-            ))
-            raise TokenSettingsNotFound(
-                address=address, protocol=self.PROTOCOL_NAME
             )
+            raise TokenSettingsNotFound(address=address, protocol=self.PROTOCOL_NAME)
 
         return token_name

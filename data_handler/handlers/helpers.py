@@ -1,37 +1,24 @@
 import decimal
 import os
+import collections
 from decimal import Decimal
 from typing import Iterator, Optional, Union
 
 import asyncio
 import google.cloud.storage
 import pandas
+import starknet_py.cairo.felt as cairo_felt_type
 
 from error_handler import BOT
+from handlers import blockchain_call
 from error_handler.values import MessageTemplates
+from handler_tools.types import TokenValues
 from handler_tools.constants import TOKEN_MAPPING, ProtocolIDs
 from handlers.settings import TOKEN_SETTINGS, PAIRS
 from db.models import InterestRate
 
 GS_BUCKET_NAME = "derisk-persistent-state"
 ERROR_LOGS = set()
-
-
-class TokenValues:
-    def __init__(
-        self,
-        values: Optional[dict[str, Union[bool, decimal.Decimal]]] = None,
-        # TODO: Only one parameter should be specified..
-        init_value: decimal.Decimal = decimal.Decimal("0"),
-    ) -> None:
-        if values:
-            # Nostra Mainnet can contain different tokens that aren't mentioned in `TOKEN_SETTINGS`
-            # assert set(values.keys()) == set(TOKEN_SETTINGS.keys())
-            self.values: dict[str, decimal.Decimal] = values
-        else:
-            self.values: dict[str, decimal.Decimal] = {
-                token: init_value for token in TOKEN_SETTINGS
-            }
 
 
 # TODO: Find a better solution to fix the discrepancies.
@@ -53,31 +40,6 @@ MAX_ROUNDING_ERRORS: TokenValues = TokenValues(
 class ExtraInfo:
     block: int
     timestamp: int
-
-
-class Portfolio(TokenValues):
-    """A class that describes holdings of tokens."""
-
-    MAX_ROUNDING_ERRORS: TokenValues = MAX_ROUNDING_ERRORS
-
-    def __init__(self) -> None:
-        super().__init__(init_value=decimal.Decimal("0"))
-
-    def round_small_value_to_zero(self, token: str):
-        if (
-            -self.MAX_ROUNDING_ERRORS.values[token]
-            < self.values[token]
-            < self.MAX_ROUNDING_ERRORS.values[token]
-        ):
-            self.values[token] = decimal.Decimal("0")
-
-    def increase_value(self, token: str, value: decimal.Decimal):
-        self.values[token] += value
-        self.round_small_value_to_zero(token=token)
-
-    def set_value(self, token: str, value: decimal.Decimal):
-        self.values[token] = value
-        self.round_small_value_to_zero(token=token)
 
 
 class InterestRateState:
@@ -109,10 +71,11 @@ class InterestRateState:
         )
 
     def update_state_cumulative_data(
-            self, token_name: str,
-            current_block: int,
-            cumulative_collateral_interest_rate_increase: Decimal,
-            cumulative_debt_interest_rate_increase: Decimal,
+        self,
+        token_name: str,
+        current_block: int,
+        cumulative_collateral_interest_rate_increase: Decimal,
+        cumulative_debt_interest_rate_increase: Decimal,
     ) -> None:
         """
         Update the state of interest rate calculation with the new data.
@@ -121,8 +84,12 @@ class InterestRateState:
         :param cumulative_collateral_interest_rate_increase: Decimal - The change in collateral(supply) interest rate.
         :param cumulative_debt_interest_rate_increase: Decimal - The change in debt(borrow) interest rate.
         """
-        self.cumulative_collateral_interest_rates[token_name] += cumulative_collateral_interest_rate_increase
-        self.cumulative_debt_interest_rate[token_name] += cumulative_debt_interest_rate_increase
+        self.cumulative_collateral_interest_rates[
+            token_name
+        ] += cumulative_collateral_interest_rate_increase
+        self.cumulative_debt_interest_rate[
+            token_name
+        ] += cumulative_debt_interest_rate_increase
         self.previous_token_timestamps[token_name] = self.current_timestamp
         self.current_block = current_block
 
@@ -134,20 +101,24 @@ class InterestRateState:
     def _fill_cumulative_data(self) -> None:
         """Fill the cumulative collateral and debt data with latest block data or default values. Default value is 1."""
         if self.last_block_data:
-            self.cumulative_collateral_interest_rates, self.cumulative_debt_interest_rate = (
-                self.last_block_data.get_json_deserialized()
-            )
+            (
+                self.cumulative_collateral_interest_rates,
+                self.cumulative_debt_interest_rate,
+            ) = self.last_block_data.get_json_deserialized()
         else:
             self.cumulative_collateral_interest_rates = {
                 token_name: Decimal("1") for token_name in TOKEN_MAPPING.values()
             }
-            self.cumulative_debt_interest_rate = self.cumulative_collateral_interest_rates.copy()
+            self.cumulative_debt_interest_rate = (
+                self.cumulative_collateral_interest_rates.copy()
+            )
 
     def _fill_timestamps(self) -> None:
         """Fill the token timestamps with latest block timestamp or default value. Default value is 0"""
         if self.last_block_data:
             self.previous_token_timestamps = {
-                token_name: self.last_block_data.timestamp for token_name in TOKEN_MAPPING.values()
+                token_name: self.last_block_data.timestamp
+                for token_name in TOKEN_MAPPING.values()
             }
         else:
             # First token event occurrence will update the timestamp,
@@ -166,16 +137,18 @@ class InterestRateState:
             block=self.current_block,
             timestamp=self.current_timestamp,
             protocol_id=protocol_id,
-            **self._serialize_cumulative_data()
+            **self._serialize_cumulative_data(),
         )
 
     def _serialize_cumulative_data(self) -> dict[str, dict[str, str]]:
         """Serialize the cumulative collateral and debt data to write to the database."""
         collateral = {
-            token_name: str(value) for token_name, value in self.cumulative_collateral_interest_rates.items()
+            token_name: str(value)
+            for token_name, value in self.cumulative_collateral_interest_rates.items()
         }
         debt = {
-            token_name: str(value) for token_name, value in self.cumulative_debt_interest_rate.items()
+            token_name: str(value)
+            for token_name, value in self.cumulative_debt_interest_rate.items()
         }
         return {"collateral": collateral, "debt": debt}
 
@@ -261,11 +234,33 @@ def get_symbol(address: str, protocol: str | None = None) -> str:
 
     if protocol and error_info not in ERROR_LOGS:
         ERROR_LOGS.update({error_info})
-        asyncio.run(BOT.send_message(
-            MessageTemplates.NEW_TOKEN_MESSAGE.format(protocol_name=protocol, address=address)
-        ))
+        asyncio.run(
+            BOT.send_message(
+                MessageTemplates.NEW_TOKEN_MESSAGE.format(
+                    protocol_name=protocol, address=address
+                )
+            )
+        )
 
     raise KeyError(f"Address = {address} does not exist in the symbol table.")
+
+
+async def get_async_symbol(token_address: str) -> str:
+    # DAI V2's symbol is `DAI` but we don't want to mix it with DAI = DAI V1.
+    if (
+        token_address
+        == "0x05574eb6b8789a91466f902c380d978e472db68170ff82a5b650b95a58ddf4ad"
+    ):
+        return "DAI V2"
+    symbol = await blockchain_call.func_call(
+        addr=token_address,
+        selector="symbol",
+        calldata=[],
+    )
+    # For some Nostra Mainnet tokens, a list of length 3 is returned.
+    if len(symbol) > 1:
+        return cairo_felt_type.decode_shortstring(symbol[1])
+    return cairo_felt_type.decode_shortstring(symbol[0])
 
 
 def upload_file_to_bucket(source_path: str, target_path: str):
