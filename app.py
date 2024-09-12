@@ -1,6 +1,7 @@
 import datetime
 import logging
 import math
+from typing import Dict, Tuple
 import requests
 import time
 
@@ -106,6 +107,86 @@ def add_ekubo_liquidity(
 
     return data
 
+def create_stablecoin_bundle(data: Dict[str, pandas.DataFrame]) -> Dict[str, pandas.DataFrame]:
+    """
+    Creates a stablecoin bundle by merging relevant DataFrames for collateral tokens and debt tokens.
+    
+    For each collateral token specified in `src.settings.COLLATERAL_TOKENS`, this function finds the
+    relevant stablecoin pairs from the provided `data` dictionary and merges the corresponding DataFrames
+    based on the 'collateral_token_price' column. It combines the debt and liquidity data for multiple 
+    stablecoin pairs and adds the result back to the `data` dictionary under a new key.
+
+    Parameters:
+    data (Dict[str, pandas.DataFrame]): A dictionary where the keys are token pairs and the values are 
+                                        corresponding DataFrames containing price and supply data.
+
+    Returns:
+    Dict[str, pandas.DataFrame]: The updated dictionary with the newly created stablecoin bundle added.
+    """
+    
+    # Iterate over all collateral tokens defined in the settings
+    for collateral in src.settings.COLLATERAL_TOKENS:
+        # Find all relevant pairs that involve the current collateral and one of the debt tokens
+        relevant_pairs = [
+            pair for pair in data.keys() 
+            if collateral in pair and any(stablecoin in pair for stablecoin in src.settings.DEBT_TOKENS[:-1])
+        ]
+        combined_df = None  # Initialize a variable to store the combined DataFrame
+
+        # Loop through each relevant pair
+        for pair in relevant_pairs:
+            df = data[pair]  # Get the DataFrame for the current pair
+
+            if df.empty:
+                # Log a warning if the DataFrame is empty and skip to the next pair
+                logging.warning(f"Empty DataFrame for pair: {pair}")
+                continue
+                
+            if combined_df is None:
+                # If this is the first DataFrame being processed, use it as the base for combining
+                combined_df = df.copy()
+            else:
+                # Merge the current DataFrame with the combined one on 'collateral_token_price'
+                combined_df = pandas.merge(combined_df, df, on='collateral_token_price', suffixes=('', '_y'))
+
+                # Sum the columns for debt and liquidity, adding the corresponding '_y' values
+                for col in ['liquidable_debt', 'liquidable_debt_at_interval', 
+                            '10kSwap_debt_token_supply', 'MySwap_debt_token_supply', 
+                            'SithSwap_debt_token_supply', 'JediSwap_debt_token_supply', 
+                            'debt_token_supply']:
+                    combined_df[col] += combined_df[f'{col}_y']
+
+                # Drop the '_y' columns after summing the relevant values
+                combined_df.drop([col for col in combined_df.columns if col.endswith('_y')], axis=1, inplace=True)
+
+        # Create a new pair name for the stablecoin bundle
+        new_pair = f'{collateral}-{src.settings.STABLECOIN_BUNDLE_NAME}'
+        # Add the combined DataFrame for this collateral to the data dictionary
+        data[new_pair] = combined_df
+
+    # Return the updated data dictionary
+    return data
+
+def process_liquidity(main_chart_data: pandas.DataFrame, collateral_token: str, debt_token: str) -> Tuple[pandas.DataFrame, float]:
+    # Fetch underlying addresses and decimals
+    collateral_token_underlying_address = src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[collateral_token]
+    collateral_token_decimals = int(math.log10(src.settings.TOKEN_SETTINGS[collateral_token].decimal_factor))
+    underlying_addresses_to_decimals = {collateral_token_underlying_address: collateral_token_decimals}
+
+    # Fetch prices
+    prices = src.helpers.get_prices(token_decimals=underlying_addresses_to_decimals)
+    collateral_token_price = prices[collateral_token_underlying_address]
+
+    # Process main chart data
+    main_chart_data = main_chart_data.astype(float)
+    debt_token_underlying_address = src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[debt_token]
+    main_chart_data = add_ekubo_liquidity(
+        data=main_chart_data,
+        collateral_token=collateral_token_underlying_address,
+        debt_token=debt_token_underlying_address,
+    )
+
+    return main_chart_data, collateral_token_price
 
 def main():
     streamlit.title("DeRisk")
@@ -152,7 +233,8 @@ def main():
             options=src.settings.DEBT_TOKENS,
             index=0,
         )
-        
+    stable_coin_pair = f"{collateral_token}-{src.settings.STABLECOIN_BUNDLE_NAME}"
+
     if(debt_token == collateral_token):
         streamlit.subheader(
             f":warning: You are selecting the same token for both collateral and debt.")   
@@ -162,7 +244,14 @@ def main():
     main_chart_data = pandas.DataFrame()
     # histogram_data = pandas.DataFrame()
     loans_data = pandas.DataFrame()
+
     protocol_main_chart_data_mapping = {
+        'zkLend': create_stablecoin_bundle(zklend_main_chart_data)[current_pair],
+        # 'Hashstack V0': hashstack_v0_main_chart_data[current_pair],
+        # 'Hashstack V1': hashstack_v1_main_chart_data[current_pair],
+        'Nostra Alpha': create_stablecoin_bundle(nostra_alpha_main_chart_data)[current_pair],
+        'Nostra Mainnet': create_stablecoin_bundle(nostra_mainnet_main_chart_data)[current_pair],
+    } if current_pair == stable_coin_pair else {
         'zkLend': zklend_main_chart_data[current_pair],
         # 'Hashstack V0': hashstack_v0_main_chart_data[current_pair],
         # 'Hashstack V1': hashstack_v1_main_chart_data[current_pair],
@@ -178,7 +267,8 @@ def main():
     }
     for protocol in protocols:
         protocol_main_chart_data = protocol_main_chart_data_mapping[protocol]
-        if protocol_main_chart_data.empty:
+        if protocol_main_chart_data is None or protocol_main_chart_data.empty:
+            logging.warning(f"No data for pair {debt_token} - {collateral_token} from {protocol}")
             continue
         protocol_loans_data = protocol_loans_data_mapping[protocol]
         if main_chart_data.empty:
@@ -197,24 +287,20 @@ def main():
 
     # Plot the liquidable debt against the available supply.
     collateral_token, debt_token = current_pair.split("-")
-    collateral_token_underlying_address = src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[collateral_token]
-    collateral_token_decimals = int(math.log10(src.settings.TOKEN_SETTINGS[collateral_token].decimal_factor))
-    underlying_addresses_to_decimals = {collateral_token_underlying_address: collateral_token_decimals}
-    prices = src.helpers.get_prices(token_decimals = underlying_addresses_to_decimals)
-    collateral_token_price = prices[collateral_token_underlying_address]
-    # TODO: Add Ekubo start
-    main_chart_data = main_chart_data.astype(float)
-    debt_token_underlying_address = src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[debt_token]
-    main_chart_data = add_ekubo_liquidity(
-        data=main_chart_data,
-        collateral_token=collateral_token_underlying_address,
-        debt_token=debt_token_underlying_address,
-    )
+    collateral_token_price = 0
+
+    if current_pair == stable_coin_pair:
+        for stable_coin in src.settings.DEBT_TOKENS[:-1]:
+            debt_token = stable_coin
+            main_chart_data, collateral_token_price = process_liquidity(main_chart_data, collateral_token, debt_token)
+    else:
+        main_chart_data, collateral_token_price = process_liquidity(main_chart_data, collateral_token, debt_token)
+
     # TODO: Add Ekubo end
     figure = src.main_chart.get_main_chart_figure(
         data=main_chart_data,
         collateral_token=collateral_token,
-        debt_token=debt_token,
+        debt_token=src.settings.STABLECOIN_BUNDLE_NAME if current_pair == stable_coin_pair else debt_token,
         collateral_token_price=collateral_token_price,
     )
     streamlit.plotly_chart(figure_or_data=figure, use_container_width=True)
