@@ -434,31 +434,30 @@ def main():
     streamlit.dataframe(loan)
 
     streamlit.header("Comparison of lending protocols")
-    streamlit.dataframe(
-        pandas.read_parquet(
-            f"gs://{src.helpers.GS_BUCKET_NAME}/data/general_stats.parquet",
-            engine='fastparquet',
-        ),
-    )
+    general_stats = pandas.read_parquet(
+        f"gs://{src.helpers.GS_BUCKET_NAME}/data/general_stats.parquet",
+        engine='fastparquet',
+    ).set_index('Protocol')
+    supply_stats = pandas.read_parquet(
+        f"gs://{src.helpers.GS_BUCKET_NAME}/data/supply_stats.parquet",
+        engine='fastparquet',
+    ).set_index('Protocol')
+    collateral_stats = pandas.read_parquet(
+        f"gs://{src.helpers.GS_BUCKET_NAME}/data/collateral_stats.parquet",
+        engine='fastparquet',
+    ).set_index('Protocol')
+    debt_stats = pandas.read_parquet(
+        f"gs://{src.helpers.GS_BUCKET_NAME}/data/debt_stats.parquet",
+        engine='fastparquet',
+    ).set_index('Protocol')
+    general_stats['TVL (USD)'] = supply_stats['Total supply (USD)'] - general_stats['Total debt (USD)']
+    streamlit.dataframe(general_stats)
     streamlit.dataframe(
         pandas.read_parquet(
             f"gs://{src.helpers.GS_BUCKET_NAME}/data/utilization_stats.parquet",
             engine='fastparquet',
-        ),
+        ).set_index('Protocol'),
     )
-    supply_stats = pandas.read_parquet(
-        f"gs://{src.helpers.GS_BUCKET_NAME}/data/supply_stats.parquet",
-        engine='fastparquet',
-    )
-    collateral_stats = pandas.read_parquet(
-        f"gs://{src.helpers.GS_BUCKET_NAME}/data/collateral_stats.parquet",
-        engine='fastparquet',
-    )
-    debt_stats = pandas.read_parquet(
-        f"gs://{src.helpers.GS_BUCKET_NAME}/data/debt_stats.parquet",
-        engine='fastparquet',
-    )
-
     # USD deposit, collateral and debt per token (bar chart).
     supply_figure, collateral_figure, debt_figure = src.main_chart.get_bar_chart_figures(
         supply_stats=supply_stats.copy(),
@@ -475,7 +474,7 @@ def main():
         with column:
             for token in [token_1, token_2]:
                 figure = plotly.express.pie(
-                    collateral_stats,
+                    collateral_stats.reset_index(),
                     values=f'{token} collateral',
                     names='Protocol',
                     title=f'{token} collateral',
@@ -484,7 +483,7 @@ def main():
                 streamlit.plotly_chart(figure, True)
             for token in [token_1, token_2]:
                 figure = plotly.express.pie(
-                    debt_stats,
+                    debt_stats.reset_index(),
                     values=f'{token} debt',
                     names='Protocol',
                     title=f'{token} debt',
@@ -493,7 +492,7 @@ def main():
                 streamlit.plotly_chart(figure, True)
             for token in [token_1, token_2]:
                 figure = plotly.express.pie(
-                    supply_stats,
+                    supply_stats.reset_index(),
                     values=f'{token} supply',
                     names='Protocol',
                     title=f'{token} supply',

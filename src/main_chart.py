@@ -183,9 +183,6 @@ def get_bar_chart_figures(
         for x in src.settings.TOKEN_SETTINGS.values()
     }
     prices = src.helpers.get_prices(token_decimals=underlying_addresses_to_decimals)
-    supply_stats.set_index('Protocol', inplace = True)
-    collateral_stats.set_index('Protocol', inplace = True)
-    debt_stats.set_index('Protocol', inplace = True)
     bar_chart_supply_stats = pandas.DataFrame()
     bar_chart_collateral_stats = pandas.DataFrame()
     bar_chart_debt_stats = pandas.DataFrame()
