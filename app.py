@@ -378,6 +378,16 @@ def main():
         engine='fastparquet',
     )
 
+    # USD deposit, collateral and debt per token (bar chart).
+    supply_figure, collateral_figure, debt_figure = src.main_chart.get_bar_chart_figures(
+        supply_stats=supply_stats.copy(),
+        collateral_stats=collateral_stats.copy(),
+        debt_stats=debt_stats.copy(),
+    )
+    streamlit.plotly_chart(figure_or_data=supply_figure, use_container_width=True)
+    streamlit.plotly_chart(figure_or_data=collateral_figure, use_container_width=True)
+    streamlit.plotly_chart(figure_or_data=debt_figure, use_container_width=True)
+
     columns = streamlit.columns(4)
     tokens = list(src.settings.TOKEN_SETTINGS.keys())
     for column, token_1, token_2 in zip(columns, tokens[:4], tokens[4:]):
