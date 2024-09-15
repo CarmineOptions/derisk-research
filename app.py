@@ -371,6 +371,25 @@ def main():
         use_container_width=True,
     )
 
+    streamlit.header("Top loans")
+    col1, col2 = streamlit.columns(2)
+    with col1:
+        streamlit.subheader('Sorted by collateral')
+        streamlit.dataframe(
+            loans_data[
+                loans_data["Health factor"] > 1  # TODO: debug the negative HFs
+            ].sort_values("Collateral (USD)", ascending = False).iloc[:20],
+            use_container_width=True,
+        )
+    with col2:
+        streamlit.subheader('Sorted by debt')
+        streamlit.dataframe(
+            loans_data[
+                loans_data["Health factor"] > 1  # TODO: debug the negative HFs
+            ].sort_values("Debt (USD)", ascending = False).iloc[:20],
+            use_container_width=True,
+        )
+
     streamlit.header("Detail of a loan")
     col1, col2, col3 = streamlit.columns(3)
     with col1:
