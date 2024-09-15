@@ -1,10 +1,11 @@
+import collections
 import datetime
 import logging
 import math
-from typing import Dict, Tuple
 import requests
 import time
 
+import numpy.random
 import pandas
 import plotly.express
 import streamlit
@@ -15,6 +16,21 @@ import src.persistent_state
 import src.settings
 import src.swap_amm
 
+
+
+def parse_token_amounts(raw_token_amounts: str) -> dict[str, float]:
+    """ Converts token amounts in the string format to the dict format. """
+    token_amounts = collections.defaultdict(int)
+
+    if raw_token_amounts == '':
+        return token_amounts
+
+    individual_token_parts = raw_token_amounts.split(', ')
+    for individual_token_part in individual_token_parts:
+        token, amount = individual_token_part.split(': ')
+        token_amounts[token] += float(amount)
+
+    return token_amounts
 
 
 def _remove_leading_zeros(address: str) -> str:
@@ -107,7 +123,7 @@ def add_ekubo_liquidity(
 
     return data
 
-def create_stablecoin_bundle(data: Dict[str, pandas.DataFrame]) -> Dict[str, pandas.DataFrame]:
+def create_stablecoin_bundle(data: dict[str, pandas.DataFrame]) -> dict[str, pandas.DataFrame]:
     """
     Creates a stablecoin bundle by merging relevant DataFrames for collateral tokens and debt tokens.
     
@@ -117,11 +133,11 @@ def create_stablecoin_bundle(data: Dict[str, pandas.DataFrame]) -> Dict[str, pan
     stablecoin pairs and adds the result back to the `data` dictionary under a new key.
 
     Parameters:
-    data (Dict[str, pandas.DataFrame]): A dictionary where the keys are token pairs and the values are 
+    data (dict[str, pandas.DataFrame]): A dictionary where the keys are token pairs and the values are 
                                         corresponding DataFrames containing price and supply data.
 
     Returns:
-    Dict[str, pandas.DataFrame]: The updated dictionary with the newly created stablecoin bundle added.
+    dict[str, pandas.DataFrame]: The updated dictionary with the newly created stablecoin bundle added.
     """
     
     # Iterate over all collateral tokens defined in the settings
@@ -167,7 +183,7 @@ def create_stablecoin_bundle(data: Dict[str, pandas.DataFrame]) -> Dict[str, pan
     # Return the updated data dictionary
     return data
 
-def process_liquidity(main_chart_data: pandas.DataFrame, collateral_token: str, debt_token: str) -> Tuple[pandas.DataFrame, float]:
+def process_liquidity(main_chart_data: pandas.DataFrame, collateral_token: str, debt_token: str) -> tuple[pandas.DataFrame, float]:
     # Fetch underlying addresses and decimals
     collateral_token_underlying_address = src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[collateral_token]
     collateral_token_decimals = int(math.log10(src.settings.TOKEN_SETTINGS[collateral_token].decimal_factor))
@@ -284,6 +300,9 @@ def main():
             loans_data = protocol_loans_data
         else:
             loans_data = pandas.concat([loans_data, protocol_loans_data])
+    # Convert token amounts in the string format to the dict format.
+    loans_data['Collateral'] = loans_data['Collateral'].apply(parse_token_amounts)
+    loans_data['Debt'] = loans_data['Debt'].apply(parse_token_amounts)
 
     # Plot the liquidable debt against the available supply.
     collateral_token, debt_token = current_pair.split("-")
@@ -351,6 +370,49 @@ def main():
         ].sort_values("Health factor").iloc[:20],
         use_container_width=True,
     )
+
+    streamlit.header("Detail of a loan")
+    col1, col2, col3 = streamlit.columns(3)
+    with col1:
+        user = streamlit.text_input("User")
+        protocol = streamlit.text_input("Protocol")
+        users_and_protocols_with_debt = list(
+            loans_data.loc[
+                loans_data['Debt (USD)'] > 0,
+                ['User', 'Protocol'],
+            ].itertuples(index = False, name = None)
+        )
+        random_user, random_protocol = users_and_protocols_with_debt[numpy.random.randint(len(users_and_protocols_with_debt))]
+        if not user:
+            streamlit.write(f'Selected random user = {random_user}.')
+            user = random_user
+        if not protocol:
+            streamlit.write(f'Selected random protocol = {random_protocol}.')
+            protocol = random_protocol
+    loan = loans_data.loc[
+        (loans_data['User'] == user)
+        & (loans_data['Protocol'] == protocol),
+    ]
+    collateral_usd_amounts, debt_usd_amounts = src.main_chart.get_specific_loan_usd_amounts(loan = loan)
+    with col2:
+        figure = plotly.express.pie(
+            collateral_usd_amounts,
+            values='amount_usd',
+            names='token',
+            title='Collateral (USD)',
+            color_discrete_sequence=plotly.express.colors.sequential.Oranges_r,
+        )
+        streamlit.plotly_chart(figure, True)
+    with col3:
+        figure = plotly.express.pie(
+            debt_usd_amounts,
+            values='amount_usd',
+            names='token',
+            title='Debt (USD)',
+            color_discrete_sequence=plotly.express.colors.sequential.Greens_r,
+        )
+        streamlit.plotly_chart(figure, True)
+    streamlit.dataframe(loan)
 
     streamlit.header("Comparison of lending protocols")
     streamlit.dataframe(
