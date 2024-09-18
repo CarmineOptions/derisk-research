@@ -101,10 +101,42 @@ class ZkLendLoanStateComputation(LoanStateComputationBase):
 
         result_df = self.get_result_df(zklend_state.loan_entities)
         result_df["deposit"] = [
-            {token: float(amount) for token, amount in loan.deposit.values.items()}
+            {token: float(amount) for token, amount in loan.deposit.items()}
             for loan in zklend_state.loan_entities.values()
         ]
         logger.info(f"Processed data for block {self.last_block}")
+        return result_df
+
+    def get_result_df(self, loan_entities: dict) -> pd.DataFrame:
+        """
+        Creates a DataFrame with the loan state based on the loan entities.
+        :param loan_entities: dictionary of loan entities
+        :return: dataframe with loan state
+        """
+        # Create a DataFrame with the loan state
+        loan_entities_values = loan_entities.values()
+        if hasattr(loan_entities_values, "update_deposit"):
+            for loan_entity in loan_entities_values:
+                loan_entity.update_deposit()
+
+        result_dict = {
+                "protocol": [self.PROTOCOL_TYPE for _ in loan_entities_values],
+                "user": [user for user in loan_entities.keys()],
+                "collateral": [
+                    {
+                        token: float(amount)
+                        for token, amount in loan.collateral.items()
+                    }
+                    for loan in loan_entities_values
+                ],
+                "block": [entity.extra_info.block for entity in loan_entities_values],
+                "timestamp": [
+                    entity.extra_info.timestamp for entity in loan_entities_values
+                ],
+                "debt": [{token: float(amount) for token, amount in loan.debt.items()} for loan in loan_entities_values],
+        }
+
+        result_df = pd.DataFrame(result_dict)
         return result_df
 
     def run(self) -> None:
