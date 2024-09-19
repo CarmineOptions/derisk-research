@@ -143,10 +143,10 @@ class ZkLendLoanStateComputation(LoanStateComputationBase):
         """
         Runs the loan state computation for the specific protocol.
         """
-        max_retries = 1000
+        max_retries = 100
         retry = 0
         zklend_protocol_address = self.PROTOCOL_ADDRESSES
-        self.last_block = 375603
+        self.last_block = 48668
         logger.info(f"Default last block: {self.last_block}")
         while retry < max_retries:
             data = self.get_data(zklend_protocol_address, self.last_block)
