@@ -2,16 +2,27 @@ import logging
 
 import pandas as pd
 from time import monotonic
-from handlers.loan_states.abstractions import LoanStateComputationBase
-from handlers.loan_states.nostra_alpha.events import (
-    NostraAlphaState,
-    INTEREST_RATE_MODEL_ADDRESS,
-    ADDRESSES_TO_EVENTS,
-    EVENTS_METHODS_MAPPING,
+from handler_tools.nostra_alpha_settings import (
+    NOSTRA_ALPHA_ADDRESSES_TO_EVENTS,
+    NOSTRA_ALPHA_EVENTS_TO_METHODS,
+    NOSTRA_ALPHA_INTEREST_RATE_MODEL_ADDRESS,
 )
-from handler_tools.constants import ProtocolAddresses, ProtocolIDs, NOSTRA_EVENTS_MAPPING
+from handlers.loan_states.abstractions import LoanStateComputationBase
+from handlers.loan_states.nostra_alpha.events import NostraAlphaState
+from handler_tools.constants import (
+    ProtocolAddresses,
+    ProtocolIDs,
+    NOSTRA_EVENTS_MAPPING,
+)
 
 logger = logging.getLogger(__name__)
+NOSTRA_ALPHA_EVENTS_TO_ORDER: dict[str, str] = {
+    "InterestStateUpdated": 0,
+    "Transfer": 1,
+    "openzeppelin::token::erc20_v070::erc20::ERC20::Transfer": 2,
+    "Burn": 3,
+    "Mint": 4,
+}
 
 
 class NostraAlphaStateComputation(LoanStateComputationBase):
@@ -23,8 +34,8 @@ class NostraAlphaStateComputation(LoanStateComputationBase):
     PROTOCOL_ADDRESSES = ProtocolAddresses().NOSTRA_ALPHA_ADDRESSES
     INTEREST_RATES_KEYS = ["InterestStateUpdated"]
     EVENTS_MAPPING = NOSTRA_EVENTS_MAPPING
-    EVENTS_METHODS_MAPPING = EVENTS_METHODS_MAPPING
-    ADDRESSES_TO_EVENTS = ADDRESSES_TO_EVENTS
+    EVENTS_METHODS_MAPPING = NOSTRA_ALPHA_EVENTS_TO_METHODS
+    ADDRESSES_TO_EVENTS = NOSTRA_ALPHA_ADDRESSES_TO_EVENTS
 
     def process_interest_rate_event(
         self, nostra_state: NostraAlphaState, event: pd.Series
@@ -59,7 +70,16 @@ class NostraAlphaStateComputation(LoanStateComputationBase):
         # Init DataFrame
         df = pd.DataFrame(data)
         df_filtered = df[df["key_name"].isin(events_with_interest_rate)]
-        sorted_df = df_filtered.sort_values(["block_number", "id"])
+        # Map 'key_name' to its corresponding order from the dict
+        df_filtered["sort_order"] = df_filtered["key_name"].map(
+            lambda x: NOSTRA_ALPHA_EVENTS_TO_ORDER.get(x, float("inf"))
+        )
+
+        # Sort by block_number, id, and the new 'sort_order' column
+        sorted_df = df_filtered.sort_values(["block_number", "id", "sort_order"])
+
+        # Drop the 'sort_order' column after sorting if it's not needed anymore
+        sorted_df = sorted_df.drop(columns=["sort_order"])
 
         # Filter out events that are not in the mapping
         for index, row in sorted_df.iterrows():
@@ -70,7 +90,7 @@ class NostraAlphaStateComputation(LoanStateComputationBase):
         return result_df
 
     def process_event(
-            self, instance_state: NostraAlphaState, method_name: str, event: pd.Series
+        self, instance_state: NostraAlphaState, method_name: str, event: pd.Series
     ) -> None:
         """
         Processes an event based on the method name and the event data.
@@ -86,7 +106,7 @@ class NostraAlphaStateComputation(LoanStateComputationBase):
         try:
             block_number = event.get("block_number")
             # For each block number, process the interest rate event
-            if event["from_address"] == INTEREST_RATE_MODEL_ADDRESS:
+            if event["from_address"] == NOSTRA_ALPHA_INTEREST_RATE_MODEL_ADDRESS:
                 self.process_interest_rate_event(instance_state, event)
                 return
 
@@ -94,7 +114,8 @@ class NostraAlphaStateComputation(LoanStateComputationBase):
                 self.last_block = block_number
                 event_type = self.ADDRESSES_TO_EVENTS[event["from_address"]]
                 getattr(
-                    instance_state, self.EVENTS_METHODS_MAPPING[(event_type, event["key_name"])]
+                    instance_state,
+                    self.EVENTS_METHODS_MAPPING[(event_type, event["key_name"])],
                 )(event=event)
         except Exception as e:
             logger.exception(f"Failed to process event due to an error: {e}")
@@ -110,7 +131,7 @@ class NostraAlphaStateComputation(LoanStateComputationBase):
         logger.info(f"Default last block: {self.last_block}")
         while retry < max_retries:
             interest_rate_data = self.get_data(
-                INTEREST_RATE_MODEL_ADDRESS, self.last_block
+                NOSTRA_ALPHA_INTEREST_RATE_MODEL_ADDRESS, self.last_block
             )
             data = self.get_addresses_data(self.PROTOCOL_ADDRESSES, self.last_block)
 
