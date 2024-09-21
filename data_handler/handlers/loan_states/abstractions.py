@@ -144,7 +144,7 @@ class LoanStateComputationBase(ABC):
         for index, item in df.iterrows():
             loan = LoanState(
                 protocol_id=self.PROTOCOL_TYPE,
-                user=item["user"],
+                user=str(item["user"]),
                 collateral=item["collateral"],
                 debt=item["debt"],
                 block=item["block"],
