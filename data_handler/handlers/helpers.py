@@ -1,8 +1,7 @@
 import decimal
 import os
-import collections
 from decimal import Decimal
-from typing import Iterator, Optional, Union
+from typing import Iterator
 
 import asyncio
 import google.cloud.storage
@@ -293,3 +292,39 @@ def add_leading_zeros(hash: str) -> str:
     `0x00436d8d078de345c11493bd91512eae60cd2713e05bcaa0bb9f0cba90358c6e`.
     """
     return "0x" + hash[2:].zfill(64)
+
+
+def get_addresses(
+    token_parameters: "TokenParameters",
+    underlying_address: str | None = None,
+    underlying_symbol: str | None = None,
+) -> list[str]:
+    """
+    Get the addresses of the tokens based on the underlying address or symbol.
+    :param token_parameters: the token parameters
+    :param underlying_address: underlying address
+    :param underlying_symbol: underlying symbol
+    :return: list of addresses
+    """
+    # Up to 2 addresses can match the given `underlying_address` or `underlying_symbol`.
+    if underlying_address:
+        addresses = [
+            x.address
+            for x in token_parameters.values()
+            if x.underlying_address == underlying_address
+        ]
+    elif underlying_symbol:
+        addresses = [
+            x.address
+            for x in token_parameters.values()
+            if x.underlying_symbol == underlying_symbol
+        ]
+    else:
+        raise ValueError(
+            "Both `underlying_address` =  {} or `underlying_symbol` = {} are not specified.".format(
+                underlying_address,
+                underlying_symbol,
+            )
+        )
+    assert len(addresses) <= 2
+    return addresses
