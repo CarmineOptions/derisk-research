@@ -240,7 +240,6 @@ class DBConnector:
                     )
                 ).scalars()
             }
-
             # Prepare list of objects to save
             objects_to_save = []
             for obj in objects:
@@ -253,7 +252,10 @@ class DBConnector:
                         or obj.protocol_id != existing_obj.protocol_id
                     ):
                         objects_to_save.append(obj)
+                else:
+                    objects_to_save.append(obj)
 
+            logger.info(f"Saving {len(objects_to_save)} loan states to the database.")
             # Save the filtered objects
             if objects_to_save:
                 db.bulk_save_objects(objects_to_save)

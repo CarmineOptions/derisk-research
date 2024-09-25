@@ -208,22 +208,21 @@ class ZkLendState(State):
         user = add_leading_zeros(event["data"][0])
         token = add_leading_zeros(event["data"][1])
 
-        user_loan_entities = self.loan_entities[user]
         # add additional info block and timestamp
-        user_loan_entities.extra_info.block = event["block_number"]
-        user_loan_entities.extra_info.timestamp = event["timestamp"]
+        self.loan_entities[user].extra_info.block = event["block_number"]
+        self.loan_entities[user].extra_info.timestamp = event["timestamp"]
 
-        user_loan_entities.collateral_enabled[token] = True
-        user_loan_entities.collateral.set_value(
+        self.loan_entities[user].collateral_enabled[token] = True
+        self.loan_entities[user].collateral.set_value(
             token=token,
             value=self.loan_entities[user].deposit[token],
         )
         # save last loan collateral_enabled state to db
         self.db_connector.save_collateral_enabled_by_user(
             user,
-            user_loan_entities.collateral_enabled,
-            user_loan_entities.collateral,
-            user_loan_entities.debt,
+            self.loan_entities[user].collateral_enabled,
+            self.loan_entities[user].collateral,
+            self.loan_entities[user].debt,
         )
         if user == self.verbose_user:
             logging.info(

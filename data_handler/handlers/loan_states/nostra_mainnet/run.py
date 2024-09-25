@@ -2,14 +2,20 @@ import logging
 
 import pandas as pd
 from time import monotonic
-from handlers.loan_states.nostra_alpha.events import EVENTS_METHODS_MAPPING
+from handler_tools.nostra_mainnet_settings import (
+    NOSTRA_MAINNET_EVENTS_TO_ORDER,
+    NOSTRA_MAINNET_EVENTS_TO_METHODS,
+    NOSTRA_MAINNET_INTEREST_RATE_MODEL_ADDRESS,
+)
 from handlers.loan_states.abstractions import LoanStateComputationBase
 from handlers.loan_states.nostra_mainnet.events import (
     NostraMainnetState,
-    INTEREST_RATE_MODEL_ADDRESS,
-    ADDRESSES_TO_EVENTS,
 )
-from handler_tools.constants import ProtocolAddresses, ProtocolIDs, NOSTRA_EVENTS_MAPPING
+from handler_tools.constants import (
+    ProtocolAddresses,
+    ProtocolIDs,
+    NOSTRA_EVENTS_MAPPING,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +28,7 @@ class NostraMainnetStateComputation(LoanStateComputationBase):
     PROTOCOL_TYPE = ProtocolIDs.NOSTRA_MAINNET.value
     PROTOCOL_ADDRESSES = ProtocolAddresses().NOSTRA_MAINNET_ADDRESSES
     INTEREST_RATES_KEYS = ["InterestStateUpdated"]
-    EVENTS_METHODS_MAPPING = EVENTS_METHODS_MAPPING
+    EVENTS_METHODS_MAPPING = NOSTRA_MAINNET_EVENTS_TO_METHODS
     ADDRESSES_TO_EVENTS = ADDRESSES_TO_EVENTS
     EVENTS_MAPPING = NOSTRA_EVENTS_MAPPING
 
@@ -43,7 +49,7 @@ class NostraMainnetStateComputation(LoanStateComputationBase):
         try:
             block_number = event.get("block_number")
             # For each block number, process the interest rate event
-            if event["from_address"] == INTEREST_RATE_MODEL_ADDRESS:
+            if event["from_address"] == NOSTRA_MAINNET_INTEREST_RATE_MODEL_ADDRESS:
                 self.process_interest_rate_event(instance_state, event)
                 return
 
@@ -51,7 +57,8 @@ class NostraMainnetStateComputation(LoanStateComputationBase):
                 self.last_block = block_number
                 event_type = self.ADDRESSES_TO_EVENTS[event["from_address"]]
                 getattr(
-                    instance_state, self.EVENTS_METHODS_MAPPING[(event_type, event["key_name"])]
+                    instance_state,
+                    self.EVENTS_METHODS_MAPPING[(event_type, event["key_name"])],
                 )(event=event)
         except Exception as e:
             logger.exception(f"Failed to process event due to an error: {e}")
@@ -88,6 +95,11 @@ class NostraMainnetStateComputation(LoanStateComputationBase):
         # Init DataFrame
         df = pd.DataFrame(data)
         df_filtered = df[df["key_name"].isin(events_with_interest_rate)]
+
+        # Map 'key_name' to its corresponding order from the dict
+        df_filtered["sort_order"] = df_filtered["key_name"].map(
+            lambda x: NOSTRA_MAINNET_EVENTS_TO_ORDER.get(x, float("inf"))
+        )
         sorted_df = df_filtered.sort_values(["block_number", "id"])
 
         # Filter out events that are not in the mapping
@@ -108,7 +120,7 @@ class NostraMainnetStateComputation(LoanStateComputationBase):
 
         while retry < max_retries:
             interest_rate_data = self.get_data(
-                INTEREST_RATE_MODEL_ADDRESS, self.last_block
+                NOSTRA_MAINNET_INTEREST_RATE_MODEL_ADDRESS, self.last_block
             )
             data = self.get_addresses_data(self.PROTOCOL_ADDRESSES, self.last_block)
 
