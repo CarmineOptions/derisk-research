@@ -2,7 +2,7 @@
 
 # How it works:
 ![A diagram that illustrates how this app works](docs/how-it-works.drawio.png)
-### `Here is a demo video how it works` [Click](https://drive.google.com/file/d/1TYwEx6PWvPerrJSfiePQzZEtbj53Yn_g/view?usp=sharing)
+### `Here is a demo video of how it works` [Click](https://drive.google.com/file/d/1TYwEx6PWvPerrJSfiePQzZEtbj53Yn_g/view?usp=sharing)
 
 ### When the `health ratio` is appropriate to the value you 
 ### have set you will be notified via `Telegram`
@@ -56,7 +56,7 @@ Create `.env` file or just rename `.env.example` --> `.env`
 mv .env.example .env
 ```
 
-### 4. Provide all environment varibles needed
+### 4. Provide all environment variables needed
 
 ```bash
 DB_NAME=#
