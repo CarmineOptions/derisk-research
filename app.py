@@ -217,7 +217,7 @@ def filter_by_price_range(data, price_column, price_min, price_max):
     """Filter the DataFrame based on a price range."""
     return data[data[price_column].between(price_min, price_max)]
 
-    
+
 def main():
     streamlit.title("DeRisk")
 
@@ -367,7 +367,7 @@ def main():
             f" worth of {int(example_row['liquidable_debt_at_interval']):,} USD will be liquidated while the AMM swaps "
             f"capacity will be {int(example_row['debt_token_supply']):,} USD."
         )
-  # accumulated liqudable debt table tobe
+  # accumulated liqudable debt table 
     streamlit.header("Cumulative Liquidable Debt by Collateral Price")
 
     # Create accumulated debt DataFrame
