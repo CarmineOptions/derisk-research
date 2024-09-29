@@ -353,6 +353,35 @@ def main():
             f" worth of {int(example_row['liquidable_debt_at_interval']):,} USD will be liquidated while the AMM swaps "
             f"capacity will be {int(example_row['debt_token_supply']):,} USD."
         )
+    accumulated_debt = main_chart_data[['collateral_token_price', 'liquidable_debt']].copy()
+    accumulated_debt['accumulated_liquidable_debt'] = accumulated_debt['liquidable_debt'].cumsum()
+    accumulated_debt['accumulated_liquidable_debt'] = accumulated_debt['accumulated_liquidable_debt'].iloc[::-1].values
+
+    # Streamlit header
+    streamlit.header("Accumulated Liquidable Debt by Collateral Price")
+
+    # two columns  layout
+    col1, _ = streamlit.columns([1, 3])
+
+    # slider with 1 column
+    with col1:
+        price_lower_bound, price_upper_bound = streamlit.slider(
+            label="Select range of Collateral Token Price",
+            min_value=float(accumulated_debt["collateral_token_price"].min()),
+            max_value=float(accumulated_debt["collateral_token_price"].max()),
+            value=(float(accumulated_debt["collateral_token_price"].min()), float(accumulated_debt["collateral_token_price"].max())),
+        )
+
+    # Filter the accumulated_debt DataFrame based on the selected price range
+    filtered_accumulated_debt = accumulated_debt[
+        accumulated_debt["collateral_token_price"].between(price_lower_bound, price_upper_bound)
+    ]
+
+    # Display the filtered DataFrame with the accumulated liquidable debt column
+    streamlit.dataframe(
+        filtered_accumulated_debt[['collateral_token_price', 'liquidable_debt', 'accumulated_liquidable_debt']],
+        use_container_width=True
+    )
 
     streamlit.header("Loans with low health factor")
     col1, _ = streamlit.columns([1, 3])
