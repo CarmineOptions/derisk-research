@@ -12,6 +12,7 @@ import src.blockchain_call
 import src.db
 import src.settings
 import src.types
+import math
 
 
 
@@ -64,11 +65,27 @@ def get_collateral_token_range(
         "0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac": 1_000.0,  # WBTC
         "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d": 0.01,  # STRK
     }
+    target_values = 50 
+    start_price = STEPS[collateral_token_underlying_address]
+    stop_price = collateral_token_price * 1.2
+    # Calculate rough step size to get about 50(target) values
+    raw_step_size = (stop_price - collateral_token_price) / target_values
+    # Round the step size to the closest readable value (1, 2, or 5 times powers of 10)
+    magnitude = 10 ** math.floor(math.log10(raw_step_size))  # Base scale
+    normalized_step = raw_step_size / magnitude  # Normalize to 1-10 range
+    if 2 - normalized_step > normalized_step - 1:
+        readable_step = 1 * magnitude
+    elif 5 - normalized_step > normalized_step - 2:
+        readable_step = 2 * magnitude
+    else:
+        readable_step = 5 * magnitude
+
+    # Generate values using the calculated readable step
     return list(
         float_range(
-            start = STEPS[collateral_token_underlying_address],
-            stop = collateral_token_price * 1.2,
-            step = STEPS[collateral_token_underlying_address],
+            start = start_price,
+            stop = stop_price,
+            step = readable_step
         )
     )
 
