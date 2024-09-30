@@ -7,6 +7,7 @@ import time
 
 import numpy.random
 import pandas
+import pandas
 import plotly.express
 import streamlit
 
@@ -205,7 +206,7 @@ def process_liquidity(main_chart_data: pandas.DataFrame, collateral_token: str, 
     return main_chart_data, collateral_token_price
 
 
-def create_accumulated_debt(data):
+def create_accumulated_debt(data: pandas.DataFrame) -> pandas.DataFrame:
     """Create a DataFrame with cumulative liquidable debt and flip the cumulative column."""
     accumulated_debt = data[['collateral_token_price', 'liquidable_debt']].copy()
     accumulated_debt['Cumulative_liquidable_debt'] = accumulated_debt['liquidable_debt'].cumsum()
@@ -213,10 +214,14 @@ def create_accumulated_debt(data):
     accumulated_debt['Cumulative_liquidable_debt'] = accumulated_debt['Cumulative_liquidable_debt'].iloc[::-1].values
     return accumulated_debt
 
-def filter_by_price_range(data, price_column, price_min, price_max):
+def filter_by_price_range(
+    data: pandas.DataFrame, 
+    price_column: str, 
+    price_min: float, 
+    price_max: float
+) -> pandas.DataFrame:
     """Filter the DataFrame based on a price range."""
     return data[data[price_column].between(price_min, price_max)]
-
 
 def main():
     streamlit.title("DeRisk")
@@ -397,7 +402,8 @@ def main():
     # Display the filtered DataFrame and hide the index
     streamlit.dataframe(
         filtered_accumulated_debt[['collateral_token_price', 'liquidable_debt', 'Cumulative_liquidable_debt']],
-        use_container_width=True
+        use_container_width=True,
+        hide_index=True
     )
 
     streamlit.header("Loans with low health factor")
