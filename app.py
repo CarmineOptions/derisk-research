@@ -16,7 +16,21 @@ import src.persistent_state
 import src.settings
 import src.swap_amm
 
+import difflib
 
+# Function to normalize user address by adding leading zeroes if necessary
+def normalize_address(address, expected_length=42):
+    if len(address) < expected_length:
+        address = address.zfill(expected_length)
+    return address
+
+# Function to find the closest protocol match using fuzzy matching
+def infer_protocol_name(input_protocol, valid_protocols):
+    closest_match = difflib.get_close_matches(input_protocol, valid_protocols, n=1, cutoff=0.6)
+    if closest_match:
+        return closest_match[0]
+    else:
+        return input_protocol
 
 def parse_token_amounts(raw_token_amounts: str) -> dict[str, float]:
     """ Converts token amounts in the string format to the dict format. """
@@ -408,6 +422,13 @@ def main():
         if not protocol:
             streamlit.write(f'Selected random protocol = {random_protocol}.')
             protocol = random_protocol
+        # Normalize the user address by adding leading zeroes if necessary
+        user = normalize_address(user)
+
+        # Infer the correct protocol name using fuzzy matching
+        valid_protocols = loans_data['Protocol'].unique()
+        protocol = infer_protocol_name(protocol, valid_protocols)
+        
     loan = loans_data.loc[
         (loans_data['User'] == user)
         & (loans_data['Protocol'] == protocol),
