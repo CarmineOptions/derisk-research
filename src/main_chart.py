@@ -103,23 +103,42 @@ def get_main_chart_figure(
     color_map_liquidity = {"debt_token_supply": "#1f77b4"} # blue
     figure = plotly.graph_objs.Figure()
 
+    custom_columns = [  
+        "liquidable_debt",
+        "liquidable_debt_zkLend",
+        "liquidable_debt_at_interval_Nostra Alpha",
+        "liquidable_debt_at_interval_Nostra Mainnet"
+    ]
+    customdata = []
+    for col in custom_columns:
+        if col in data.columns:
+            customdata.append(data[col].values)
+        else:
+            customdata.append([0] * len(data)) # Use 0 if the column is missing
+
+    # Transpose customdata to match rows to records
+    customdata = list(zip(*customdata))
+
     # Add bars for each protocol and the total liquidable debt
     for col in color_map_protocol.keys():
-        figure.add_trace(plotly.graph_objs.Bar(
-            x=data["collateral_token_price"],
-            y=data[col],
-            name = col.replace("liquidable_debt_at_interval", f"Liquidable {debt_token} debt").replace("_", " "),
-            marker_color = color_map_protocol[col],
-            opacity = 0.7,
-            customdata=data[["liquidable_debt", "liquidable_debt_zkLend", "liquidable_debt_at_interval_Nostra Alpha", "liquidable_debt_at_interval_Nostra Mainnet"]].values,
-            hovertemplate=(
-                "<b>Price:</b> %{x}<br>"
-                "<b>Total Volume:</b> %{customdata[0]:,.2f}<br>"
-                "<b>ZkLend Volume:</b> %{customdata[1]:,.2f}<br>"
-                "<b>Nostra Alpha Volume:</b> %{customdata[2]:,.2f}<br>"
-                "<b>Nostra Mainnet Volume:</b> %{customdata[3]:,.2f}<br>"
-            ),
-    ))
+        try:
+            figure.add_trace(plotly.graph_objs.Bar(
+                x=data["collateral_token_price"],
+                y=data[col],
+                name = col.replace("liquidable_debt_at_interval", f"Liquidable {debt_token} debt").replace("_", " "),
+                marker_color = color_map_protocol[col],
+                opacity = 0.7,
+                customdata=customdata,
+                hovertemplate=(
+                    "<b>Price:</b> %{x}<br>"
+                    "<b>Total Volume:</b> %{customdata[0]:,.2f}<br>"
+                    "<b>ZkLend Volume:</b> %{customdata[1]:,.2f}<br>"
+                    "<b>Nostra Alpha Volume:</b> %{customdata[2]:,.2f}<br>"
+                    "<b>Nostra Mainnet Volume:</b> %{customdata[3]:,.2f}<br>"
+                ),
+            ))
+        except KeyError: # If `KeyError` is raised from accessing data[col]
+            continue     # Skip this trace
     
     # Add a separate trace for debt_token_supply with overlay mode
     figure.add_trace(plotly.graph_objs.Bar(

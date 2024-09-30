@@ -285,6 +285,7 @@ def main():
         protocol_main_chart_data = protocol_main_chart_data_mapping[protocol]
         if protocol_main_chart_data is None or protocol_main_chart_data.empty:
             logging.warning(f"No data for pair {debt_token} - {collateral_token} from {protocol}")
+            streamlit.subheader(f":warning: No liquidable debt for the {collateral_token} collateral token and the {debt_token} debt token exists on the lending protocol.")
             continue
         protocol_loans_data = protocol_loans_data_mapping[protocol]
         if main_chart_data.empty:
