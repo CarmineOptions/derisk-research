@@ -392,64 +392,59 @@ def main():
 
     streamlit.header("Detail of a loan")
     col1, col2, col3 = streamlit.columns(3)
-    try:
-        with col1:
-            user = streamlit.text_input("User")
-            protocol = streamlit.text_input("Protocol")
-            
-            users_and_protocols_with_debt = list(
-                loans_data.loc[
-                    loans_data['Debt (USD)'] > 0,
-                    ['User', 'Protocol'],
-                ].itertuples(index=False, name=None)
-            )
+    with col1:
+        user = streamlit.text_input("User")
+        protocol = streamlit.text_input("Protocol")
         
-            random_user, random_protocol = users_and_protocols_with_debt[numpy.random.randint(len(users_and_protocols_with_debt))]
-            
-            if not user:
-                streamlit.write(f'Selected random user = {random_user}.')
-                user = random_user
-            if not protocol:
-                streamlit.write(f'Selected random protocol = {random_protocol}.')
-                protocol = random_protocol
+        users_and_protocols_with_debt = list(
+            loans_data.loc[
+                loans_data['Debt (USD)'] > 0,
+                ['User', 'Protocol'],
+            ].itertuples(index=False, name=None)
+        )
+    
+        random_user, random_protocol = users_and_protocols_with_debt[numpy.random.randint(len(users_and_protocols_with_debt))]
+        
+        if not user:
+            streamlit.write(f'Selected random user = {random_user}.')
+            user = random_user
+        if not protocol:
+            streamlit.write(f'Selected random protocol = {random_protocol}.')
+            protocol = random_protocol
 
-        loan = loans_data.loc[
-            (loans_data['User'] == user)
-            & (loans_data['Protocol'] == protocol),
-        ]
+    loan = loans_data.loc[
+        (loans_data['User'] == user)
+        & (loans_data['Protocol'] == protocol),
+    ]
 
-        if loan.empty:
-            streamlit.warning(f"No loan found for user = {user} and protocol = {protocol}.")
-        else:
+    if loan.empty:
+        streamlit.warning(f"No loan found for user = {user} and protocol = {protocol}.")
+    else:
+        try:
             collateral_usd_amounts, debt_usd_amounts = src.main_chart.get_specific_loan_usd_amounts(loan=loan)
-            with col2:
-                figure = plotly.express.pie(
-                    collateral_usd_amounts,
-                    values='amount_usd',
-                    names='token',
-                    title='Collateral (USD)',
-                    color_discrete_sequence=plotly.express.colors.sequential.Oranges_r,
-                )
-                streamlit.plotly_chart(figure, True)
+        except Exception as e:
+            streamlit.error(f"An unexpected error occurred: {str(e)}. Please try again.")
+        with col2:
+            figure = plotly.express.pie(
+                collateral_usd_amounts,
+                values='amount_usd',
+                names='token',
+                title='Collateral (USD)',
+                color_discrete_sequence=plotly.express.colors.sequential.Oranges_r,
+            )
+            streamlit.plotly_chart(figure, True)
 
-            with col3:
-                figure = plotly.express.pie(
-                    debt_usd_amounts,
-                    values='amount_usd',
-                    names='token',
-                    title='Debt (USD)',
-                    color_discrete_sequence=plotly.express.colors.sequential.Greens_r,
-                )
-                streamlit.plotly_chart(figure, True)
+        with col3:
+            figure = plotly.express.pie(
+                debt_usd_amounts,
+                values='amount_usd',
+                names='token',
+                title='Debt (USD)',
+                color_discrete_sequence=plotly.express.colors.sequential.Greens_r,
+            )
+            streamlit.plotly_chart(figure, True)
 
-            streamlit.dataframe(loan)
-
-    except ValueError as ve:
-        streamlit.error(f"Value error: {str(ve)}. Please check the entered data.")
-    except IndexError as ie:
-        streamlit.error(f"No loans available for the selected users and protocols.")
-    except Exception as e:
-        streamlit.error(f"An unexpected error occurred: {str(e)}. Please try again.")
+        streamlit.dataframe(loan)
 
     streamlit.header("Comparison of lending protocols")
     general_stats = pandas.read_parquet(
