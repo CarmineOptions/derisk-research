@@ -103,21 +103,7 @@ def get_main_chart_figure(
     color_map_liquidity = {"debt_token_supply": "#1f77b4"} # blue
     figure = plotly.graph_objs.Figure()
 
-    custom_columns = [  
-        "liquidable_debt",
-        "liquidable_debt_zkLend",
-        "liquidable_debt_at_interval_Nostra Alpha",
-        "liquidable_debt_at_interval_Nostra Mainnet"
-    ]
-    customdata = []
-    for col in custom_columns:
-        if col in data.columns:
-            customdata.append(data[col].values)
-        else:
-            customdata.append([0] * len(data)) # Use 0 if the column is missing
-
-    # Transpose customdata to match rows to records
-    customdata = list(zip(*customdata))
+    customdata = src.helpers.get_custom_data(data)
 
     # Add bars for each protocol and the total liquidable debt
     for col in color_map_protocol.keys():
