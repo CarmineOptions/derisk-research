@@ -16,6 +16,17 @@ import src.persistent_state
 import src.settings
 import src.swap_amm
 
+# color map
+color_map = {
+    'Supply': 'green',
+    'Demand': 'red',
+    'zkLend': 'blue',
+    'Nostra Alpha': 'orange',
+    'Nostra Mainnet': 'darkblue',
+    'Deposit': 'green',
+    'Collateral': 'yellow',
+    'Debt': 'red'
+}
 
 
 def parse_token_amounts(raw_token_amounts: str) -> dict[str, float]:
@@ -418,8 +429,8 @@ def main():
             collateral_usd_amounts,
             values='amount_usd',
             names='token',
-            title='Collateral (USD)',
-            color_discrete_sequence=plotly.express.colors.sequential.Oranges_r,
+            title='Collateral (USD)',  
+            color_discrete_sequence=[color_map.get('Collateral')],
         )
         streamlit.plotly_chart(figure, True)
     with col3:
@@ -428,7 +439,7 @@ def main():
             values='amount_usd',
             names='token',
             title='Debt (USD)',
-            color_discrete_sequence=plotly.express.colors.sequential.Greens_r,
+            color_discrete_sequence=[color_map.get('Debt')],
         )
         streamlit.plotly_chart(figure, True)
     streamlit.dataframe(loan)
