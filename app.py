@@ -19,18 +19,33 @@ import src.swap_amm
 import difflib
 
 # Function to normalize user address by adding leading zeroes if necessary
-def normalize_address(address, expected_length=42):
+def normalize_address(address: str, expected_length: int = 42) -> str:
+    """Normalize a given address to a specific length by adding leading zeroes if necessary.
+
+    Args:
+        address (str): The address string to normalize.
+        expected_length (int): The desired length of the normalized address (default is 42).
+
+    Returns:
+        str: The normalized address with leading zeroes if it was shorter than the expected length.
+    """
     if len(address) < expected_length:
         address = address.zfill(expected_length)
     return address
 
 # Function to find the closest protocol match using fuzzy matching
-def infer_protocol_name(input_protocol, valid_protocols):
+def infer_protocol_name(input_protocol: str, valid_protocols: list[str]) -> str:
+    """Find the closest matching protocol name from a list of valid protocols using fuzzy matching.
+
+    Args:
+        input_protocol (str): The protocol name input by the user.
+        valid_protocols (list[str]): A list of valid protocol names.
+
+    Returns:
+        str: The closest matching protocol name if found, otherwise returns the input protocol.
+    """
     closest_match = difflib.get_close_matches(input_protocol, valid_protocols, n=1, cutoff=0.6)
-    if closest_match:
-        return closest_match[0]
-    else:
-        return input_protocol
+    return closest_match and closest_match[0] or input_protocol
 
 def parse_token_amounts(raw_token_amounts: str) -> dict[str, float]:
     """ Converts token amounts in the string format to the dict format. """
