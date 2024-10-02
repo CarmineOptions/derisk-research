@@ -2,8 +2,6 @@ import collections
 import datetime
 import logging
 import math
-import requests
-import time
 
 import numpy.random
 import pandas
@@ -16,6 +14,7 @@ import src.persistent_state
 import src.settings
 import src.swap_amm
 
+from utils import EkuboLiquidity
 
 
 def parse_token_amounts(raw_token_amounts: str) -> dict[str, float]:
@@ -33,118 +32,28 @@ def parse_token_amounts(raw_token_amounts: str) -> dict[str, float]:
     return token_amounts
 
 
-def _remove_leading_zeros(address: str) -> str:
-    while address[2] == '0':
-        address = f'0x{address[3:]}'
-    return address
-
-
-def _get_available_liquidity(data: pandas.DataFrame, price: float, price_diff: float, bids: bool) -> float:
-    price_lower_bound = max(0.95 * price, price - price_diff) if bids else price
-    price_upper_bound = price if bids else min(1.05 * price, price + price_diff)
-    return data.loc[data["price"].between(price_lower_bound, price_upper_bound), "quantity"].sum()
-
-
-def add_ekubo_liquidity(
-    data: pandas.DataFrame,
-    collateral_token: str,
-    debt_token: str,
-) -> float:
-    URL = "http://178.32.172.153/orderbook/"
-    DEX = 'Ekubo'
-    params = {
-        "base_token": _remove_leading_zeros(collateral_token),
-        "quote_token": _remove_leading_zeros(debt_token),
-        "dex": DEX,
-    }
-    response = requests.get(URL, params=params)
-
-    if response.status_code == 200:
-        liquidity = response.json()
-        try:
-            bid_prices, bid_quantities = zip(*liquidity["bids"])
-        except ValueError:
-            time.sleep(300)
-            add_ekubo_liquidity(data=data, collateral_token=collateral_token, debt_token=debt_token)
-        else:
-            bids = pandas.DataFrame(
-                {
-                    'price': bid_prices,
-                    'quantity': bid_quantities,
-                },
-            )
-            bids = bids.astype(float)
-            bids.sort_values('price', inplace = True)
-            price_diff = data['collateral_token_price'].diff().max()
-            data['Ekubo_debt_token_supply'] = data['collateral_token_price'].apply(
-                lambda x: _get_available_liquidity(
-                    data=bids,
-                    price=x,
-                    price_diff=price_diff,
-                    bids=True,
-                )
-            )
-            data['debt_token_supply'] += data['Ekubo_debt_token_supply']
-            return data
-
-    logging.warning('Using collateral token as base token and debt token as quote token.')
-    params = {
-        "base_token": _remove_leading_zeros(debt_token),
-        "quote_token": _remove_leading_zeros(collateral_token),
-        "dex": DEX,
-    }
-    response = requests.get(URL, params=params)
-
-    if response.status_code == 200:
-        liquidity = response.json()
-        try:
-            ask_prices, ask_quantities = zip(*liquidity["asks"])
-        except ValueError:
-            time.sleep(5)
-            add_ekubo_liquidity(data=data, collateral_token=collateral_token, debt_token=debt_token)
-        else:
-            asks = pandas.DataFrame(
-                {
-                    'price': ask_prices,
-                    'quantity': ask_quantities,
-                },
-            )
-            asks = asks.astype(float)
-            asks.sort_values('price', inplace = True)
-            data['Ekubo_debt_token_supply'] = data['collateral_token_price'].apply(
-                lambda x: _get_available_liquidity(
-                    data=asks,
-                    price=x,
-                    bids=False,
-                )
-            )
-            data['debt_token_supply'] += data['Ekubo_debt_token_supply']
-            return data
-
-    return data
-
 def create_stablecoin_bundle(data: dict[str, pandas.DataFrame]) -> dict[str, pandas.DataFrame]:
     """
     Creates a stablecoin bundle by merging relevant DataFrames for collateral tokens and debt tokens.
-    
+
     For each collateral token specified in `src.settings.COLLATERAL_TOKENS`, this function finds the
     relevant stablecoin pairs from the provided `data` dictionary and merges the corresponding DataFrames
-    based on the 'collateral_token_price' column. It combines the debt and liquidity data for multiple 
+    based on the 'collateral_token_price' column. It combines the debt and liquidity data for multiple
     stablecoin pairs and adds the result back to the `data` dictionary under a new key.
 
     Parameters:
-    data (dict[str, pandas.DataFrame]): A dictionary where the keys are token pairs and the values are 
+    data (dict[str, pandas.DataFrame]): A dictionary where the keys are token pairs and the values are
                                         corresponding DataFrames containing price and supply data.
 
     Returns:
     dict[str, pandas.DataFrame]: The updated dictionary with the newly created stablecoin bundle added.
     """
-    
+
     # Iterate over all collateral tokens defined in the settings
     for collateral in src.settings.COLLATERAL_TOKENS:
         # Find all relevant pairs that involve the current collateral and one of the debt tokens
         relevant_pairs = [
-            pair for pair in data.keys() 
+            pair for pair in data.keys()
             if collateral in pair and any(stablecoin in pair for stablecoin in src.settings.DEBT_TOKENS[:-1])
         ]
         combined_df = None  # Initialize a variable to store the combined DataFrame
@@ -157,7 +66,7 @@ def create_stablecoin_bundle(data: dict[str, pandas.DataFrame]) -> dict[str, pan
                 # Log a warning if the DataFrame is empty and skip to the next pair
                 logging.warning(f"Empty DataFrame for pair: {pair}")
                 continue
-                
+
             if combined_df is None:
                 # If this is the first DataFrame being processed, use it as the base for combining
                 combined_df = df.copy()
@@ -166,9 +75,9 @@ def create_stablecoin_bundle(data: dict[str, pandas.DataFrame]) -> dict[str, pan
                 combined_df = pandas.merge(combined_df, df, on='collateral_token_price', suffixes=('', '_y'))
 
                 # Sum the columns for debt and liquidity, adding the corresponding '_y' values
-                for col in ['liquidable_debt', 'liquidable_debt_at_interval', 
-                            '10kSwap_debt_token_supply', 'MySwap_debt_token_supply', 
-                            'SithSwap_debt_token_supply', 'JediSwap_debt_token_supply', 
+                for col in ['liquidable_debt', 'liquidable_debt_at_interval',
+                            '10kSwap_debt_token_supply', 'MySwap_debt_token_supply',
+                            'SithSwap_debt_token_supply', 'JediSwap_debt_token_supply',
                             'debt_token_supply']:
                     combined_df[col] += combined_df[f'{col}_y']
 
@@ -183,6 +92,7 @@ def create_stablecoin_bundle(data: dict[str, pandas.DataFrame]) -> dict[str, pan
     # Return the updated data dictionary
     return data
 
+
 def process_liquidity(main_chart_data: pandas.DataFrame, collateral_token: str, debt_token: str) -> tuple[pandas.DataFrame, float]:
     # Fetch underlying addresses and decimals
     collateral_token_underlying_address = src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[collateral_token]
@@ -196,13 +106,19 @@ def process_liquidity(main_chart_data: pandas.DataFrame, collateral_token: str, 
     # Process main chart data
     main_chart_data = main_chart_data.astype(float)
     debt_token_underlying_address = src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[debt_token]
-    main_chart_data = add_ekubo_liquidity(
+
+    ekubo_liquidity = EkuboLiquidity(
         data=main_chart_data,
         collateral_token=collateral_token_underlying_address,
         debt_token=debt_token_underlying_address,
+
+    )
+    main_chart_data = ekubo_liquidity.apply_liquidity_to_dataframe(
+        ekubo_liquidity.fetch_liquidity(),
     )
 
     return main_chart_data, collateral_token_price
+
 
 def main():
     streamlit.title("DeRisk")
@@ -243,7 +159,7 @@ def main():
             options=src.settings.COLLATERAL_TOKENS,
             index=0,
         )
-        
+
         debt_token = streamlit.selectbox(
             label="Select debt token:",
             options=src.settings.DEBT_TOKENS,
@@ -253,8 +169,8 @@ def main():
 
     if debt_token == collateral_token:
         streamlit.subheader(
-            f":warning: You are selecting the same token for both collateral and debt.")   
-        
+            f":warning: You are selecting the same token for both collateral and debt.")
+
     current_pair = f"{collateral_token}-{debt_token}"
 
     main_chart_data = pandas.DataFrame()
@@ -347,7 +263,7 @@ def main():
         streamlit.subheader(
             f":warning: At price of {round(example_row['collateral_token_price'], 2)}, the risk of acquiring bad debt for "
             f"lending protocols is {_get_risk_level(example_row['debt_to_supply_ratio'])}."
-        )    
+        )
         streamlit.write(
             f"The ratio of liquidated debt to available supply is {round(example_row['debt_to_supply_ratio'] * 100)}%.Debt"
             f" worth of {int(example_row['liquidable_debt_at_interval']):,} USD will be liquidated while the AMM swaps "
@@ -367,7 +283,7 @@ def main():
         loans_data[
             (loans_data["Health factor"] > 0)  # TODO: debug the negative HFs
             & loans_data["Debt (USD)"].between(debt_usd_lower_bound, debt_usd_upper_bound)
-        ].sort_values("Health factor").iloc[:20],
+            ].sort_values("Health factor").iloc[:20],
         use_container_width=True,
     )
 
@@ -378,7 +294,7 @@ def main():
         streamlit.dataframe(
             loans_data[
                 loans_data["Health factor"] > 1  # TODO: debug the negative HFs
-            ].sort_values("Collateral (USD)", ascending = False).iloc[:20],
+            ].sort_values("Collateral (USD)", ascending=False).iloc[:20],
             use_container_width=True,
         )
     with col2:
@@ -386,7 +302,7 @@ def main():
         streamlit.dataframe(
             loans_data[
                 loans_data["Health factor"] > 1  # TODO: debug the negative HFs
-            ].sort_values("Debt (USD)", ascending = False).iloc[:20],
+            ].sort_values("Debt (USD)", ascending=False).iloc[:20],
             use_container_width=True,
         )
 
@@ -399,7 +315,7 @@ def main():
             loans_data.loc[
                 loans_data['Debt (USD)'] > 0,
                 ['User', 'Protocol'],
-            ].itertuples(index = False, name = None)
+            ].itertuples(index=False, name=None)
         )
         random_user, random_protocol = users_and_protocols_with_debt[numpy.random.randint(len(users_and_protocols_with_debt))]
         if not user:
@@ -412,7 +328,7 @@ def main():
         (loans_data['User'] == user)
         & (loans_data['Protocol'] == protocol),
     ]
-    collateral_usd_amounts, debt_usd_amounts = src.main_chart.get_specific_loan_usd_amounts(loan = loan)
+    collateral_usd_amounts, debt_usd_amounts = src.main_chart.get_specific_loan_usd_amounts(loan=loan)
     with col2:
         figure = plotly.express.pie(
             collateral_usd_amounts,
