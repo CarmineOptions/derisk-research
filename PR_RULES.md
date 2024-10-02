@@ -1,4 +1,4 @@
-## Hot to create PR
+## How to create PR
 1. Create fork from the main repository
 2. Create a new branch from the master from fork-repository
 
