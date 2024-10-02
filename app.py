@@ -17,7 +17,7 @@ import src.settings
 import src.swap_amm
 
 # color map
-color_map = {
+COLORS_MAP = {
     'Supply': 'green',
     'Demand': 'red',
     'zkLend': 'blue',
