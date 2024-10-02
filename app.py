@@ -355,7 +355,6 @@ def main():
         )
 
     streamlit.header("Liquidable debt")
-    # Create two columns for layout
     liquidable_debt_data = main_chart_data[['collateral_token_price', 'liquidable_debt_at_interval', 'liquidable_debt']].copy()
     liquidable_debt_data.rename(columns={'liquidable_debt': 'Liquidable debt at price','liquidable_debt_at_interval':'Liquidable debt at interval','collateral_token_price':'Collateral token price'}, inplace=True)
 
