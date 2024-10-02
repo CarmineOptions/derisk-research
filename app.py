@@ -2,12 +2,12 @@ import collections
 import datetime
 import logging
 import math
-import requests
 import time
 
 import numpy.random
 import pandas
 import plotly.express
+import requests
 import streamlit
 
 import src.helpers
@@ -15,7 +15,6 @@ import src.main_chart
 import src.persistent_state
 import src.settings
 import src.swap_amm
-
 
 
 def parse_token_amounts(raw_token_amounts: str) -> dict[str, float]:
@@ -203,6 +202,20 @@ def process_liquidity(main_chart_data: pandas.DataFrame, collateral_token: str, 
     )
 
     return main_chart_data, collateral_token_price
+
+
+def create_accumulated_debt(data):
+    """Create a DataFrame with cumulative liquidable debt and flip the cumulative column."""
+    accumulated_debt = data[['collateral_token_price', 'liquidable_debt']].copy()
+    accumulated_debt['Cumulative_liquidable_debt'] = accumulated_debt['liquidable_debt'].cumsum()
+    # Flip the cumulative column
+    accumulated_debt['Cumulative_liquidable_debt'] = accumulated_debt['Cumulative_liquidable_debt'].iloc[::-1].values
+    return accumulated_debt
+
+def filter_by_price_range(data, price_column, price_min, price_max):
+    """Filter the DataFrame based on a price range."""
+    return data[data[price_column].between(price_min, price_max)]
+
 
 def main():
     streamlit.title("DeRisk")
