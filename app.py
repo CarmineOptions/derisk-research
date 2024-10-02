@@ -354,11 +354,8 @@ def main():
             f"capacity will be {int(example_row['debt_token_supply']):,} USD."
         )
 
-
     streamlit.header("Liquidable debt")
-
     # Create two columns for layout
-    col1, _ = streamlit.columns([1, 3])
     liquidable_debt_data = main_chart_data[['collateral_token_price', 'liquidable_debt_at_interval', 'liquidable_debt']].copy()
     liquidable_debt_data.rename(columns={'liquidable_debt': 'Liquidable debt at price','liquidable_debt_at_interval':'Liquidable debt at interval','collateral_token_price':'Collateral token price'}, inplace=True)
 
