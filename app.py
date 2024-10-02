@@ -420,10 +420,8 @@ def main():
     if loan.empty:
         streamlit.warning(f"No loan found for user = {user} and protocol = {protocol}.")
     else:
-        try:
-            collateral_usd_amounts, debt_usd_amounts = src.main_chart.get_specific_loan_usd_amounts(loan=loan)
-        except Exception as e:
-            streamlit.error(f"An unexpected error occurred: {str(e)}. Please try again.")
+        collateral_usd_amounts, debt_usd_amounts = src.main_chart.get_specific_loan_usd_amounts(loan=loan)
+        
         with col2:
             figure = plotly.express.pie(
                 collateral_usd_amounts,
