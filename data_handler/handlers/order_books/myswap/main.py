@@ -1,20 +1,19 @@
 import asyncio
 import itertools
+import logging
 import math
 import os
-import logging
 from decimal import Decimal
+
+import pandas as pd
+from handlers.blockchain_call import func_call
+from handlers.order_books.abstractions import OrderBookBase
+from handlers.order_books.commons import get_logger
+from handlers.order_books.myswap.api_connection.api_connector import \
+    MySwapAPIConnector
 
 from db.crud import DBConnector
 from db.models import OrderBookModel
-from handlers.blockchain_call import func_call
-from handlers.order_books.abstractions import OrderBookBase
-
-import pandas as pd
-
-from handlers.order_books.commons import get_logger
-from handlers.order_books.myswap.api_connection.api_connector import MySwapAPIConnector
-
 
 MYSWAP_CL_MM_ADDRESS = "0x01114c7103e12c2b2ecbd3a2472ba9c48ddcbf702b1c242dd570057e26212111"
 

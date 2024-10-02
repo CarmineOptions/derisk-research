@@ -1,11 +1,12 @@
 import logging
-from typing import Union
-import pandas as pd
-from db.crud import InitializerDBConnector
-from db.models import HashtackCollateralDebt
 from decimal import Decimal
+from typing import Union
+
+import pandas as pd
 from handlers.loan_states.hashtack_v0.events import HashstackV0LoanEntity
 
+from db.crud import InitializerDBConnector
+from db.models import HashtackCollateralDebt
 
 logger = logging.getLogger(__name__)
 

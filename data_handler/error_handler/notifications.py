@@ -1,10 +1,11 @@
+import asyncio
 import logging
 from uuid import uuid4
 
-import asyncio
 from aiogram import Bot, Dispatcher
+
+from .config import ERROR_CHAT_ID, TELEGRAM_TOKEN
 from .values import Message
-from .config import TELEGRAM_TOKEN, ERROR_CHAT_ID
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)

@@ -2,9 +2,9 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Optional
 
-from handlers.blockchain_call import get_myswap_pool, balance_of, func_call
-from handlers.settings import TOKEN_SETTINGS, TokenSettings
+from handlers.blockchain_call import balance_of, func_call, get_myswap_pool
 from handlers.helpers import TokenValues, add_leading_zeros
+from handlers.settings import TOKEN_SETTINGS, TokenSettings
 
 
 class Pair:

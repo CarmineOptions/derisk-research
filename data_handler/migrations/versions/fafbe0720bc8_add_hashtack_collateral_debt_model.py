@@ -7,11 +7,10 @@ Create Date: 2024-08-07 10:31:47.338655
 """
 
 from typing import Sequence, Union
-from sqlalchemy.engine.reflection import Inspector
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
+from sqlalchemy.engine.reflection import Inspector
 
 # revision identifiers, used by Alembic.
 revision: str = "fafbe0720bc8"

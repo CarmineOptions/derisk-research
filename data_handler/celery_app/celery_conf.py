@@ -1,8 +1,8 @@
 import os
 
 from celery import Celery
-from dotenv import load_dotenv
 from celery.schedules import crontab
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -57,22 +57,8 @@ app.conf.beat_schedule = {
     },
 }
 
-from celery_app.tasks import (
-#     run_loan_states_computation_for_hashtack_v0,
-#     run_loan_states_computation_for_hashtack_v1,
-#     run_loan_states_computation_for_nostra_alpha,
-#     run_loan_states_computation_for_nostra_mainnet,
-#     run_loan_states_computation_for_zklend,
-#     run_liquidable_debt_computation_for_nostra_alpha,
-#     run_liquidable_debt_computation_for_nostra_mainnet,
-#     run_liquidable_debt_computation_for_hashstack_v0,
-#     run_liquidable_debt_computation_for_hashstack_v1,
-        run_liquidable_debt_computation_for_zklend,
-#     uniswap_v2_order_book,
-)
+from celery_app.order_books_tasks import ekubo_order_book
+from celery_app.tasks import \
+    run_liquidable_debt_computation_for_zklend  # run_loan_states_computation_for_hashtack_v0,; run_loan_states_computation_for_hashtack_v1,; run_loan_states_computation_for_nostra_alpha,; run_loan_states_computation_for_nostra_mainnet,; run_loan_states_computation_for_zklend,; run_liquidable_debt_computation_for_nostra_alpha,; run_liquidable_debt_computation_for_nostra_mainnet,; run_liquidable_debt_computation_for_hashstack_v0,; run_liquidable_debt_computation_for_hashstack_v1,; uniswap_v2_order_book,
 
-
-from celery_app.order_books_tasks import (
-    ekubo_order_book,
-)
 app.autodiscover_tasks(["celery_app.tasks", "celery_app.order_books_tasks"])

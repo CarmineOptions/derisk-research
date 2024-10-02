@@ -1,8 +1,8 @@
 import argparse
 from decimal import Decimal
+from typing import List
 
 import matplotlib.pyplot as plt
-from typing import List
 
 from web_app.order_books.ekubo.main import EkuboOrderBook
 

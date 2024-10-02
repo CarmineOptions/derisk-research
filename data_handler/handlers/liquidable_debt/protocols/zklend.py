@@ -1,16 +1,15 @@
 import logging
-from handlers.liquidable_debt.debt_handlers import ZkLendDBLiquidableDebtDataHandler
-from handlers.liquidable_debt.values import (
-    COLLATERAL_FIELD_NAME,
-    DEBT_FIELD_NAME,
-    LIQUIDABLE_DEBT_FIELD_NAME,
-    PRICE_FIELD_NAME,
-)
-from handlers.loan_states.zklend.events import ZkLendState, ZkLendLoanEntity
+
 from handler_tools.constants import ProtocolIDs
+from handlers.liquidable_debt.debt_handlers import \
+    ZkLendDBLiquidableDebtDataHandler
+from handlers.liquidable_debt.values import (COLLATERAL_FIELD_NAME,
+                                             DEBT_FIELD_NAME,
+                                             LIQUIDABLE_DEBT_FIELD_NAME,
+                                             PRICE_FIELD_NAME)
+from handlers.loan_states.zklend.events import ZkLendLoanEntity, ZkLendState
 
 from db.models import LiquidableDebt
-
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)

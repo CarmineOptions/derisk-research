@@ -1,12 +1,12 @@
-from handlers.liquidable_debt.debt_handlers import (
-    NostraAlphaDBLiquidableDebtDataHandler
-)
-from handlers.liquidable_debt.values import (
-    COLLATERAL_FIELD_NAME, DEBT_FIELD_NAME,
-    LIQUIDABLE_DEBT_FIELD_NAME, PRICE_FIELD_NAME,
-)
-from handlers.loan_states.nostra_alpha.events import NostraAlphaState, NostraAlphaLoanEntity
 from handler_tools.constants import ProtocolIDs
+from handlers.liquidable_debt.debt_handlers import \
+    NostraAlphaDBLiquidableDebtDataHandler
+from handlers.liquidable_debt.values import (COLLATERAL_FIELD_NAME,
+                                             DEBT_FIELD_NAME,
+                                             LIQUIDABLE_DEBT_FIELD_NAME,
+                                             PRICE_FIELD_NAME)
+from handlers.loan_states.nostra_alpha.events import (NostraAlphaLoanEntity,
+                                                      NostraAlphaState)
 
 from db.models import LiquidableDebt
 

@@ -1,8 +1,9 @@
+import asyncio
 import decimal
 from dataclasses import dataclass
-import asyncio
 
-from handlers.loan_states.zklend.fetch_zklend_specific_token_settings import TokenSettings, ZkLendSpecificTokenSettings, get_token_settings
+from handlers.loan_states.zklend.fetch_zklend_specific_token_settings import (
+    TokenSettings, ZkLendSpecificTokenSettings, get_token_settings)
 
 
 # Mock response for the on chain call (func_call)

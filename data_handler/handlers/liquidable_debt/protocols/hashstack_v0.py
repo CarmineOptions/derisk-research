@@ -1,12 +1,12 @@
-from handlers.liquidable_debt.debt_handlers import (
-    HashstackV0DBLiquidableDebtDataHandler
-)
-from handlers.liquidable_debt.values import (
-    COLLATERAL_FIELD_NAME, DEBT_FIELD_NAME,
-    LIQUIDABLE_DEBT_FIELD_NAME, PRICE_FIELD_NAME,
-)
-from handlers.loan_states.hashtack_v0.events import HashstackV0State, HashstackV0LoanEntity
 from handler_tools.constants import ProtocolIDs
+from handlers.liquidable_debt.debt_handlers import \
+    HashstackV0DBLiquidableDebtDataHandler
+from handlers.liquidable_debt.values import (COLLATERAL_FIELD_NAME,
+                                             DEBT_FIELD_NAME,
+                                             LIQUIDABLE_DEBT_FIELD_NAME,
+                                             PRICE_FIELD_NAME)
+from handlers.loan_states.hashtack_v0.events import (HashstackV0LoanEntity,
+                                                     HashstackV0State)
 
 from db.models import LiquidableDebt
 

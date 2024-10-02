@@ -3,12 +3,12 @@ from abc import ABC, abstractmethod
 from typing import Dict, Optional
 
 import pandas as pd
+from handler_tools.api_connector import DeRiskAPIConnector
 from handler_tools.constants import ProtocolIDs
+from handlers.state import InterestRateModels, State
 
 from db.crud import DBConnector
-from db.models import LoanState, InterestRate
-from handlers.state import State, InterestRateModels
-from handler_tools.api_connector import DeRiskAPIConnector
+from db.models import InterestRate, LoanState
 
 logger = logging.getLogger(__name__)
 

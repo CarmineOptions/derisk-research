@@ -1,17 +1,15 @@
-from typing import Optional
 import copy
 import dataclasses
 import decimal
 import logging
+from typing import Optional
 
 import pandas
-
 from handlers.helpers import Portfolio, TokenValues, get_symbol
 from handlers.settings import TOKEN_SETTINGS, TokenSettings
-from handlers.state import LoanEntity, InterestRateModels, State
+from handlers.state import InterestRateModels, LoanEntity, State
+
 from db.crud import InitializerDBConnector
-
-
 
 ADDRESS: str = "0x03dcf5c72ba60eb7b2fe151032769d49dd3df6b04fa3141dffd6e2aa162b7a6e"
 

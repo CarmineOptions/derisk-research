@@ -1,8 +1,8 @@
-from decimal import Decimal
 import asyncio
+from decimal import Decimal
 from typing import Iterable
 
-from handlers.helpers import get_range, get_collateral_token_range
+from handlers.helpers import get_collateral_token_range, get_range
 from handlers.order_books.abstractions import OrderBookBase
 from handlers.order_books.uniswap_v2.swap_amm import SwapAmm
 

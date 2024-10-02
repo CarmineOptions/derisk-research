@@ -1,9 +1,10 @@
-from db.models import HealthRatioLevel
-
 from handler_tools.constants import ProtocolIDs
-from handlers.liquidable_debt.values import TIMESTAMP_FIELD_NAME, USER_FIELD_NAME, HEALTH_FACTOR_FIELD_NAME
-
+from handlers.liquidable_debt.values import (HEALTH_FACTOR_FIELD_NAME,
+                                             TIMESTAMP_FIELD_NAME,
+                                             USER_FIELD_NAME)
 from health_ratio_handlers import ZkLendHealthRatioHandler
+
+from db.models import HealthRatioLevel
 
 
 def run():

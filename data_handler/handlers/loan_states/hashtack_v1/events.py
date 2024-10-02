@@ -1,14 +1,15 @@
-from typing import Optional
 import copy
 import dataclasses
 import decimal
 import logging
+from typing import Optional
 
 import pandas as pd
+from handlers.helpers import (MAX_ROUNDING_ERRORS, Portfolio, TokenValues,
+                              add_leading_zeros, get_symbol)
+from handlers.settings import TOKEN_SETTINGS, TokenSettings
+from handlers.state import InterestRateModels, LoanEntity, State
 
-from handlers.helpers import Portfolio, MAX_ROUNDING_ERRORS, TokenValues, add_leading_zeros, get_symbol
-from handlers.settings import TokenSettings, TOKEN_SETTINGS
-from handlers.state import LoanEntity, InterestRateModels, State
 from db.crud import InitializerDBConnector
 
 logger = logging.getLogger(__name__)

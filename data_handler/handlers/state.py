@@ -1,26 +1,20 @@
 import abc
+import asyncio
 import collections
 import dataclasses
 import decimal
 from typing import Optional
 
-import asyncio
 import pandas
-
 from error_handler import BOT
-from handler_tools.types import (
-    CollateralAndDebtInterestRateModels,
-    InterestRateModels,
-    TokenParameters,
-    CollateralAndDebtTokenParameters,
-    Portfolio,
-    TokenValues,
-    Prices,
-)
 from error_handler.values import MessageTemplates
+from handler_tools.types import (CollateralAndDebtInterestRateModels,
+                                 CollateralAndDebtTokenParameters,
+                                 InterestRateModels, Portfolio, Prices,
+                                 TokenParameters, TokenValues)
+from handlers.exceptions import TokenSettingsNotFound
 from handlers.helpers import ExtraInfo
 from handlers.settings import TOKEN_SETTINGS, TokenSettings
-from handlers.exceptions import TokenSettingsNotFound
 
 
 @dataclasses.dataclass

@@ -3,7 +3,8 @@ from pathlib import Path
 
 from handlers.order_books.abstractions import OrderBookBase
 from handlers.order_books.constants import TOKEN_MAPPING
-from handlers.order_books.haiko.api_connector import HaikoAPIConnector, HaikoBlastAPIConnector
+from handlers.order_books.haiko.api_connector import (HaikoAPIConnector,
+                                                      HaikoBlastAPIConnector)
 from handlers.order_books.haiko.logger import get_logger
 
 

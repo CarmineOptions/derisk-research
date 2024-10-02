@@ -1,15 +1,8 @@
-from handler_tools.types.base import (
-    BaseTokenParameters,
-    InterestRateModels,
-    TokenParameters,
-    Prices,
-    CollateralAndDebtInterestRateModels,
-    CollateralAndDebtTokenParameters,
-    TokenValues,
-    Portfolio,
-)
-from handler_tools.types.zklend import (
-    ZkLendCollateralEnabled,
-    ZkLendCollateralTokenParameters,
-    ZkLendDebtTokenParameters,
-)
+from handler_tools.types.base import (BaseTokenParameters,
+                                      CollateralAndDebtInterestRateModels,
+                                      CollateralAndDebtTokenParameters,
+                                      InterestRateModels, Portfolio, Prices,
+                                      TokenParameters, TokenValues)
+from handler_tools.types.zklend import (ZkLendCollateralEnabled,
+                                        ZkLendCollateralTokenParameters,
+                                        ZkLendDebtTokenParameters)

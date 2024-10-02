@@ -1,22 +1,16 @@
 import logging
 import uuid
-import logging
 from typing import List, Optional, Type, TypeVar
 
-from sqlalchemy import create_engine, func, select, and_, desc, Subquery
+from handler_tools.constants import ProtocolIDs
+from sqlalchemy import Subquery, and_, create_engine, desc, func, select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import scoped_session, sessionmaker, Session, aliased, Query
+from sqlalchemy.orm import (Query, Session, aliased, scoped_session,
+                            sessionmaker)
 
 from db.database import SQLALCHEMY_DATABASE_URL
-from db.models import (
-    Base,
-    LoanState,
-    OrderBookModel,
-    InterestRate,
-    ZkLendCollateralDebt,
-    HashtackCollateralDebt,
-)
-from handler_tools.constants import ProtocolIDs
+from db.models import (Base, HashtackCollateralDebt, InterestRate, LoanState,
+                       OrderBookModel, ZkLendCollateralDebt)
 
 logger = logging.getLogger(__name__)
 ModelType = TypeVar("ModelType", bound=Base)

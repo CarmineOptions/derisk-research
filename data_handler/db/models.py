@@ -1,13 +1,13 @@
-from uuid import uuid4
 from decimal import Decimal
-
-from sqlalchemy import UUID, BigInteger, Column, MetaData, String, DECIMAL, Integer
-from sqlalchemy.orm import DeclarativeBase, Mapped
-from sqlalchemy.types import JSON
-from sqlalchemy_utils.types.choice import ChoiceType
+from uuid import uuid4
 
 from handler_tools.constants import ProtocolIDs
 from handlers.liquidable_debt.values import LendingProtocolNames
+from sqlalchemy import (DECIMAL, UUID, BigInteger, Column, Integer, MetaData,
+                        String)
+from sqlalchemy.orm import DeclarativeBase, Mapped
+from sqlalchemy.types import JSON
+from sqlalchemy_utils.types.choice import ChoiceType
 
 
 class Base(DeclarativeBase):

@@ -1,30 +1,23 @@
+import asyncio
 import copy
 import decimal
 import logging
 from typing import Optional
 
-import asyncio
 import pandas as pd
-
-from handler_tools.types import (
-    TokenParameters,
-    ZkLendCollateralEnabled,
-    Prices,
-    ZkLendCollateralTokenParameters,
-    ZkLendDebtTokenParameters,
-)
+from handler_tools.types import (Portfolio, Prices, TokenParameters,
+                                 TokenValues, ZkLendCollateralEnabled,
+                                 ZkLendCollateralTokenParameters,
+                                 ZkLendDebtTokenParameters)
 from handlers import blockchain_call
-from handlers.helpers import (
-    add_leading_zeros,
-    get_async_symbol,
-)
-from handler_tools.types import TokenValues, Portfolio
+from handlers.helpers import add_leading_zeros, get_async_symbol
 from handlers.loan_states.zklend import TokenSettings
 from handlers.state import InterestRateModels, LoanEntity, State
 
 from db.crud import InitializerDBConnector
 
-from .fetch_zklend_specific_token_settings import fetch_zklend_specific_token_settings
+from .fetch_zklend_specific_token_settings import \
+    fetch_zklend_specific_token_settings
 
 ZKLEND_MARKET: str = (
     "0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05"

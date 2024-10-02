@@ -1,37 +1,23 @@
-import starknet_py
 import copy
 import logging
-import pandas as pd
 from decimal import Decimal
+
+import pandas as pd
+import starknet_py
 from error_handler.values import ProtocolIDs
-from handlers.loan_states.nostra_alpha.events import (
-    NostraAlphaState,
-)
-from handler_tools.types.base import (
-    InterestRateModels,
-    TokenParameters,
-    Prices,
-)
+from handler_tools.helpers import (add_leading_zeros, blockchain_call,
+                                   get_addresses, get_symbol)
 from handler_tools.nostra_mainnet_settings import (
-    NOSTRA_MAINNET_TOKEN_ADDRESSES,
     NOSTRA_MAINNET_CDP_MANAGER_ADDRESS,
     NOSTRA_MAINNET_DEFERRED_BATCH_CALL_ADAPTER_ADDRESS,
     NOSTRA_MAINNET_EVENTS_TO_METHODS,
-)
-from handler_tools.types.nostra import (
-    NostraMainnetCollateralTokenParameters,
-    NostraDebtTokenParameters,
-)
-from handler_tools.helpers import (
-    blockchain_call,
-    get_symbol,
-    add_leading_zeros,
-    get_addresses,
-)
-from handlers.loan_states.nostra_alpha.events import NostraAlphaLoanEntity
-from handler_tools.nostra_mainnet_settings import (
-    NOSTRA_MAINNET_INTEREST_RATE_MODEL_ADDRESS,
-)
+    NOSTRA_MAINNET_INTEREST_RATE_MODEL_ADDRESS, NOSTRA_MAINNET_TOKEN_ADDRESSES)
+from handler_tools.types.base import (InterestRateModels, Prices,
+                                      TokenParameters)
+from handler_tools.types.nostra import (NostraDebtTokenParameters,
+                                        NostraMainnetCollateralTokenParameters)
+from handlers.loan_states.nostra_alpha.events import (NostraAlphaLoanEntity,
+                                                      NostraAlphaState)
 
 logger = logging.getLogger(__name__)
 

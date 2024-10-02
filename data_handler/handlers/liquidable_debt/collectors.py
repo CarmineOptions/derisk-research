@@ -1,14 +1,15 @@
 from typing import Iterable
 
 import dask.dataframe as dd
+from handlers.liquidable_debt.bases import Collector
+from handlers.liquidable_debt.exceptions import ProtocolExistenceError
+from handlers.liquidable_debt.managers import LocalStorageManager
+from handlers.liquidable_debt.values import (GS_BUCKET_NAME, GS_BUCKET_URL,
+                                             LOCAL_STORAGE_PATH,
+                                             LendingProtocolNames)
 from sqlalchemy.exc import SQLAlchemyError
 
 from db.crud import DBConnector
-
-from handlers.liquidable_debt.values import LendingProtocolNames, GS_BUCKET_NAME, GS_BUCKET_URL, LOCAL_STORAGE_PATH
-from handlers.liquidable_debt.exceptions import ProtocolExistenceError
-from handlers.liquidable_debt.managers import LocalStorageManager
-from handlers.liquidable_debt.bases import Collector
 
 
 class GoogleCloudDataCollector(Collector):

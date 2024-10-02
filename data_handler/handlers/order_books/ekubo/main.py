@@ -1,8 +1,8 @@
 from decimal import Decimal, getcontext
+
 import pandas as pd
 from handlers.order_books.abstractions import OrderBookBase
 from handlers.order_books.ekubo.api_connector import EkuboAPIConnector
-
 
 getcontext().prec = 18
 

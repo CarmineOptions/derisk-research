@@ -1,21 +1,14 @@
 import logging
+from time import monotonic
 
 import pandas as pd
-from time import monotonic
+from handler_tools.constants import (NOSTRA_EVENTS_MAPPING, ProtocolAddresses,
+                                     ProtocolIDs)
 from handler_tools.nostra_mainnet_settings import (
-    NOSTRA_MAINNET_EVENTS_TO_ORDER,
-    NOSTRA_MAINNET_EVENTS_TO_METHODS,
-    NOSTRA_MAINNET_INTEREST_RATE_MODEL_ADDRESS,
-)
+    NOSTRA_MAINNET_EVENTS_TO_METHODS, NOSTRA_MAINNET_EVENTS_TO_ORDER,
+    NOSTRA_MAINNET_INTEREST_RATE_MODEL_ADDRESS)
 from handlers.loan_states.abstractions import LoanStateComputationBase
-from handlers.loan_states.nostra_mainnet.events import (
-    NostraMainnetState,
-)
-from handler_tools.constants import (
-    ProtocolAddresses,
-    ProtocolIDs,
-    NOSTRA_EVENTS_MAPPING,
-)
+from handlers.loan_states.nostra_mainnet.events import NostraMainnetState
 
 logger = logging.getLogger(__name__)
 

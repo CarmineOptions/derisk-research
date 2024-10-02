@@ -1,17 +1,19 @@
-from typing import List, Optional
 import logging
-from fastapi import FastAPI, Depends, HTTPException, Request, Path, Query, status
-from sqlalchemy.orm import Session
-from sqlalchemy import desc
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-from slowapi.middleware import SlowAPIMiddleware
+from typing import List, Optional
 
-from db.schemas import LoanStateResponse, InterestRateModel, OrderBookResponseModel
+from fastapi import (Depends, FastAPI, HTTPException, Path, Query, Request,
+                     status)
 from handler_tools.constants import ProtocolIDs
-from db.models import LoanState, InterestRate, OrderBookModel, HealthRatioLevel
-from db.database import Base, engine, get_database
+from slowapi import Limiter
+from slowapi.middleware import SlowAPIMiddleware
+from slowapi.util import get_remote_address
+from sqlalchemy import desc
+from sqlalchemy.orm import Session
 
+from db.database import Base, engine, get_database
+from db.models import HealthRatioLevel, InterestRate, LoanState, OrderBookModel
+from db.schemas import (InterestRateModel, LoanStateResponse,
+                        OrderBookResponseModel)
 
 logger = logging.getLogger(__name__)
 
