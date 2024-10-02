@@ -7,7 +7,6 @@ import time
 
 import numpy.random
 import pandas
-import pandas
 import plotly.express
 import streamlit
 
@@ -205,24 +204,6 @@ def process_liquidity(main_chart_data: pandas.DataFrame, collateral_token: str, 
 
     return main_chart_data, collateral_token_price
 
-
-def create_accumulated_debt(data: pandas.DataFrame) -> pandas.DataFrame:
-    """Create a DataFrame with cumulative liquidable debt and flip the cumulative column."""
-    accumulated_debt = data[['collateral_token_price', 'liquidable_debt']].copy()
-    accumulated_debt['Cumulative_liquidable_debt'] = accumulated_debt['liquidable_debt'].cumsum()
-    # Flip the cumulative column
-    accumulated_debt['Cumulative_liquidable_debt'] = accumulated_debt['Cumulative_liquidable_debt'].iloc[::-1].values
-    return accumulated_debt
-
-def filter_by_price_range(
-    data: pandas.DataFrame, 
-    price_column: str, 
-    price_min: float, 
-    price_max: float
-) -> pandas.DataFrame:
-    """Filter the DataFrame based on a price range."""
-    return data[data[price_column].between(price_min, price_max)]
-
 def main():
     streamlit.title("DeRisk")
 
@@ -372,40 +353,22 @@ def main():
             f" worth of {int(example_row['liquidable_debt_at_interval']):,} USD will be liquidated while the AMM swaps "
             f"capacity will be {int(example_row['debt_token_supply']):,} USD."
         )
-  # accumulated liqudable debt table 
-    streamlit.header("Cumulative Liquidable Debt by Collateral Price")
 
-    # Create accumulated debt DataFrame
-    accumulated_debt = create_accumulated_debt(main_chart_data)
 
-    # Get min and max price once
-    price_min = float(accumulated_debt["collateral_token_price"].min())
-    price_max = float(accumulated_debt["collateral_token_price"].max())
+    streamlit.header("Liquidable debt")
 
     # Create two columns for layout
     col1, _ = streamlit.columns([1, 3])
-
-    # Slider for price range selection
-    with col1:
-        price_lower_bound, price_upper_bound = streamlit.slider(
-            label="Select range of Collateral Token Price",
-            min_value=price_min,
-            max_value=price_max,
-            value=(price_min, price_max),
-        )
-
-    # Filter accumulated_debt DataFrame based on selected price range
-    filtered_accumulated_debt = filter_by_price_range(
-        accumulated_debt, "collateral_token_price", price_lower_bound, price_upper_bound
-    )
+    liquidable_debt_data = main_chart_data[['collateral_token_price', 'liquidable_debt_at_interval', 'liquidable_debt']].copy()
+    liquidable_debt_data.rename(columns={'liquidable_debt': 'Liquidable debt at price','liquidable_debt_at_interval':'Liquidable debt at interval','collateral_token_price':'Collateral token price'}, inplace=True)
 
     # Display the filtered DataFrame and hide the index
     streamlit.dataframe(
-        filtered_accumulated_debt[['collateral_token_price', 'liquidable_debt', 'Cumulative_liquidable_debt']],
+        liquidable_debt_data.round(),
         use_container_width=True,
         hide_index=True
     )
-
+    
     streamlit.header("Loans with low health factor")
     col1, _ = streamlit.columns([1, 3])
     with col1:
