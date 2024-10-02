@@ -2,15 +2,14 @@ import os
 from datetime import datetime
 
 import httpx
+from database.database import get_database
+from database.models import NotificationData
 from dotenv import load_dotenv
 from fastapi import HTTPException, Request, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 from starlette.middleware.base import (BaseHTTPMiddleware,
                                        RequestResponseEndpoint)
-
-from database.database import get_database
-from database.models import NotificationData
 
 from .values import MiddlewaresValues
 

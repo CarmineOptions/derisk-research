@@ -1,6 +1,7 @@
 import os
+from typing import Dict, List, Optional
+
 import requests
-from typing import List, Optional, Dict
 from pydantic import BaseModel
 
 

@@ -1,6 +1,7 @@
+from unittest.mock import Mock, patch
+
 import pytest
 import requests
-from unittest.mock import patch, Mock
 from utils.abstractions import AbstractionAPIConnector
 
 

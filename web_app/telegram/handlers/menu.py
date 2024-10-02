@@ -1,7 +1,7 @@
-from aiogram import Router, types, F
-
+from aiogram import F, Router, types
 from database.models import NotificationData
 from telegram.crud import TelegramCrud
+
 from .utils import kb
 
 menu_router = Router()

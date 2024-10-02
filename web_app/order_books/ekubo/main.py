@@ -1,10 +1,11 @@
 import logging
 from decimal import Decimal, getcontext
+
 import pandas as pd
 from order_books.abstractions import OrderBookBase
 from order_books.constants import TOKEN_MAPPING
-from web_app.order_books.ekubo.api_connector import EkuboAPIConnector
 
+from web_app.order_books.ekubo.api_connector import EkuboAPIConnector
 
 getcontext().prec = 18
 

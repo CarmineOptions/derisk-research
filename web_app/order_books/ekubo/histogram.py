@@ -1,6 +1,7 @@
 import argparse
-import matplotlib.pyplot as plt
 from typing import List
+
+import matplotlib.pyplot as plt
 
 from web_app.order_books.ekubo.main import EkuboOrderBook
 

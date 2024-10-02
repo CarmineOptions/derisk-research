@@ -1,8 +1,8 @@
 from aiogram import Router, types
-from aiogram.filters import CommandStart, CommandObject, Command
-
+from aiogram.filters import Command, CommandObject, CommandStart
 from database.models import NotificationData
 from telegram.crud import TelegramCrud
+
 from .utils import kb
 
 cmd_router = Router()
