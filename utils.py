@@ -42,17 +42,20 @@ class EkuboLiquidity:
                 'quantity': bids_or_asks['quantities'],
             },
         ).astype(float)
+
         liquidity_dataframe.sort_values(by='price', inplace=True)
         price_diff = self.data['collateral_token_price'].diff().max()
+
         self.data['Ekubo_debt_token_supply'] = self.data['collateral_token_price'].apply(
             lambda price: self._get_available_liquidity(
-                data=self.data,
+                data=liquidity_dataframe,
                 price=price,
                 price_diff=price_diff,
                 bids=True if bids_or_asks['type'] == 'bids' else False,
             ),
         )
         self.data['debt_token_supply'] += self.data['Ekubo_debt_token_supply']
+
         return self.data
 
     def fetch_liquidity(self, bids: bool = True) -> dict[str, Any]:
