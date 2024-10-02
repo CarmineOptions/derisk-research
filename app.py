@@ -251,7 +251,7 @@ def main():
         )
     stable_coin_pair = f"{collateral_token}-{src.settings.STABLECOIN_BUNDLE_NAME}"
 
-    if(debt_token == collateral_token):
+    if debt_token == collateral_token:
         streamlit.subheader(
             f":warning: You are selecting the same token for both collateral and debt.")   
         
