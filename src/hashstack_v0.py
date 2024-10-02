@@ -1,8 +1,8 @@
-from typing import Optional
 import copy
 import dataclasses
 import decimal
 import logging
+from typing import Optional
 
 import pandas
 
@@ -10,8 +10,6 @@ import src.helpers
 import src.settings
 import src.state
 import src.types
-
-
 
 ADDRESS: str = "0x03dcf5c72ba60eb7b2fe151032769d49dd3df6b04fa3141dffd6e2aa162b7a6e"
 

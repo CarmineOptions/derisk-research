@@ -1,7 +1,7 @@
 import math
 
 import pandas
-import plotly.express 
+import plotly.express
 import plotly.graph_objs
 
 import src.helpers
@@ -10,7 +10,6 @@ import src.settings
 import src.state
 import src.swap_amm
 import src.types
-
 
 
 def get_main_chart_data(

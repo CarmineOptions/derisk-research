@@ -21,7 +21,6 @@ import src.swap_amm
 import src.zklend
 
 
-
 def update_data(zklend_state: src.zklend.ZkLendState):
     logging.info(f"Updating CSV data from {zklend_state.last_block_number}...")
     t0 = time.time()

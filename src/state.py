@@ -10,7 +10,6 @@ import src.helpers
 import src.types
 
 
-
 class State(abc.ABC):
     """
     A class that describes the state of all loan entities of the given lending protocol.

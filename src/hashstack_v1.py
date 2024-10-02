@@ -1,8 +1,8 @@
-from typing import Optional
 import copy
 import dataclasses
 import decimal
 import logging
+from typing import Optional
 
 import pandas
 
@@ -11,8 +11,6 @@ import src.settings
 import src.state
 import src.swap_amm
 import src.types
-
-
 
 R_TOKENS: dict[str, str] = {
     'ETH': '0x00436d8d078de345c11493bd91512eae60cd2713e05bcaa0bb9f0cba90358c6e',

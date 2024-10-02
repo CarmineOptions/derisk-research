@@ -1,9 +1,9 @@
 import time
 
+import starknet_py.cairo.felt
 import starknet_py.hash.selector
 import starknet_py.net.client_models
 import starknet_py.net.networks
-import starknet_py.cairo.felt
 from starknet_py.net.full_node_client import FullNodeClient
 
 NET = FullNodeClient(node_url="https://starknet-mainnet.public.blastapi.io")

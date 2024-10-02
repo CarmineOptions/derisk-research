@@ -5,7 +5,6 @@ import src.nostra_mainnet
 import src.zklend
 
 
-
 # TODO: make this an attribute of the State class? Or get it from the name of the protocol?
 def get_directory(state: src.state.State) -> str:
     # TODO: Improve the inference.

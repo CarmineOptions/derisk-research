@@ -1,7 +1,6 @@
 import dataclasses
 
 
-
 @dataclasses.dataclass
 class TokenSettings:
     symbol: str

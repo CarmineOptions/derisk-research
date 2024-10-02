@@ -11,8 +11,6 @@ import src.settings
 import src.state
 import src.types
 
-
-
 # Source: https://docs.nostra.finance/lend/deployed-contracts/lend-alpha#core-contracts.
 NOSTRA_ALPHA_INTEREST_RATE_MODEL_ADDRESS: str = '0x03d39f7248fb2bfb960275746470f7fb470317350ad8656249ec66067559e892'
 

@@ -1,15 +1,14 @@
-from typing import Optional, Union
 import asyncio
 import dataclasses
 import decimal
+from typing import Optional, Union
+
 import requests
 
 import src.blockchain_call
 import src.hashstack_v1
 # import src.helpers
 import src.settings
-
-
 
 AMMS = ["10kSwap", "MySwap", "SithSwap", "JediSwap"]
 

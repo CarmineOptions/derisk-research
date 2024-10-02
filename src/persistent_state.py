@@ -1,14 +1,12 @@
-from typing import Any
 import logging
 import os
+from typing import Any
 
 import dill
 import requests
 
 import src.helpers
 import src.zklend
-
-
 
 LAST_UPDATE_FILENAME = "last_update.json"
 PERSISTENT_STATE_FILENAME = "persistent-state.pkl"

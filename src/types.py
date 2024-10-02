@@ -4,7 +4,6 @@ import dataclasses
 import decimal
 
 
-
 class InterestRateModels(collections.defaultdict):
     """
     A class that describes the state of the interest rate indices for multiple tokens. The indices help transform face 

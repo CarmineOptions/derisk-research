@@ -10,7 +10,6 @@ import src.state
 import src.types
 
 
-
 def get_loans_table_data(
     state: src.state.State,
     prices: src.types.Prices,

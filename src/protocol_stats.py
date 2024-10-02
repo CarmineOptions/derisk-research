@@ -14,7 +14,6 @@ import src.state
 import src.types
 
 
-
 def get_general_stats(
     states: list[src.state.State],
     loan_stats: dict[str, pandas.DataFrame],
