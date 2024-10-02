@@ -1,5 +1,6 @@
 import collections
 import datetime
+import difflib
 import logging
 import math
 import requests
@@ -15,23 +16,6 @@ import src.main_chart
 import src.persistent_state
 import src.settings
 import src.swap_amm
-
-import difflib
-
-# Function to normalize user address by adding leading zeroes if necessary
-def normalize_address(address: str, expected_length: int = 42) -> str:
-    """Normalize a given address to a specific length by adding leading zeroes if necessary.
-
-    Args:
-        address (str): The address string to normalize.
-        expected_length (int): The desired length of the normalized address (default is 42).
-
-    Returns:
-        str: The normalized address with leading zeroes if it was shorter than the expected length.
-    """
-    if len(address) < expected_length:
-        address = address.zfill(expected_length)
-    return address
 
 # Function to find the closest protocol match using fuzzy matching
 def infer_protocol_name(input_protocol: str, valid_protocols: list[str]) -> str:
@@ -437,8 +421,9 @@ def main():
         if not protocol:
             streamlit.write(f'Selected random protocol = {random_protocol}.')
             protocol = random_protocol
+            
         # Normalize the user address by adding leading zeroes if necessary
-        user = normalize_address(user)
+        user =src.helpers.add_leading_zeros(user)
 
         # Infer the correct protocol name using fuzzy matching
         valid_protocols = loans_data['Protocol'].unique()
