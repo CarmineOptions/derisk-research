@@ -23,3 +23,9 @@ class EkuboLiquidity:
 
     def _get_available_liquidity(self) -> ...:
         ...
+
+    @staticmethod
+    def _remove_leading_zeros(address: str) -> str:
+        while address[2] == '0':
+            address = f'0x{address[3:]}'
+        return address
