@@ -225,13 +225,12 @@ def get_underlying_address(
     return list(underlying_addresses)[0]
 
 def get_custom_data(data: pandas.DataFrame) -> list:
-    custom_columns = [  
-        "liquidable_debt",
+    custom_columns = [
         "liquidable_debt_zkLend",
         "liquidable_debt_at_interval_Nostra Alpha",
         "liquidable_debt_at_interval_Nostra Mainnet"
     ]
-    customdata = []
+    customdata = [data["liquidable_debt"], ]
     data_length = len(data)
     for col in custom_columns:
         if col in data.columns:

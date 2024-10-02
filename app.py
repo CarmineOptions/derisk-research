@@ -285,7 +285,7 @@ def main():
         protocol_main_chart_data = protocol_main_chart_data_mapping[protocol]
         if protocol_main_chart_data is None or protocol_main_chart_data.empty:
             logging.warning(f"No data for pair {debt_token} - {collateral_token} from {protocol}")
-            streamlit.subheader(f":warning: No liquidable debt for the {collateral_token} collateral token and the {debt_token} debt token exists on the lending protocol.")
+            streamlit.subheader(f":warning: No liquidable debt for the {collateral_token} collateral token and the {debt_token} debt token exists on the {protocol} protocol.")
             continue
         protocol_loans_data = protocol_loans_data_mapping[protocol]
         if main_chart_data.empty:
@@ -301,138 +301,142 @@ def main():
             loans_data = protocol_loans_data
         else:
             loans_data = pandas.concat([loans_data, protocol_loans_data])
-    # Convert token amounts in the string format to the dict format.
-    loans_data['Collateral'] = loans_data['Collateral'].apply(parse_token_amounts)
-    loans_data['Debt'] = loans_data['Debt'].apply(parse_token_amounts)
 
-    # Plot the liquidable debt against the available supply.
-    collateral_token, debt_token = current_pair.split("-")
-    collateral_token_price = 0
+    if not main_chart_data.empty:
+        # Plot the liquidable debt against the available supply.
+        collateral_token, debt_token = current_pair.split("-")
+        collateral_token_price = 0
 
-    if current_pair == stable_coin_pair:
-        for stable_coin in src.settings.DEBT_TOKENS[:-1]:
-            debt_token = stable_coin
+        if current_pair == stable_coin_pair:
+            for stable_coin in src.settings.DEBT_TOKENS[:-1]:
+                debt_token = stable_coin
+                main_chart_data, collateral_token_price = process_liquidity(main_chart_data, collateral_token, debt_token)
+        else:
             main_chart_data, collateral_token_price = process_liquidity(main_chart_data, collateral_token, debt_token)
-    else:
-        main_chart_data, collateral_token_price = process_liquidity(main_chart_data, collateral_token, debt_token)
 
-    # TODO: Add Ekubo end
-    figure = src.main_chart.get_main_chart_figure(
-        data=main_chart_data,
-        collateral_token=collateral_token,
-        debt_token=src.settings.STABLECOIN_BUNDLE_NAME if current_pair == stable_coin_pair else debt_token,
-        collateral_token_price=collateral_token_price,
-    )
-    streamlit.plotly_chart(figure_or_data=figure, use_container_width=True)
-
-    main_chart_data['debt_to_supply_ratio'] = (
-        main_chart_data['liquidable_debt_at_interval'] / main_chart_data['debt_token_supply']
-    )
-    example_rows = main_chart_data[
-        (main_chart_data['debt_to_supply_ratio'] > 0.75)
-        & (main_chart_data['collateral_token_price'] <= collateral_token_price)
-    ]
-
-    if not example_rows.empty:
-        example_row = example_rows.sort_values('collateral_token_price').iloc[-1]
-
-        def _get_risk_level(debt_to_supply_ratio: float) -> str:
-            if debt_to_supply_ratio < 0.2:
-                return 'low'
-            elif debt_to_supply_ratio < 0.4:
-                return 'medium'
-            elif debt_to_supply_ratio < 0.6:
-                'high'
-            return 'very high'
-
-        streamlit.subheader(
-            f":warning: At price of {round(example_row['collateral_token_price'], 2)}, the risk of acquiring bad debt for "
-            f"lending protocols is {_get_risk_level(example_row['debt_to_supply_ratio'])}."
-        )    
-        streamlit.write(
-            f"The ratio of liquidated debt to available supply is {round(example_row['debt_to_supply_ratio'] * 100)}%.Debt"
-            f" worth of {int(example_row['liquidable_debt_at_interval']):,} USD will be liquidated while the AMM swaps "
-            f"capacity will be {int(example_row['debt_token_supply']):,} USD."
+        # TODO: Add Ekubo end
+        figure = src.main_chart.get_main_chart_figure(
+            data=main_chart_data,
+            collateral_token=collateral_token,
+            debt_token=src.settings.STABLECOIN_BUNDLE_NAME if current_pair == stable_coin_pair else debt_token,
+            collateral_token_price=collateral_token_price,
         )
+        streamlit.plotly_chart(figure_or_data=figure, use_container_width=True)
 
-    streamlit.header("Loans with low health factor")
-    col1, _ = streamlit.columns([1, 3])
-    with col1:
-        debt_usd_lower_bound, debt_usd_upper_bound = streamlit.slider(
-            label="Select range of USD borrowings",
-            min_value=0,
-            max_value=int(loans_data["Debt (USD)"].max()),
-            value=(0, int(loans_data["Debt (USD)"].max())),
+        main_chart_data['debt_to_supply_ratio'] = (
+            main_chart_data['liquidable_debt_at_interval'] / main_chart_data['debt_token_supply']
         )
-    streamlit.dataframe(
-        loans_data[
-            (loans_data["Health factor"] > 0)  # TODO: debug the negative HFs
-            & loans_data["Debt (USD)"].between(debt_usd_lower_bound, debt_usd_upper_bound)
-        ].sort_values("Health factor").iloc[:20],
-        use_container_width=True,
-    )
+        example_rows = main_chart_data[
+            (main_chart_data['debt_to_supply_ratio'] > 0.75)
+            & (main_chart_data['collateral_token_price'] <= collateral_token_price)
+        ]
 
-    streamlit.header("Top loans")
-    col1, col2 = streamlit.columns(2)
-    with col1:
-        streamlit.subheader('Sorted by collateral')
+        if not example_rows.empty:
+            example_row = example_rows.sort_values('collateral_token_price').iloc[-1]
+
+            def _get_risk_level(debt_to_supply_ratio: float) -> str:
+                if debt_to_supply_ratio < 0.2:
+                    return 'low'
+                elif debt_to_supply_ratio < 0.4:
+                    return 'medium'
+                elif debt_to_supply_ratio < 0.6:
+                    'high'
+                return 'very high'
+
+            streamlit.subheader(
+                f":warning: At price of {round(example_row['collateral_token_price'], 2)}, the risk of acquiring bad debt for "
+                f"lending protocols is {_get_risk_level(example_row['debt_to_supply_ratio'])}."
+            )    
+            streamlit.write(
+                f"The ratio of liquidated debt to available supply is {round(example_row['debt_to_supply_ratio'] * 100)}%.Debt"
+                f" worth of {int(example_row['liquidable_debt_at_interval']):,} USD will be liquidated while the AMM swaps "
+                f"capacity will be {int(example_row['debt_token_supply']):,} USD."
+            )
+
+    if not loans_data.empty:
+        streamlit.header("Loans with low health factor")
+
+        # Convert token amounts in the string format to the dict format.
+        loans_data['Collateral'] = loans_data['Collateral'].apply(parse_token_amounts)
+        loans_data['Debt'] = loans_data['Debt'].apply(parse_token_amounts)
+
+        col1, _ = streamlit.columns([1, 3])
+        with col1:
+            debt_usd_lower_bound, debt_usd_upper_bound = streamlit.slider(
+                label="Select range of USD borrowings",
+                min_value=0,
+                max_value=int(loans_data["Debt (USD)"].max()),
+                value=(0, int(loans_data["Debt (USD)"].max())),
+            )
         streamlit.dataframe(
             loans_data[
-                loans_data["Health factor"] > 1  # TODO: debug the negative HFs
-            ].sort_values("Collateral (USD)", ascending = False).iloc[:20],
-            use_container_width=True,
-        )
-    with col2:
-        streamlit.subheader('Sorted by debt')
-        streamlit.dataframe(
-            loans_data[
-                loans_data["Health factor"] > 1  # TODO: debug the negative HFs
-            ].sort_values("Debt (USD)", ascending = False).iloc[:20],
+                (loans_data["Health factor"] > 0)  # TODO: debug the negative HFs
+                & loans_data["Debt (USD)"].between(debt_usd_lower_bound, debt_usd_upper_bound)
+            ].sort_values("Health factor").iloc[:20],
             use_container_width=True,
         )
 
-    streamlit.header("Detail of a loan")
-    col1, col2, col3 = streamlit.columns(3)
-    with col1:
-        user = streamlit.text_input("User")
-        protocol = streamlit.text_input("Protocol")
-        users_and_protocols_with_debt = list(
-            loans_data.loc[
-                loans_data['Debt (USD)'] > 0,
-                ['User', 'Protocol'],
-            ].itertuples(index = False, name = None)
-        )
-        random_user, random_protocol = users_and_protocols_with_debt[numpy.random.randint(len(users_and_protocols_with_debt))]
-        if not user:
-            streamlit.write(f'Selected random user = {random_user}.')
-            user = random_user
-        if not protocol:
-            streamlit.write(f'Selected random protocol = {random_protocol}.')
-            protocol = random_protocol
-    loan = loans_data.loc[
-        (loans_data['User'] == user)
-        & (loans_data['Protocol'] == protocol),
-    ]
-    collateral_usd_amounts, debt_usd_amounts = src.main_chart.get_specific_loan_usd_amounts(loan = loan)
-    with col2:
-        figure = plotly.express.pie(
-            collateral_usd_amounts,
-            values='amount_usd',
-            names='token',
-            title='Collateral (USD)',
-            color_discrete_sequence=plotly.express.colors.sequential.Oranges_r,
-        )
-        streamlit.plotly_chart(figure, True)
-    with col3:
-        figure = plotly.express.pie(
-            debt_usd_amounts,
-            values='amount_usd',
-            names='token',
-            title='Debt (USD)',
-            color_discrete_sequence=plotly.express.colors.sequential.Greens_r,
-        )
-        streamlit.plotly_chart(figure, True)
-    streamlit.dataframe(loan)
+        streamlit.header("Top loans")
+        col1, col2 = streamlit.columns(2)
+        with col1:
+            streamlit.subheader('Sorted by collateral')
+            streamlit.dataframe(
+                loans_data[
+                    loans_data["Health factor"] > 1  # TODO: debug the negative HFs
+                ].sort_values("Collateral (USD)", ascending = False).iloc[:20],
+                use_container_width=True,
+            )
+        with col2:
+            streamlit.subheader('Sorted by debt')
+            streamlit.dataframe(
+                loans_data[
+                    loans_data["Health factor"] > 1  # TODO: debug the negative HFs
+                ].sort_values("Debt (USD)", ascending = False).iloc[:20],
+                use_container_width=True,
+            )
+
+        streamlit.header("Detail of a loan")
+        col1, col2, col3 = streamlit.columns(3)
+        with col1:
+            user = streamlit.text_input("User")
+            protocol = streamlit.text_input("Protocol")
+            users_and_protocols_with_debt = list(
+                loans_data.loc[
+                    loans_data['Debt (USD)'] > 0,
+                    ['User', 'Protocol'],
+                ].itertuples(index = False, name = None)
+            )
+            random_user, random_protocol = users_and_protocols_with_debt[numpy.random.randint(len(users_and_protocols_with_debt))]
+            if not user:
+                streamlit.write(f'Selected random user = {random_user}.')
+                user = random_user
+            if not protocol:
+                streamlit.write(f'Selected random protocol = {random_protocol}.')
+                protocol = random_protocol
+        loan = loans_data.loc[
+            (loans_data['User'] == user)
+            & (loans_data['Protocol'] == protocol),
+        ]
+        collateral_usd_amounts, debt_usd_amounts = src.main_chart.get_specific_loan_usd_amounts(loan = loan)
+        with col2:
+            figure = plotly.express.pie(
+                collateral_usd_amounts,
+                values='amount_usd',
+                names='token',
+                title='Collateral (USD)',
+                color_discrete_sequence=plotly.express.colors.sequential.Oranges_r,
+            )
+            streamlit.plotly_chart(figure, True)
+        with col3:
+            figure = plotly.express.pie(
+                debt_usd_amounts,
+                values='amount_usd',
+                names='token',
+                title='Debt (USD)',
+                color_discrete_sequence=plotly.express.colors.sequential.Greens_r,
+            )
+            streamlit.plotly_chart(figure, True)
+        streamlit.dataframe(loan)
 
     streamlit.header("Comparison of lending protocols")
     general_stats = pandas.read_parquet(

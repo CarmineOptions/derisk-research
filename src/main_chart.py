@@ -117,10 +117,10 @@ def get_main_chart_figure(
                 customdata=customdata,
                 hovertemplate=(
                     "<b>Price:</b> %{x}<br>"
-                    "<b>Total Volume:</b> %{customdata[0]:,.2f}<br>"
-                    "<b>ZkLend Volume:</b> %{customdata[1]:,.2f}<br>"
-                    "<b>Nostra Alpha Volume:</b> %{customdata[2]:,.2f}<br>"
-                    "<b>Nostra Mainnet Volume:</b> %{customdata[3]:,.2f}<br>"
+                    "<b>Total:</b> %{customdata[0]:,.2f}<br>"
+                    "<b>ZkLend:</b> %{customdata[1]:,.2f}<br>"
+                    "<b>Nostra Alpha:</b> %{customdata[2]:,.2f}<br>"
+                    "<b>Nostra Mainnet:</b> %{customdata[3]:,.2f}<br>"
                 ),
             ))
         except KeyError: # If `KeyError` is raised from accessing data[col]
