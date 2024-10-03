@@ -132,6 +132,11 @@ class EkuboLiquidity:
 
     @staticmethod
     def _remove_leading_zeros(address: str) -> str:
+        '''
+        Removing leading zeros from address and returning cleaned string
+        :param address: str
+        :return: str
+        '''
         while address[2] == '0':
             address = f'0x{address[3:]}'
         return address
