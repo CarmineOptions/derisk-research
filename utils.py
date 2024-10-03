@@ -21,6 +21,9 @@ class EkuboLiquidity:
         self.collateral_token = collateral_token
         self.debt_token = debt_token
 
+        self.lower_bound_value = 0.95
+        self.upper_bound_value = 1.05
+
         cleaned_collateral_token = self._remove_leading_zeros(collateral_token)
         cleaned_debt_token = self._remove_leading_zeros(debt_token)
 
@@ -36,6 +39,12 @@ class EkuboLiquidity:
         }
 
     def apply_liquidity_to_dataframe(self, bids_or_asks: dict[str, Any]) -> pandas.DataFrame:
+        '''
+        Applying liquidity bids or asks data to dataframe, saving in object and returns data
+        :param bids_or_asks: dict[str, Any]
+        :return: pandas.DataFrame
+        '''
+
         liquidity_dataframe = pandas.DataFrame(
             {
                 'price': bids_or_asks['prices'],
@@ -59,6 +68,18 @@ class EkuboLiquidity:
         return self.data
 
     def fetch_liquidity(self, bids: bool = True) -> dict[str, Any]:
+        '''
+        Fetching liquidity from API endpoint and structuring data to comfortable format.
+        Returns dictionary with the following struct:
+        {
+        'type': 'bids' or 'asks',
+        'prices': list[float],
+        'quantities': list[float]
+        }
+        :param bids: bool = True
+        :return: dict[str, Any]
+        '''
+
         params = self.params_for_bids
         if not bids:
             params = self.params_for_asks
@@ -66,7 +87,7 @@ class EkuboLiquidity:
 
         response = requests.get(self.URL, params=params)
 
-        if response.status_code == 200:
+        if response.ok:
             liquidity = response.json()
             data = {
                 'type': 'bids' if bids else 'asks',
@@ -83,15 +104,24 @@ class EkuboLiquidity:
         else:
             self.fetch_liquidity()
 
-    @staticmethod
     def _get_available_liquidity(
+            self,
             data: pandas.DataFrame,
             price: float,
             price_diff: float,
             bids: bool
     ) -> float:
-        price_lower_bound = max(0.95 * price, price - price_diff) if bids else price
-        price_upper_bound = price if bids else min(1.05 * price, price + price_diff)
+        '''
+        Getting available liquidity from data, price, price_diff for bids or asks and returns float
+        :param data: pandas.DataFrame
+        :param price: float
+        :param price_diff: float
+        :param bids: bool
+        :return: float
+        '''
+
+        price_lower_bound = max(self.lower_bound_value * price, price - price_diff) if bids else price
+        price_upper_bound = price if bids else min(self.upper_bound_value * price, price + price_diff)
         return data.loc[
             data['price'].between(
                 price_lower_bound,
