@@ -143,4 +143,6 @@ class HaikoBlastAPIConnector(AbstractionAPIConnector):
             "id": 0
         }
         """
-        return cls._post_request_builder("starknet_getBlockWithTxHashes", params={"block_id": "latest"})
+        return cls._post_request_builder(
+            "starknet_getBlockWithTxHashes", params={"block_id": "latest"}
+        )

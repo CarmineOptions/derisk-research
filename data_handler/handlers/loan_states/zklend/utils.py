@@ -1,7 +1,9 @@
+from decimal import Decimal
+
 import pandas as pd
+
 from db.crud import InitializerDBConnector
 from db.models import ZkLendCollateralDebt
-from decimal import Decimal
 
 
 class ZkLendInitializer:
@@ -9,6 +11,7 @@ class ZkLendInitializer:
     A class that initializes the zkLend loan states.
     To have actual collateral_enabled values.
     """
+
     FIRST_INDEX_ELEMENTS = (
         "Repayment",
         "zklend::market::Market::Repayment",

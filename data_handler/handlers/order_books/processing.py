@@ -23,7 +23,9 @@ class OrderBookProcessor:
         """
         # Fetch order book
         connector = DBConnector()
-        order_book = connector.get_latest_order_book(self.dex, self.token_a, self.token_b)
+        order_book = connector.get_latest_order_book(
+            self.dex, self.token_a, self.token_b
+        )
         if not order_book:
             raise ValueError("No order book found for the given DEX and token pair.")
 
@@ -44,22 +46,22 @@ class OrderBookProcessor:
         return price_change
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     processor = OrderBookProcessor(
         "Starknet",
         "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
-        "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"
+        "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8",
     )
     uniswapv2 = processor.calculate_price_change(Decimal("0.05"))
     processor = OrderBookProcessor(
         "Ekubo",
         "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
-        "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"
+        "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8",
     )
     ekubo = processor.calculate_price_change(Decimal("0.05"))
     processor = OrderBookProcessor(
         "Haiko",
         "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
-        "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"
+        "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8",
     )
     haiko = processor.calculate_price_change(Decimal("0.05"))

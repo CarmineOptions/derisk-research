@@ -2,16 +2,21 @@ import asyncio
 from decimal import Decimal
 from typing import Iterable, Type
 
-from db.crud import DBConnector
-from db.models import LoanState, HashtackCollateralDebt
-
 from handler_tools.constants import ProtocolIDs
-from handlers.state import State, LoanEntity
-from handlers.liquidable_debt.values import (LendingProtocolNames, COLLATERAL_FIELD_NAME,
-                                             DEBT_FIELD_NAME, LIQUIDABLE_DEBT_FIELD_NAME, PRICE_FIELD_NAME)
+from handlers.helpers import TokenValues, get_collateral_token_range, get_range
 from handlers.liquidable_debt.utils import Prices
+from handlers.liquidable_debt.values import (
+    COLLATERAL_FIELD_NAME,
+    DEBT_FIELD_NAME,
+    LIQUIDABLE_DEBT_FIELD_NAME,
+    PRICE_FIELD_NAME,
+    LendingProtocolNames,
+)
 from handlers.settings import TOKEN_PAIRS
-from handlers.helpers import TokenValues, get_range, get_collateral_token_range
+from handlers.state import LoanEntity, State
+
+from db.crud import DBConnector
+from db.models import HashtackCollateralDebt, LoanState
 
 
 class BaseDBLiquidableDebtDataHandler:
@@ -21,13 +26,16 @@ class BaseDBLiquidableDebtDataHandler:
 
     :cvar AVAILABLE_PROTOCOLS: A list of all available protocols.
     """
+
     AVAILABLE_PROTOCOLS = [item.value for item in LendingProtocolNames]
 
     def __init__(self, *args, **kwargs):
         self.db_connector = DBConnector()
 
     @staticmethod
-    def get_prices_range(collateral_token_name: str, current_price: Decimal) -> Iterable[Decimal]:
+    def get_prices_range(
+        collateral_token_name: str, current_price: Decimal
+    ) -> Iterable[Decimal]:
         """
         Get prices range based on the current price.
         :param current_price: Decimal - The current pair price.
@@ -39,7 +47,9 @@ class BaseDBLiquidableDebtDataHandler:
         if collateral_token_name in collateral_tokens:
             return get_collateral_token_range(collateral_token_name, current_price)
 
-        return get_range(Decimal(0), current_price * Decimal("1.3"), Decimal(current_price / 100))
+        return get_range(
+            Decimal(0), current_price * Decimal("1.3"), Decimal(current_price / 100)
+        )
 
     def initialize_loan_entities(self, state: State, data: dict = None) -> State:
         """
@@ -68,12 +78,11 @@ class BaseDBLiquidableDebtDataHandler:
         :param protocol_name: Protocol name.
         :return: tuple
         """
-        loan_data = self.db_connector.get_loans(
-            model=LoanState,
-            protocol=protocol_name
-        )
-        interest_rate_models = self.db_connector.get_last_interest_rate_record_by_protocol_id(
-            protocol_id=protocol_name
+        loan_data = self.db_connector.get_loans(model=LoanState, protocol=protocol_name)
+        interest_rate_models = (
+            self.db_connector.get_last_interest_rate_record_by_protocol_id(
+                protocol_id=protocol_name
+            )
         )
 
         return loan_data, interest_rate_models
@@ -88,9 +97,9 @@ class ZkLendDBLiquidableDebtDataHandler(BaseDBLiquidableDebtDataHandler):
     """
 
     def __init__(
-            self,
-            loan_state_class: Type[State],
-            loan_entity_class: Type[LoanEntity],
+        self,
+        loan_state_class: Type[State],
+        loan_entity_class: Type[LoanEntity],
     ):
         super().__init__()
         self.state_class = loan_state_class
@@ -111,16 +120,14 @@ class ZkLendDBLiquidableDebtDataHandler(BaseDBLiquidableDebtDataHandler):
         state.collateral_interest_rate_models = TokenValues(
             values=interest_rate_models.collateral
         )
-        state.debt_interest_rate_models = TokenValues(
-            values=interest_rate_models.debt
-        )
+        state.debt_interest_rate_models = TokenValues(values=interest_rate_models.debt)
 
         current_prices = Prices()
         asyncio.run(current_prices.get_lp_token_prices())
 
         hypothetical_collateral_token_prices = self.get_prices_range(
             collateral_token_name="STRK",
-            current_price=current_prices.prices.values["STRK"]
+            current_price=current_prices.prices.values["STRK"],
         )
 
         result_data = list()
@@ -134,7 +141,8 @@ class ZkLendDBLiquidableDebtDataHandler(BaseDBLiquidableDebtDataHandler):
             )
 
             if liquidable_debt > Decimal("0"):
-                result_data.append({
+                result_data.append(
+                    {
                         LIQUIDABLE_DEBT_FIELD_NAME: liquidable_debt,
                         PRICE_FIELD_NAME: hypothetical_price,
                         COLLATERAL_FIELD_NAME: "STRK",
@@ -154,9 +162,9 @@ class NostraAlphaDBLiquidableDebtDataHandler(BaseDBLiquidableDebtDataHandler):
     """
 
     def __init__(
-            self,
-            loan_state_class: Type[State],
-            loan_entity_class: Type[LoanEntity],
+        self,
+        loan_state_class: Type[State],
+        loan_entity_class: Type[LoanEntity],
     ):
         super().__init__()
         self.state_class = loan_state_class
@@ -177,16 +185,14 @@ class NostraAlphaDBLiquidableDebtDataHandler(BaseDBLiquidableDebtDataHandler):
         state.collateral_interest_rate_models = TokenValues(
             values=interest_rate_models.collateral
         )
-        state.debt_interest_rate_models = TokenValues(
-            values=interest_rate_models.debt
-        )
+        state.debt_interest_rate_models = TokenValues(values=interest_rate_models.debt)
 
         current_prices = Prices()
         asyncio.run(current_prices.get_lp_token_prices())
 
         hypothetical_collateral_token_prices = self.get_prices_range(
             collateral_token_name="STRK",
-            current_price=current_prices.prices.values["STRK"]
+            current_price=current_prices.prices.values["STRK"],
         )
 
         result_data = list()
@@ -200,7 +206,8 @@ class NostraAlphaDBLiquidableDebtDataHandler(BaseDBLiquidableDebtDataHandler):
             )
 
             if liquidable_debt > Decimal("0"):
-                result_data.append({
+                result_data.append(
+                    {
                         LIQUIDABLE_DEBT_FIELD_NAME: liquidable_debt,
                         PRICE_FIELD_NAME: hypothetical_price,
                         COLLATERAL_FIELD_NAME: "STRK",
@@ -220,9 +227,9 @@ class NostraMainnetDBLiquidableDebtDataHandler(BaseDBLiquidableDebtDataHandler):
     """
 
     def __init__(
-            self,
-            loan_state_class: Type[State],
-            loan_entity_class: Type[LoanEntity],
+        self,
+        loan_state_class: Type[State],
+        loan_entity_class: Type[LoanEntity],
     ):
         super().__init__()
         self.state_class = loan_state_class
@@ -243,16 +250,14 @@ class NostraMainnetDBLiquidableDebtDataHandler(BaseDBLiquidableDebtDataHandler):
         state.collateral_interest_rate_models = TokenValues(
             values=interest_rate_models.collateral
         )
-        state.debt_interest_rate_models = TokenValues(
-            values=interest_rate_models.debt
-        )
+        state.debt_interest_rate_models = TokenValues(values=interest_rate_models.debt)
 
         current_prices = Prices()
         asyncio.run(current_prices.get_lp_token_prices())
 
         hypothetical_collateral_token_prices = self.get_prices_range(
             collateral_token_name="STRK",
-            current_price=current_prices.prices.values["STRK"]
+            current_price=current_prices.prices.values["STRK"],
         )
 
         result_data = list()
@@ -266,7 +271,8 @@ class NostraMainnetDBLiquidableDebtDataHandler(BaseDBLiquidableDebtDataHandler):
             )
 
             if liquidable_debt > Decimal("0"):
-                result_data.append({
+                result_data.append(
+                    {
                         LIQUIDABLE_DEBT_FIELD_NAME: liquidable_debt,
                         PRICE_FIELD_NAME: hypothetical_price,
                         COLLATERAL_FIELD_NAME: "STRK",
@@ -286,9 +292,9 @@ class HashstackV0DBLiquidableDebtDataHandler(BaseDBLiquidableDebtDataHandler):
     """
 
     def __init__(
-            self,
-            loan_state_class: Type[State],
-            loan_entity_class: Type[LoanEntity],
+        self,
+        loan_state_class: Type[State],
+        loan_entity_class: Type[LoanEntity],
     ):
         super().__init__()
         self.state_class = loan_state_class
@@ -303,13 +309,13 @@ class HashstackV0DBLiquidableDebtDataHandler(BaseDBLiquidableDebtDataHandler):
         """
 
         for instance in data:
-            hashstack_loan_state = self.db_connector.get_last_hashstack_loan_state(instance.user)
+            hashstack_loan_state = self.db_connector.get_last_hashstack_loan_state(
+                instance.user
+            )
 
             if debt_category := hashstack_loan_state.debt_category:
-
                 loan_entity = self.loan_entity_class(
-                    user=instance.user,
-                    debt_category=debt_category
+                    user=instance.user, debt_category=debt_category
                 )
 
                 loan_entity.debt = TokenValues(values=instance.debt)
@@ -336,16 +342,14 @@ class HashstackV0DBLiquidableDebtDataHandler(BaseDBLiquidableDebtDataHandler):
         state.collateral_interest_rate_models = TokenValues(
             values=interest_rate_models.collateral
         )
-        state.debt_interest_rate_models = TokenValues(
-            values=interest_rate_models.debt
-        )
+        state.debt_interest_rate_models = TokenValues(values=interest_rate_models.debt)
 
         current_prices = Prices()
         asyncio.run(current_prices.get_lp_token_prices())
 
         hypothetical_collateral_token_prices = self.get_prices_range(
             collateral_token_name="STRK",
-            current_price=current_prices.prices.values["STRK"]
+            current_price=current_prices.prices.values["STRK"],
         )
 
         result_data = list()
@@ -359,12 +363,13 @@ class HashstackV0DBLiquidableDebtDataHandler(BaseDBLiquidableDebtDataHandler):
             )
 
             if liquidable_debt > Decimal("0"):
-                result_data.append({
-                    LIQUIDABLE_DEBT_FIELD_NAME: liquidable_debt,
-                    PRICE_FIELD_NAME: hypothetical_price,
-                    COLLATERAL_FIELD_NAME: "STRK",  # we use this token by agreement
-                    DEBT_FIELD_NAME: "USDC",
-                }
+                result_data.append(
+                    {
+                        LIQUIDABLE_DEBT_FIELD_NAME: liquidable_debt,
+                        PRICE_FIELD_NAME: hypothetical_price,
+                        COLLATERAL_FIELD_NAME: "STRK",  # we use this token by agreement
+                        DEBT_FIELD_NAME: "USDC",
+                    }
                 )
 
         return result_data
