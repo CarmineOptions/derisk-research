@@ -17,6 +17,10 @@ import src.settings
 import src.swap_amm
 
 
+ZKLEND = 'zkLend'
+NOSTRA_ALPHA = 'Nostra Alpha'
+NOSTRA_MAINNET = 'Nostra Mainnet'
+
 
 def parse_token_amounts(raw_token_amounts: str) -> dict[str, float]:
     """ Converts token amounts in the string format to the dict format. """
@@ -210,7 +214,7 @@ def main():
     (
         zklend_main_chart_data,
         zklend_loans_data,
-    ) = src.helpers.load_data(protocol='zkLend')
+    ) = src.helpers.load_data(protocol=ZKLEND)
     # (
     #     hashstack_v0_main_chart_data,
     #     hashstack_v0_loans_data,
@@ -222,21 +226,21 @@ def main():
     (
         nostra_alpha_main_chart_data,
         nostra_alpha_loans_data,
-    ) = src.helpers.load_data(protocol='Nostra Alpha')
+    ) = src.helpers.load_data(protocol=NOSTRA_ALPHA)
     (
         nostra_mainnet_main_chart_data,
         nostra_mainnet_loans_data,
-    ) = src.helpers.load_data(protocol='Nostra Mainnet')
+    ) = src.helpers.load_data(protocol=NOSTRA_MAINNET)
 
     col1, _ = streamlit.columns([1, 3])
     with col1:
         protocols = streamlit.multiselect(
             label="Select protocols",
             # TODO
-            options=["zkLend", "Nostra Alpha", "Nostra Mainnet"],
-            default=["zkLend", "Nostra Alpha", "Nostra Mainnet"],
-            # options=["zkLend", "Hashstack V0", "Hashstack V1", "Nostra Alpha", "Nostra Mainnet"],
-            # default=["zkLend", "Hashstack V0", "Hashstack V1", "Nostra Alpha", "Nostra Mainnet"],
+            options=[ZKLEND, NOSTRA_ALPHA, NOSTRA_MAINNET],
+            default=[ZKLEND, NOSTRA_ALPHA, NOSTRA_MAINNET],
+            # options=[ZKLEND, "Hashstack V0", "Hashstack V1", NOSTRA_ALPHA, NOSTRA_MAINNET],
+            # default=[ZKLEND, "Hashstack V0", "Hashstack V1", NOSTRA_ALPHA, NOSTRA_MAINNET],
         )
         collateral_token = streamlit.selectbox(
             label="Select collateral token:",
@@ -262,24 +266,24 @@ def main():
     loans_data = pandas.DataFrame()
 
     protocol_main_chart_data_mapping = {
-        'zkLend': create_stablecoin_bundle(zklend_main_chart_data)[current_pair],
+        ZKLEND: create_stablecoin_bundle(zklend_main_chart_data)[current_pair],
         # 'Hashstack V0': hashstack_v0_main_chart_data[current_pair],
         # 'Hashstack V1': hashstack_v1_main_chart_data[current_pair],
-        'Nostra Alpha': create_stablecoin_bundle(nostra_alpha_main_chart_data)[current_pair],
-        'Nostra Mainnet': create_stablecoin_bundle(nostra_mainnet_main_chart_data)[current_pair],
+        NOSTRA_ALPHA: create_stablecoin_bundle(nostra_alpha_main_chart_data)[current_pair],
+        NOSTRA_MAINNET: create_stablecoin_bundle(nostra_mainnet_main_chart_data)[current_pair],
     } if current_pair == stable_coin_pair else {
-        'zkLend': zklend_main_chart_data[current_pair],
+        ZKLEND: zklend_main_chart_data[current_pair],
         # 'Hashstack V0': hashstack_v0_main_chart_data[current_pair],
         # 'Hashstack V1': hashstack_v1_main_chart_data[current_pair],
-        'Nostra Alpha': nostra_alpha_main_chart_data[current_pair],
-        'Nostra Mainnet': nostra_mainnet_main_chart_data[current_pair],
+        NOSTRA_ALPHA: nostra_alpha_main_chart_data[current_pair],
+        NOSTRA_MAINNET: nostra_mainnet_main_chart_data[current_pair],
     }
     protocol_loans_data_mapping = {
-        'zkLend': zklend_loans_data,
+        ZKLEND: zklend_loans_data,
         # 'Hashstack V0': hashstack_v0_loans_data,
         # 'Hashstack V1': hashstack_v1_loans_data,
-        'Nostra Alpha': nostra_alpha_loans_data,
-        'Nostra Mainnet': nostra_mainnet_loans_data,
+        NOSTRA_ALPHA: nostra_alpha_loans_data,
+        NOSTRA_MAINNET: nostra_mainnet_loans_data,
     }
     for protocol in protocols:
         protocol_main_chart_data = protocol_main_chart_data_mapping[protocol]
