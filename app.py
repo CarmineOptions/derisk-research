@@ -386,7 +386,6 @@ def main():
             ].sort_values("Health factor").iloc[:20],
             use_container_width=True,
         )
-    
         streamlit.header("Top loans")
         col1, col2 = streamlit.columns(2)
         with col1:
@@ -459,6 +458,7 @@ def main():
                 streamlit.plotly_chart(figure, True)
     
             streamlit.dataframe(loan)
+
 
     streamlit.header("Comparison of lending protocols")
     general_stats = pandas.read_parquet(
