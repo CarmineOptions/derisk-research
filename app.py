@@ -129,6 +129,7 @@ def add_ekubo_liquidity(
                 lambda x: _get_available_liquidity(
                     data=asks,
                     price=x,
+                    price_diff=price_diff,
                     bids=False,
                 )
             )
@@ -306,6 +307,9 @@ def main():
     # histogram_data = pandas.DataFrame()
     loans_data = pandas.DataFrame()
 
+    protocol_main_chart_data_mapping = charts.get_protocol_main_mapped_chart_data(ZKLEND, NOSTRA_ALPHA, NOSTRA_MAINNET, current_pair, stable_coin_pair)
+    protocol_loans_data_mapping = charts.get_protocol_loans_mapped_data(ZKLEND, NOSTRA_ALPHA, NOSTRA_MAINNET)
+    
     # Convert token amounts in the string format to the dict format.
     loans_data["Collateral"] = loans_data["Collateral"].apply(parse_token_amounts)
     loans_data["Debt"] = loans_data["Debt"].apply(parse_token_amounts)
@@ -386,7 +390,7 @@ def main():
 
     streamlit.header("Loans with low health factor")
     col1, _ = streamlit.columns([1, 3])
-    charts.get_usd_debt_boundaries(col1, streamlit, loans_data)
+    charts.get_usd_debt_boundaries(col1, loans_data)
 
     streamlit.header("Top loans")
     col1, col2 = streamlit.columns(2)
@@ -409,7 +413,7 @@ def main():
 
     streamlit.header("Detail of a loan")
     col1, col2, col3 = streamlit.columns(3)
-    user, protocol = charts.lottery(col1, streamlit, loans_data)
+    user, protocol = charts.select_random_user_protocol(col1, loans_data)
 
     loan = loans_data.loc[
         (loans_data["User"] == user) & (loans_data["Protocol"] == protocol),
@@ -423,7 +427,7 @@ def main():
         )
 
         charts.get_pie_chart(
-            col2, col3, streamlit, collateral_usd_amounts, debt_usd_amounts
+            col2, col3, collateral_usd_amounts, debt_usd_amounts
         )
 
         streamlit.dataframe(loan)
@@ -451,7 +455,7 @@ def main():
 
     columns = streamlit.columns(4)
     tokens = list(src.settings.TOKEN_SETTINGS.keys())
-    charts.get_multi_pie_chart()
+    charts.get_multi_pie_chart(columns, tokens, collateral_stats, debt_stats, supply_stats)
 
     last_update = src.persistent_state.load_pickle(
         path=src.persistent_state.LAST_UPDATE_FILENAME
