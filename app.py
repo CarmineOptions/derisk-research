@@ -1,13 +1,11 @@
-import collections
 import datetime
 import logging
-import math
-import requests
 import time
 
-import numpy.random
+import numpy
 import pandas
-import plotly.express
+import plotly
+import requests
 import streamlit
 
 import src.helpers
@@ -15,26 +13,14 @@ import src.main_chart
 import src.persistent_state
 import src.settings
 import src.swap_amm
-import charts
+from chart_utils import (get_protocol_data_mappings, load_stats_data,
+                         transform_loans_data, transform_main_chart_data)
 
-ZKLEND = "zkLend"
-NOSTRA_ALPHA = "Nostra Alpha"
-NOSTRA_MAINNET = "Nostra Mainnet"
-
-
-def parse_token_amounts(raw_token_amounts: str) -> dict[str, float]:
-    """Converts token amounts in the string format to the dict format."""
-    token_amounts = collections.defaultdict(int)
-
-    if raw_token_amounts == "":
-        return token_amounts
-
-    individual_token_parts = raw_token_amounts.split(", ")
-    for individual_token_part in individual_token_parts:
-        token, amount = individual_token_part.split(": ")
-        token_amounts[token] += float(amount)
-
-    return token_amounts
+PROTOCOL_NAMES = [
+    "zkLend",
+    "Nostra Alpha",
+    "Nostra Mainnet",
+]  # "Hashstack V0", "Hashstack V1"
 
 
 def _remove_leading_zeros(address: str) -> str:
@@ -129,7 +115,6 @@ def add_ekubo_liquidity(
                 lambda x: _get_available_liquidity(
                     data=asks,
                     price=x,
-                    price_diff=price_diff,
                     bids=False,
                 )
             )
@@ -139,149 +124,16 @@ def add_ekubo_liquidity(
     return data
 
 
-def create_stablecoin_bundle(
-    data: dict[str, pandas.DataFrame]
-) -> dict[str, pandas.DataFrame]:
-    """
-    Creates a stablecoin bundle by merging relevant DataFrames for collateral tokens and debt tokens.
-
-    For each collateral token specified in `src.settings.COLLATERAL_TOKENS`, this function finds the
-    relevant stablecoin pairs from the provided `data` dictionary and merges the corresponding DataFrames
-    based on the 'collateral_token_price' column. It combines the debt and liquidity data for multiple
-    stablecoin pairs and adds the result back to the `data` dictionary under a new key.
-
-    Parameters:
-    data (dict[str, pandas.DataFrame]): A dictionary where the keys are token pairs and the values are
-                                        corresponding DataFrames containing price and supply data.
-
-    Returns:
-    dict[str, pandas.DataFrame]: The updated dictionary with the newly created stablecoin bundle added.
-    """
-
-    # Iterate over all collateral tokens defined in the settings
-    for collateral in src.settings.COLLATERAL_TOKENS:
-        # Find all relevant pairs that involve the current collateral and one of the debt tokens
-        relevant_pairs = [
-            pair
-            for pair in data.keys()
-            if collateral in pair
-            and any(stablecoin in pair for stablecoin in src.settings.DEBT_TOKENS[:-1])
-        ]
-        combined_df = None  # Initialize a variable to store the combined DataFrame
-
-        # Loop through each relevant pair
-        for pair in relevant_pairs:
-            df = data[pair]  # Get the DataFrame for the current pair
-
-            if df.empty:
-                # Log a warning if the DataFrame is empty and skip to the next pair
-                logging.warning(f"Empty DataFrame for pair: {pair}")
-                continue
-
-            if combined_df is None:
-                # If this is the first DataFrame being processed, use it as the base for combining
-                combined_df = df.copy()
-            else:
-                # Merge the current DataFrame with the combined one on 'collateral_token_price'
-                combined_df = pandas.merge(
-                    combined_df, df, on="collateral_token_price", suffixes=("", "_y")
-                )
-
-                # Sum the columns for debt and liquidity, adding the corresponding '_y' values
-                for col in [
-                    "liquidable_debt",
-                    "liquidable_debt_at_interval",
-                    "10kSwap_debt_token_supply",
-                    "MySwap_debt_token_supply",
-                    "SithSwap_debt_token_supply",
-                    "JediSwap_debt_token_supply",
-                    "debt_token_supply",
-                ]:
-                    combined_df[col] += combined_df[f"{col}_y"]
-
-                # Drop the '_y' columns after summing the relevant values
-                combined_df.drop(
-                    [col for col in combined_df.columns if col.endswith("_y")],
-                    axis=1,
-                    inplace=True,
-                )
-
-        # Create a new pair name for the stablecoin bundle
-        new_pair = f"{collateral}-{src.settings.STABLECOIN_BUNDLE_NAME}"
-        # Add the combined DataFrame for this collateral to the data dictionary
-        data[new_pair] = combined_df
-
-    # Return the updated data dictionary
-    return data
-
-
-def process_liquidity(
-    main_chart_data: pandas.DataFrame, collateral_token: str, debt_token: str
-) -> tuple[pandas.DataFrame, float]:
-    # Fetch underlying addresses and decimals
-    collateral_token_underlying_address = (
-        src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[collateral_token]
-    )
-    collateral_token_decimals = int(
-        math.log10(src.settings.TOKEN_SETTINGS[collateral_token].decimal_factor)
-    )
-    underlying_addresses_to_decimals = {
-        collateral_token_underlying_address: collateral_token_decimals
-    }
-
-    # Fetch prices
-    prices = src.helpers.get_prices(token_decimals=underlying_addresses_to_decimals)
-    collateral_token_price = prices[collateral_token_underlying_address]
-
-    # Process main chart data
-    main_chart_data = main_chart_data.astype(float)
-    debt_token_underlying_address = (
-        src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[debt_token]
-    )
-    main_chart_data = add_ekubo_liquidity(
-        data=main_chart_data,
-        collateral_token=collateral_token_underlying_address,
-        debt_token=debt_token_underlying_address,
-    )
-
-    return main_chart_data, collateral_token_price
-
-
 def main():
     streamlit.title("DeRisk")
-
-    (
-        zklend_main_chart_data,
-        zklend_loans_data,
-    ) = src.helpers.load_data(protocol=ZKLEND)
-    # (
-    #     hashstack_v0_main_chart_data,
-    #     hashstack_v0_loans_data,
-    # ) = src.helpers.load_data(protocol='Hashstack V0')
-    # (
-    #     hashstack_v1_main_chart_data,
-    #     hashstack_v1_loans_data,
-    # ) = src.helpers.load_data(protocol='Hashstack V1')
-    (
-        nostra_alpha_main_chart_data,
-        nostra_alpha_loans_data,
-    ) = src.helpers.load_data(protocol=NOSTRA_ALPHA)
-    (
-        nostra_mainnet_main_chart_data,
-        nostra_mainnet_loans_data,
-    ) = src.helpers.load_data(protocol=NOSTRA_MAINNET)
 
     col1, _ = streamlit.columns([1, 3])
     with col1:
         protocols = streamlit.multiselect(
             label="Select protocols",
-            # TODO
-            options=[ZKLEND, NOSTRA_ALPHA, NOSTRA_MAINNET],
-            default=[ZKLEND, NOSTRA_ALPHA, NOSTRA_MAINNET],
-            # options=[ZKLEND, "Hashstack V0", "Hashstack V1", NOSTRA_ALPHA, NOSTRA_MAINNET],
-            # default=[ZKLEND, "Hashstack V0", "Hashstack V1", NOSTRA_ALPHA, NOSTRA_MAINNET],
+            options=PROTOCOL_NAMES,
+            default=PROTOCOL_NAMES,
         )
-
         collateral_token = streamlit.selectbox(
             label="Select collateral token:",
             options=src.settings.COLLATERAL_TOKENS,
@@ -293,7 +145,6 @@ def main():
             options=src.settings.DEBT_TOKENS,
             index=0,
         )
-
     stable_coin_pair = f"{collateral_token}-{src.settings.STABLECOIN_BUNDLE_NAME}"
 
     if debt_token == collateral_token:
@@ -303,28 +154,32 @@ def main():
 
     current_pair = f"{collateral_token}-{debt_token}"
 
-    main_chart_data = pandas.DataFrame()
-    # histogram_data = pandas.DataFrame()
-    loans_data = pandas.DataFrame()
-
-    protocol_main_chart_data_mapping = charts.get_protocol_main_mapped_chart_data(ZKLEND, NOSTRA_ALPHA, NOSTRA_MAINNET, current_pair, stable_coin_pair)
-    protocol_loans_data_mapping = charts.get_protocol_loans_mapped_data(ZKLEND, NOSTRA_ALPHA, NOSTRA_MAINNET)
-    
-    # Convert token amounts in the string format to the dict format.
-    loans_data["Collateral"] = loans_data["Collateral"].apply(parse_token_amounts)
-    loans_data["Debt"] = loans_data["Debt"].apply(parse_token_amounts)
+    protocol_main_chart_data_mapping, protocol_loans_data_mapping = (
+        get_protocol_data_mappings(
+            current_pair=current_pair,
+            stable_coin_pair=stable_coin_pair,
+            protocols=protocols,
+        )
+    )
+    loans_data = transform_loans_data(protocol_loans_data_mapping, protocols)
+    main_chart_data = transform_main_chart_data(
+        protocol_main_chart_data_mapping, current_pair, protocols
+    )
 
     # Plot the liquidable debt against the available supply.
     collateral_token, debt_token = current_pair.split("-")
     collateral_token_price = 0
 
-    main_chart_data, collateral_token_price = charts.noname_func(
-        main_chart_data, current_pair, stable_coin_pair, collateral_token
-    )
-
-    main_chart_data, loans_data = charts.get_charts_data(
-        main_chart_data, loans_data, protocols, collateral_token, debt_token
-    )
+    if current_pair == stable_coin_pair:
+        for stable_coin in src.settings.DEBT_TOKENS[:-1]:
+            debt_token = stable_coin
+            main_chart_data, collateral_token_price = process_liquidity(
+                main_chart_data, collateral_token, debt_token
+            )
+    else:
+        main_chart_data, collateral_token_price = process_liquidity(
+            main_chart_data, collateral_token, debt_token
+        )
 
     # TODO: Add Ekubo end
     figure = src.main_chart.get_main_chart_figure(
@@ -390,7 +245,24 @@ def main():
 
     streamlit.header("Loans with low health factor")
     col1, _ = streamlit.columns([1, 3])
-    charts.get_usd_debt_boundaries(col1, loans_data)
+    with col1:
+        debt_usd_lower_bound, debt_usd_upper_bound = streamlit.slider(
+            label="Select range of USD borrowings",
+            min_value=0,
+            max_value=int(loans_data["Debt (USD)"].max()),
+            value=(0, int(loans_data["Debt (USD)"].max())),
+        )
+    streamlit.dataframe(
+        loans_data[
+            (loans_data["Health factor"] > 0)  # TODO: debug the negative HFs
+            & loans_data["Debt (USD)"].between(
+                debt_usd_lower_bound, debt_usd_upper_bound
+            )
+        ]
+        .sort_values("Health factor")
+        .iloc[:20],
+        use_container_width=True,
+    )
 
     streamlit.header("Top loans")
     col1, col2 = streamlit.columns(2)
@@ -413,7 +285,27 @@ def main():
 
     streamlit.header("Detail of a loan")
     col1, col2, col3 = streamlit.columns(3)
-    user, protocol = charts.select_random_user_protocol(col1, loans_data)
+    with col1:
+        user = streamlit.text_input("User")
+        protocol = streamlit.text_input("Protocol")
+
+        users_and_protocols_with_debt = list(
+            loans_data.loc[
+                loans_data["Debt (USD)"] > 0,
+                ["User", "Protocol"],
+            ].itertuples(index=False, name=None)
+        )
+
+        random_user, random_protocol = users_and_protocols_with_debt[
+            numpy.random.randint(len(users_and_protocols_with_debt))
+        ]
+
+        if not user:
+            streamlit.write(f"Selected random user = {random_user}.")
+            user = random_user
+        if not protocol:
+            streamlit.write(f"Selected random protocol = {random_protocol}.")
+            protocol = random_protocol
 
     loan = loans_data.loc[
         (loans_data["User"] == user) & (loans_data["Protocol"] == protocol),
@@ -426,21 +318,35 @@ def main():
             src.main_chart.get_specific_loan_usd_amounts(loan=loan)
         )
 
-        charts.get_pie_chart(
-            col2, col3, collateral_usd_amounts, debt_usd_amounts
-        )
+        with col2:
+            figure = plotly.express.pie(
+                collateral_usd_amounts,
+                values="amount_usd",
+                names="token",
+                title="Collateral (USD)",
+                color_discrete_sequence=plotly.express.colors.sequential.Oranges_r,
+            )
+            streamlit.plotly_chart(figure, True)
+
+        with col3:
+            figure = plotly.express.pie(
+                debt_usd_amounts,
+                values="amount_usd",
+                names="token",
+                title="Debt (USD)",
+                color_discrete_sequence=plotly.express.colors.sequential.Greens_r,
+            )
+            streamlit.plotly_chart(figure, True)
 
         streamlit.dataframe(loan)
 
     streamlit.header("Comparison of lending protocols")
-    general_stats, supply_stats, collateral_stats, debt_stats = charts.get_parquets()
-    streamlit.dataframe(general_stats)
-    streamlit.dataframe(
-        pandas.read_parquet(
-            f"gs://{src.helpers.GS_BUCKET_NAME}/data/utilization_stats.parquet",
-            engine="fastparquet",
-        ).set_index("Protocol"),
+    supply_stats, collateral_stats, debt_stats, general_stats, utilization_stats = (
+        load_stats_data()
     )
+    # Display dataframes
+    streamlit.dataframe(general_stats)
+    streamlit.dataframe(utilization_stats)
     # USD deposit, collateral and debt per token (bar chart).
     supply_figure, collateral_figure, debt_figure = (
         src.main_chart.get_bar_chart_figures(
@@ -455,7 +361,35 @@ def main():
 
     columns = streamlit.columns(4)
     tokens = list(src.settings.TOKEN_SETTINGS.keys())
-    charts.get_multi_pie_chart(columns, tokens, collateral_stats, debt_stats, supply_stats)
+    for column, token_1, token_2 in zip(columns, tokens[:4], tokens[4:]):
+        with column:
+            for token in [token_1, token_2]:
+                figure = plotly.express.pie(
+                    collateral_stats.reset_index(),
+                    values=f"{token} collateral",
+                    names="Protocol",
+                    title=f"{token} collateral",
+                    color_discrete_sequence=plotly.express.colors.sequential.Oranges_r,
+                )
+                streamlit.plotly_chart(figure, True)
+            for token in [token_1, token_2]:
+                figure = plotly.express.pie(
+                    debt_stats.reset_index(),
+                    values=f"{token} debt",
+                    names="Protocol",
+                    title=f"{token} debt",
+                    color_discrete_sequence=plotly.express.colors.sequential.Greens_r,
+                )
+                streamlit.plotly_chart(figure, True)
+            for token in [token_1, token_2]:
+                figure = plotly.express.pie(
+                    supply_stats.reset_index(),
+                    values=f"{token} supply",
+                    names="Protocol",
+                    title=f"{token} supply",
+                    color_discrete_sequence=plotly.express.colors.sequential.Blues_r,
+                )
+                streamlit.plotly_chart(figure, True)
 
     last_update = src.persistent_state.load_pickle(
         path=src.persistent_state.LAST_UPDATE_FILENAME
