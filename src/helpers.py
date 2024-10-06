@@ -59,27 +59,22 @@ def get_collateral_token_range(
     collateral_token_underlying_address: str,
     collateral_token_price: float,
 ) -> list[float]:
-    target_values = 50 
-    start_price = collateral_token_price
+    TARGET_NUMBER_OF_VALUES = 50 
+    start_price = 0.0
     stop_price = collateral_token_price * 1.2
     # Calculate rough step size to get about 50 (target) values
-    raw_step_size = (stop_price - start_price) / target_values
+    raw_step_size = (stop_price - start_price) / TARGET_NUMBER_OF_VALUES
     # Round the step size to the closest readable value (1, 2, or 5 times powers of 10)
     magnitude = 10 ** math.floor(math.log10(raw_step_size))  # Base scale
-    normalized_step = raw_step_size / magnitude  # Normalize to 1-10 range
-    if 2 - normalized_step > normalized_step - 1:
-        readable_step = 1 * magnitude
-    elif 5 - normalized_step > normalized_step - 2:
-        readable_step = 2 * magnitude
-    elif 10 - normalized_step > normalized_step -5:
-        readable_step = 5 * magnitude
-    else:
-        readable_step = 10 * magnitude
+    step_factors = [1, 2, 2.5, 5, 10]
+    difference = [abs(50 - stop_price/ (k * magnitude)) for k in step_factors] # Stores the difference between the target value and number of values generated from each step factor.
+    readable_step = step_factors[difference.index(min(difference))] * magnitude # Gets readable step from step factor with values closest to the target value.
+
 
     # Generate values using the calculated readable step
     return list(
         float_range(
-            start = start_price,
+            start = readable_step,
             stop = stop_price,
             step = readable_step
         )
