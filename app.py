@@ -19,11 +19,6 @@ import src.swap_amm
 # color map
 COLORS_MAP = {
     'Supply': 'green',
-    'Demand': 'red',
-    'zkLend': 'blue',
-    'Nostra Alpha': 'orange',
-    'Nostra Mainnet': 'darkblue',
-    'Deposit': 'green',
     'Collateral': 'yellow',
     'Debt': 'red'
 }
@@ -412,37 +407,45 @@ def main():
                 ['User', 'Protocol'],
             ].itertuples(index = False, name = None)
         )
+
         random_user, random_protocol = users_and_protocols_with_debt[numpy.random.randint(len(users_and_protocols_with_debt))]
+
         if not user:
             streamlit.write(f'Selected random user = {random_user}.')
             user = random_user
         if not protocol:
             streamlit.write(f'Selected random protocol = {random_protocol}.')
             protocol = random_protocol
+
     loan = loans_data.loc[
         (loans_data['User'] == user)
         & (loans_data['Protocol'] == protocol),
     ]
-    collateral_usd_amounts, debt_usd_amounts = src.main_chart.get_specific_loan_usd_amounts(loan = loan)
-    with col2:
-        figure = plotly.express.pie(
-            collateral_usd_amounts,
-            values='amount_usd',
-            names='token',
-            title='Collateral (USD)',  
-            color_discrete_sequence=[COLORS_MAP.get('Collateral')],
-        )
-        streamlit.plotly_chart(figure, True)
-    with col3:
-        figure = plotly.express.pie(
-            debt_usd_amounts,
-            values='amount_usd',
-            names='token',
-            title='Debt (USD)',
-            color_discrete_sequence=[COLORS_MAP.get('Debt')],
-        )
-        streamlit.plotly_chart(figure, True)
-    streamlit.dataframe(loan)
+
+    if loan.empty:
+        streamlit.warning(f"No loan found for user = {user} and protocol = {protocol}.")
+    else:
+        collateral_usd_amounts, debt_usd_amounts = src.main_chart.get_specific_loan_usd_amounts(loan = loan)
+
+        with col2:
+            figure = plotly.express.pie(
+                collateral_usd_amounts,
+                values='amount_usd',
+                names='token',
+                title='Collateral (USD)',  
+                color_discrete_sequence=[COLORS_MAP.get('Collateral')],
+            )
+            streamlit.plotly_chart(figure, True)
+        with col3:
+            figure = plotly.express.pie(
+                debt_usd_amounts,
+                values='amount_usd',
+                names='token',
+                title='Debt (USD)',
+                color_discrete_sequence=[COLORS_MAP.get('Debt')],
+            )
+            streamlit.plotly_chart(figure, True)
+        streamlit.dataframe(loan)
 
     streamlit.header("Comparison of lending protocols")
     general_stats = pandas.read_parquet(
@@ -489,7 +492,7 @@ def main():
                     values=f'{token} collateral',
                     names='Protocol',
                     title=f'{token} collateral',
-                    color_discrete_sequence=plotly.express.colors.sequential.Oranges_r,
+                    color_discrete_sequence=COLORS_MAP.get('Collateral'),
                 )
                 streamlit.plotly_chart(figure, True)
             for token in [token_1, token_2]:
@@ -498,7 +501,7 @@ def main():
                     values=f'{token} debt',
                     names='Protocol',
                     title=f'{token} debt',
-                    color_discrete_sequence=plotly.express.colors.sequential.Greens_r,
+                    color_discrete_sequence=COLORS_MAP.get('Debt'),
                 )
                 streamlit.plotly_chart(figure, True)
             for token in [token_1, token_2]:
@@ -507,7 +510,7 @@ def main():
                     values=f'{token} supply',
                     names='Protocol',
                     title=f'{token} supply',
-                    color_discrete_sequence=plotly.express.colors.sequential.Blues_r,
+                    color_discrete_sequence=COLORS_MAP.get('Supply'),
                 )
                 streamlit.plotly_chart(figure, True)
 
