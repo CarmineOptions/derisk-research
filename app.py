@@ -551,7 +551,6 @@ def main():
 
             streamlit.dataframe(loan)
 
-
     streamlit.header("Comparison of lending protocols")
     general_stats = pandas.read_parquet(
         f"gs://{src.helpers.GS_BUCKET_NAME}/data/general_stats.parquet",
