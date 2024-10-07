@@ -2,7 +2,7 @@ import asyncio
 
 from aiogram.types import BotCommand, BotCommandScopeDefault
 
-from . import dp, bot
+from . import bot, dp
 from .crud import get_async_sessionmaker
 from .middleware import DatabaseMiddleware
 

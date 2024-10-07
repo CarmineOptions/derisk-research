@@ -1,23 +1,32 @@
 import logging
 from time import monotonic
 
-from db.crud import DBConnector
-from db.models import OrderBookModel
-from handlers.order_books.constants import TOKEN_MAPPING
-from .celery_conf import app
-from handlers.order_books.ekubo.api_connector import EkuboAPIConnector
+# from handlers.loan_states.nostra_mainnet.run import NostraMainnetStateComputation
+from handlers.liquidable_debt.protocols import (
+    hashstack_v0,
+    hashstack_v1,
+    nostra_alpha,
+    nostra_mainnet,
+    zklend,
+)
+
 # from handlers.loan_states.hashtack_v0.run import HashtackV0StateComputation
 # from handlers.loan_states.hashtack_v1.run import HashtackV1StateComputation
 # from handlers.loan_states.zklend.run import ZkLendLoanStateComputation
 from handlers.loan_states.nostra_alpha.run import NostraAlphaStateComputation
-# from handlers.loan_states.nostra_mainnet.run import NostraMainnetStateComputation
-from handlers.liquidable_debt.protocols import zklend, nostra_mainnet, nostra_alpha, hashstack_v0, hashstack_v1
+from handlers.order_books.constants import TOKEN_MAPPING
+from handlers.order_books.ekubo.api_connector import EkuboAPIConnector
 from handlers.order_books.uniswap_v2.main import UniswapV2OrderBook
+
+from db.crud import DBConnector
+from db.models import OrderBookModel
+
+from .celery_conf import app
 
 connector = DBConnector()
 
 
-#@app.task(name="run_loan_states_computation_for_hashtack_v0")
+# @app.task(name="run_loan_states_computation_for_hashtack_v0")
 # def run_loan_states_computation_for_hashtack_v0():
 #     start = monotonic()
 #     logging.basicConfig(level=logging.INFO)
@@ -32,7 +41,7 @@ connector = DBConnector()
 #     )
 
 
-#@app.task(name="run_loan_states_computation_for_hashtack_v1")
+# @app.task(name="run_loan_states_computation_for_hashtack_v1")
 # def run_loan_states_computation_for_hashtack_v1():
 #     start = monotonic()
 #     logging.basicConfig(level=logging.INFO)
@@ -77,7 +86,7 @@ def run_loan_states_computation_for_nostra_alpha():
     )
 
 
-#@app.task(name="run_loan_states_computation_for_nostra_mainnet")
+# @app.task(name="run_loan_states_computation_for_nostra_mainnet")
 # def run_loan_states_computation_for_nostra_mainnet():
 #     start = monotonic()
 #     logging.basicConfig(level=logging.INFO)
@@ -108,7 +117,9 @@ def uniswap_v2_order_book():
                 serialized_data = order_book.serialize()
                 connector.write_to_db(OrderBookModel(**serialized_data.model_dump()))
             except Exception as e:
-                logging.info(f"With token pair: {base_token} and {quote_token} something happened: {e}")
+                logging.info(
+                    f"With token pair: {base_token} and {quote_token} something happened: {e}"
+                )
 
 
 @app.task(name="run_liquidable_debt_computation_for_zklend")
@@ -116,8 +127,6 @@ def run_liquidable_debt_computation_for_zklend():
     logging.info("Starting zkLend liquidable debt computation")
     zklend.run()
     logging.info("zkLend liquidable debt computation finished")
-
-
 
 
 @app.task(name="run_liquidable_debt_computation_for_nostra_alpha")

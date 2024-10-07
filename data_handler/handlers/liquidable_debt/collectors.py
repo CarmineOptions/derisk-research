@@ -1,14 +1,18 @@
 from typing import Iterable
 
 import dask.dataframe as dd
+from handlers.liquidable_debt.bases import Collector
+from handlers.liquidable_debt.exceptions import ProtocolExistenceError
+from handlers.liquidable_debt.managers import LocalStorageManager
+from handlers.liquidable_debt.values import (
+    GS_BUCKET_NAME,
+    GS_BUCKET_URL,
+    LOCAL_STORAGE_PATH,
+    LendingProtocolNames,
+)
 from sqlalchemy.exc import SQLAlchemyError
 
 from db.crud import DBConnector
-
-from handlers.liquidable_debt.values import LendingProtocolNames, GS_BUCKET_NAME, GS_BUCKET_URL, LOCAL_STORAGE_PATH
-from handlers.liquidable_debt.exceptions import ProtocolExistenceError
-from handlers.liquidable_debt.managers import LocalStorageManager
-from handlers.liquidable_debt.bases import Collector
 
 
 class GoogleCloudDataCollector(Collector):
@@ -16,12 +20,12 @@ class GoogleCloudDataCollector(Collector):
 
     @classmethod
     def collect_data(
-            cls,
-            protocol_name: str,
-            available_protocols: Iterable[str],
-            bucket_name: str,
-            path: str,
-            url: str,
+        cls,
+        protocol_name: str,
+        available_protocols: Iterable[str],
+        bucket_name: str,
+        path: str,
+        url: str,
     ) -> str:
         """
         Collects data from Google Cloud Storage bucket and saves it to local storage.
@@ -46,10 +50,10 @@ class GoogleCloudDataCollector(Collector):
 
     @staticmethod
     def _download_file(
-            protocol_name: str,
-            bucket_name: str,
-            url: str,
-            path: str,
+        protocol_name: str,
+        bucket_name: str,
+        url: str,
+        path: str,
     ) -> None:
         """
         Downloads parquet file to local storage from Google Cloud Storage
@@ -75,9 +79,7 @@ class GoogleCloudDataCollector(Collector):
 
     @classmethod
     def _check_protocol_existence(
-            cls,
-            protocol_name: str,
-            available_protocols: Iterable[str]
+        cls, protocol_name: str, available_protocols: Iterable[str]
     ) -> None:
         """
         Checks if protocol exists
@@ -93,8 +95,8 @@ class GoogleCloudDataCollector(Collector):
 
     @staticmethod
     def _protocol_exists(
-            protocol_name: str,
-            available_protocols: Iterable[str],
+        protocol_name: str,
+        available_protocols: Iterable[str],
     ) -> bool:
         """
         Checks if the protocol name is in available protocols list

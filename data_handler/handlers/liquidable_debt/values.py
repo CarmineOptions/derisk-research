@@ -1,5 +1,4 @@
 import os
-
 from enum import Enum
 
 from dotenv import load_dotenv
@@ -46,4 +45,4 @@ class LendingProtocolNames(Enum):
     HASHSTACK_V1: str = "Hashstack_v1"
     NOSTRA_ALPHA: str = "Nostra_alpha"
     NOSTRA_MAINNET: str = "Nostra_mainnet"
-    ZKLEND: str = 'zkLend'
+    ZKLEND: str = "zkLend"
