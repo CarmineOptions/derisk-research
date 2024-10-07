@@ -1,4 +1,5 @@
 import logging
+import math
 import os
 import time
 from typing import Iterator
@@ -55,17 +56,24 @@ def get_collateral_token_range(
     collateral_token_underlying_address: str,
     collateral_token_price: float,
 ) -> list[float]:
-    # TODO: improve
-    STEPS = {
-        "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7": 50.0,  # ETH
-        "0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac": 1_000.0,  # WBTC
-        "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d": 0.01,  # STRK
-    }
+    TARGET_NUMBER_OF_VALUES = 50 
+    start_price = 0.0
+    stop_price = collateral_token_price * 1.2
+    # Calculate rough step size to get about 50 (target) values
+    raw_step_size = (stop_price - start_price) / TARGET_NUMBER_OF_VALUES
+    # Round the step size to the closest readable value (1, 2, or 5 times powers of 10)
+    magnitude = 10 ** math.floor(math.log10(raw_step_size))  # Base scale
+    step_factors = [1, 2, 2.5, 5, 10]
+    difference = [abs(50 - stop_price/ (k * magnitude)) for k in step_factors] # Stores the difference between the target value and number of values generated from each step factor.
+    readable_step = step_factors[difference.index(min(difference))] * magnitude # Gets readable step from step factor with values closest to the target value.
+
+
+    # Generate values using the calculated readable step
     return list(
         float_range(
-            start=STEPS[collateral_token_underlying_address],
-            stop=collateral_token_price * 1.2,
-            step=STEPS[collateral_token_underlying_address],
+            start = readable_step,
+            stop = stop_price,
+            step = readable_step
         )
     )
 
