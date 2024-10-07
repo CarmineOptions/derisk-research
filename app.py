@@ -1,10 +1,11 @@
 import datetime
 import logging
+import math
 import time
 
-import numpy
+import numpy.random
 import pandas
-import plotly
+import plotly.express
 import requests
 import streamlit
 
@@ -13,7 +14,7 @@ import src.main_chart
 import src.persistent_state
 import src.settings
 import src.swap_amm
-from chart_utils import (get_protocol_data_mappings, load_stats_data,
+from src.chart_utils import (get_protocol_data_mappings, load_stats_data,
                          transform_loans_data, transform_main_chart_data)
 
 PROTOCOL_NAMES = [
@@ -122,6 +123,45 @@ def add_ekubo_liquidity(
             return data
 
     return data
+
+
+def process_liquidity(
+    main_chart_data: pandas.DataFrame, collateral_token: str, debt_token: str
+) -> tuple[pandas.DataFrame, float]:
+    """
+    Process liquidity data for the main chart.
+    :param main_chart_data: Main chart data.
+    :param collateral_token: Collateral token.
+    :param debt_token: Debt token.
+    :return: Processed main chart data and collateral token price.
+    """
+    # Fetch underlying addresses and decimals
+    collateral_token_underlying_address = (
+        src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[collateral_token]
+    )
+    collateral_token_decimals = int(
+        math.log10(src.settings.TOKEN_SETTINGS[collateral_token].decimal_factor)
+    )
+    underlying_addresses_to_decimals = {
+        collateral_token_underlying_address: collateral_token_decimals
+    }
+
+    # Fetch prices
+    prices = src.helpers.get_prices(token_decimals=underlying_addresses_to_decimals)
+    collateral_token_price = prices[collateral_token_underlying_address]
+
+    # Process main chart data
+    main_chart_data = main_chart_data.astype(float)
+    debt_token_underlying_address = (
+        src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[debt_token]
+    )
+    main_chart_data = add_ekubo_liquidity(
+        data=main_chart_data,
+        collateral_token=collateral_token_underlying_address,
+        debt_token=debt_token_underlying_address,
+    )
+
+    return main_chart_data, collateral_token_price
 
 
 def main():

@@ -1,13 +1,13 @@
 import logging
 from collections import defaultdict
 from functools import partial
-from typing import Dict, Tuple
 
 import pandas as pd
 import streamlit
 
 import src.helpers
 import src.main_chart
+import src.settings
 
 
 def parse_token_amounts(raw_token_amounts: str) -> dict[str, float]:
@@ -100,9 +100,9 @@ def create_stablecoin_bundle(data: dict[str, pd.DataFrame]) -> dict[str, pd.Data
 
 
 @streamlit.cache_data(ttl=300)
-def get_load_data(
+def get_data(
     protocol_name: str,
-) -> Tuple[Dict[str, pd.DataFrame], Dict[str, pd.DataFrame]]:
+) -> tuple[dict[str, pd.DataFrame], dict[str, pd.DataFrame]]:
     """
     Load loan data and main chart data for the specified protocol.
     :param protocol_name: Protocol name.
@@ -113,7 +113,7 @@ def get_load_data(
 
 def get_protocol_data_mappings(
     current_pair: str, stable_coin_pair: str, protocols: list[str]
-) -> Tuple[Dict[str, dict], Dict[str, dict]]:
+) -> tuple[dict[str, dict], dict[str, dict]]:
     """
     Get protocol data mappings for main chart data and loans data.
 
@@ -125,11 +125,11 @@ def get_protocol_data_mappings(
         - protocol_loans_data: Mapping of protocol names to their loans data.
     """
 
-    protocol_main_chart_data: Dict[str, dict] = {}
-    protocol_loans_data: Dict[str, dict] = {}
+    protocol_main_chart_data: dict[str, dict] = {}
+    protocol_loans_data: dict[str, dict] = {}
 
     for protocol_name in protocols:
-        main_chart_data, loans_data = get_load_data(protocol_name)
+        main_chart_data, loans_data = get_data(protocol_name)
         protocol_loans_data[protocol_name] = loans_data
 
         if current_pair == stable_coin_pair:
@@ -143,7 +143,7 @@ def get_protocol_data_mappings(
 
 
 def load_stats_data() -> (
-    Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]
+    tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]
 ):
     """
     Load general stats, supply stats, collateral stats, and debt stats data.
@@ -180,7 +180,7 @@ def transform_loans_data(
     protocol_loans_data_mapping: pd.DataFrame, protocols: list[str]
 ) -> pd.DataFrame:
     """
-    Transform the data by adding a new column 'Total Supply (USD)'.
+    Transform protocol loans data
     :param protocol_loans_data_mapping: Input DataFrame.
     :param protocols: List of protocols.
     :return: Transformed loans DataFrame.
