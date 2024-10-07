@@ -13,8 +13,7 @@ import src.main_chart
 import src.persistent_state
 import src.settings
 import src.swap_amm
-
-from utils import EkuboLiquidity
+import src.utils
 
 
 def parse_token_amounts(raw_token_amounts: str) -> dict[str, float]:
@@ -107,12 +106,12 @@ def process_liquidity(main_chart_data: pandas.DataFrame, collateral_token: str, 
     main_chart_data = main_chart_data.astype(float)
     debt_token_underlying_address = src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[debt_token]
 
-    ekubo_liquidity = EkuboLiquidity(
+    ekubo_liquidity = src.utils.EkuboLiquidity(
         data=main_chart_data,
         collateral_token=collateral_token_underlying_address,
         debt_token=debt_token_underlying_address,
-
     )
+
     main_chart_data = ekubo_liquidity.apply_liquidity_to_dataframe(
         ekubo_liquidity.fetch_liquidity(),
     )
