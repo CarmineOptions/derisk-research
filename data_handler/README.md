@@ -1,7 +1,7 @@
 # DeRisk Data Handler
 
-This project created to make data public for Derisk Alert app.
-This app is not considering to you use in production. It's just a research project.
+This project was created to make data public for Derisk Alert app.
+This app is not intended for you to use in production. It's just a research project.
 
 ## Requirements
  - python3.11 
@@ -41,6 +41,8 @@ DB_HOST=db
 DB_PORT=#
 DERISK_API_URL=#
 REDIS_HOST=redis
+ERROR_CHAT_ID=# Actually your telegram id
+TELEGRAM_TOKEN=#
 ```
 
 ### 5. Build your docker containers
