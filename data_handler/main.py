@@ -1,13 +1,19 @@
 from typing import List, Optional
-from fastapi import FastAPI, Depends, HTTPException, Request
+import logging
+from fastapi import FastAPI, Depends, HTTPException, Request, Path, Query, status
 from sqlalchemy.orm import Session
+from sqlalchemy import desc
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.middleware import SlowAPIMiddleware
 
-from db.schemas import LoanStateResponse
-from db.models import LoanState
+from db.schemas import LoanStateResponse, InterestRateModel, OrderBookResponseModel
+from handler_tools.constants import ProtocolIDs
+from db.models import LoanState, InterestRate, OrderBookModel, HealthRatioLevel
 from db.database import Base, engine, get_database
+
+
+logger = logging.getLogger(__name__)
 
 # Create the database tables
 Base.metadata.create_all(bind=engine)
@@ -19,8 +25,8 @@ app.state.limiter = limiter
 app.add_middleware(SlowAPIMiddleware)
 
 
-@app.get("/loan_states", response_model=List[LoanStateResponse])
 @limiter.limit("10/second")
+@app.get("/loan_states", response_model=List[LoanStateResponse])
 async def read_loan_states(
     request: Request,
     protocol: Optional[str] = None,
@@ -70,3 +76,100 @@ async def read_loan_states(
         raise HTTPException(status_code=404, detail="Loan states not found")
 
     return results
+
+
+@limiter.limit("10/second")
+@app.get("/interest-rate/", response_model=InterestRateModel)
+def get_last_interest_rate_by_block(
+    request: Request,
+    protocol: Optional[str] = None,
+    db: Session = Depends(get_database),
+):
+    """
+    Fetch the last interest rate record by block number.
+    :param protocol: The protocol ID to filter by.
+    :param db: The database session.
+    :return: The last interest rate record.
+    """
+    if protocol is None:
+        raise HTTPException(status_code=400, detail="Protocol ID is required")
+
+    if protocol not in ProtocolIDs.choices():
+        raise HTTPException(status_code=400, detail="Invalid protocol ID")
+
+    last_record = (
+        db.query(InterestRate)
+        .filter(InterestRate.protocol_id == protocol)
+        .order_by(InterestRate.block.desc())
+        .first()
+    )
+
+    return last_record
+
+
+@limiter.limit("10/second")
+@app.get("/health-ratio-per-user/{protocol}/")
+async def get_health_ratio_per_user(
+        request: Request,
+        protocol: str = Path(...,),
+        user_id: str = Query(...,),
+        db: Session = Depends(get_database)
+):
+    """
+    Returns the health ratio by user id provided.
+    :param request: The request object.
+    :param protocol: The protocol ID to filter by.
+    :param user_id: The user id.
+    :param db: The database session.
+    :return: The health ratio by user id.
+    """
+    if protocol is None:
+        raise HTTPException(status_code=400, detail="Protocol ID is required")
+
+    if protocol not in ProtocolIDs.choices():
+        raise HTTPException(status_code=400, detail="Invalid protocol ID")
+
+    if not user_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User ID is required")
+
+    row = db.query(HealthRatioLevel).filter(
+        HealthRatioLevel.protocol_id == protocol,
+                HealthRatioLevel.user_id == user_id
+    ).order_by(desc(HealthRatioLevel.timestamp)).first()
+
+    if not row:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail="Health ratio with user ID provided not found")
+
+    return row.value
+
+@app.get("/orderbook/", response_model=OrderBookResponseModel)
+def get_orderbook(
+    base_token: str, quote_token: str, dex: str, db: Session = Depends(get_database)
+) -> OrderBookResponseModel:
+    """
+    Fetch order book records from the database.
+    :param base_token: The base token symbol.
+    :param quote_token: The quote token symbol.
+    :param dex: The DEX name.
+    :return: A list of order book records.
+    """
+    print(f"Fetching order book records for {base_token}/{quote_token} on {dex}")
+    logger.info(f"Fetching order book records for {base_token}/{quote_token} on {dex}")
+
+    records = (
+        db.query(OrderBookModel)
+        .filter(
+            OrderBookModel.token_a == base_token,
+            OrderBookModel.token_b == quote_token,
+            OrderBookModel.dex == dex,
+        )
+        .order_by(OrderBookModel.timestamp.desc())
+        .first()
+    )
+    print(f"Found {records} order book records")
+    logger.info(f"Found {records} order book records")
+    if not records:
+        raise HTTPException(status_code=404, detail="Records not found")
+
+    return records

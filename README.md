@@ -6,6 +6,10 @@ Monorepo with components required for the implementation of DeRisk on Starknet.
 
 See [our contributor guidelines](https://github.com/CarmineOptions/derisk-research/blob/master/CONTRIBUTING.md).
 
+## Set env variables
+
+Set `CREDENTIALS_PATH` and `PG_CONNECTION_STRING` to empty strings (or fill out in case you have access to the db). 
+
 ## Install dependencies
 
 Python dependencies are managed with `poetry`, install them with this command:

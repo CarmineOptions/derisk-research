@@ -1,133 +1,14 @@
-from typing import Any, Optional
 import abc
 import collections
-import dataclasses
 import decimal
+import json
+import logging
 
 import pandas
 
-import src.settings
 import src.helpers
+import src.types
 
-
-
-@dataclasses.dataclass
-class SpecificTokenSettings:
-    collateral_factor: decimal.Decimal
-    debt_factor: decimal.Decimal
-
-
-@dataclasses.dataclass
-class TokenSettings(SpecificTokenSettings, src.settings.TokenSettings):
-    pass
-
-
-LOAN_ENTITY_SPECIFIC_TOKEN_SETTINGS: dict[str, SpecificTokenSettings] = {
-    "ETH": SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
-    "wBTC": SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
-    "USDC": SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
-    "DAI": SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
-    "USDT": SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
-    "wstETH": SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
-    "LORDS": SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
-    "STRK": SpecificTokenSettings(collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")),
-}
-TOKEN_SETTINGS: dict[str, TokenSettings] = {
-    token: TokenSettings(
-        symbol=src.settings.TOKEN_SETTINGS[token].symbol,
-        decimal_factor=src.settings.TOKEN_SETTINGS[token].decimal_factor,
-        address=src.settings.TOKEN_SETTINGS[token].address,
-        collateral_factor=LOAN_ENTITY_SPECIFIC_TOKEN_SETTINGS[token].collateral_factor,
-        debt_factor=LOAN_ENTITY_SPECIFIC_TOKEN_SETTINGS[token].debt_factor,
-    )
-    for token in src.settings.TOKEN_SETTINGS
-}
-
-
-class InterestRateModels(src.helpers.TokenValues):
-    """
-    A class that describes the state of the interest rate indices which help transform face amounts into raw amounts. 
-    Raw amount is the amount that would have been accumulated into the face amount if it were deposited at genesis.
-    """
-
-    def __init__(self) -> None:
-        super().__init__(init_value=decimal.Decimal("1"))
-
-
-class LoanEntity(abc.ABC):
-    """
-    A class that describes and entity which can hold collateral, borrow debt and be liquidable. For example, on 
-    Starknet, such an entity is the user in case of zkLend, Nostra Alpha and Nostra Mainnet, or an individual loan in 
-    case od Hashstack V0 and Hashstack V1.
-    """
-
-    TOKEN_SETTINGS: dict[str, TokenSettings] = TOKEN_SETTINGS
-
-    def __init__(self) -> None:
-        self.collateral: src.helpers.Portfolio = src.helpers.Portfolio()
-        self.debt: src.helpers.Portfolio = src.helpers.Portfolio()
-
-    def compute_collateral_usd(
-        self,
-        risk_adjusted: bool,
-        collateral_interest_rate_models: InterestRateModels,
-        prices: src.helpers.TokenValues,
-    ) -> decimal.Decimal:
-        return sum(
-            token_amount
-            / self.TOKEN_SETTINGS[token].decimal_factor
-            * (self.TOKEN_SETTINGS[token].collateral_factor if risk_adjusted else decimal.Decimal("1"))
-            * collateral_interest_rate_models.values[token]
-            * prices.values[token]
-            for token, token_amount in self.collateral.values.items()
-        )
-
-    def compute_debt_usd(
-        self, 
-        risk_adjusted: bool,
-        debt_interest_rate_models: InterestRateModels,
-        prices: src.helpers.TokenValues,
-    ) -> decimal.Decimal:
-        return sum(
-            token_amount
-            / self.TOKEN_SETTINGS[token].decimal_factor
-            / (self.TOKEN_SETTINGS[token].debt_factor if risk_adjusted else decimal.Decimal("1"))
-            * debt_interest_rate_models.values[token]
-            * prices.values[token]
-            for token, token_amount in self.debt.values.items()
-        )
-
-    @abc.abstractmethod
-    def compute_health_factor(self):
-        pass
-
-    @abc.abstractmethod
-    def compute_debt_to_be_liquidated(self):
-        pass
-
-    def get_collateral_str(self, collateral_interest_rate_models: InterestRateModels) -> str:
-        return ', '.join(
-            f"{token}: {round(token_amount / self.TOKEN_SETTINGS[token].decimal_factor * collateral_interest_rate_models.values[token], 4)}"
-            for token, token_amount in self.collateral.values.items()
-            if token_amount > decimal.Decimal("0")
-        )
-
-    def get_debt_str(self, debt_interest_rate_models: InterestRateModels) -> str:
-        return ', '.join(
-            f"{token}: {round(token_amount / self.TOKEN_SETTINGS[token].decimal_factor * debt_interest_rate_models.values[token], 4)}"
-            for token, token_amount in self.debt.values.items()
-            if token_amount > decimal.Decimal("0")
-        )
-
-    def has_collateral(self) -> bool:
-        if any(token_amount for token_amount in self.collateral.values.values()):
-            return True
-        return False
-
-    def has_debt(self) -> bool:
-        if any(token_amount for token_amount in self.debt.values.values()):
-            return True
-        return False
 
 
 class State(abc.ABC):
@@ -135,28 +16,79 @@ class State(abc.ABC):
     A class that describes the state of all loan entities of the given lending protocol.
     """
 
-    EVENTS_METHODS_MAPPING: dict[str, str] = {}
+    EVENTS_TO_METHODS: dict[str, str] = {}
 
     def __init__(
         self,
-        loan_entity_class: LoanEntity,
-        verbose_user: Optional[str] = None,
+        loan_entity_class: src.types.LoanEntity,
+        verbose_user: str | None = None,
     ) -> None:
-        self.loan_entity_class: LoanEntity = loan_entity_class
-        self.verbose_user: Optional[str] = verbose_user
+        self.loan_entity_class: src.types.LoanEntity = loan_entity_class
+        self.verbose_user: str | None = verbose_user
         self.loan_entities: collections.defaultdict = collections.defaultdict(self.loan_entity_class)
-        # These models reflect the interest rates at which users lend/stake funds.
-        self.collateral_interest_rate_models: InterestRateModels = InterestRateModels()
-        # These models reflect the interest rates at which users borrow funds.
-        self.debt_interest_rate_models: InterestRateModels = InterestRateModels()
+        self.interest_rate_models: src.types.CollateralAndDebtInterestRateModels = src.types.CollateralAndDebtInterestRateModels()
+        self.token_parameters: src.types.CollateralAndDebtTokenParameters = src.types.CollateralAndDebtTokenParameters()  # TODO: move outside of State?
         self.last_block_number: int = 0
 
+    def set_loan_entities(self, loan_entities: pandas.DataFrame) -> None:
+        # When we're processing the data for the first time, we call this method with empty `loan_entities`. In that
+        # case, there's nothing to be set.
+        if loan_entities.empty:
+            return
+
+        # Clear `self.loan entities` in case they were not empty.
+        if len(self.loan_entities) > 0:
+            self.clear_loan_entities()
+
+        # Fill up `self.loan_entities` with `loan_entities`.
+        for _, loan_entity in loan_entities.iterrows():
+            user = loan_entity['user']
+            for collateral_token, collateral_amount in json.loads(loan_entity['collateral'].decode('utf-8')).items():
+                if collateral_amount:
+                    self.loan_entities[user].collateral[collateral_token] = decimal.Decimal(str(collateral_amount))
+            for debt_token, debt_amount in json.loads(loan_entity['debt'].decode('utf-8')).items():
+                if debt_amount:
+                    self.loan_entities[user].debt[debt_token] = decimal.Decimal(str(debt_amount))
+        logging.info(
+            "Set = {} non-zero loan entities out of the former = {} loan entities.".format(
+                len(self.loan_entities),
+                len(loan_entities),
+            )
+        )
+
+    def save_loan_entities(self, path: str) -> None:
+        loan_entities = []
+        for user, loan_entity in self.loan_entities.items():
+            # Convert each loan entity into a feasible format.
+            loan_entities.append(
+                {
+                    'user': user,
+                    'collateral': {x: int(y) for x, y in loan_entity.collateral.items()},
+                    'debt': {x: int(y) for x, y in loan_entity.debt.items()},
+                }
+
+            )
+        loan_entities = pandas.DataFrame(loan_entities)
+        src.helpers.save_dataframe(data = loan_entities, path = path)
+        logging.info("Saved = {} loan entities.".format(len(loan_entities)))
+
+    def clear_loan_entities(self) -> None:
+        logging.info("Clearing = {} loan entities.".format(len(self.loan_entities)))
+        self.loan_entities = collections.defaultdict(self.loan_entity_class)
+
+
+    # TODO: This method will likely differ across protocols. -> Leave undefined?
     def process_event(self, event: pandas.Series) -> None:
         # TODO: Save the timestamp of each update?
         assert event["block_number"] >= self.last_block_number
         self.last_block_number = event["block_number"]
-        getattr(self, self.EVENTS_METHODS_MAPPING[event["key_name"]])(event=event)
+        getattr(self, self.EVENTS_TO_METHODS[event["key_name"]])(event=event)
 
+    @abc.abstractmethod
+    def collect_token_parameters(self):
+        pass
+
+    # TODO: most of what the individual methods implement could be done within `LoanEntity`
     @abc.abstractmethod
     def compute_liquidable_debt_at_price(self):
         pass

@@ -31,7 +31,7 @@ class GoogleCloudDataCollector(Collector):
         :param path: The path where the data will be saved to (Local Storage Path).
         :param url: The connection URL to collect data from (Google Cloud Storage Bucket url).
         """
-        cls._check_protocol_existance(protocol_name, available_protocols)
+        cls._check_protocol_existence(protocol_name, available_protocols)
 
         file_name = cls.LS_MANAGER.update_dir(protocol_name)
 
@@ -49,7 +49,7 @@ class GoogleCloudDataCollector(Collector):
             protocol_name: str,
             bucket_name: str,
             url: str,
-            path: str = "loans/{protocol}_data/{title}.parquet",
+            path: str,
     ) -> None:
         """
         Downloads parquet file to local storage from Google Cloud Storage
@@ -66,10 +66,15 @@ class GoogleCloudDataCollector(Collector):
 
     @classmethod
     def _remove_file(cls, file_path: str) -> None:
+        """
+        Removes file from local storage
+        :param file_path: Local storage path to remove
+        :return: None
+        """
         cls.LS_MANAGER.delete_file(file_path)
 
     @classmethod
-    def _check_protocol_existance(
+    def _check_protocol_existence(
             cls,
             protocol_name: str,
             available_protocols: Iterable[str]

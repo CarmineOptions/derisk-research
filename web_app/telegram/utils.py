@@ -122,7 +122,7 @@ class TelegramNotifications:
                 await asyncio.sleep(e.retry_after)
                 # Ignore QueueFull exception to prevent it from being raised when the queue is explicitly limited
                 with suppress(QueueFull):
-                    self.__queue_to_send.put_nowait(item)
+                    self.__queue_to_send.put_nowait(notification_id)
             except exceptions.TelegramAPIError:
                 pass  # skip errors
 

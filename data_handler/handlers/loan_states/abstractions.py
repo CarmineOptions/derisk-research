@@ -3,12 +3,12 @@ from abc import ABC, abstractmethod
 from typing import Dict, Optional
 
 import pandas as pd
-from tools.constants import ProtocolIDs
+from handler_tools.constants import ProtocolIDs
 
 from db.crud import DBConnector
 from db.models import LoanState, InterestRate
-from tools.constants import FIRST_RUNNING_MAPPING
-from tools.api_connector import DeRiskAPIConnector
+from handlers.state import State, InterestRateModels
+from handler_tools.api_connector import DeRiskAPIConnector
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +24,7 @@ class LoanStateComputationBase(ABC):
     PROTOCOL_ADDRESSES: Optional[Dict[str, str]] = None
     PROTOCOL_TYPE: Optional[ProtocolIDs] = None
     PAGINATION_SIZE: int = 1000
+    INTEREST_RATES_KEYS: list = []
 
     def __init__(self):
         """
@@ -35,24 +36,18 @@ class LoanStateComputationBase(ABC):
         self.last_block = self.db_connector.get_last_block(self.PROTOCOL_TYPE)
         self.interest_rate_result: list = []
 
-    def get_data(self, form_address: str, min_block: int) -> dict:
+    def process_interest_rate_event(
+        self, instance_state: State, event: pd.Series
+    ) -> None:
         """
-        Fetches data from the DeRisk API endpoint using the defined protocol address.
-        This method must be implemented by subclasses to specify how data is retrieved from the API.
+        Processes an interest rate event.
 
-        :param form_address: The address of the contract from which to retrieve events.
-        :type form_address: str
-        :param min_block: The minimum block number from which to retrieve events.
-        :type min_block: int
+        :param instance_state: The instance of the state class to call the method on.
+        :type instance_state: object
+        :param event: The data of the event.
+        :type event: pd.Series
         """
-        logger.info(
-            f"Fetching data from {self.last_block} to {min_block + self.PAGINATION_SIZE} for address {form_address}"
-        )
-        return self.api_connector.get_data(
-            from_address=form_address,
-            min_block_number=self.last_block,
-            max_block_number=min_block + self.PAGINATION_SIZE,
-        )
+        pass
 
     @abstractmethod
     def process_data(self, data: list[dict]) -> pd.DataFrame:
@@ -66,31 +61,8 @@ class LoanStateComputationBase(ABC):
         """
         pass
 
-    def save_data(self, df: pd.DataFrame) -> None:
-        """
-        Saves the processed data to the database.
-        Ex
-        """
-        if df.empty:
-            logger.info("No data to save.")
-            return
-
-        objects_to_write = []
-        for index, item in df.iterrows():
-            loan = LoanState(
-                protocol_id=self.PROTOCOL_TYPE,
-                user=item["user"],
-                collateral=item["collateral"],
-                debt=item["debt"],
-                block=item["block"],
-                timestamp=item["timestamp"],
-                deposit=item.get('deposit')
-            )
-            objects_to_write.append(loan)
-        self.db_connector.write_loan_states_to_db(objects_to_write)
-
     def process_event(
-        self, instance_state: object, method_name: str, event: pd.Series
+        self, instance_state: State, method_name: str, event: pd.Series
     ) -> None:
         """
         Processes an event based on the method name and the event data.
@@ -105,17 +77,82 @@ class LoanStateComputationBase(ABC):
         """
         try:
             block_number = event.get("block_number")
+            self.set_interest_rate(instance_state, block_number, self.PROTOCOL_TYPE)
+
             if block_number and block_number >= self.last_block:
                 self.last_block = block_number
                 method = getattr(instance_state, method_name, None)
                 if method:
                     method(event)
                 else:
-                    logger.info(
+                    logger.debug(
                         f"No method named {method_name} found for processing event."
                     )
         except Exception as e:
             logger.exception(f"Failed to process event due to an error: {e}")
+
+    def get_data(self, from_address: str, min_block: int) -> list:
+        """
+        Fetches data from the DeRisk API endpoint using the defined protocol address.
+        This method must be implemented by subclasses to specify how data is retrieved from the API.
+
+        :param from_address: The address of the contract from which to retrieve events.
+        :type from_address: str
+        :param min_block: The minimum block number from which to retrieve events.
+        :type min_block: int
+        """
+        logger.info(
+            f"Fetching data from {self.last_block} to {min_block + self.PAGINATION_SIZE} for address {from_address}"
+        )
+        return self.api_connector.get_data(
+            from_address=from_address,
+            min_block_number=self.last_block,
+            max_block_number=min_block + self.PAGINATION_SIZE,
+        )
+
+    def get_addresses_data(
+        self, from_addresses: list[str], min_block: int
+    ) -> list[dict]:
+        """
+        Fetches data from the DeRisk API endpoint using the defined protocol address.
+        This method must be implemented by subclasses to specify how data is retrieved from the API.
+
+        :param from_addresses: The addresses of the contract from which to retrieve events.
+        :type from_addresses: list[str]
+        :param min_block: The minimum block number from which to retrieve events.
+        :type min_block: int
+        """
+        logger.info(
+            f"Fetching data from {self.last_block} to {min_block + self.PAGINATION_SIZE} for addresses {from_addresses}"
+        )
+        result_data: list = []
+        for from_address in from_addresses:
+            result_data.extend(self.get_data(from_address, min_block))
+
+        return result_data
+
+    def save_data(self, df: pd.DataFrame) -> None:
+        """
+        Saves the processed data to the database.
+        Ex
+        """
+        if df.empty:
+            logger.info("No data to save.")
+            return
+
+        objects_to_write = []
+        for index, item in df.iterrows():
+            loan = LoanState(
+                protocol_id=self.PROTOCOL_TYPE,
+                user=str(item["user"]),
+                collateral=item["collateral"],
+                debt=item["debt"],
+                block=item["block"],
+                timestamp=item["timestamp"],
+                deposit=item.get("deposit"),
+            )
+            objects_to_write.append(loan)
+        self.db_connector.write_loan_states_to_db(objects_to_write)
 
     def save_interest_rate_data(self) -> None:
         """
@@ -145,28 +182,74 @@ class LoanStateComputationBase(ABC):
         """
         # Create a DataFrame with the loan state
         loan_entities_values = loan_entities.values()
-        result_df = pd.DataFrame(
+        if hasattr(loan_entities_values, "update_deposit"):
+            for loan_entity in loan_entities_values:
+                loan_entity.update_deposit()
+
+        result_dict = {
+            "protocol": [self.PROTOCOL_TYPE for _ in loan_entities_values],
+            "user": [loan_entity.user for loan_entity in loan_entities_values],
+            "collateral": [
+                {
+                    token: float(amount)
+                    for token, amount in loan.collateral.values.items()
+                }
+                for loan in loan_entities_values
+            ],
+            "block": [entity.extra_info.block for entity in loan_entities_values],
+            "timestamp": [
+                entity.extra_info.timestamp for entity in loan_entities_values
+            ],
+            "debt": [
+                {token: float(amount) for token, amount in loan.debt.values.items()}
+                for loan in loan_entities_values
+            ],
+        }
+        result_df = pd.DataFrame(result_dict)
+        return result_df
+
+    def add_interest_rate_data(self, state_instance: State, event: pd.Series) -> None:
+        """
+        Adds interest rate data to the state instance.
+        :param state_instance: The state instance to add the data to.
+        :param event: The event data.
+        """
+        self.interest_rate_result.append(
             {
-                "protocol": [self.PROTOCOL_TYPE for _ in loan_entities.keys()],
-                "user": [user for user in loan_entities],
-                "collateral": [
-                    {
-                        token: float(amount)
-                        for token, amount in loan.collateral.values.items()
-                    }
-                    for loan in loan_entities.values()
-                ],
-                "block": [entity.extra_info.block for entity in loan_entities_values],
-                "timestamp": [
-                    entity.extra_info.timestamp for entity in loan_entities_values
-                ],
-                "debt": [
-                    {token: float(amount) for token, amount in loan.debt.values.items()}
-                    for loan in loan_entities_values
-                ],
+                "block": event["block_number"],
+                "timestamp": event["timestamp"],
+                "debt": {
+                    token: float(amount)
+                    for token, amount in state_instance.interest_rate_models.debt.items()
+                },
+                "collateral": {
+                    token: float(amount)
+                    for token, amount in state_instance.interest_rate_models.collateral.items()
+                },
             }
         )
-        return result_df
+
+    def set_interest_rate(self, instance_state: State, block: int, protocol_type: str) -> None:
+        """
+        Sets the interest rate for the zkLend protocol.
+
+        :param instance_state: The zkLend|HashtackV0|HashtackV1 state object.
+        :type instance_state: zkLend|HashtackV0|HashtackV1
+        :param protocol_type: The protocol type.
+        :type protocol_type: str
+        :param block: block_number
+        :type block: int
+        """
+        if block == instance_state.last_interest_rate_block_number:
+            return
+
+        interest_rate_data = self.db_connector.get_interest_rate_by_block(block_number=block,
+                                                                          protocol_id=protocol_type)
+        if interest_rate_data and instance_state.last_interest_rate_block_number != interest_rate_data.block:
+            collateral_interest_rate, debt_interest_rate = interest_rate_data.get_json_deserialized()
+            instance_state.interest_rate_models.collateral = InterestRateModels(collateral_interest_rate)
+            instance_state.interest_rate_models.debt = InterestRateModels(debt_interest_rate)
+            instance_state.last_interest_rate_block_number = block
 
     def run(self) -> None:
         """
@@ -176,15 +259,17 @@ class LoanStateComputationBase(ABC):
         default_last_block = self.last_block
         for protocol_address in self.PROTOCOL_ADDRESSES:
             retry = 0
-            logger.info(f'Default last block: {default_last_block}')
-            # FIXME after first run
-            self.last_block = FIRST_RUNNING_MAPPING.get(protocol_address, 10800) # default_last_block
+            logger.info(f"Default last block: {default_last_block}")
+
+            self.last_block = default_last_block
 
             while retry < max_retries:
                 data = self.get_data(protocol_address, self.last_block)
 
                 if not data:
-                    logger.info(f"No data found for address {protocol_address} at block {self.last_block}")
+                    logger.info(
+                        f"No data found for address {protocol_address} at block {self.last_block}"
+                    )
                     self.last_block += self.PAGINATION_SIZE
                     retry += 1
                     continue
@@ -198,3 +283,53 @@ class LoanStateComputationBase(ABC):
 
             if retry == max_retries:
                 logger.info(f"Reached max retries for address {protocol_address}")
+
+
+class HashstackBaseLoanStateComputation(LoanStateComputationBase):
+    """Class for computing loan states for the Hashstack V0/V1 protocols."""
+
+    def get_result_df(self, loan_entities: dict) -> pd.DataFrame:
+        """
+        Creates a DataFrame with the loan state based on the loan entities.
+        :param loan_entities: dictionary of loan entities
+        :return: dataframe with loan state
+        """
+
+        # if there are no loan entities, return an empty DataFrame
+        if not loan_entities:
+            return pd.DataFrame()
+
+        filtered_loan_entities: dict = {}
+        # remove objects from loan_entities_values if the object has `has_skip` attribute
+        for loan_id, loan_entity in loan_entities.items():
+            has_skip = getattr(loan_entity, "has_skip", None)
+            if not has_skip:
+                filtered_loan_entities[loan_id] = loan_entity
+
+        result_dict = {
+            "protocol": [self.PROTOCOL_TYPE for _ in filtered_loan_entities.keys()],
+            "user": [
+                loan_entity.user for loan_entity in filtered_loan_entities.values()
+            ],
+            "collateral": [
+                {
+                    token: float(amount)
+                    for token, amount in loan.collateral.values.items()
+                }
+                for loan in filtered_loan_entities.values()
+            ],
+            "block": [
+                entity.extra_info.block for entity in filtered_loan_entities.values()
+            ],
+            "timestamp": [
+                entity.extra_info.timestamp
+                for entity in filtered_loan_entities.values()
+            ],
+            "debt": [
+                {token: float(amount) for token, amount in loan.debt.values.items()}
+                for loan in filtered_loan_entities.values()
+            ],
+        }
+
+        result_df = pd.DataFrame(result_dict)
+        return result_df
