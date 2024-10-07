@@ -1,10 +1,8 @@
-from typing import Any
-
 import logging
-import requests
 import time
 
 import pandas
+import requests
 
 
 class EkuboLiquidity:
@@ -38,7 +36,7 @@ class EkuboLiquidity:
         }
 
     def apply_liquidity_to_dataframe(
-        self, bids_or_asks: dict[str, Any]
+        self, bids_or_asks: dict[str, str | list[float]]
     ) -> pandas.DataFrame:
         """
         Applying liquidity bids or asks data to dataframe, saving in object and returns data
@@ -46,21 +44,21 @@ class EkuboLiquidity:
         :return: pandas.DataFrame
         """
 
-        liquidity_dataframe = pandas.DataFrame(
+        liquidity = pandas.DataFrame(
             {
                 "price": bids_or_asks["prices"],
                 "quantity": bids_or_asks["quantities"],
             },
         ).astype(float)
 
-        liquidity_dataframe.sort_values(by="price", inplace=True)
+        liquidity.sort_values(by="price", inplace=True)
         price_diff = self.data["collateral_token_price"].diff().max()
 
         self.data["Ekubo_debt_token_supply"] = self.data[
             "collateral_token_price"
         ].apply(
             lambda price: self._get_available_liquidity(
-                data=liquidity_dataframe,
+                data=liquidity,
                 price=price,
                 price_diff=price_diff,
                 bids=True if bids_or_asks["type"] == "bids" else False,
@@ -70,7 +68,7 @@ class EkuboLiquidity:
 
         return self.data
 
-    def fetch_liquidity(self, bids: bool = True) -> dict[str, Any]:
+    def fetch_liquidity(self, bids: bool = True) -> dict[str, str | list[float]]:
         """
         Fetching liquidity from API endpoint and structuring data to comfortable format.
         Returns dictionary with the following struct:
@@ -80,7 +78,7 @@ class EkuboLiquidity:
         'quantities': list[float]
         }
         :param bids: bool = True
-        :return: dict[str, Any]
+        :return: dict[str, str | list[float]]
         """
 
         params = self.params_for_bids
@@ -101,13 +99,14 @@ class EkuboLiquidity:
                 data["prices"], data["quantities"] = zip(*liquidity[data["type"]])
             except ValueError:
                 time.sleep(300 if bids else 5)
-                self.fetch_liquidity()
+                self.fetch_liquidity(bids=True)
             else:
                 return data
-        elif bids:
-            self.fetch_liquidity(bids=False)
         else:
-            self.fetch_liquidity()
+            time.sleep(300 if bids else 5)
+            self.fetch_liquidity(
+                bids=False if bids else True,
+            )
 
     def _get_available_liquidity(
         self, data: pandas.DataFrame, price: float, price_diff: float, bids: bool
