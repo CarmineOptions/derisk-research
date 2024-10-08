@@ -1,4 +1,3 @@
-import collections
 import datetime
 import difflib
 import logging
@@ -14,8 +13,16 @@ import src.main_chart
 import src.persistent_state
 import src.settings
 import src.swap_amm
+from src.chart_utils import (get_protocol_data_mappings, load_stats_data,
+                         transform_loans_data, transform_main_chart_data)
 import src.utils
 
+
+PROTOCOL_NAMES = [
+    "zkLend",
+    "Nostra Alpha",
+    "Nostra Mainnet",
+]  # "Hashstack V0", "Hashstack V1"
 
 
 def infer_protocol_name(input_protocol: str, valid_protocols: list[str]) -> str:
@@ -32,21 +39,12 @@ def infer_protocol_name(input_protocol: str, valid_protocols: list[str]) -> str:
         input_protocol, valid_protocols, n=1, cutoff=0.6
     )
     return closest_match and closest_match[0] or input_protocol
-
-
-def parse_token_amounts(raw_token_amounts: str) -> dict[str, float]:
-    """Converts token amounts in the string format to the dict format."""
-    token_amounts = collections.defaultdict(int)
-
-    if raw_token_amounts == "":
-        return token_amounts
-
-    individual_token_parts = raw_token_amounts.split(", ")
-    for individual_token_part in individual_token_parts:
-        token, amount = individual_token_part.split(": ")
-        token_amounts[token] += float(amount)
-
-    return token_amounts
+  
+  
+def _remove_leading_zeros(address: str) -> str:
+    while address[2] == "0":
+        address = f"0x{address[3:]}"
+    return address
 
 
 def create_stablecoin_bundle(data: dict[str, pandas.DataFrame]) -> dict[str, pandas.DataFrame]:
@@ -126,6 +124,13 @@ def create_stablecoin_bundle(data: dict[str, pandas.DataFrame]) -> dict[str, pan
 def process_liquidity(
     main_chart_data: pandas.DataFrame, collateral_token: str, debt_token: str
 ) -> tuple[pandas.DataFrame, float]:
+    """
+    Process liquidity data for the main chart.
+    :param main_chart_data: Main chart data.
+    :param collateral_token: Collateral token.
+    :param debt_token: Debt token.
+    :return: Processed main chart data and collateral token price.
+    """
     # Fetch underlying addresses and decimals
     collateral_token_underlying_address = src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[collateral_token]
     collateral_token_decimals = int(math.log10(src.settings.TOKEN_SETTINGS[collateral_token].decimal_factor))
@@ -157,36 +162,12 @@ def process_liquidity(
 def main():
     streamlit.title("DeRisk")
 
-    (
-        zklend_main_chart_data,
-        zklend_loans_data,
-    ) = src.helpers.load_data(protocol="zkLend")
-    # (
-    #     hashstack_v0_main_chart_data,
-    #     hashstack_v0_loans_data,
-    # ) = src.helpers.load_data(protocol='Hashstack V0')
-    # (
-    #     hashstack_v1_main_chart_data,
-    #     hashstack_v1_loans_data,
-    # ) = src.helpers.load_data(protocol='Hashstack V1')
-    (
-        nostra_alpha_main_chart_data,
-        nostra_alpha_loans_data,
-    ) = src.helpers.load_data(protocol="Nostra Alpha")
-    (
-        nostra_mainnet_main_chart_data,
-        nostra_mainnet_loans_data,
-    ) = src.helpers.load_data(protocol="Nostra Mainnet")
-
     col1, _ = streamlit.columns([1, 3])
     with col1:
         protocols = streamlit.multiselect(
             label="Select protocols",
-            # TODO
-            options=["zkLend", "Nostra Alpha", "Nostra Mainnet"],
-            default=["zkLend", "Nostra Alpha", "Nostra Mainnet"],
-            # options=["zkLend", "Hashstack V0", "Hashstack V1", "Nostra Alpha", "Nostra Mainnet"],
-            # default=["zkLend", "Hashstack V0", "Hashstack V1", "Nostra Alpha", "Nostra Mainnet"],
+            options=PROTOCOL_NAMES,
+            default=PROTOCOL_NAMES,
         )
         collateral_token = streamlit.selectbox(
             label="Select collateral token:",
@@ -208,74 +189,17 @@ def main():
 
     current_pair = f"{collateral_token}-{debt_token}"
 
-    main_chart_data = pandas.DataFrame()
-    # histogram_data = pandas.DataFrame()
-    loans_data = pandas.DataFrame()
-
-    protocol_main_chart_data_mapping = (
-        {
-            "zkLend": create_stablecoin_bundle(zklend_main_chart_data)[current_pair],
-            # 'Hashstack V0': hashstack_v0_main_chart_data[current_pair],
-            # 'Hashstack V1': hashstack_v1_main_chart_data[current_pair],
-            "Nostra Alpha": create_stablecoin_bundle(nostra_alpha_main_chart_data)[
-                current_pair
-            ],
-            "Nostra Mainnet": create_stablecoin_bundle(nostra_mainnet_main_chart_data)[
-                current_pair
-            ],
-        }
-        if current_pair == stable_coin_pair
-        else {
-            "zkLend": zklend_main_chart_data[current_pair],
-            # 'Hashstack V0': hashstack_v0_main_chart_data[current_pair],
-            # 'Hashstack V1': hashstack_v1_main_chart_data[current_pair],
-            "Nostra Alpha": nostra_alpha_main_chart_data[current_pair],
-            "Nostra Mainnet": nostra_mainnet_main_chart_data[current_pair],
-        }
+    protocol_main_chart_data_mapping, protocol_loans_data_mapping = (
+        get_protocol_data_mappings(
+            current_pair=current_pair,
+            stable_coin_pair=stable_coin_pair,
+            protocols=protocols,
+        )
     )
-    protocol_loans_data_mapping = {
-        "zkLend": zklend_loans_data,
-        # 'Hashstack V0': hashstack_v0_loans_data,
-        # 'Hashstack V1': hashstack_v1_loans_data,
-        "Nostra Alpha": nostra_alpha_loans_data,
-        "Nostra Mainnet": nostra_mainnet_loans_data,
-    }
-    for protocol in protocols:
-        protocol_main_chart_data = protocol_main_chart_data_mapping[protocol]
-        if protocol_main_chart_data is None or protocol_main_chart_data.empty:
-            logging.warning(
-                f"No data for pair {debt_token} - {collateral_token} from {protocol}"
-            )
-            continue
-        protocol_loans_data = protocol_loans_data_mapping[protocol]
-        if main_chart_data.empty:
-            main_chart_data = protocol_main_chart_data
-            main_chart_data[f"liquidable_debt_{protocol}"] = protocol_main_chart_data[
-                "liquidable_debt"
-            ]
-            main_chart_data[
-                f"liquidable_debt_at_interval_{protocol}"
-            ] = protocol_main_chart_data["liquidable_debt_at_interval"]
-        else:
-            main_chart_data["liquidable_debt"] += protocol_main_chart_data[
-                "liquidable_debt"
-            ]
-            main_chart_data["liquidable_debt_at_interval"] += protocol_main_chart_data[
-                "liquidable_debt_at_interval"
-            ]
-            main_chart_data[f"liquidable_debt_{protocol}"] = protocol_main_chart_data[
-                "liquidable_debt"
-            ]
-            main_chart_data[
-                f"liquidable_debt_at_interval_{protocol}"
-            ] = protocol_main_chart_data["liquidable_debt_at_interval"]
-        if loans_data.empty:
-            loans_data = protocol_loans_data
-        else:
-            loans_data = pandas.concat([loans_data, protocol_loans_data])
-    # Convert token amounts in the string format to the dict format.
-    loans_data["Collateral"] = loans_data["Collateral"].apply(parse_token_amounts)
-    loans_data["Debt"] = loans_data["Debt"].apply(parse_token_amounts)
+    loans_data = transform_loans_data(protocol_loans_data_mapping, protocols)
+    main_chart_data = transform_main_chart_data(
+        protocol_main_chart_data_mapping, current_pair, protocols
+    )
 
     # Plot the liquidable debt against the available supply.
     collateral_token, debt_token = current_pair.split("-")
@@ -296,9 +220,11 @@ def main():
     figure = src.main_chart.get_main_chart_figure(
         data=main_chart_data,
         collateral_token=collateral_token,
-        debt_token=src.settings.STABLECOIN_BUNDLE_NAME
-        if current_pair == stable_coin_pair
-        else debt_token,
+        debt_token=(
+            src.settings.STABLECOIN_BUNDLE_NAME
+            if current_pair == stable_coin_pair
+            else debt_token
+        ),
         collateral_token_price=collateral_token_price,
     )
     streamlit.plotly_chart(figure_or_data=figure, use_container_width=True)
@@ -433,6 +359,7 @@ def main():
             debt_usd_amounts,
         ) = src.main_chart.get_specific_loan_usd_amounts(loan=loan)
 
+
         with col2:
             figure = plotly.express.pie(
                 collateral_usd_amounts,
@@ -456,32 +383,12 @@ def main():
         streamlit.dataframe(loan)
 
     streamlit.header("Comparison of lending protocols")
-    general_stats = pandas.read_parquet(
-        f"gs://{src.helpers.GS_BUCKET_NAME}/data/general_stats.parquet",
-        engine="fastparquet",
-    ).set_index("Protocol")
-    supply_stats = pandas.read_parquet(
-        f"gs://{src.helpers.GS_BUCKET_NAME}/data/supply_stats.parquet",
-        engine="fastparquet",
-    ).set_index("Protocol")
-    collateral_stats = pandas.read_parquet(
-        f"gs://{src.helpers.GS_BUCKET_NAME}/data/collateral_stats.parquet",
-        engine="fastparquet",
-    ).set_index("Protocol")
-    debt_stats = pandas.read_parquet(
-        f"gs://{src.helpers.GS_BUCKET_NAME}/data/debt_stats.parquet",
-        engine="fastparquet",
-    ).set_index("Protocol")
-    general_stats["TVL (USD)"] = (
-        supply_stats["Total supply (USD)"] - general_stats["Total debt (USD)"]
+    supply_stats, collateral_stats, debt_stats, general_stats, utilization_stats = (
+        load_stats_data()
     )
+    # Display dataframes
     streamlit.dataframe(general_stats)
-    streamlit.dataframe(
-        pandas.read_parquet(
-            f"gs://{src.helpers.GS_BUCKET_NAME}/data/utilization_stats.parquet",
-            engine="fastparquet",
-        ).set_index("Protocol"),
-    )
+    streamlit.dataframe(utilization_stats)
     # USD deposit, collateral and debt per token (bar chart).
     (
         supply_figure,
