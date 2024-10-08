@@ -13,31 +13,19 @@ import src.main_chart
 import src.persistent_state
 import src.settings
 import src.swap_amm
-from src.chart_utils import (get_protocol_data_mappings, load_stats_data,
-                         transform_loans_data, transform_main_chart_data)
 import src.utils
+from src.chart_utils import (
+    get_protocol_data_mappings,
+    load_stats_data,
+    transform_loans_data,
+    transform_main_chart_data,
+)
 
 PROTOCOL_NAMES = [
     "zkLend",
     "Nostra Alpha",
     "Nostra Mainnet",
 ]  # "Hashstack V0", "Hashstack V1"
-
-def parse_token_amounts(raw_token_amounts: str) -> dict[str, float]:
-    """Converts token amounts in the string format to the dict format."""
-    token_amounts = collections.defaultdict(int)
-
-    if raw_token_amounts == "":
-        return token_amounts
-
-    individual_token_parts = raw_token_amounts.split(", ")
-    for individual_token_part in individual_token_parts:
-        token, amount = individual_token_part.split(": ")
-        token_amounts[token] += float(amount)
-
-    return token_amounts
-  
-
 
 
 def infer_protocol_name(input_protocol: str, valid_protocols: list[str]) -> str:
@@ -54,8 +42,8 @@ def infer_protocol_name(input_protocol: str, valid_protocols: list[str]) -> str:
         input_protocol, valid_protocols, n=1, cutoff=0.6
     )
     return closest_match and closest_match[0] or input_protocol
-  
-  
+
+
 def _remove_leading_zeros(address: str) -> str:
     while address[2] == "0":
         address = f"0x{address[3:]}"
@@ -211,13 +199,14 @@ def main():
         )
 
     current_pair = f"{collateral_token}-{debt_token}"
-    
-    protocol_main_chart_data_mapping, protocol_loans_data_mapping = (
-        get_protocol_data_mappings(
-            current_pair=current_pair,
-            stable_coin_pair=stable_coin_pair,
-            protocols=protocols,
-        )
+
+    (
+        protocol_main_chart_data_mapping,
+        protocol_loans_data_mapping,
+    ) = get_protocol_data_mappings(
+        current_pair=current_pair,
+        stable_coin_pair=stable_coin_pair,
+        protocols=protocols,
     )
     loans_data = transform_loans_data(protocol_loans_data_mapping, protocols)
     main_chart_data = transform_main_chart_data(
@@ -304,10 +293,6 @@ def main():
     if not loans_data.empty:
         streamlit.header("Loans with low health factor")
 
-        # Convert token amounts in the string format to the dict format.
-        loans_data["Collateral"] = loans_data["Collateral"].apply(parse_token_amounts)
-        loans_data["Debt"] = loans_data["Debt"].apply(parse_token_amounts)
-
         col1, _ = streamlit.columns([1, 3])
         with col1:
             debt_usd_lower_bound, debt_usd_upper_bound = streamlit.slider(
@@ -324,6 +309,9 @@ def main():
                 )
             ]
             .sort_values("Health factor")
+            .iloc[:20],
+            use_container_width=True,
+        )
 
         streamlit.header("Top loans")
         col1, col2 = streamlit.columns(2)
@@ -359,7 +347,7 @@ def main():
                     loans_data["Debt (USD)"] > 0,
                     ["User", "Protocol"],
                 ].itertuples(index=False, name=None)
-
+            )
             random_user, random_protocol = users_and_protocols_with_debt[
                 numpy.random.randint(len(users_and_protocols_with_debt))
             ]
@@ -381,15 +369,16 @@ def main():
         loan = loans_data.loc[
             (loans_data["User"] == user) & (loans_data["Protocol"] == protocol),
         ]
-              
+
         if loan.empty:
-            streamlit.warning(f"No loan found for user = {user} and protocol = {protocol}.")
+            streamlit.warning(
+                f"No loan found for user = {user} and protocol = {protocol}."
+            )
         else:
             (
                 collateral_usd_amounts,
                 debt_usd_amounts,
             ) = src.main_chart.get_specific_loan_usd_amounts(loan=loan)
-
 
             with col2:
                 figure = plotly.express.pie(
@@ -408,14 +397,19 @@ def main():
                     names="token",
                     title="Debt (USD)",
                     color_discrete_sequence=plotly.express.colors.sequential.Greens_r,
-            )
-  
+                )
+                streamlit.plotly_chart(figure, True)
+
             streamlit.dataframe(loan)
 
     streamlit.header("Comparison of lending protocols")
-    supply_stats, collateral_stats, debt_stats, general_stats, utilization_stats = (
-        load_stats_data()
-    )
+    (
+        supply_stats,
+        collateral_stats,
+        debt_stats,
+        general_stats,
+        utilization_stats,
+    ) = load_stats_data()
     # Display dataframes
     streamlit.dataframe(general_stats)
     streamlit.dataframe(utilization_stats)
