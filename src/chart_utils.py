@@ -217,6 +217,10 @@ def transform_main_chart_data(
         protocol_main_chart_data = protocol_main_chart_data_mapping[protocol]
         if protocol_main_chart_data is None or protocol_main_chart_data.empty:
             logging.warning(f"No data for pair {current_pair} from {protocol}")
+            collateral_token, debt_token = current_pair.split("-")
+            streamlit.subheader(
+                f":warning: No liquidable debt for the {collateral_token} collateral token and the {debt_token} debt token exists on the {protocol} protocol."
+            )
             continue
 
         if main_chart_data.empty:
@@ -224,9 +228,9 @@ def transform_main_chart_data(
             main_chart_data[f"liquidable_debt_{protocol}"] = protocol_main_chart_data[
                 "liquidable_debt"
             ]
-            main_chart_data[f"liquidable_debt_at_interval_{protocol}"] = (
-                protocol_main_chart_data["liquidable_debt_at_interval"]
-            )
+            main_chart_data[
+                f"liquidable_debt_at_interval_{protocol}"
+            ] = protocol_main_chart_data["liquidable_debt_at_interval"]
         else:
             main_chart_data["liquidable_debt"] += protocol_main_chart_data[
                 "liquidable_debt"
@@ -237,8 +241,8 @@ def transform_main_chart_data(
             main_chart_data[f"liquidable_debt_{protocol}"] = protocol_main_chart_data[
                 "liquidable_debt"
             ]
-            main_chart_data[f"liquidable_debt_at_interval_{protocol}"] = (
-                protocol_main_chart_data["liquidable_debt_at_interval"]
-            )
+            main_chart_data[
+                f"liquidable_debt_at_interval_{protocol}"
+            ] = protocol_main_chart_data["liquidable_debt_at_interval"]
 
     return main_chart_data
