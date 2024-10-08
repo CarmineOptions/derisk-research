@@ -17,12 +17,27 @@ from src.chart_utils import (get_protocol_data_mappings, load_stats_data,
                          transform_loans_data, transform_main_chart_data)
 import src.utils
 
-
 PROTOCOL_NAMES = [
     "zkLend",
     "Nostra Alpha",
     "Nostra Mainnet",
 ]  # "Hashstack V0", "Hashstack V1"
+
+def parse_token_amounts(raw_token_amounts: str) -> dict[str, float]:
+    """Converts token amounts in the string format to the dict format."""
+    token_amounts = collections.defaultdict(int)
+
+    if raw_token_amounts == "":
+        return token_amounts
+
+    individual_token_parts = raw_token_amounts.split(", ")
+    for individual_token_part in individual_token_parts:
+        token, amount = individual_token_part.split(": ")
+        token_amounts[token] += float(amount)
+
+    return token_amounts
+  
+
 
 
 def infer_protocol_name(input_protocol: str, valid_protocols: list[str]) -> str:
@@ -47,7 +62,9 @@ def _remove_leading_zeros(address: str) -> str:
     return address
 
 
-def create_stablecoin_bundle(data: dict[str, pandas.DataFrame]) -> dict[str, pandas.DataFrame]:
+def create_stablecoin_bundle(
+    data: dict[str, pandas.DataFrame]
+) -> dict[str, pandas.DataFrame]:
     """
     Creates a stablecoin bundle by merging relevant DataFrames for collateral tokens and debt tokens.
 
@@ -132,9 +149,15 @@ def process_liquidity(
     :return: Processed main chart data and collateral token price.
     """
     # Fetch underlying addresses and decimals
-    collateral_token_underlying_address = src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[collateral_token]
-    collateral_token_decimals = int(math.log10(src.settings.TOKEN_SETTINGS[collateral_token].decimal_factor))
-    underlying_addresses_to_decimals = {collateral_token_underlying_address: collateral_token_decimals}
+    collateral_token_underlying_address = (
+        src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[collateral_token]
+    )
+    collateral_token_decimals = int(
+        math.log10(src.settings.TOKEN_SETTINGS[collateral_token].decimal_factor)
+    )
+    underlying_addresses_to_decimals = {
+        collateral_token_underlying_address: collateral_token_decimals
+    }
 
     # Fetch prices
     prices = src.helpers.get_prices(token_decimals=underlying_addresses_to_decimals)
@@ -188,7 +211,7 @@ def main():
         )
 
     current_pair = f"{collateral_token}-{debt_token}"
-
+    
     protocol_main_chart_data_mapping, protocol_loans_data_mapping = (
         get_protocol_data_mappings(
             current_pair=current_pair,
@@ -260,127 +283,134 @@ def main():
             f"capacity will be {int(example_row['debt_token_supply']):,} USD."
         )
 
-    streamlit.header("Liquidable debt")
-    liquidable_debt_data = main_chart_data[
-        ["collateral_token_price", "liquidable_debt_at_interval", "liquidable_debt"]
-    ].copy()
-    liquidable_debt_data.rename(
-        columns={
-            "liquidable_debt": "Liquidable debt at price",
-            "liquidable_debt_at_interval": "Liquidable debt at interval",
-            "collateral_token_price": "Collateral token price",
-        },
-        inplace=True,
-    )
-
-    # Display the filtered DataFrame and hide the index
-    streamlit.dataframe(
-        liquidable_debt_data.round(), use_container_width=True, hide_index=True
-    )
-
-    streamlit.header("Loans with low health factor")
-    col1, _ = streamlit.columns([1, 3])
-    with col1:
-        debt_usd_lower_bound, debt_usd_upper_bound = streamlit.slider(
-            label="Select range of USD borrowings",
-            min_value=0,
-            max_value=int(loans_data["Debt (USD)"].max()),
-            value=(0, int(loans_data["Debt (USD)"].max())),
+        streamlit.header("Liquidable debt")
+        liquidable_debt_data = main_chart_data[
+            ["collateral_token_price", "liquidable_debt_at_interval", "liquidable_debt"]
+        ].copy()
+        liquidable_debt_data.rename(
+            columns={
+                "liquidable_debt": "Liquidable debt at price",
+                "liquidable_debt_at_interval": "Liquidable debt at interval",
+                "collateral_token_price": "Collateral token price",
+            },
+            inplace=True,
         )
-    streamlit.dataframe(
-        loans_data[
-            (loans_data["Health factor"] > 0)  # TODO: debug the negative HFs
-            & loans_data["Debt (USD)"].between(
-                debt_usd_lower_bound, debt_usd_upper_bound
+
+        # Display the filtered DataFrame and hide the index
+        streamlit.dataframe(
+            liquidable_debt_data.round(), use_container_width=True, hide_index=True
+        )
+
+    if not loans_data.empty:
+        streamlit.header("Loans with low health factor")
+
+        # Convert token amounts in the string format to the dict format.
+        loans_data["Collateral"] = loans_data["Collateral"].apply(parse_token_amounts)
+        loans_data["Debt"] = loans_data["Debt"].apply(parse_token_amounts)
+
+        col1, _ = streamlit.columns([1, 3])
+        with col1:
+            debt_usd_lower_bound, debt_usd_upper_bound = streamlit.slider(
+                label="Select range of USD borrowings",
+                min_value=0,
+                max_value=int(loans_data["Debt (USD)"].max()),
+                value=(0, int(loans_data["Debt (USD)"].max())),
             )
-        ]
-        .sort_values("Health factor")
-        .iloc[:20],
-        use_container_width=True,
-    )
-
-    streamlit.header("Top loans")
-    col1, col2 = streamlit.columns(2)
-    with col1:
-        streamlit.subheader("Sorted by collateral")
         streamlit.dataframe(
-            loans_data[loans_data["Health factor"] > 1]  # TODO: debug the negative HFs
-            .sort_values("Collateral (USD)", ascending=False)
-            .iloc[:20],
-            use_container_width=True,
-        )
-    with col2:
-        streamlit.subheader("Sorted by debt")
-        streamlit.dataframe(
-            loans_data[loans_data["Health factor"] > 1]  # TODO: debug the negative HFs
-            .sort_values("Debt (USD)", ascending=False)
-            .iloc[:20],
-            use_container_width=True,
-        )
+            loans_data[
+                (loans_data["Health factor"] > 0)  # TODO: debug the negative HFs
+                & loans_data["Debt (USD)"].between(
+                    debt_usd_lower_bound, debt_usd_upper_bound
+                )
+            ]
+            .sort_values("Health factor")
 
-    streamlit.header("Detail of a loan")
-    col1, col2, col3 = streamlit.columns(3)
-    with col1:
-        user = streamlit.text_input("User")
-        protocol = streamlit.text_input("Protocol")
-        users_and_protocols_with_debt = list(
-            loans_data.loc[
-                loans_data["Debt (USD)"] > 0,
-                ["User", "Protocol"],
-            ].itertuples(index=False, name=None)
-        )
-
-        random_user, random_protocol = users_and_protocols_with_debt[
-            numpy.random.randint(len(users_and_protocols_with_debt))
-        ]
-
-        if not user:
-            streamlit.write(f"Selected random user = {random_user}.")
-            user = random_user
-        if not protocol:
-            streamlit.write(f"Selected random protocol = {random_protocol}.")
-            protocol = random_protocol
-
-        # Normalize the user address by adding leading zeroes if necessary
-        user = src.helpers.add_leading_zeros(user)
-
-        # Infer the correct protocol name using fuzzy matching
-        valid_protocols = loans_data["Protocol"].unique()
-        protocol = infer_protocol_name(protocol, valid_protocols)
-
-    loan = loans_data.loc[
-        (loans_data["User"] == user) & (loans_data["Protocol"] == protocol),
-    ]
-    if loan.empty:
-        streamlit.warning(f"No loan found for user = {user} and protocol = {protocol}.")
-    else:
-        (
-            collateral_usd_amounts,
-            debt_usd_amounts,
-        ) = src.main_chart.get_specific_loan_usd_amounts(loan=loan)
-
-
+        streamlit.header("Top loans")
+        col1, col2 = streamlit.columns(2)
+        with col1:
+            streamlit.subheader("Sorted by collateral")
+            streamlit.dataframe(
+                loans_data[
+                    loans_data["Health factor"] > 1  # TODO: debug the negative HFs
+                ]
+                .sort_values("Collateral (USD)", ascending=False)
+                .iloc[:20],
+                use_container_width=True,
+            )
         with col2:
-            figure = plotly.express.pie(
+            streamlit.subheader("Sorted by debt")
+            streamlit.dataframe(
+                loans_data[
+                    loans_data["Health factor"] > 1  # TODO: debug the negative HFs
+                ]
+                .sort_values("Debt (USD)", ascending=False)
+                .iloc[:20],
+                use_container_width=True,
+            )
+
+        streamlit.header("Detail of a loan")
+        col1, col2, col3 = streamlit.columns(3)
+        with col1:
+            user = streamlit.text_input("User")
+            protocol = streamlit.text_input("Protocol")
+
+            users_and_protocols_with_debt = list(
+                loans_data.loc[
+                    loans_data["Debt (USD)"] > 0,
+                    ["User", "Protocol"],
+                ].itertuples(index=False, name=None)
+
+            random_user, random_protocol = users_and_protocols_with_debt[
+                numpy.random.randint(len(users_and_protocols_with_debt))
+            ]
+
+            if not user:
+                streamlit.write(f"Selected random user = {random_user}.")
+                user = random_user
+            if not protocol:
+                streamlit.write(f"Selected random protocol = {random_protocol}.")
+                protocol = random_protocol
+
+            # Normalize the user address by adding leading zeroes if necessary
+            user = src.helpers.add_leading_zeros(user)
+
+            # Infer the correct protocol name using fuzzy matching
+            valid_protocols = loans_data["Protocol"].unique()
+            protocol = infer_protocol_name(protocol, valid_protocols)
+
+        loan = loans_data.loc[
+            (loans_data["User"] == user) & (loans_data["Protocol"] == protocol),
+        ]
+              
+        if loan.empty:
+            streamlit.warning(f"No loan found for user = {user} and protocol = {protocol}.")
+        else:
+            (
                 collateral_usd_amounts,
-                values="amount_usd",
-                names="token",
-                title="Collateral (USD)",
-                color_discrete_sequence=plotly.express.colors.sequential.Oranges_r,
-            )
-            streamlit.plotly_chart(figure, True)
-
-        with col3:
-            figure = plotly.express.pie(
                 debt_usd_amounts,
-                values="amount_usd",
-                names="token",
-                title="Debt (USD)",
-                color_discrete_sequence=plotly.express.colors.sequential.Greens_r,
-            )
-            streamlit.plotly_chart(figure, True)
+            ) = src.main_chart.get_specific_loan_usd_amounts(loan=loan)
 
-        streamlit.dataframe(loan)
+
+            with col2:
+                figure = plotly.express.pie(
+                    collateral_usd_amounts,
+                    values="amount_usd",
+                    names="token",
+                    title="Collateral (USD)",
+                    color_discrete_sequence=plotly.express.colors.sequential.Oranges_r,
+                )
+                streamlit.plotly_chart(figure, True)
+
+            with col3:
+                figure = plotly.express.pie(
+                    debt_usd_amounts,
+                    values="amount_usd",
+                    names="token",
+                    title="Debt (USD)",
+                    color_discrete_sequence=plotly.express.colors.sequential.Greens_r,
+            )
+  
+            streamlit.dataframe(loan)
 
     streamlit.header("Comparison of lending protocols")
     supply_stats, collateral_stats, debt_stats, general_stats, utilization_stats = (
