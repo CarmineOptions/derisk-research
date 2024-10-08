@@ -53,11 +53,15 @@ def get_report() -> dict:
             try:
                 order_book = HaikoOrderBook(base_token, quote_token)
             except ValueError:
-                logging.log(logging.ERROR, f"Pair of tokens: {base_token}-{quote_token}")
+                logging.log(
+                    logging.ERROR, f"Pair of tokens: {base_token}-{quote_token}"
+                )
                 logging.log(logging.ERROR, "One of the tokens isn't supported by Haiko")
                 continue
             except RuntimeError as e:
-                logging.log(logging.ERROR, f"Pair of tokens: {base_token}-{quote_token}")
+                logging.log(
+                    logging.ERROR, f"Pair of tokens: {base_token}-{quote_token}"
+                )
                 logging.log(logging.ERROR, e)
                 continue
 
@@ -75,7 +79,9 @@ def get_report() -> dict:
                     report["empty_pairs"].append(token_pair)
             except KeyError:
                 order_book.logger.error(f"Pair of tokens: {base_token}-{quote_token}")
-                order_book.logger.error("One of the tokens doesn't present in tokens mapping")
+                order_book.logger.error(
+                    "One of the tokens doesn't present in tokens mapping"
+                )
             except RuntimeError as e:
                 order_book.logger.error(f"Pair of tokens: {base_token}-{quote_token}")
                 order_book.logger.error(e)

@@ -10,7 +10,6 @@ import src.state
 import src.types
 
 
-
 def get_loans_table_data(
     state: src.state.State,
     prices: src.types.Prices,
@@ -36,9 +35,8 @@ def get_loans_table_data(
             debt_interest_rate_model=state.interest_rate_models.debt,
             prices=prices,
         )
-        if (
-            isinstance(state, src.nostra_alpha.NostraAlphaState)
-            or isinstance(state, src.nostra_mainnet.NostraMainnetState)
+        if isinstance(state, src.nostra_alpha.NostraAlphaState) or isinstance(
+            state, src.nostra_mainnet.NostraMainnetState
         ):
             risk_adjusted_debt_usd = loan_entity.compute_debt_usd(
                 risk_adjusted=True,
@@ -57,9 +55,8 @@ def get_loans_table_data(
                 risk_adjusted_collateral_usd=risk_adjusted_collateral_usd,
                 risk_adjusted_debt_usd=risk_adjusted_debt_usd,
             )
-        elif (
-            isinstance(state, src.hashstack_v0.HashstackV0State)
-            or isinstance(state, src.hashstack_v1.HashstackV1State)
+        elif isinstance(state, src.hashstack_v0.HashstackV0State) or isinstance(
+            state, src.hashstack_v1.HashstackV1State
         ):
             health_factor = loan_entity.compute_health_factor(
                 standardized=False,
@@ -90,7 +87,8 @@ def get_loans_table_data(
                     if not (
                         isinstance(state, src.hashstack_v0.HashstackV0State)
                         or isinstance(state, src.hashstack_v1.HashstackV1State)
-                    ) else loan_entity.user
+                    )
+                    else loan_entity.user
                 ),
                 "Protocol": src.protocol_parameters.get_protocol(state=state),
                 "Collateral (USD)": collateral_usd,
@@ -99,12 +97,12 @@ def get_loans_table_data(
                 "Health factor": health_factor,
                 "Standardized health factor": standardized_health_factor,
                 "Collateral": loan_entity.get_collateral_str(
-                    collateral_token_parameters = state.token_parameters.collateral,
-                    collateral_interest_rate_model = state.interest_rate_models.collateral,
+                    collateral_token_parameters=state.token_parameters.collateral,
+                    collateral_interest_rate_model=state.interest_rate_models.collateral,
                 ),
                 "Debt": loan_entity.get_debt_str(
-                    debt_token_parameters = state.token_parameters.debt,
-                    debt_interest_rate_model = state.interest_rate_models.debt,
+                    debt_token_parameters=state.token_parameters.debt,
+                    debt_interest_rate_model=state.interest_rate_models.debt,
                 ),
             }
         )
@@ -114,10 +112,3 @@ def get_loans_table_data(
         path = f"{directory}/loans.parquet"
         src.helpers.save_dataframe(data=data, path=path)
     return data
-
-
-
-
-
-
-

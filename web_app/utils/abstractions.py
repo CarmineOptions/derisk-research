@@ -51,4 +51,3 @@ class AbstractionAPIConnector(ABC):
             return response.json()
         except requests.RequestException as e:
             return {"error": str(e)}
-

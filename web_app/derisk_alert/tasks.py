@@ -4,13 +4,12 @@ from database.crud import DBConnector
 from telegram import TelegramNotifications
 from utils.fucntools import (
     calculate_difference,
-    get_health_ratio_level_from_endpoint,
     get_all_activated_subscribers_from_db,
+    get_health_ratio_level_from_endpoint,
 )
 from utils.values import HEALTH_RATIO_LEVEL_ALERT_VALUE
 
 from .celery_conf import app
-
 
 connector = DBConnector()
 notificator = TelegramNotifications(db_connector=connector)
@@ -25,7 +24,8 @@ def check_health_ratio_level_changes():
             protocol_id=subscriber.protocol_id.value, user_id=subscriber.wallet_id
         )
 
-        if (calculate_difference(health_ratio_level, subscriber.health_ratio_level)
+        if (
+            calculate_difference(health_ratio_level, subscriber.health_ratio_level)
             >= HEALTH_RATIO_LEVEL_ALERT_VALUE
         ):
             asyncio.run(notificator.send_notification(notification_id=subscriber.id))

@@ -1,24 +1,25 @@
-from uuid import UUID
 from typing import Type, TypeVar
-
-from sqlalchemy import create_engine, func
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session, scoped_session, sessionmaker
+from uuid import UUID
 
 from database.database import SQLALCHEMY_DATABASE_URL
 from database.models import Base
-from utils.values import (CURRENTLY_AVAILABLE_PROTOCOLS_IDS,
-                          CreateSubscriptionValues,
-                          NotificationValidationValues)
+from sqlalchemy import create_engine, func
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session, scoped_session, sessionmaker
+from utils.values import (
+    CURRENTLY_AVAILABLE_PROTOCOLS_IDS,
+    CreateSubscriptionValues,
+    NotificationValidationValues,
+)
 
 ModelType = TypeVar("ModelType", bound=Base)
 
 
 def _exists_in_db(
-        db: Session = None,
-        model: Type[Base] = None,
-        attr: str = None,
-        obj: Base = None,
+    db: Session = None,
+    model: Type[Base] = None,
+    attr: str = None,
+    obj: Base = None,
 ) -> bool:
     """
     Checks if the given attribute value already exists in the database
@@ -29,8 +30,8 @@ def _exists_in_db(
     :return: bool
     """
     return (
-            db.query(model).filter(getattr(model, attr) == getattr(obj, attr)).first()  # type: ignore
-            is not None
+        db.query(model).filter(getattr(model, attr) == getattr(obj, attr)).first()  # type: ignore
+        is not None
     )
 
 
@@ -41,9 +42,9 @@ def health_ratio_is_valid(health_ratio: float) -> bool:
     :return: bool
     """
     return (
-            NotificationValidationValues.health_ratio_level_min_value
-            <= health_ratio
-            <= NotificationValidationValues.health_ratio_level_max_value
+        NotificationValidationValues.health_ratio_level_min_value
+        <= health_ratio
+        <= NotificationValidationValues.health_ratio_level_max_value
     )
 
 
@@ -62,7 +63,7 @@ def validate_health_ratio(health_ratio: float = None) -> dict[str, str] | None:
 
 
 def validate_fields(
-        db: Session = None, obj: ModelType = None, model: Type[ModelType] = None
+    db: Session = None, obj: ModelType = None, model: Type[ModelType] = None
 ) -> dict:
     """
     Validates all fields in the object and returns a dict with validation errors if they were occured
@@ -131,7 +132,7 @@ class DBConnector:
             return object_id
 
     def get_object(
-            self, model: Type[ModelType] = None, obj_id: UUID = None
+        self, model: Type[ModelType] = None, obj_id: UUID = None
     ) -> ModelType | None:
         """
         Retrieves an object by its ID from the database.
@@ -146,7 +147,7 @@ class DBConnector:
             db.close()
 
     def get_all_activated_subscribers(
-            self, model: Type[Base] = None
+        self, model: Type[Base] = None
     ) -> ModelType | None:
         db = self.Session()
         try:

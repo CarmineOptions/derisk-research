@@ -1,8 +1,8 @@
 from aiogram import Router, types
-from aiogram.filters import CommandStart, CommandObject, Command
-
+from aiogram.filters import Command, CommandObject, CommandStart
 from database.models import NotificationData
 from telegram.crud import TelegramCrud
+
 from .utils import kb
 
 cmd_router = Router()
@@ -22,7 +22,9 @@ async def start(message: types.Message, crud: TelegramCrud, command: CommandObje
     """
     Register Telegram ID in the database.
     """
-    await crud.update_values(NotificationData, command.args, telegram_id=str(message.from_user.id))
+    await crud.update_values(
+        NotificationData, command.args, telegram_id=str(message.from_user.id)
+    )
 
     await message.answer(
         "You are subscribed to notifications.", reply_markup=kb.go_menu()
