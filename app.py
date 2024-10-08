@@ -354,17 +354,6 @@ def main():
             f"capacity will be {int(example_row['debt_token_supply']):,} USD."
         )
 
-    streamlit.header("Liquidable debt")
-    liquidable_debt_data = main_chart_data[['collateral_token_price', 'liquidable_debt_at_interval', 'liquidable_debt']].copy()
-    liquidable_debt_data.rename(columns={'liquidable_debt': 'Liquidable debt at price','liquidable_debt_at_interval':'Liquidable debt at interval','collateral_token_price':'Collateral token price'}, inplace=True)
-
-    # Display the filtered DataFrame and hide the index
-    streamlit.dataframe(
-        liquidable_debt_data.round(),
-        use_container_width=True,
-        hide_index=True
-    )
-    
     streamlit.header("Loans with low health factor")
     col1, _ = streamlit.columns([1, 3])
     with col1:
@@ -406,54 +395,44 @@ def main():
     with col1:
         user = streamlit.text_input("User")
         protocol = streamlit.text_input("Protocol")
-        
         users_and_protocols_with_debt = list(
             loans_data.loc[
                 loans_data['Debt (USD)'] > 0,
                 ['User', 'Protocol'],
-            ].itertuples(index=False, name=None)
+            ].itertuples(index = False, name = None)
         )
-    
         random_user, random_protocol = users_and_protocols_with_debt[numpy.random.randint(len(users_and_protocols_with_debt))]
-        
         if not user:
             streamlit.write(f'Selected random user = {random_user}.')
             user = random_user
         if not protocol:
             streamlit.write(f'Selected random protocol = {random_protocol}.')
             protocol = random_protocol
-
     loan = loans_data.loc[
         (loans_data['User'] == user)
         & (loans_data['Protocol'] == protocol),
     ]
-
-    if loan.empty:
-        streamlit.warning(f"No loan found for user = {user} and protocol = {protocol}.")
-    else:
-        collateral_usd_amounts, debt_usd_amounts = src.main_chart.get_specific_loan_usd_amounts(loan=loan)
-        
-        with col2:
-            figure = plotly.express.pie(
-                collateral_usd_amounts,
-                values='amount_usd',
-                names='token',
-                title='Collateral (USD)',
-                color_discrete_sequence=plotly.express.colors.sequential.Oranges_r,
-            )
-            streamlit.plotly_chart(figure, True)
-
-        with col3:
-            figure = plotly.express.pie(
-                debt_usd_amounts,
-                values='amount_usd',
-                names='token',
-                title='Debt (USD)',
-                color_discrete_sequence=plotly.express.colors.sequential.Greens_r,
-            )
-            streamlit.plotly_chart(figure, True)
-
-        streamlit.dataframe(loan)
+    
+    collateral_usd_amounts, debt_usd_amounts = src.main_chart.get_specific_loan_usd_amounts(loan = loan)
+    with col2:
+        figure = plotly.express.pie(
+            collateral_usd_amounts,
+            values='amount_usd',
+            names='token',
+            title='Collateral (USD)',
+            color_discrete_sequence=plotly.express.colors.sequential.Oranges_r,
+        )
+        streamlit.plotly_chart(figure, True)
+    with col3:
+        figure = plotly.express.pie(
+            debt_usd_amounts,
+            values='amount_usd',
+            names='token',
+            title='Debt (USD)',
+            color_discrete_sequence=plotly.express.colors.sequential.Greens_r,
+        )
+        streamlit.plotly_chart(figure, True)
+    streamlit.dataframe(loan)
 
     streamlit.header("Comparison of lending protocols")
     general_stats = pandas.read_parquet(
@@ -490,6 +469,18 @@ def main():
     streamlit.plotly_chart(figure_or_data=collateral_figure, use_container_width=True)
     streamlit.plotly_chart(figure_or_data=debt_figure, use_container_width=True)
 
+    collateral_protocol_color_map = {"zkLend": "#ce8554", 
+                        "Nostra Alpha": "#ec5f00",
+                        "Nostra Mainnet": "#b84a01"}
+    
+    debt_protocol_color_map = {"zkLend": "#10c759", 
+                        "Nostra Alpha": "#068a3b",
+                        "Nostra Mainnet": "#025322"}
+    
+    supply_protocol_color_map = {"zkLend": "#43a4e6", 
+                        "Nostra Alpha": "#0274c0",
+                        "Nostra Mainnet": "#015b97"}
+
     columns = streamlit.columns(4)
     tokens = list(src.settings.TOKEN_SETTINGS.keys())
     for column, token_1, token_2 in zip(columns, tokens[:4], tokens[4:]):
@@ -500,7 +491,9 @@ def main():
                     values=f'{token} collateral',
                     names='Protocol',
                     title=f'{token} collateral',
-                    color_discrete_sequence=plotly.express.colors.sequential.Oranges_r,
+                    color='Protocol',
+                    color_discrete_map=collateral_protocol_color_map,
+
                 )
                 streamlit.plotly_chart(figure, True)
             for token in [token_1, token_2]:
@@ -509,7 +502,8 @@ def main():
                     values=f'{token} debt',
                     names='Protocol',
                     title=f'{token} debt',
-                    color_discrete_sequence=plotly.express.colors.sequential.Greens_r,
+                    color='Protocol',
+                    color_discrete_map=debt_protocol_color_map,
                 )
                 streamlit.plotly_chart(figure, True)
             for token in [token_1, token_2]:
@@ -518,7 +512,8 @@ def main():
                     values=f'{token} supply',
                     names='Protocol',
                     title=f'{token} supply',
-                    color_discrete_sequence=plotly.express.colors.sequential.Blues_r,
+                    color='Protocol',
+                    color_discrete_map=supply_protocol_color_map,
                 )
                 streamlit.plotly_chart(figure, True)
 
