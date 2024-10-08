@@ -18,7 +18,7 @@ import src.settings
 import src.swap_amm
 
 
-# Function to find the closest protocol match using fuzzy matching
+
 def infer_protocol_name(input_protocol: str, valid_protocols: list[str]) -> str:
     """Find the closest matching protocol name from a list of valid protocols using fuzzy matching.
 
