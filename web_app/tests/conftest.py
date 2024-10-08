@@ -1,7 +1,6 @@
 from unittest.mock import MagicMock
 
 import pytest
-
 from database.database import get_database
 from main import app
 

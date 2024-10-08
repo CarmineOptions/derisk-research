@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+
 from handler_tools.types.base import BaseTokenParameters
 
 

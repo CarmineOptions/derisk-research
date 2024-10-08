@@ -5,7 +5,6 @@ from typing import Iterator, Union
 
 import google.cloud.storage
 import pandas as pd
-
 from utils.exceptions import TokenValidationError
 from utils.settings import TOKEN_SETTINGS
 

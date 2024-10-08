@@ -1,11 +1,10 @@
 import dataclasses
 
 
-
 @dataclasses.dataclass
 class TokenSettings:
     symbol: str
-    # Source: Starkscan, e.g. 
+    # Source: Starkscan, e.g.
     # https://starkscan.co/token/0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7 for ETH.
     decimal_factor: float
     address: str
@@ -58,7 +57,7 @@ TOKEN_SETTINGS: dict[str, TokenSettings] = {
 
 
 # TODO: Introduce other pairs.
-# TODO: Define the addresses first, then map (static or dynamic (with special treatment of DAI)?) to symbols. 
+# TODO: Define the addresses first, then map (static or dynamic (with special treatment of DAI)?) to symbols.
 PAIRS: list[str] = [
     "ETH-USDC",
     "ETH-USDT",
@@ -74,8 +73,8 @@ PAIRS: list[str] = [
     "STRK-DAI V2",
 ]
 
-COLLATERAL_TOKENS = ['ETH', 'WBTC', 'STRK']
+COLLATERAL_TOKENS = ["ETH", "WBTC", "STRK"]
 
-STABLECOIN_BUNDLE_NAME = '(All USD Stable Coins)'
+STABLECOIN_BUNDLE_NAME = "(All USD Stable Coins)"
 
-DEBT_TOKENS = ['USDC', 'USDT', 'DAI', 'DAI V2', STABLECOIN_BUNDLE_NAME]
+DEBT_TOKENS = ["USDC", "USDT", "DAI", "DAI V2", STABLECOIN_BUNDLE_NAME]

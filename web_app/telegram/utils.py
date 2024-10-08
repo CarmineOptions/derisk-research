@@ -5,9 +5,9 @@ from uuid import UUID
 
 from aiogram import exceptions
 from aiogram.utils.deep_linking import create_deep_link
-
 from database.crud import DBConnector
 from database.models import NotificationData, TelegramLog
+
 from .bot import bot
 
 DEFAULT_MESSAGE_TEMPLATE = (

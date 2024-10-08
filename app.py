@@ -17,6 +17,7 @@ import src.swap_amm
 from src.chart_utils import (get_protocol_data_mappings, load_stats_data,
                          transform_loans_data, transform_main_chart_data)
 
+
 PROTOCOL_NAMES = [
     "zkLend",
     "Nostra Alpha",
@@ -124,7 +125,7 @@ def add_ekubo_liquidity(
 
     return data
 
-
+  
 def process_liquidity(
     main_chart_data: pandas.DataFrame, collateral_token: str, debt_token: str
 ) -> tuple[pandas.DataFrame, float]:
@@ -354,9 +355,11 @@ def main():
     if loan.empty:
         streamlit.warning(f"No loan found for user = {user} and protocol = {protocol}.")
     else:
-        collateral_usd_amounts, debt_usd_amounts = (
-            src.main_chart.get_specific_loan_usd_amounts(loan=loan)
-        )
+        (
+            collateral_usd_amounts,
+            debt_usd_amounts,
+        ) = src.main_chart.get_specific_loan_usd_amounts(loan=loan)
+
 
         with col2:
             figure = plotly.express.pie(
@@ -388,12 +391,14 @@ def main():
     streamlit.dataframe(general_stats)
     streamlit.dataframe(utilization_stats)
     # USD deposit, collateral and debt per token (bar chart).
-    supply_figure, collateral_figure, debt_figure = (
-        src.main_chart.get_bar_chart_figures(
-            supply_stats=supply_stats.copy(),
-            collateral_stats=collateral_stats.copy(),
-            debt_stats=debt_stats.copy(),
-        )
+    (
+        supply_figure,
+        collateral_figure,
+        debt_figure,
+    ) = src.main_chart.get_bar_chart_figures(
+        supply_stats=supply_stats.copy(),
+        collateral_stats=collateral_stats.copy(),
+        debt_stats=debt_stats.copy(),
     )
     streamlit.plotly_chart(figure_or_data=supply_figure, use_container_width=True)
     streamlit.plotly_chart(figure_or_data=collateral_figure, use_container_width=True)

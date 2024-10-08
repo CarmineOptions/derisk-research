@@ -1,12 +1,12 @@
 import logging
+from time import monotonic
 
 import pandas as pd
-from time import monotonic
-from handlers.state import State
+from handler_tools.constants import ProtocolAddresses, ProtocolIDs
 from handlers.loan_states.abstractions import LoanStateComputationBase
 from handlers.loan_states.zklend.events import ZkLendState
-from handler_tools.constants import ProtocolAddresses, ProtocolIDs
 from handlers.loan_states.zklend.utils import ZkLendInitializer
+from handlers.state import State
 
 logger = logging.getLogger(__name__)
 
@@ -120,20 +120,20 @@ class ZkLendLoanStateComputation(LoanStateComputationBase):
                 loan_entity.update_deposit()
 
         result_dict = {
-                "protocol": [self.PROTOCOL_TYPE for _ in loan_entities_values],
-                "user": [user for user in loan_entities.keys()],
-                "collateral": [
-                    {
-                        token: float(amount)
-                        for token, amount in loan.collateral.items()
-                    }
-                    for loan in loan_entities_values
-                ],
-                "block": [entity.extra_info.block for entity in loan_entities_values],
-                "timestamp": [
-                    entity.extra_info.timestamp for entity in loan_entities_values
-                ],
-                "debt": [{token: float(amount) for token, amount in loan.debt.items()} for loan in loan_entities_values],
+            "protocol": [self.PROTOCOL_TYPE for _ in loan_entities_values],
+            "user": [user for user in loan_entities.keys()],
+            "collateral": [
+                {token: float(amount) for token, amount in loan.collateral.items()}
+                for loan in loan_entities_values
+            ],
+            "block": [entity.extra_info.block for entity in loan_entities_values],
+            "timestamp": [
+                entity.extra_info.timestamp for entity in loan_entities_values
+            ],
+            "debt": [
+                {token: float(amount) for token, amount in loan.debt.items()}
+                for loan in loan_entities_values
+            ],
         }
 
         result_df = pd.DataFrame(result_dict)

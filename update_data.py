@@ -21,18 +21,21 @@ import src.swap_amm
 import src.zklend
 
 
-
 def update_data(zklend_state: src.zklend.ZkLendState):
     logging.info(f"Updating CSV data from {zklend_state.last_block_number}...")
     t0 = time.time()
     # TODO: parallelize per protocol
     # TODO: stream the data, don't wait until we get all events
-    zklend_events = src.zklend.zklend_get_events(start_block_number = zklend_state.last_block_number + 1)
+    zklend_events = src.zklend.zklend_get_events(
+        start_block_number=zklend_state.last_block_number + 1
+    )
     # hashstack_v0_events = src.hashstack_v0.hashstack_v0_get_events()
     # hashstack_v1_events = src.hashstack_v1.hashstack_v1_get_events()
     nostra_alpha_events = src.nostra_alpha.nostra_alpha_get_events()
     nostra_mainnet_events = src.nostra_mainnet.nostra_mainnet_get_events()
-    logging.info(f"got = {len(zklend_events)} events in {time.time() - t0}s")  # TODO: this log will become obsolete
+    logging.info(
+        f"got = {len(zklend_events)} events in {time.time() - t0}s"
+    )  # TODO: this log will become obsolete
 
     # Iterate over ordered events to obtain the final state of each user.
     t1 = time.time()
@@ -73,8 +76,8 @@ def update_data(zklend_state: src.zklend.ZkLendState):
     t_prices = time.time()
     states = [
         zklend_state,
-        # hashstack_v0_state, 
-        # hashstack_v1_state, 
+        # hashstack_v0_state,
+        # hashstack_v1_state,
         nostra_alpha_state,
         nostra_mainnet_state,
     ]
@@ -82,22 +85,23 @@ def update_data(zklend_state: src.zklend.ZkLendState):
     for state in states:
         underlying_addresses_to_decimals.update(
             {
-                x.underlying_address: x.decimals 
+                x.underlying_address: x.decimals
                 for x in state.token_parameters.collateral.values()
             }
         )
         underlying_addresses_to_decimals.update(
             {
-                x.underlying_address: x.decimals 
+                x.underlying_address: x.decimals
                 for x in state.token_parameters.debt.values()
             }
         )
     underlying_addresses_to_decimals.update(
         {
-            x.address: int(math.log10(x.decimal_factor)) for x in src.settings.TOKEN_SETTINGS.values()
+            x.address: int(math.log10(x.decimal_factor))
+            for x in src.settings.TOKEN_SETTINGS.values()
         }
     )
-    prices = src.helpers.get_prices(token_decimals = underlying_addresses_to_decimals)
+    prices = src.helpers.get_prices(token_decimals=underlying_addresses_to_decimals)
     logging.info(f"prices in {time.time() - t_prices}s")
 
     t_swap = time.time()
@@ -108,9 +112,13 @@ def update_data(zklend_state: src.zklend.ZkLendState):
     t3 = time.time()
     for pair, state in itertools.product(src.settings.PAIRS, states):
         protocol = src.protocol_parameters.get_protocol(state=state)
-        logging.info(f"Preparing main chart data for protocol = {protocol} and pair = {pair}.")
+        logging.info(
+            f"Preparing main chart data for protocol = {protocol} and pair = {pair}."
+        )
         # TODO: Decipher `pair` in a smarter way.
-        collateral_token_underlying_symbol, debt_token_underlying_symbol = pair.split("-")
+        collateral_token_underlying_symbol, debt_token_underlying_symbol = pair.split(
+            "-"
+        )
         _ = src.main_chart.get_main_chart_data(
             state=state,
             prices=prices,
@@ -119,15 +127,21 @@ def update_data(zklend_state: src.zklend.ZkLendState):
             debt_token_underlying_symbol=debt_token_underlying_symbol,
             save_data=True,
         )
-        logging.info(f"Main chart data for protocol = {protocol} and pair = {pair} prepared in {time.time() - t3}s")
+        logging.info(
+            f"Main chart data for protocol = {protocol} and pair = {pair} prepared in {time.time() - t3}s"
+        )
     logging.info(f"updated graphs in {time.time() - t3}s")
 
     loan_stats = {}
     for state in states:
         protocol = src.protocol_parameters.get_protocol(state=state)
-        loan_stats[protocol] = src.loans_table.get_loans_table_data(state=state, prices=prices, save_data=True)
+        loan_stats[protocol] = src.loans_table.get_loans_table_data(
+            state=state, prices=prices, save_data=True
+        )
 
-    general_stats = src.protocol_stats.get_general_stats(states=states, loan_stats=loan_stats, save_data=True)
+    general_stats = src.protocol_stats.get_general_stats(
+        states=states, loan_stats=loan_stats, save_data=True
+    )
     supply_stats = src.protocol_stats.get_supply_stats(
         states=states,
         prices=prices,
@@ -137,21 +151,30 @@ def update_data(zklend_state: src.zklend.ZkLendState):
     debt_stats = src.protocol_stats.get_debt_stats(states=states, save_data=True)
     _ = src.protocol_stats.get_utilization_stats(
         general_stats=general_stats,
-        supply_stats=supply_stats, 
-        debt_stats=debt_stats, 
+        supply_stats=supply_stats,
+        debt_stats=debt_stats,
         save_data=True,
     )
 
     max_block_number = zklend_events["block_number"].max()
     max_timestamp = zklend_events["timestamp"].max()
-    last_update = {"timestamp": str(max_timestamp), "block_number": str(max_block_number)}
-    src.persistent_state.upload_object_as_pickle(last_update, path=src.persistent_state.LAST_UPDATE_FILENAME)
-    zklend_state.save_loan_entities(path=src.persistent_state.PERSISTENT_STATE_LOAN_ENTITIES_FILENAME)
+    last_update = {
+        "timestamp": str(max_timestamp),
+        "block_number": str(max_block_number),
+    }
+    src.persistent_state.upload_object_as_pickle(
+        last_update, path=src.persistent_state.LAST_UPDATE_FILENAME
+    )
+    zklend_state.save_loan_entities(
+        path=src.persistent_state.PERSISTENT_STATE_LOAN_ENTITIES_FILENAME
+    )
     zklend_state.clear_loan_entities()
-    src.persistent_state.upload_object_as_pickle(zklend_state, path=src.persistent_state.PERSISTENT_STATE_FILENAME)
+    src.persistent_state.upload_object_as_pickle(
+        zklend_state, path=src.persistent_state.PERSISTENT_STATE_FILENAME
+    )
     loan_entities = pandas.read_parquet(
         f"gs://{src.helpers.GS_BUCKET_NAME}/{src.persistent_state.PERSISTENT_STATE_LOAN_ENTITIES_FILENAME}",
-        engine='fastparquet',
+        engine="fastparquet",
     )
     zklend_state.set_loan_entities(loan_entities=loan_entities)
     logging.info(f"Updated CSV data in {time.time() - t0}s")
@@ -159,11 +182,13 @@ def update_data(zklend_state: src.zklend.ZkLendState):
 
 
 def update_data_continuously():
-    state = src.persistent_state.load_pickle(path=src.persistent_state.PERSISTENT_STATE_FILENAME)
+    state = src.persistent_state.load_pickle(
+        path=src.persistent_state.PERSISTENT_STATE_FILENAME
+    )
     if state.last_block_number > 0:
         loan_entities = pandas.read_parquet(
             f"gs://{src.helpers.GS_BUCKET_NAME}/{src.persistent_state.PERSISTENT_STATE_LOAN_ENTITIES_FILENAME}",
-            engine='fastparquet',
+            engine="fastparquet",
         )
         state.set_loan_entities(loan_entities=loan_entities)
     while True:
@@ -173,13 +198,18 @@ def update_data_continuously():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
 
-    zklend_state = src.persistent_state.load_pickle(path=src.persistent_state.PERSISTENT_STATE_FILENAME)
+    zklend_state = src.persistent_state.load_pickle(
+        path=src.persistent_state.PERSISTENT_STATE_FILENAME
+    )
     if zklend_state.last_block_number > 0:
         loan_entities = pandas.read_parquet(
             f"gs://{src.helpers.GS_BUCKET_NAME}/{src.persistent_state.PERSISTENT_STATE_LOAN_ENTITIES_FILENAME}",
-            engine='fastparquet',
+            engine="fastparquet",
         )
         zklend_state.set_loan_entities(loan_entities=loan_entities)
     update_data(zklend_state)

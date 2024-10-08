@@ -1,8 +1,12 @@
+import asyncio
 import decimal
 from dataclasses import dataclass
-import asyncio
 
-from handlers.loan_states.zklend.fetch_zklend_specific_token_settings import TokenSettings, ZkLendSpecificTokenSettings, get_token_settings
+from handlers.loan_states.zklend.fetch_zklend_specific_token_settings import (
+    TokenSettings,
+    ZkLendSpecificTokenSettings,
+    get_token_settings,
+)
 
 
 # Mock response for the on chain call (func_call)
@@ -11,20 +15,76 @@ class MockBlockchainCall:
         return [
             {"name": "enabled", "type": "core::bool", "value": "1"},
             {"name": "decimals", "type": "core::felt252", "value": "18"},
-            {"name": "z_token_address", "type": "core::starknet::contract_address::ContractAddress", "value": "0x1b5bd713e72fdc5d63ffd83762f81297f6175a5e0a4771cdadbc1dd5fe72cb1"},
-            {"name": "interest_rate_model", "type": "core::starknet::contract_address::ContractAddress", "value": "0x5e39a07355604e8b19586ea01e83396166977fefbcf4bcf914d0febc2e382fe"},
-            {"name": "collateral_factor", "type": "core::felt252", "value": "800000000000000000000000000"},
-            {"name": "borrow_factor", "type": "core::felt252", "value": "1000000000000000000000000000"},
-            {"name": "reserve_factor", "type": "core::felt252", "value": "100000000000000000000000000"},
-            {"name": "last_update_timestamp", "type": "core::felt252", "value": "1717117956"},
-            {"name": "lending_accumulator", "type": "core::felt252", "value": "1004566796838649499220632413"},
-            {"name": "debt_accumulator", "type": "core::felt252", "value": "1023091980725735432747405580"},
-            {"name": "current_lending_rate", "type": "core::felt252", "value": "8818453132823305828258328"},
-            {"name": "current_borrowing_rate", "type": "core::felt252", "value": "26045010053342575604645918"},
-            {"name": "raw_total_debt", "type": "core::felt252", "value": "1473750388904731480172"},
-            {"name": "flash_loan_fee", "type": "core::felt252", "value": "900000000000000000000000"},
-            {"name": "liquidation_bonus", "type": "core::felt252", "value": "100000000000000000000000000"},
-            {"name": "debt_limit", "type": "core::felt252", "value": "2500000000000000000000"}
+            {
+                "name": "z_token_address",
+                "type": "core::starknet::contract_address::ContractAddress",
+                "value": "0x1b5bd713e72fdc5d63ffd83762f81297f6175a5e0a4771cdadbc1dd5fe72cb1",
+            },
+            {
+                "name": "interest_rate_model",
+                "type": "core::starknet::contract_address::ContractAddress",
+                "value": "0x5e39a07355604e8b19586ea01e83396166977fefbcf4bcf914d0febc2e382fe",
+            },
+            {
+                "name": "collateral_factor",
+                "type": "core::felt252",
+                "value": "800000000000000000000000000",
+            },
+            {
+                "name": "borrow_factor",
+                "type": "core::felt252",
+                "value": "1000000000000000000000000000",
+            },
+            {
+                "name": "reserve_factor",
+                "type": "core::felt252",
+                "value": "100000000000000000000000000",
+            },
+            {
+                "name": "last_update_timestamp",
+                "type": "core::felt252",
+                "value": "1717117956",
+            },
+            {
+                "name": "lending_accumulator",
+                "type": "core::felt252",
+                "value": "1004566796838649499220632413",
+            },
+            {
+                "name": "debt_accumulator",
+                "type": "core::felt252",
+                "value": "1023091980725735432747405580",
+            },
+            {
+                "name": "current_lending_rate",
+                "type": "core::felt252",
+                "value": "8818453132823305828258328",
+            },
+            {
+                "name": "current_borrowing_rate",
+                "type": "core::felt252",
+                "value": "26045010053342575604645918",
+            },
+            {
+                "name": "raw_total_debt",
+                "type": "core::felt252",
+                "value": "1473750388904731480172",
+            },
+            {
+                "name": "flash_loan_fee",
+                "type": "core::felt252",
+                "value": "900000000000000000000000",
+            },
+            {
+                "name": "liquidation_bonus",
+                "type": "core::felt252",
+                "value": "100000000000000000000000000",
+            },
+            {
+                "name": "debt_limit",
+                "type": "core::felt252",
+                "value": "2500000000000000000000",
+            },
         ]
 
 
@@ -32,7 +92,8 @@ class ProtocolAddresses:
     def __init__(self):
         self.ZKLEND_MARKET_ADDRESSES = "0xMarketAddress"
 
-src = type('src', (), {'blockchain_call': MockBlockchainCall()})
+
+src = type("src", (), {"blockchain_call": MockBlockchainCall()})
 
 
 # Mock TOKEN_SETTINGS dict
@@ -96,14 +157,14 @@ async def fetch_zklend_specific_token_settings():
     """
     # New dict to store ZkLendSpecificTokenSettings
     zklend_specific_token_settings: dict[str, ZkLendSpecificTokenSettings] = {}
-    
+
     # TOKEN_SETTINGS from /derisk-research/data_handler/handlers/settings.py
     # For each tokenSetting in TOKEN_SETTINGS, get the data from zklend
     for symbol, token_setting in TOKEN_SETTINGS.items():
         reserve_data = await get_token_reserve_data(token_setting.address)
         zklend_specific_token_setting = get_token_settings(reserve_data)
         zklend_specific_token_settings[symbol] = zklend_specific_token_setting
-    
+
     return zklend_specific_token_settings
 
 
@@ -112,6 +173,7 @@ async def main():
     new_settings = await fetch_zklend_specific_token_settings()
     for symbol, settings in new_settings.items():
         print(f"{symbol}: {settings}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

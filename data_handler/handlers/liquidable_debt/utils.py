@@ -2,14 +2,18 @@ import time
 from decimal import Decimal
 
 import requests
-from starknet_py.net.full_node_client import FullNodeClient
+from handlers.helpers import TokenValues, add_leading_zeros, get_symbol
+from handlers.settings import (
+    HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS,
+    JEDISWAP_POOL_SETTINGS,
+    MYSWAP_POOL_SETTINGS,
+    TOKEN_SETTINGS,
+    JediSwapPoolSettings,
+    MySwapPoolSettings,
+)
 from starknet_py.hash.selector import get_selector_from_name
 from starknet_py.net.client_models import Call
-
-from handlers.helpers import TokenValues, get_symbol, add_leading_zeros
-from handlers.settings import (TOKEN_SETTINGS,
-                               HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS, JEDISWAP_POOL_SETTINGS,
-                               MySwapPoolSettings, MYSWAP_POOL_SETTINGS, JediSwapPoolSettings)
+from starknet_py.net.full_node_client import FullNodeClient
 
 NET = FullNodeClient(node_url="https://starknet-mainnet.public.blastapi.io")
 
@@ -67,7 +71,7 @@ class JediSwapPool:
             (
                 await func_call(
                     addr=self.settings.address,
-                    selector='totalSupply',
+                    selector="totalSupply",
                     calldata=[],
                 )
             )[0]
@@ -183,7 +187,9 @@ class Prices:
                 (id, symbol) = token
                 self.prices.values[symbol] = Decimal(data[id][self.vs_currency])
         else:
-            raise Exception(f"Failed getting prices, status code = {response.status_code}.")
+            raise Exception(
+                f"Failed getting prices, status code = {response.status_code}."
+            )
 
     async def get_lp_token_prices(self) -> None:
         """
@@ -193,12 +199,14 @@ class Prices:
         lp_token_pools = LPTokenPools()
         await lp_token_pools.get_data()
         for lp_token, lp_token_pool in lp_token_pools.pools.items():
-            self.prices.values[lp_token] = self._get_lp_token_price(pool=lp_token_pool, prices=self.prices)
+            self.prices.values[lp_token] = self._get_lp_token_price(
+                pool=lp_token_pool, prices=self.prices
+            )
 
     @staticmethod
     def _get_lp_token_price(
-            pool: JediSwapPool | MySwapPool,
-            prices: TokenValues,
+        pool: JediSwapPool | MySwapPool,
+        prices: TokenValues,
     ) -> Decimal:
         """
         Calculates token prices
@@ -209,21 +217,18 @@ class Prices:
         token_1 = get_symbol(pool.settings.token_1)
         token_2 = get_symbol(pool.settings.token_2)
         token_1_value = (
-                pool.token_amounts.values[token_1]
-                / TOKEN_SETTINGS[token_1].decimal_factor
-                * prices.values[token_1]
+            pool.token_amounts.values[token_1]
+            / TOKEN_SETTINGS[token_1].decimal_factor
+            * prices.values[token_1]
         )
         token_2_value = (
-                pool.token_amounts.values[token_2]
-                / TOKEN_SETTINGS[token_2].decimal_factor
-                * prices.values[token_2]
+            pool.token_amounts.values[token_2]
+            / TOKEN_SETTINGS[token_2].decimal_factor
+            * prices.values[token_2]
         )
-        return (
-                (token_1_value + token_2_value)
-                / (
-                        pool.total_lp_supply
-                        / HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS[
-                            pool.settings.symbol
-                        ].decimal_factor
-                )
+        return (token_1_value + token_2_value) / (
+            pool.total_lp_supply
+            / HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS[
+                pool.settings.symbol
+            ].decimal_factor
         )
