@@ -8,10 +8,9 @@ Create Date: 2024-06-03 17:48:10.443847
 
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
 import sqlalchemy_utils
-
+from alembic import op
 from handlers.liquidable_debt.values import LendingProtocolNames
 
 # revision identifiers, used by Alembic.

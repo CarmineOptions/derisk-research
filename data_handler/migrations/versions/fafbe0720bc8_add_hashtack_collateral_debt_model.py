@@ -7,11 +7,10 @@ Create Date: 2024-08-07 10:31:47.338655
 """
 
 from typing import Sequence, Union
-from sqlalchemy.engine.reflection import Inspector
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
+from sqlalchemy.engine.reflection import Inspector
 
 # revision identifiers, used by Alembic.
 revision: str = "fafbe0720bc8"
@@ -55,6 +54,6 @@ def downgrade() -> None:
     if inspector.has_table("hashtack_collateral_debt"):
         op.drop_index(
             op.f("ix_hashtack_collateral_debt_user_id"),
-            table_name="hashtack_collateral_debt"
+            table_name="hashtack_collateral_debt",
         )
         op.drop_table("hashtack_collateral_debt")

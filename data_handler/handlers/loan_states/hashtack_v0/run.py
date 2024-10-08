@@ -1,12 +1,11 @@
 import logging
+from time import monotonic
 
 import pandas as pd
-from time import monotonic
+from handler_tools.constants import ProtocolAddresses, ProtocolIDs
 from handlers.loan_states.abstractions import HashstackBaseLoanStateComputation
 from handlers.loan_states.hashtack_v0.events import HashstackV0State, InterestRateModels
-from handler_tools.constants import ProtocolAddresses, ProtocolIDs
 from handlers.loan_states.hashtack_v0.utils import HashtackInitializer
-
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +51,7 @@ class HashtackV0StateComputation(HashstackBaseLoanStateComputation):
         return result_df
 
     def process_event(
-            self, instance_state: "State", method_name: str, event: pd.Series
+        self, instance_state: "State", method_name: str, event: pd.Series
     ) -> None:
         """
         Processes an event based on the method name and the event data.

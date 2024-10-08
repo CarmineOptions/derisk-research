@@ -1,24 +1,25 @@
+import asyncio
 import decimal
+import logging
 import os
 from decimal import Decimal
 from typing import Iterator
 
-import asyncio
 import google.cloud.storage
 import pandas
 import starknet_py.cairo.felt as cairo_felt_type
-
 from error_handler import BOT
-from handlers import blockchain_call
 from error_handler.values import MessageTemplates
-from handler_tools.types import TokenValues
 from handler_tools.constants import TOKEN_MAPPING, ProtocolIDs
-from handlers.settings import TOKEN_SETTINGS, PAIRS
+from handler_tools.types import TokenValues
+from handlers import blockchain_call
+from handlers.settings import PAIRS, TOKEN_SETTINGS
+
 from db.models import InterestRate
 
 GS_BUCKET_NAME = "derisk-persistent-state"
 ERROR_LOGS = set()
-
+logger = logging.getLogger(__name__)
 
 # TODO: Find a better solution to fix the discrepancies.
 # TODO: Update the values.
@@ -262,11 +263,23 @@ async def get_async_symbol(token_address: str) -> str:
     return cairo_felt_type.decode_shortstring(symbol[0])
 
 
-def upload_file_to_bucket(source_path: str, target_path: str):
+def upload_file_to_bucket(source_path: str, target_path: str) -> None:
+    """
+    Upload file to bucket
+    :param source_path: source path
+    :param target_path: target path
+    :return: None
+    """
     # Initialize the Google Cloud Storage client with the credentials.
-    storage_client = google.cloud.storage.Client.from_service_account_json(
-        os.getenv("CREDENTIALS_PATH")
-    )
+    try:
+        # Initialize the Google Cloud Storage client with the credentials.
+        storage_client = google.cloud.storage.Client.from_service_account_json(
+            # It can run only if CREDENTIALS_PATH=<value> or CREDENTIALS_PATH=""
+            os.getenv("CREDENTIALS_PATH", "")
+        )
+    except FileNotFoundError as e:
+        logger.info(f"Failed to initialize the Google Cloud Storage client due to an error: {e}")
+        raise FileNotFoundError
 
     # Get the target bucket.
     bucket = storage_client.bucket(GS_BUCKET_NAME)
@@ -274,7 +287,7 @@ def upload_file_to_bucket(source_path: str, target_path: str):
     # Upload the file to the bucket.
     blob = bucket.blob(target_path)
     blob.upload_from_filename(source_path)
-    print(f"File = {source_path} uploaded to = gs://{GS_BUCKET_NAME}/{target_path}")
+    logger.info(f"File = {source_path} uploaded to = gs://{GS_BUCKET_NAME}/{target_path}")
 
 
 def save_dataframe(data: pandas.DataFrame, path: str) -> None:
