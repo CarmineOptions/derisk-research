@@ -56,7 +56,7 @@ def get_collateral_token_range(
     collateral_token_underlying_address: str,
     collateral_token_price: float,
 ) -> list[float]:
-    TARGET_NUMBER_OF_VALUES = 50 
+    TARGET_NUMBER_OF_VALUES = 50
     start_price = 0.0
     stop_price = collateral_token_price * 1.2
     # Calculate rough step size to get about 50 (target) values
@@ -64,18 +64,15 @@ def get_collateral_token_range(
     # Round the step size to the closest readable value (1, 2, or 5 times powers of 10)
     magnitude = 10 ** math.floor(math.log10(raw_step_size))  # Base scale
     step_factors = [1, 2, 2.5, 5, 10]
-    difference = [abs(50 - stop_price/ (k * magnitude)) for k in step_factors] # Stores the difference between the target value and number of values generated from each step factor.
-    readable_step = step_factors[difference.index(min(difference))] * magnitude # Gets readable step from step factor with values closest to the target value.
-
+    difference = [
+        abs(50 - stop_price / (k * magnitude)) for k in step_factors
+    ]  # Stores the difference between the target value and number of values generated from each step factor.
+    readable_step = (
+        step_factors[difference.index(min(difference))] * magnitude
+    )  # Gets readable step from step factor with values closest to the target value.
 
     # Generate values using the calculated readable step
-    return list(
-        float_range(
-            start = readable_step,
-            stop = stop_price,
-            step = readable_step
-        )
-    )
+    return list(float_range(start=readable_step, stop=stop_price, step=readable_step))
 
 
 # TODO: replace these mappings
@@ -252,11 +249,16 @@ def get_underlying_address(
 
 
 def get_custom_data(data: pandas.DataFrame) -> list:
+    """
+    Returns custom data for Plotly charts.
+    :param data: dataframe
+    :return: list
+    """
     custom_columns = [
-        "liquidable_debt",
-        "liquidable_debt_zkLend",
+        "liquidable_debt_at_interval",
+        "liquidable_debt_at_interval_zkLend",
         "liquidable_debt_at_interval_Nostra Alpha",
-        "liquidable_debt_at_interval_Nostra Mainnet"
+        "liquidable_debt_at_interval_Nostra Mainnet",
     ]
     customdata = []
     data_length = len(data)
@@ -264,7 +266,7 @@ def get_custom_data(data: pandas.DataFrame) -> list:
         if col in data.columns:
             customdata.append(data[col].values)
         else:
-            customdata.append([0] * data_length) # Use 0 if the column is missing
+            customdata.append([0] * data_length)  # Use 0 if the column is missing
 
     # Transpose customdata to match rows to records
     customdata = list(zip(*customdata))
