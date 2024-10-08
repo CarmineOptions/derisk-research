@@ -3,12 +3,10 @@ import datetime
 import difflib
 import logging
 import math
-import time
 
 import numpy.random
 import pandas
 import plotly.express
-import requests
 import streamlit
 
 import src.helpers
@@ -16,6 +14,7 @@ import src.main_chart
 import src.persistent_state
 import src.settings
 import src.swap_amm
+import src.utils
 
 
 
@@ -50,110 +49,7 @@ def parse_token_amounts(raw_token_amounts: str) -> dict[str, float]:
     return token_amounts
 
 
-def _remove_leading_zeros(address: str) -> str:
-    while address[2] == "0":
-        address = f"0x{address[3:]}"
-    return address
-
-
-def _get_available_liquidity(
-    data: pandas.DataFrame, price: float, price_diff: float, bids: bool
-) -> float:
-    price_lower_bound = max(0.95 * price, price - price_diff) if bids else price
-    price_upper_bound = price if bids else min(1.05 * price, price + price_diff)
-    return data.loc[
-        data["price"].between(price_lower_bound, price_upper_bound), "quantity"
-    ].sum()
-
-
-def add_ekubo_liquidity(
-    data: pandas.DataFrame,
-    collateral_token: str,
-    debt_token: str,
-) -> float:
-    URL = "http://178.32.172.153/orderbook/"
-    DEX = "Ekubo"
-    params = {
-        "base_token": _remove_leading_zeros(collateral_token),
-        "quote_token": _remove_leading_zeros(debt_token),
-        "dex": DEX,
-    }
-    response = requests.get(URL, params=params)
-
-    if response.status_code == 200:
-        liquidity = response.json()
-        try:
-            bid_prices, bid_quantities = zip(*liquidity["bids"])
-        except ValueError:
-            time.sleep(300)
-            add_ekubo_liquidity(
-                data=data, collateral_token=collateral_token, debt_token=debt_token
-            )
-        else:
-            bids = pandas.DataFrame(
-                {
-                    "price": bid_prices,
-                    "quantity": bid_quantities,
-                },
-            )
-            bids = bids.astype(float)
-            bids.sort_values("price", inplace=True)
-            price_diff = data["collateral_token_price"].diff().max()
-            data["Ekubo_debt_token_supply"] = data["collateral_token_price"].apply(
-                lambda x: _get_available_liquidity(
-                    data=bids,
-                    price=x,
-                    price_diff=price_diff,
-                    bids=True,
-                )
-            )
-            data["debt_token_supply"] += data["Ekubo_debt_token_supply"]
-            return data
-
-    logging.warning(
-        "Using collateral token as base token and debt token as quote token."
-    )
-    params = {
-        "base_token": _remove_leading_zeros(debt_token),
-        "quote_token": _remove_leading_zeros(collateral_token),
-        "dex": DEX,
-    }
-    response = requests.get(URL, params=params)
-
-    if response.status_code == 200:
-        liquidity = response.json()
-        try:
-            ask_prices, ask_quantities = zip(*liquidity["asks"])
-        except ValueError:
-            time.sleep(5)
-            add_ekubo_liquidity(
-                data=data, collateral_token=collateral_token, debt_token=debt_token
-            )
-        else:
-            asks = pandas.DataFrame(
-                {
-                    "price": ask_prices,
-                    "quantity": ask_quantities,
-                },
-            )
-            asks = asks.astype(float)
-            asks.sort_values("price", inplace=True)
-            data["Ekubo_debt_token_supply"] = data["collateral_token_price"].apply(
-                lambda x: _get_available_liquidity(
-                    data=asks,
-                    price=x,
-                    bids=False,
-                )
-            )
-            data["debt_token_supply"] += data["Ekubo_debt_token_supply"]
-            return data
-
-    return data
-
-
-def create_stablecoin_bundle(
-    data: dict[str, pandas.DataFrame]
-) -> dict[str, pandas.DataFrame]:
+def create_stablecoin_bundle(data: dict[str, pandas.DataFrame]) -> dict[str, pandas.DataFrame]:
     """
     Creates a stablecoin bundle by merging relevant DataFrames for collateral tokens and debt tokens.
 
@@ -231,15 +127,9 @@ def process_liquidity(
     main_chart_data: pandas.DataFrame, collateral_token: str, debt_token: str
 ) -> tuple[pandas.DataFrame, float]:
     # Fetch underlying addresses and decimals
-    collateral_token_underlying_address = (
-        src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[collateral_token]
-    )
-    collateral_token_decimals = int(
-        math.log10(src.settings.TOKEN_SETTINGS[collateral_token].decimal_factor)
-    )
-    underlying_addresses_to_decimals = {
-        collateral_token_underlying_address: collateral_token_decimals
-    }
+    collateral_token_underlying_address = src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[collateral_token]
+    collateral_token_decimals = int(math.log10(src.settings.TOKEN_SETTINGS[collateral_token].decimal_factor))
+    underlying_addresses_to_decimals = {collateral_token_underlying_address: collateral_token_decimals}
 
     # Fetch prices
     prices = src.helpers.get_prices(token_decimals=underlying_addresses_to_decimals)
@@ -250,10 +140,15 @@ def process_liquidity(
     debt_token_underlying_address = (
         src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[debt_token]
     )
-    main_chart_data = add_ekubo_liquidity(
+
+    ekubo_liquidity = src.utils.EkuboLiquidity(
         data=main_chart_data,
         collateral_token=collateral_token_underlying_address,
         debt_token=debt_token_underlying_address,
+    )
+
+    main_chart_data = ekubo_liquidity.apply_liquidity_to_dataframe(
+        ekubo_liquidity.fetch_liquidity(),
     )
 
     return main_chart_data, collateral_token_price
