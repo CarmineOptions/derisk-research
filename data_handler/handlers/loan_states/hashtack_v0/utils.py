@@ -1,11 +1,12 @@
 import logging
-from typing import Union
-import pandas as pd
-from db.crud import InitializerDBConnector
-from db.models import HashtackCollateralDebt
 from decimal import Decimal
+from typing import Union
+
+import pandas as pd
 from handlers.loan_states.hashtack_v0.events import HashstackV0LoanEntity
 
+from db.crud import InitializerDBConnector
+from db.models import HashtackCollateralDebt
 
 logger = logging.getLogger(__name__)
 
@@ -15,18 +16,24 @@ class HashtackInitializer:
     A class that initializes the HashstackV0 or HashtackV1 loan states.
     """
 
-    def __init__(self, hashtack_state: Union["HashstackV0State", "HashstackV1State"]) -> None:
+    def __init__(
+        self, hashtack_state: Union["HashstackV0State", "HashstackV1State"]
+    ) -> None:
         self.db_connector = InitializerDBConnector()
         self.hashtack_state = hashtack_state
 
-    def set_last_loan_states_per_loan_ids(self, users_ids: list[str], version: int) -> None:
+    def set_last_loan_states_per_loan_ids(
+        self, users_ids: list[str], version: int
+    ) -> None:
         """
         Sets the last loan states for the given users.
 
         :param version: Version of Hashtack or V0 or V1
         :param users_ids: The list of user ids to set the loan states for.
         """
-        loan_states = self.db_connector.get_hashtack_by_loan_ids(users_ids, version=version)
+        loan_states = self.db_connector.get_hashtack_by_loan_ids(
+            users_ids, version=version
+        )
         for loan_state in loan_states:
             self._set_loan_state_per_loan_id(loan_state)
 

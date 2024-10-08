@@ -8,10 +8,9 @@ Create Date: 2024-05-22 19:36:14.751029
 
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
 import sqlalchemy_utils
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "26bebf9e427d"
@@ -34,12 +33,14 @@ def downgrade() -> None:
     # Check for duplicate emails
     connection = op.get_bind()
     duplicates = connection.execute(
-        sa.text("""
+        sa.text(
+            """
                SELECT email
                FROM notification
                GROUP BY email
                HAVING COUNT(email) > 1
-           """)
+           """
+        )
     ).fetchall()
 
     if duplicates:
@@ -48,12 +49,16 @@ def downgrade() -> None:
         for row in duplicates:
             print(row.email)
         # Ask for user permission to delete duplicates
-        user_input = input("Do you want to delete duplicate records? [yes/no]: ").strip().lower()
-        if user_input != 'yes':
+        user_input = (
+            input("Do you want to delete duplicate records? [yes/no]: ").strip().lower()
+        )
+        if user_input != "yes":
             print("Aborting downgrade operation due to duplicate email addresses.")
             return
         # Delete duplicate records, keeping only the first occurrence
-        connection.execute(sa.text("""
+        connection.execute(
+            sa.text(
+                """
             DELETE FROM notification
             WHERE id NOT IN (
                 SELECT id
@@ -63,8 +68,8 @@ def downgrade() -> None:
                     FROM notification
                 ) AS subq
                 WHERE r = 1
-            )"""))
+            )"""
+            )
+        )
 
-    op.create_index(
-        "ix_notification_email", "notification", ["email"], unique=True
-    )
+    op.create_index("ix_notification_email", "notification", ["email"], unique=True)

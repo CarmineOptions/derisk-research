@@ -8,13 +8,11 @@ Create Date: 2024-07-01 20:40:32.485428
 
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
 import sqlalchemy_utils
-from sqlalchemy.engine import reflection
-
+from alembic import op
 from handler_tools.constants import ProtocolIDs
-
+from sqlalchemy.engine import reflection
 
 # revision identifiers, used by Alembic.
 revision: str = "efd02f93572b"

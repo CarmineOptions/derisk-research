@@ -2,10 +2,9 @@ import time
 from decimal import Decimal
 
 import requests
-from fastapi import Request
-
 from database.crud import DBConnector
 from database.models import NotificationData
+from fastapi import Request
 from utils.values import HEALTH_RATIO_URL
 
 
@@ -33,7 +32,9 @@ def get_all_activated_subscribers_from_db() -> list[NotificationData]:
     return list(DBConnector().get_all_activated_subscribers(model=NotificationData))
 
 
-def calculate_difference(a: float | Decimal = None, b: float | Decimal = None) -> Decimal:
+def calculate_difference(
+    a: float | Decimal = None, b: float | Decimal = None
+) -> Decimal:
     """
     Calculates difference between two numbers
     """

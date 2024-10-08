@@ -1,8 +1,8 @@
-from typing import Iterator
 import logging
 import math
 import os
 import time
+from typing import Iterator
 
 import google.cloud.storage
 import pandas
@@ -14,11 +14,8 @@ import src.db
 import src.settings
 import src.types
 
-
-
 # TODO: rename
 GS_BUCKET_NAME = "derisk-persistent-state/v3"
-
 
 
 def get_events(
@@ -81,7 +78,7 @@ def get_collateral_token_range(
     )
 
 
-# TODO: replace these mappings 
+# TODO: replace these mappings
 UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES = {
     "ETH": "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
     "WBTC": "0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac",
@@ -97,28 +94,41 @@ def load_data(protocol: str) -> tuple[dict[str, pandas.DataFrame], pandas.DataFr
     directory = f"{protocol.lower().replace(' ', '_')}_data"
     main_chart_data = {}
     for pair in src.settings.PAIRS:
-        collateral_token_underlying_symbol, debt_token_underlying_symbol = pair.split('-')
-        collateral_token_underlying_address = UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[collateral_token_underlying_symbol]
-        debt_token_underlying_address = UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[debt_token_underlying_symbol]
-        underlying_addresses_pair = f"{collateral_token_underlying_address}-{debt_token_underlying_address}"
+        collateral_token_underlying_symbol, debt_token_underlying_symbol = pair.split(
+            "-"
+        )
+        collateral_token_underlying_address = (
+            UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[
+                collateral_token_underlying_symbol
+            ]
+        )
+        debt_token_underlying_address = UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[
+            debt_token_underlying_symbol
+        ]
+        underlying_addresses_pair = (
+            f"{collateral_token_underlying_address}-{debt_token_underlying_address}"
+        )
         try:
             main_chart_data[pair] = pandas.read_parquet(
                 f"gs://{src.helpers.GS_BUCKET_NAME}/{directory}/{underlying_addresses_pair}.parquet",
-                engine='fastparquet',
+                engine="fastparquet",
             )
         except FileNotFoundError:
             main_chart_data[pair] = pandas.DataFrame()
     loans_data = pandas.read_parquet(
         f"gs://{src.helpers.GS_BUCKET_NAME}/{directory}/loans.parquet",
-        engine='fastparquet',
+        engine="fastparquet",
     )
     return main_chart_data, loans_data
 
 
 async def get_symbol(token_address: str) -> str:
-    # DAI V2's symbol is `DAI` but we don't want to mix it with DAI = DAI V1. 
-    if token_address == '0x05574eb6b8789a91466f902c380d978e472db68170ff82a5b650b95a58ddf4ad':
-        return 'DAI V2'
+    # DAI V2's symbol is `DAI` but we don't want to mix it with DAI = DAI V1.
+    if (
+        token_address
+        == "0x05574eb6b8789a91466f902c380d978e472db68170ff82a5b650b95a58ddf4ad"
+    ):
+        return "DAI V2"
     symbol = await src.blockchain_call.func_call(
         addr=token_address,
         selector="symbol",
@@ -140,27 +150,33 @@ def get_prices(token_decimals: dict[str, int]) -> dict[str, float]:
 
         prices = {}
         for token, decimals in token_decimals.items():
-            token_info = list(filter(lambda x: (add_leading_zeros(x['address']) == token), tokens_info))
+            token_info = list(
+                filter(
+                    lambda x: (add_leading_zeros(x["address"]) == token), tokens_info
+                )
+            )
 
             # Remove duplicates.
             token_info = [dict(y) for y in {tuple(x.items()) for x in token_info}]
 
             # Perform sanity checks.
             assert len(token_info) == 1
-            assert decimals == token_info[0]['decimals']
+            assert decimals == token_info[0]["decimals"]
 
-            prices[token] = token_info[0]['currentPrice']
+            prices[token] = token_info[0]["currentPrice"]
         return prices
     else:
         response.raise_for_status()
 
 
 def upload_file_to_bucket(source_path: str, target_path: str):
-    bucket_name, folder = GS_BUCKET_NAME.split('/')
-    target_path = f'{folder}/{target_path}'
+    bucket_name, folder = GS_BUCKET_NAME.split("/")
+    target_path = f"{folder}/{target_path}"
 
     # Initialize the Google Cloud Storage client with the credentials.
-    storage_client = google.cloud.storage.Client.from_service_account_json(os.getenv("CREDENTIALS_PATH"))
+    storage_client = google.cloud.storage.Client.from_service_account_json(
+        os.getenv("CREDENTIALS_PATH")
+    )
 
     # Get the target bucket.
     bucket = storage_client.bucket(bucket_name)
@@ -168,28 +184,30 @@ def upload_file_to_bucket(source_path: str, target_path: str):
     # Upload the file to the bucket.
     blob = bucket.blob(target_path)
     blob.upload_from_filename(source_path)
-    logging.debug(f"File = {source_path} uploaded to = gs://{bucket_name}/{target_path}.")
+    logging.debug(
+        f"File = {source_path} uploaded to = gs://{bucket_name}/{target_path}."
+    )
 
 
 def save_dataframe(data: pandas.DataFrame, path: str) -> None:
-    directory = path.rstrip(path.split('/')[-1])
-    if not directory == '':
+    directory = path.rstrip(path.split("/")[-1])
+    if not directory == "":
         os.makedirs(directory, exist_ok=True)
-    data.to_parquet(path, index=False, engine = 'fastparquet', compression='gzip')
+    data.to_parquet(path, index=False, engine="fastparquet", compression="gzip")
     src.helpers.upload_file_to_bucket(source_path=path, target_path=path)
     os.remove(path)
 
 
 def add_leading_zeros(hash: str) -> str:
-    '''
-    Converts e.g. `0x436d8d078de345c11493bd91512eae60cd2713e05bcaa0bb9f0cba90358c6e` to  
+    """
+    Converts e.g. `0x436d8d078de345c11493bd91512eae60cd2713e05bcaa0bb9f0cba90358c6e` to
     `0x00436d8d078de345c11493bd91512eae60cd2713e05bcaa0bb9f0cba90358c6e`.
-    '''
-    return '0x' + hash[2:].zfill(64)
+    """
+    return "0x" + hash[2:].zfill(64)
 
 
 def get_addresses(
-    token_parameters: src.types.TokenParameters, 
+    token_parameters: src.types.TokenParameters,
     underlying_address: str | None = None,
     underlying_symbol: str | None = None,
 ) -> list[str]:
@@ -208,8 +226,8 @@ def get_addresses(
         ]
     else:
         raise ValueError(
-            'Both `underlying_address` =  {} or `underlying_symbol` = {} are not specified.'.format(
-                underlying_address, 
+            "Both `underlying_address` =  {} or `underlying_symbol` = {} are not specified.".format(
+                underlying_address,
                 underlying_symbol,
             )
         )
@@ -218,7 +236,7 @@ def get_addresses(
 
 
 def get_underlying_address(
-    token_parameters: src.types.TokenParameters, 
+    token_parameters: src.types.TokenParameters,
     underlying_symbol: str,
 ) -> str:
     # One underlying address at maximum can match the given `underlying_symbol`.
@@ -228,6 +246,6 @@ def get_underlying_address(
         if x.underlying_symbol == underlying_symbol
     }
     if not underlying_addresses:
-        return ''
+        return ""
     assert len(underlying_addresses) == 1
     return list(underlying_addresses)[0]

@@ -1,11 +1,12 @@
-import requests
-
+from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from decimal import Decimal
 
-from abc import ABC, abstractmethod
-from .constants import TOKEN_MAPPING, TokenConfig
+import requests
+
 from db.schemas import OrderBookResponseModel
+
+from .constants import TOKEN_MAPPING, TokenConfig
 
 
 class OrderBookBase(ABC):

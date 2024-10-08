@@ -1,7 +1,7 @@
 import dataclasses
 import decimal
-from typing import Optional, Union
 from collections import defaultdict
+from typing import Optional, Union
 
 
 @dataclasses.dataclass

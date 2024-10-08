@@ -1,10 +1,14 @@
-from db.models import LiquidableDebt
-from handlers.liquidable_debt.values import (COLLATERAL_FIELD_NAME,
-                                             GS_BUCKET_NAME, GS_BUCKET_URL,
-                                             LIQUIDABLE_DEBT_FIELD_NAME,
-                                             PRICE_FIELD_NAME,
-                                             LendingProtocolNames)
+from handlers.liquidable_debt.values import (
+    COLLATERAL_FIELD_NAME,
+    GS_BUCKET_NAME,
+    GS_BUCKET_URL,
+    LIQUIDABLE_DEBT_FIELD_NAME,
+    PRICE_FIELD_NAME,
+    LendingProtocolNames,
+)
 from handlers.loan_states.hashtack_v1.events import HashstackV1State
+
+from db.models import LiquidableDebt
 
 
 def run() -> None:
@@ -28,6 +32,6 @@ def run() -> None:
             liquidable_debt=liquidable_debt_info[LIQUIDABLE_DEBT_FIELD_NAME],
             protocol_name=LendingProtocolNames.HASHSTACK_V1.value,
             collateral_token_price=liquidable_debt_info[PRICE_FIELD_NAME],
-            collateral_token=liquidable_debt_info[COLLATERAL_FIELD_NAME]
+            collateral_token=liquidable_debt_info[COLLATERAL_FIELD_NAME],
         )
         handler.CONNECTOR.write_to_db(db_row)
