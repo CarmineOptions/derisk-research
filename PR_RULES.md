@@ -18,7 +18,7 @@ python -m isort <your file name>
 ```
 
 ## Commit your changes
-1. Make sure that your commit message make sense and describe what you have done
+1. Make sure that your commit message makes sense and describe what you have done
 
 
 ## Assign PR to reviewer
