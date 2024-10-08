@@ -2,13 +2,18 @@ from datetime import datetime
 from uuid import uuid4
 
 from sqlalchemy import (
-    UUID, Boolean, Column, DateTime, Float, ForeignKey,
-    MetaData, String
+    UUID,
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    MetaData,
+    String,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped
 from sqlalchemy_utils import IPAddressType
 from sqlalchemy_utils.types.choice import ChoiceType
-
 from utils.values import ProtocolIDs
 
 
@@ -51,5 +56,3 @@ class TelegramLog(Base):
     notification_data_id = Column(ForeignKey(NotificationData.id), nullable=False)
     is_succesfully = Column(Boolean, nullable=False)
     message = Column(String, server_default="", default="", nullable=False)
-
-

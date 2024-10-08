@@ -1,8 +1,8 @@
 from decimal import Decimal, getcontext
+
 import pandas as pd
 from handlers.order_books.abstractions import OrderBookBase
 from handlers.order_books.ekubo.api_connector import EkuboAPIConnector
-
 
 getcontext().prec = 18
 
@@ -108,7 +108,8 @@ class EkuboOrderBook(OrderBookBase):
         next_sqrt = self._get_pure_sqrt_ratio(next_tick)
 
         supply = abs(
-            ((glob_liq / prev_sqrt) - (glob_liq / next_sqrt)) / 10**self.token_a_decimal
+            ((glob_liq / prev_sqrt) - (glob_liq / next_sqrt))
+            / 10**self.token_a_decimal
         )
         price = self.tick_to_price(prev_tick)
         self.asks.append((price, supply))
@@ -150,7 +151,8 @@ class EkuboOrderBook(OrderBookBase):
         next_sqrt = self._get_pure_sqrt_ratio(next_tick)
 
         supply = abs(
-            ((glob_liq * prev_sqrt) - (glob_liq * next_sqrt)) / 10**self.token_b_decimal
+            ((glob_liq * prev_sqrt) - (glob_liq * next_sqrt))
+            / 10**self.token_b_decimal
         )
         price = self.tick_to_price(prev_tick)
         self.bids.append((price, supply))

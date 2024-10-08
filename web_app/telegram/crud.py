@@ -1,11 +1,10 @@
 from typing import Sequence
 from uuid import UUID
 
-from sqlalchemy import update, select, delete
-from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncEngine, create_async_engine
-
 from database.crud import ModelType
-from database.models import NotificationData, Base
+from database.models import Base, NotificationData
+from sqlalchemy import delete, select, update
+from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 from telegram.config import DATABASE_URL
 
 

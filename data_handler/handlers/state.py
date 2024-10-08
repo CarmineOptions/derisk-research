@@ -1,26 +1,25 @@
 import abc
+import asyncio
 import collections
 import dataclasses
 import decimal
 from typing import Optional
 
-import asyncio
 import pandas
-
 from error_handler import BOT
+from error_handler.values import MessageTemplates
 from handler_tools.types import (
     CollateralAndDebtInterestRateModels,
-    InterestRateModels,
-    TokenParameters,
     CollateralAndDebtTokenParameters,
+    InterestRateModels,
     Portfolio,
-    TokenValues,
     Prices,
+    TokenParameters,
+    TokenValues,
 )
-from error_handler.values import MessageTemplates
+from handlers.exceptions import TokenSettingsNotFound
 from handlers.helpers import ExtraInfo
 from handlers.settings import TOKEN_SETTINGS, TokenSettings
-from handlers.exceptions import TokenSettingsNotFound
 
 
 @dataclasses.dataclass
@@ -195,11 +194,11 @@ class LoanEntity(abc.ABC):
         self.extra_info: ExtraInfo = ExtraInfo()
 
     def compute_collateral_usd(
-            self,
-            risk_adjusted: bool,
-            collateral_token_parameters: TokenParameters,
-            collateral_interest_rate_model: InterestRateModels,
-            prices: Prices,
+        self,
+        risk_adjusted: bool,
+        collateral_token_parameters: TokenParameters,
+        collateral_interest_rate_model: InterestRateModels,
+        prices: Prices,
     ) -> float:
         """
         Compute the value of the collateral in USD.
@@ -212,7 +211,11 @@ class LoanEntity(abc.ABC):
         return sum(
             float(token_amount)
             / (10 ** collateral_token_parameters[token].decimals)
-            * (collateral_token_parameters[token].collateral_factor if risk_adjusted else 1.0)
+            * (
+                collateral_token_parameters[token].collateral_factor
+                if risk_adjusted
+                else 1.0
+            )
             * float(collateral_interest_rate_model[token])
             * prices[collateral_token_parameters[token].underlying_address]
             for token, token_amount in self.collateral.items()

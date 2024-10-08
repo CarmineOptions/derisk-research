@@ -1,7 +1,7 @@
-from decimal import Decimal
-from typing import Optional, Dict
-from typing import List
 import decimal
+from decimal import Decimal
+from typing import Dict, List, Optional
+
 from pydantic import BaseModel, field_validator
 
 
@@ -26,6 +26,7 @@ class InterestRateModel(BaseModel):
     """
     A data model class that validates data user entered
     """
+
     block: int
     timestamp: int
     debt: Dict[str, float]
@@ -58,7 +59,7 @@ class OrderBookResponseModel(BaseModel):
         return [(float(a), float(b)) for a, b in value]
 
     @field_validator("block")
-    def validate_block(cls, value: int| None) -> int:
+    def validate_block(cls, value: int | None) -> int:
         """
         Validate block number
         :param value: block number

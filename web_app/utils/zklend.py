@@ -5,6 +5,7 @@ from .helpers import Portfolio, TokenValues
 from .settings import TOKEN_SETTINGS as BASE_TOKEN_SETTINGS
 from .settings import TokenSettings as BaseTokenSettings
 from .state import InterestRateModels, LoanEntity, State
+
 # IT GIVES `ModuleNotFoundError` THAT'S WHY I COMMENTED OUT IT
 # from data_handler.handlers.loan_states.zklend.fetch_zklend_specific_token_settings import ZKLEND_SPECIFIC_TOKEN_SETTINGS
 

@@ -1,10 +1,11 @@
+import asyncio
 import logging
 from uuid import uuid4
 
-import asyncio
 from aiogram import Bot, Dispatcher
+
+from .config import ERROR_CHAT_ID, TELEGRAM_TOKEN
 from .values import Message
-from .config import TELEGRAM_TOKEN, ERROR_CHAT_ID
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -45,19 +46,25 @@ class ErrorHandlerBot:
 
         if not self.SESSION_MESSAGES[self.SESSION_ID]:
             await self.bot.send_message(chat_id=ERROR_CHAT_ID, text=message)
-            self.SESSION_MESSAGES[self.SESSION_ID].append(Message(text=message, is_sent=True))
+            self.SESSION_MESSAGES[self.SESSION_ID].append(
+                Message(text=message, is_sent=True)
+            )
             await self.bot.close()
 
         elif self._get_unique_message(message):
             await self.bot.send_message(chat_id=ERROR_CHAT_ID, text=message)
-            self.SESSION_MESSAGES[self.SESSION_ID].append(Message(text=message, is_sent=True))
+            self.SESSION_MESSAGES[self.SESSION_ID].append(
+                Message(text=message, is_sent=True)
+            )
             await self.bot.close()
 
         else:
-            self.SESSION_MESSAGES[self.SESSION_ID].append(Message(text=message, is_sent=False))
+            self.SESSION_MESSAGES[self.SESSION_ID].append(
+                Message(text=message, is_sent=False)
+            )
 
 
 BOT = ErrorHandlerBot(TELEGRAM_TOKEN)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(dispatcher.start_polling(BOT.bot))

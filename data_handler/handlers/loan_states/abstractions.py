@@ -3,12 +3,12 @@ from abc import ABC, abstractmethod
 from typing import Dict, Optional
 
 import pandas as pd
+from handler_tools.api_connector import DeRiskAPIConnector
 from handler_tools.constants import ProtocolIDs
+from handlers.state import InterestRateModels, State
 
 from db.crud import DBConnector
-from db.models import LoanState, InterestRate
-from handlers.state import State, InterestRateModels
-from handler_tools.api_connector import DeRiskAPIConnector
+from db.models import InterestRate, LoanState
 
 logger = logging.getLogger(__name__)
 
@@ -229,7 +229,9 @@ class LoanStateComputationBase(ABC):
             }
         )
 
-    def set_interest_rate(self, instance_state: State, block: int, protocol_type: str) -> None:
+    def set_interest_rate(
+        self, instance_state: State, block: int, protocol_type: str
+    ) -> None:
         """
         Sets the interest rate for the zkLend protocol.
 
@@ -243,12 +245,24 @@ class LoanStateComputationBase(ABC):
         if block == instance_state.last_interest_rate_block_number:
             return
 
-        interest_rate_data = self.db_connector.get_interest_rate_by_block(block_number=block,
-                                                                          protocol_id=protocol_type)
-        if interest_rate_data and instance_state.last_interest_rate_block_number != interest_rate_data.block:
-            collateral_interest_rate, debt_interest_rate = interest_rate_data.get_json_deserialized()
-            instance_state.interest_rate_models.collateral = InterestRateModels(collateral_interest_rate)
-            instance_state.interest_rate_models.debt = InterestRateModels(debt_interest_rate)
+        interest_rate_data = self.db_connector.get_interest_rate_by_block(
+            block_number=block, protocol_id=protocol_type
+        )
+        if (
+            interest_rate_data
+            and instance_state.last_interest_rate_block_number
+            != interest_rate_data.block
+        ):
+            (
+                collateral_interest_rate,
+                debt_interest_rate,
+            ) = interest_rate_data.get_json_deserialized()
+            instance_state.interest_rate_models.collateral = InterestRateModels(
+                collateral_interest_rate
+            )
+            instance_state.interest_rate_models.debt = InterestRateModels(
+                debt_interest_rate
+            )
             instance_state.last_interest_rate_block_number = block
 
     def run(self) -> None:
