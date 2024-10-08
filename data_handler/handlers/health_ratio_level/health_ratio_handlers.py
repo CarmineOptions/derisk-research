@@ -3,26 +3,26 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Type
 
-from db.crud import DBConnector
-
-from handlers.helpers import TokenValues
-from handlers.state import State, LoanEntity
-from handlers.loan_states.zklend.events import ZkLendState, ZkLendLoanEntity
-from handlers.loan_states.nostra_alpha.events import (
-    NostraAlphaState,
-    NostraAlphaLoanEntity,
-)
-from handlers.loan_states.nostra_mainnet.events import (
-    NostraMainnetState,
-    NostraMainnetLoanEntity,
-)
 from handler_tools.constants import ProtocolIDs
+from handlers.helpers import TokenValues
 from handlers.liquidable_debt.utils import Prices
 from handlers.liquidable_debt.values import (
-    USER_FIELD_NAME,
     HEALTH_FACTOR_FIELD_NAME,
     TIMESTAMP_FIELD_NAME,
+    USER_FIELD_NAME,
 )
+from handlers.loan_states.nostra_alpha.events import (
+    NostraAlphaLoanEntity,
+    NostraAlphaState,
+)
+from handlers.loan_states.nostra_mainnet.events import (
+    NostraMainnetLoanEntity,
+    NostraMainnetState,
+)
+from handlers.loan_states.zklend.events import ZkLendLoanEntity, ZkLendState
+from handlers.state import LoanEntity, State
+
+from db.crud import DBConnector
 
 
 class BaseHealthRatioHandler:

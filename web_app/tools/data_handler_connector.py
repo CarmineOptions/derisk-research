@@ -1,6 +1,7 @@
 import os
+from typing import Dict, List, Optional
+
 import requests
-from typing import List, Optional, Dict
 from pydantic import BaseModel
 
 
@@ -25,6 +26,7 @@ class DataFetcherClient:
     """
     A client for fetching data from the FastAPI endpoints.
     """
+
     def __init__(self):
         self.base_url = os.getenv("DATA_HANDLER_URL", "http://localhost:8000")
         self.session = requests.Session()
@@ -36,7 +38,7 @@ class DataFetcherClient:
         end_block: Optional[int] = None,
         start_datetime: Optional[int] = None,
         end_datetime: Optional[int] = None,
-        user: Optional[str] = None
+        user: Optional[str] = None,
     ) -> List[LoanStateResponse]:
         """
         Fetch loan states from the database with optional filtering.
@@ -63,16 +65,13 @@ class DataFetcherClient:
             "end_block": end_block,
             "start_datetime": start_datetime,
             "end_datetime": end_datetime,
-            "user": user
+            "user": user,
         }
         response = self.session.get(f"{self.base_url}/loan_states", params=params)
         response.raise_for_status()
         return [LoanStateResponse(**item) for item in response.json()]
 
-    def get_last_interest_rate_by_block(
-        self,
-        protocol: str
-    ) -> InterestRateModel:
+    def get_last_interest_rate_by_block(self, protocol: str) -> InterestRateModel:
         """
         Fetch the last interest rate record by block number and protocol.
 

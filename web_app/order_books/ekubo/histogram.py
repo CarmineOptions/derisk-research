@@ -1,6 +1,7 @@
 import argparse
-import matplotlib.pyplot as plt
 from typing import List
+
+import matplotlib.pyplot as plt
 
 from web_app.order_books.ekubo.main import EkuboOrderBook
 
@@ -85,13 +86,19 @@ class Histogram:
 
     def add_asks(self) -> None:
         """Add ask prices and quantities to the histogram."""
-        self.ax.barh(self.ask_prices, self.ask_quantities, color="red", label="Asks", height=15)
+        self.ax.barh(
+            self.ask_prices, self.ask_quantities, color="red", label="Asks", height=15
+        )
 
     def add_bids(self) -> None:
         """Add bid prices and quantities to the histogram."""
-        self.ax.barh(self.bid_prices, self.bid_quantities, color="green", label="Bids", height=15)
+        self.ax.barh(
+            self.bid_prices, self.bid_quantities, color="green", label="Bids", height=15
+        )
 
-    def add_total_box_quantity(self, quantities_name: str, sum_quantities: float) -> None:
+    def add_total_box_quantity(
+        self, quantities_name: str, sum_quantities: float
+    ) -> None:
         """
         Add a text box displaying the total quantity.
 
@@ -100,10 +107,18 @@ class Histogram:
             sum_quantities (float): The sum of the quantities.
         """
         total_quantity = round(sum_quantities, 4)
-        textstr = f'Total {quantities_name} Quantity: {total_quantity}'
-        props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-        self.ax.text(0.95, 1.05, textstr, transform=self.ax.transAxes, fontsize=10,
-                     verticalalignment='top', horizontalalignment='right', bbox=props)
+        textstr = f"Total {quantities_name} Quantity: {total_quantity}"
+        props = dict(boxstyle="round", facecolor="wheat", alpha=0.5)
+        self.ax.text(
+            0.95,
+            1.05,
+            textstr,
+            transform=self.ax.transAxes,
+            fontsize=10,
+            verticalalignment="top",
+            horizontalalignment="right",
+            bbox=props,
+        )
 
     def show_asks(self) -> None:
         """Display the asks histogram with the current price line and total quantity."""
@@ -124,15 +139,19 @@ class Histogram:
 
 def main():
     parser = argparse.ArgumentParser(description="Display order book histograms.")
-    parser.add_argument('--type', choices=['asks', 'bids'], required=True,
-                        help="Type of histogram to display: 'asks' or 'bids'.")
+    parser.add_argument(
+        "--type",
+        choices=["asks", "bids"],
+        required=True,
+        help="Type of histogram to display: 'asks' or 'bids'.",
+    )
 
     args = parser.parse_args()
 
     histogram = Histogram()
-    if args.type == 'asks':
+    if args.type == "asks":
         histogram.show_asks()
-    elif args.type == 'bids':
+    elif args.type == "bids":
         histogram.show_bids()
 
 

@@ -1,22 +1,21 @@
 import logging
 import uuid
-import logging
 from typing import List, Optional, Type, TypeVar
 
-from sqlalchemy import create_engine, func, select, and_, desc, Subquery
+from handler_tools.constants import ProtocolIDs
+from sqlalchemy import Subquery, and_, create_engine, desc, func, select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import scoped_session, sessionmaker, Session, aliased, Query
+from sqlalchemy.orm import Query, Session, aliased, scoped_session, sessionmaker
 
 from db.database import SQLALCHEMY_DATABASE_URL
 from db.models import (
     Base,
+    HashtackCollateralDebt,
+    InterestRate,
     LoanState,
     OrderBookModel,
-    InterestRate,
     ZkLendCollateralDebt,
-    HashtackCollateralDebt,
 )
-from handler_tools.constants import ProtocolIDs
 
 logger = logging.getLogger(__name__)
 ModelType = TypeVar("ModelType", bound=Base)
@@ -260,7 +259,9 @@ class DBConnector:
             if objects_to_save:
                 db.bulk_save_objects(objects_to_save)
                 db.commit()
-                logger.info(f"Saved {len(objects_to_save)} loan states to the database.")
+                logger.info(
+                    f"Saved {len(objects_to_save)} loan states to the database."
+                )
         except SQLAlchemyError as e:
             db.rollback()
             raise e
@@ -352,7 +353,9 @@ class DBConnector:
         finally:
             db.close()
 
-    def get_interest_rate_by_block(self, block_number: int, protocol_id: str) -> InterestRate:
+    def get_interest_rate_by_block(
+        self, block_number: int, protocol_id: str
+    ) -> InterestRate:
         """
         Fetch the closest InterestRate instance by block number that is less than or equal to the given block number.
 
@@ -424,7 +427,9 @@ class InitializerDBConnector:
         finally:
             session.close()
 
-    def get_hashtack_by_loan_ids(self, loan_ids: List[str], version: int) -> List[HashtackCollateralDebt]:
+    def get_hashtack_by_loan_ids(
+        self, loan_ids: List[str], version: int
+    ) -> List[HashtackCollateralDebt]:
         """
         Retrieve HashtackCollateralDebt records by loan_ids.
         :param loan_ids: A list of user IDs to filter by.

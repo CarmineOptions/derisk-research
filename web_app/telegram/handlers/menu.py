@@ -1,7 +1,7 @@
-from aiogram import Router, types, F
-
+from aiogram import F, Router, types
 from database.models import NotificationData
 from telegram.crud import TelegramCrud
+
 from .utils import kb
 
 menu_router = Router()
@@ -17,7 +17,9 @@ async def menu(callback: types.CallbackQuery):
 
 
 @menu_router.callback_query(F.data.startswith("notification_delete_confirm_"))
-async def delete_notification_confirm(callback: types.CallbackQuery, crud: TelegramCrud):
+async def delete_notification_confirm(
+    callback: types.CallbackQuery, crud: TelegramCrud
+):
     """
     This function is called when the user confirms the deletion of a notification.
     It deletes the notification from the database and sends the user a message about successful deletion.
@@ -60,7 +62,9 @@ async def show_notifications(callback: types.CallbackQuery, crud: TelegramCrud):
     if callback.data.startswith("notifications_"):
         page = int(callback.data.removeprefix("notifications_"))
     # get the current page of notifications
-    obj = await crud.get_objects_by_filter(NotificationData, page, 1, telegram_id=str(callback.from_user.id))
+    obj = await crud.get_objects_by_filter(
+        NotificationData, page, 1, telegram_id=str(callback.from_user.id)
+    )
     # handle callback answer (from pagination)
     if not obj and callback.data.startswith("notifications_"):
         return callback.answer("Not more notifications", show_alert=True)
@@ -81,7 +85,9 @@ async def show_notifications(callback: types.CallbackQuery, crud: TelegramCrud):
 @menu_router.callback_query(F.data == "all_unsubscribe_confirm")
 async def all_unsubscribe_confirm(callback: types.CallbackQuery, crud: TelegramCrud):
     # delete all notifications for the user
-    await crud.delete_objects_by_filter(NotificationData, telegram_id=str(callback.from_user.id))
+    await crud.delete_objects_by_filter(
+        NotificationData, telegram_id=str(callback.from_user.id)
+    )
     # send a confirmation message
     await callback.message.edit_text(
         "You are unsubscribed from all notifications.", reply_markup=kb.menu()

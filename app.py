@@ -18,6 +18,7 @@ import src.settings
 import src.swap_amm
 
 
+<<<<<<< HEAD
 # Function to find the closest protocol match using fuzzy matching
 def infer_protocol_name(input_protocol: str, valid_protocols: list[str]) -> str:
     """Find the closest matching protocol name from a list of valid protocols using fuzzy matching.
@@ -35,6 +36,8 @@ def infer_protocol_name(input_protocol: str, valid_protocols: list[str]) -> str:
     return closest_match and closest_match[0] or input_protocol
 
 
+=======
+>>>>>>> master
 def parse_token_amounts(raw_token_amounts: str) -> dict[str, float]:
     """Converts token amounts in the string format to the dict format."""
     token_amounts = collections.defaultdict(int)
@@ -439,6 +442,27 @@ def main():
             f"capacity will be {int(example_row['debt_token_supply']):,} USD."
         )
 
+<<<<<<< HEAD
+=======
+    streamlit.header("Liquidable debt")
+    liquidable_debt_data = main_chart_data[
+        ["collateral_token_price", "liquidable_debt_at_interval", "liquidable_debt"]
+    ].copy()
+    liquidable_debt_data.rename(
+        columns={
+            "liquidable_debt": "Liquidable debt at price",
+            "liquidable_debt_at_interval": "Liquidable debt at interval",
+            "collateral_token_price": "Collateral token price",
+        },
+        inplace=True,
+    )
+
+    # Display the filtered DataFrame and hide the index
+    streamlit.dataframe(
+        liquidable_debt_data.round(), use_container_width=True, hide_index=True
+    )
+
+>>>>>>> master
     streamlit.header("Loans with low health factor")
     col1, _ = streamlit.columns([1, 3])
     with col1:
@@ -484,15 +508,27 @@ def main():
     with col1:
         user = streamlit.text_input("User")
         protocol = streamlit.text_input("Protocol")
+<<<<<<< HEAD
+=======
+
+>>>>>>> master
         users_and_protocols_with_debt = list(
             loans_data.loc[
                 loans_data["Debt (USD)"] > 0,
                 ["User", "Protocol"],
             ].itertuples(index=False, name=None)
         )
+<<<<<<< HEAD
         random_user, random_protocol = users_and_protocols_with_debt[
             numpy.random.randint(len(users_and_protocols_with_debt))
         ]
+=======
+
+        random_user, random_protocol = users_and_protocols_with_debt[
+            numpy.random.randint(len(users_and_protocols_with_debt))
+        ]
+
+>>>>>>> master
         if not user:
             streamlit.write(f"Selected random user = {random_user}.")
             user = random_user
@@ -510,6 +546,7 @@ def main():
     loan = loans_data.loc[
         (loans_data["User"] == user) & (loans_data["Protocol"] == protocol),
     ]
+<<<<<<< HEAD
     (
         collateral_usd_amounts,
         debt_usd_amounts,
@@ -533,6 +570,38 @@ def main():
         )
         streamlit.plotly_chart(figure, True)
     streamlit.dataframe(loan)
+=======
+
+    if loan.empty:
+        streamlit.warning(f"No loan found for user = {user} and protocol = {protocol}.")
+    else:
+        (
+            collateral_usd_amounts,
+            debt_usd_amounts,
+        ) = src.main_chart.get_specific_loan_usd_amounts(loan=loan)
+
+        with col2:
+            figure = plotly.express.pie(
+                collateral_usd_amounts,
+                values="amount_usd",
+                names="token",
+                title="Collateral (USD)",
+                color_discrete_sequence=plotly.express.colors.sequential.Oranges_r,
+            )
+            streamlit.plotly_chart(figure, True)
+
+        with col3:
+            figure = plotly.express.pie(
+                debt_usd_amounts,
+                values="amount_usd",
+                names="token",
+                title="Debt (USD)",
+                color_discrete_sequence=plotly.express.colors.sequential.Greens_r,
+            )
+            streamlit.plotly_chart(figure, True)
+
+        streamlit.dataframe(loan)
+>>>>>>> master
 
     streamlit.header("Comparison of lending protocols")
     general_stats = pandas.read_parquet(

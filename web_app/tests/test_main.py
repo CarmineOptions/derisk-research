@@ -2,9 +2,8 @@ from copy import deepcopy
 from urllib.parse import urlencode
 
 from fastapi import status
-from starlette.testclient import TestClient
-
 from main import app
+from starlette.testclient import TestClient
 from tests.values import INVALID_DATA, VALID_DATA
 
 from .conftest import mock_database_session

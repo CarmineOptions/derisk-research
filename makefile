@@ -3,3 +3,6 @@ notebook:
 
 app:
 	streamlit run app.py
+
+setup:
+	./setup.sh

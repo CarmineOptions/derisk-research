@@ -10,6 +10,7 @@ class LocalStorageManager:
     :method: `update_dir` -> Updates the local storage directory.
                             Deletes the local storage directory if it already exists.
     """
+
     @classmethod
     def update_dir(cls, protocol_name: str) -> str:
         """
@@ -23,7 +24,7 @@ class LocalStorageManager:
 
             return f"{current_directory}/loans"
 
-        dirs = os.listdir(current_directory+"/loans")
+        dirs = os.listdir(current_directory + "/loans")
         for file_path in dirs:
             if file_path in os.listdir("loans"):
                 cls._delete_file(f"loans/{file_path}")

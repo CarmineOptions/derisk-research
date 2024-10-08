@@ -1,15 +1,13 @@
 import logging
 
-from db.crud import DBConnector
-from db.models import OrderBookModel
-
-from handlers.order_books.ekubo.api_connector import EkuboAPIConnector
+from celery_app.celery_conf import app
 from handlers.order_books.constants import TOKEN_MAPPING
+from handlers.order_books.ekubo.api_connector import EkuboAPIConnector
 from handlers.order_books.ekubo.main import EkuboOrderBook
 from handlers.order_books.haiko.main import HaikoOrderBook
 
-
-from celery_app.celery_conf import app
+from db.crud import DBConnector
+from db.models import OrderBookModel
 
 logger = logging.getLogger(__name__)
 connector = DBConnector()
@@ -24,7 +22,8 @@ def ekubo_order_book():
     filtered_pool_states = [
         pool_state
         for pool_state in pool_states
-        if isinstance(pool_state, dict) and pool_state["token0"] in TOKEN_MAPPING
+        if isinstance(pool_state, dict)
+        and pool_state["token0"] in TOKEN_MAPPING
         and pool_state["token1"] in TOKEN_MAPPING
     ]
     for pool_state in filtered_pool_states:
@@ -60,7 +59,9 @@ def haiko_order_book():
                 serialized_data = order_book.serialize()
                 connector.write_to_db(OrderBookModel(**serialized_data.model_dump()))
             except Exception as e:
-                logger.info(f"With token pair: {base_token} and {quote_token} something happened: {e}")
+                logger.info(
+                    f"With token pair: {base_token} and {quote_token} something happened: {e}"
+                )
 
 
 if __name__ == "__main__":
