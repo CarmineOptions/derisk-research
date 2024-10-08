@@ -1,12 +1,11 @@
 import datetime
+import difflib
 import logging
 import math
-import time
 
 import numpy.random
 import pandas
 import plotly.express
-import requests
 import streamlit
 
 import src.helpers
@@ -16,6 +15,7 @@ import src.settings
 import src.swap_amm
 from src.chart_utils import (get_protocol_data_mappings, load_stats_data,
                          transform_loans_data, transform_main_chart_data)
+import src.utils
 
 
 PROTOCOL_NAMES = [
@@ -25,107 +25,102 @@ PROTOCOL_NAMES = [
 ]  # "Hashstack V0", "Hashstack V1"
 
 
+def infer_protocol_name(input_protocol: str, valid_protocols: list[str]) -> str:
+    """Find the closest matching protocol name from a list of valid protocols using fuzzy matching.
+
+    Args:
+        input_protocol (str): The protocol name input by the user.
+        valid_protocols (list[str]): A list of valid protocol names.
+
+    Returns:
+        str: The closest matching protocol name if found, otherwise returns the input protocol.
+    """
+    closest_match = difflib.get_close_matches(
+        input_protocol, valid_protocols, n=1, cutoff=0.6
+    )
+    return closest_match and closest_match[0] or input_protocol
+  
+  
 def _remove_leading_zeros(address: str) -> str:
     while address[2] == "0":
         address = f"0x{address[3:]}"
     return address
 
 
-def _get_available_liquidity(
-    data: pandas.DataFrame, price: float, price_diff: float, bids: bool
-) -> float:
-    price_lower_bound = max(0.95 * price, price - price_diff) if bids else price
-    price_upper_bound = price if bids else min(1.05 * price, price + price_diff)
-    return data.loc[
-        data["price"].between(price_lower_bound, price_upper_bound), "quantity"
-    ].sum()
+def create_stablecoin_bundle(data: dict[str, pandas.DataFrame]) -> dict[str, pandas.DataFrame]:
+    """
+    Creates a stablecoin bundle by merging relevant DataFrames for collateral tokens and debt tokens.
 
+    For each collateral token specified in `src.settings.COLLATERAL_TOKENS`, this function finds the
+    relevant stablecoin pairs from the provided `data` dictionary and merges the corresponding DataFrames
+    based on the 'collateral_token_price' column. It combines the debt and liquidity data for multiple
+    stablecoin pairs and adds the result back to the `data` dictionary under a new key.
 
-def add_ekubo_liquidity(
-    data: pandas.DataFrame,
-    collateral_token: str,
-    debt_token: str,
-) -> float:
-    URL = "http://178.32.172.153/orderbook/"
-    DEX = "Ekubo"
-    params = {
-        "base_token": _remove_leading_zeros(collateral_token),
-        "quote_token": _remove_leading_zeros(debt_token),
-        "dex": DEX,
-    }
-    response = requests.get(URL, params=params)
+    Parameters:
+    data (dict[str, pandas.DataFrame]): A dictionary where the keys are token pairs and the values are
+                                        corresponding DataFrames containing price and supply data.
 
-    if response.status_code == 200:
-        liquidity = response.json()
-        try:
-            bid_prices, bid_quantities = zip(*liquidity["bids"])
-        except ValueError:
-            time.sleep(300)
-            add_ekubo_liquidity(
-                data=data, collateral_token=collateral_token, debt_token=debt_token
-            )
-        else:
-            bids = pandas.DataFrame(
-                {
-                    "price": bid_prices,
-                    "quantity": bid_quantities,
-                },
-            )
-            bids = bids.astype(float)
-            bids.sort_values("price", inplace=True)
-            price_diff = data["collateral_token_price"].diff().max()
-            data["Ekubo_debt_token_supply"] = data["collateral_token_price"].apply(
-                lambda x: _get_available_liquidity(
-                    data=bids,
-                    price=x,
-                    price_diff=price_diff,
-                    bids=True,
+    Returns:
+    dict[str, pandas.DataFrame]: The updated dictionary with the newly created stablecoin bundle added.
+    """
+
+    # Iterate over all collateral tokens defined in the settings
+    for collateral in src.settings.COLLATERAL_TOKENS:
+        # Find all relevant pairs that involve the current collateral and one of the debt tokens
+        relevant_pairs = [
+            pair
+            for pair in data.keys()
+            if collateral in pair
+            and any(stablecoin in pair for stablecoin in src.settings.DEBT_TOKENS[:-1])
+        ]
+        combined_df = None  # Initialize a variable to store the combined DataFrame
+
+        # Loop through each relevant pair
+        for pair in relevant_pairs:
+            df = data[pair]  # Get the DataFrame for the current pair
+
+            if df.empty:
+                # Log a warning if the DataFrame is empty and skip to the next pair
+                logging.warning(f"Empty DataFrame for pair: {pair}")
+                continue
+
+            if combined_df is None:
+                # If this is the first DataFrame being processed, use it as the base for combining
+                combined_df = df.copy()
+            else:
+                # Merge the current DataFrame with the combined one on 'collateral_token_price'
+                combined_df = pandas.merge(
+                    combined_df, df, on="collateral_token_price", suffixes=("", "_y")
                 )
-            )
-            data["debt_token_supply"] += data["Ekubo_debt_token_supply"]
-            return data
 
-    logging.warning(
-        "Using collateral token as base token and debt token as quote token."
-    )
-    params = {
-        "base_token": _remove_leading_zeros(debt_token),
-        "quote_token": _remove_leading_zeros(collateral_token),
-        "dex": DEX,
-    }
-    response = requests.get(URL, params=params)
+                # Sum the columns for debt and liquidity, adding the corresponding '_y' values
+                for col in [
+                    "liquidable_debt",
+                    "liquidable_debt_at_interval",
+                    "10kSwap_debt_token_supply",
+                    "MySwap_debt_token_supply",
+                    "SithSwap_debt_token_supply",
+                    "JediSwap_debt_token_supply",
+                    "debt_token_supply",
+                ]:
+                    combined_df[col] += combined_df[f"{col}_y"]
 
-    if response.status_code == 200:
-        liquidity = response.json()
-        try:
-            ask_prices, ask_quantities = zip(*liquidity["asks"])
-        except ValueError:
-            time.sleep(5)
-            add_ekubo_liquidity(
-                data=data, collateral_token=collateral_token, debt_token=debt_token
-            )
-        else:
-            asks = pandas.DataFrame(
-                {
-                    "price": ask_prices,
-                    "quantity": ask_quantities,
-                },
-            )
-            asks = asks.astype(float)
-            asks.sort_values("price", inplace=True)
-            data["Ekubo_debt_token_supply"] = data["collateral_token_price"].apply(
-                lambda x: _get_available_liquidity(
-                    data=asks,
-                    price=x,
-                    bids=False,
+                # Drop the '_y' columns after summing the relevant values
+                combined_df.drop(
+                    [col for col in combined_df.columns if col.endswith("_y")],
+                    axis=1,
+                    inplace=True,
                 )
-            )
-            data["debt_token_supply"] += data["Ekubo_debt_token_supply"]
-            return data
 
+        # Create a new pair name for the stablecoin bundle
+        new_pair = f"{collateral}-{src.settings.STABLECOIN_BUNDLE_NAME}"
+        # Add the combined DataFrame for this collateral to the data dictionary
+        data[new_pair] = combined_df
+
+    # Return the updated data dictionary
     return data
 
-  
+
 def process_liquidity(
     main_chart_data: pandas.DataFrame, collateral_token: str, debt_token: str
 ) -> tuple[pandas.DataFrame, float]:
@@ -137,15 +132,9 @@ def process_liquidity(
     :return: Processed main chart data and collateral token price.
     """
     # Fetch underlying addresses and decimals
-    collateral_token_underlying_address = (
-        src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[collateral_token]
-    )
-    collateral_token_decimals = int(
-        math.log10(src.settings.TOKEN_SETTINGS[collateral_token].decimal_factor)
-    )
-    underlying_addresses_to_decimals = {
-        collateral_token_underlying_address: collateral_token_decimals
-    }
+    collateral_token_underlying_address = src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[collateral_token]
+    collateral_token_decimals = int(math.log10(src.settings.TOKEN_SETTINGS[collateral_token].decimal_factor))
+    underlying_addresses_to_decimals = {collateral_token_underlying_address: collateral_token_decimals}
 
     # Fetch prices
     prices = src.helpers.get_prices(token_decimals=underlying_addresses_to_decimals)
@@ -156,10 +145,15 @@ def process_liquidity(
     debt_token_underlying_address = (
         src.helpers.UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[debt_token]
     )
-    main_chart_data = add_ekubo_liquidity(
+
+    ekubo_liquidity = src.utils.EkuboLiquidity(
         data=main_chart_data,
         collateral_token=collateral_token_underlying_address,
         debt_token=debt_token_underlying_address,
+    )
+
+    main_chart_data = ekubo_liquidity.apply_liquidity_to_dataframe(
+        ekubo_liquidity.fetch_liquidity(),
     )
 
     return main_chart_data, collateral_token_price
@@ -329,7 +323,6 @@ def main():
     with col1:
         user = streamlit.text_input("User")
         protocol = streamlit.text_input("Protocol")
-
         users_and_protocols_with_debt = list(
             loans_data.loc[
                 loans_data["Debt (USD)"] > 0,
@@ -348,10 +341,16 @@ def main():
             streamlit.write(f"Selected random protocol = {random_protocol}.")
             protocol = random_protocol
 
+        # Normalize the user address by adding leading zeroes if necessary
+        user = src.helpers.add_leading_zeros(user)
+
+        # Infer the correct protocol name using fuzzy matching
+        valid_protocols = loans_data["Protocol"].unique()
+        protocol = infer_protocol_name(protocol, valid_protocols)
+
     loan = loans_data.loc[
         (loans_data["User"] == user) & (loans_data["Protocol"] == protocol),
     ]
-
     if loan.empty:
         streamlit.warning(f"No loan found for user = {user} and protocol = {protocol}.")
     else:
