@@ -1,5 +1,6 @@
 import collections
 import datetime
+import difflib
 import logging
 import math
 import time
@@ -15,6 +16,23 @@ import src.main_chart
 import src.persistent_state
 import src.settings
 import src.swap_amm
+
+
+
+def infer_protocol_name(input_protocol: str, valid_protocols: list[str]) -> str:
+    """Find the closest matching protocol name from a list of valid protocols using fuzzy matching.
+
+    Args:
+        input_protocol (str): The protocol name input by the user.
+        valid_protocols (list[str]): A list of valid protocol names.
+
+    Returns:
+        str: The closest matching protocol name if found, otherwise returns the input protocol.
+    """
+    closest_match = difflib.get_close_matches(
+        input_protocol, valid_protocols, n=1, cutoff=0.6
+    )
+    return closest_match and closest_match[0] or input_protocol
 
 
 def parse_token_amounts(raw_token_amounts: str) -> dict[str, float]:
@@ -484,7 +502,6 @@ def main():
     with col1:
         user = streamlit.text_input("User")
         protocol = streamlit.text_input("Protocol")
-
         users_and_protocols_with_debt = list(
             loans_data.loc[
                 loans_data["Debt (USD)"] > 0,
@@ -503,10 +520,16 @@ def main():
             streamlit.write(f"Selected random protocol = {random_protocol}.")
             protocol = random_protocol
 
+        # Normalize the user address by adding leading zeroes if necessary
+        user = src.helpers.add_leading_zeros(user)
+
+        # Infer the correct protocol name using fuzzy matching
+        valid_protocols = loans_data["Protocol"].unique()
+        protocol = infer_protocol_name(protocol, valid_protocols)
+
     loan = loans_data.loc[
         (loans_data["User"] == user) & (loans_data["Protocol"] == protocol),
     ]
-
     if loan.empty:
         streamlit.warning(f"No loan found for user = {user} and protocol = {protocol}.")
     else:
