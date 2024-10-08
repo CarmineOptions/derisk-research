@@ -11,7 +11,6 @@ from typing import Sequence, Union
 import sqlalchemy as sa
 import sqlalchemy_utils
 from alembic import op
-
 from utils.values import ProtocolIDs
 
 # revision identifiers, used by Alembic.

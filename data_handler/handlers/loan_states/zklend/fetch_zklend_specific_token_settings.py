@@ -1,10 +1,11 @@
-import decimal
 import asyncio
+import decimal
 from dataclasses import dataclass, field
-from pydantic import BaseModel, field_validator
-from handlers.settings import TOKEN_SETTINGS, TokenSettings
+
 from handler_tools.constants import ProtocolAddresses
 from handlers import blockchain_call
+from handlers.settings import TOKEN_SETTINGS, TokenSettings
+from pydantic import BaseModel, field_validator
 
 SCALE_FACTOR = decimal.Decimal("1e27")
 
@@ -79,7 +80,9 @@ async def get_token_reserve_data(token_setting_address: str) -> list:
     return reserve_data
 
 
-async def fetch_zklend_specific_token_settings() -> dict[str, ZkLendSpecificTokenSettings]:
+async def fetch_zklend_specific_token_settings() -> dict[
+    str, ZkLendSpecificTokenSettings
+]:
     """
     Fetch ZkLend specific token settings.
     :return: Dict of ZkLend specific token settings.

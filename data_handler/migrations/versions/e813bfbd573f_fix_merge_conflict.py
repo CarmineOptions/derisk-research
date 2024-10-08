@@ -8,9 +8,9 @@ Create Date: 2024-07-03 16:48:38.031605
 
 from typing import Sequence, Union
 
-from alembic import op
-import sqlalchemy_utils
 import sqlalchemy as sa
+import sqlalchemy_utils
+from alembic import op
 from handlers.liquidable_debt.values import LendingProtocolNames
 from sqlalchemy.dialects import postgresql
 

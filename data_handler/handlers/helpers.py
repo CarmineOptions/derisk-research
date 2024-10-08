@@ -1,19 +1,19 @@
+import asyncio
 import decimal
 import os
 from decimal import Decimal
 from typing import Iterator
 
-import asyncio
 import google.cloud.storage
 import pandas
 import starknet_py.cairo.felt as cairo_felt_type
-
 from error_handler import BOT
-from handlers import blockchain_call
 from error_handler.values import MessageTemplates
-from handler_tools.types import TokenValues
 from handler_tools.constants import TOKEN_MAPPING, ProtocolIDs
-from handlers.settings import TOKEN_SETTINGS, PAIRS
+from handler_tools.types import TokenValues
+from handlers import blockchain_call
+from handlers.settings import PAIRS, TOKEN_SETTINGS
+
 from db.models import InterestRate
 
 GS_BUCKET_NAME = "derisk-persistent-state"

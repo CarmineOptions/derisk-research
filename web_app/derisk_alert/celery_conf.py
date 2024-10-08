@@ -27,6 +27,4 @@ app.conf.beat_schedule = {
     },
 }
 
-from .tasks import (
-    check_health_ratio_level_changes,
-)
+from .tasks import check_health_ratio_level_changes
