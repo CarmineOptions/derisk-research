@@ -93,20 +93,16 @@ def get_main_chart_figure(
 ) -> plotly.graph_objs.Figure:
     # Define the AMMs and their color mappings
     amms = src.swap_amm.AMMS
-    color_map = {
-        "10kSwap_debt_token_supply": "#4C6DD0",
-        "MySwap_debt_token_supply": "#4CA7D0",
-        "SithSwap_debt_token_supply": "#4C99D0",
-        "JediSwap_debt_token_supply": "#4C83D0",
-    }
+    color_map = {"10kSwap_debt_token_supply": "#1f77b4",
+                 "MySwap_debt_token_supply": "#ff7f0e",
+                 "SithSwap_debt_token_supply": "#2ca02c",
+                 "JediSwap_debt_token_supply": "#d62728"}
 
     # TODO: Align colors with the rest of the app.
-    color_map_protocol = {
-        "liquidable_debt_at_interval_zkLend": "#fff7bc",  # light yellow
-        "liquidable_debt_at_interval_Nostra Alpha": "#fec44f",  # yellow
-        "liquidable_debt_at_interval_Nostra Mainnet": "#d95f0e",
-    }  # mustard yellow
-    color_map_liquidity = {"debt_token_supply": "#1f77b4"}  # blue
+    color_map_protocol = {"liquidable_debt_at_interval_zkLend": "#4B16E9", 
+                        "liquidable_debt_at_interval_Nostra Alpha": "#E94B16",
+                        "liquidable_debt_at_interval_Nostra Mainnet": "#16E94B"}
+    color_map_liquidity = {"debt_token_supply": "#E9164B"}
     figure = plotly.graph_objs.Figure()
 
     customdata = src.helpers.get_custom_data(data)
@@ -218,19 +214,19 @@ def get_bar_chart_figures(
                 name="zkLend",
                 x=bar_chart_supply_stats.index,
                 y=bar_chart_supply_stats["zkLend"],
-                marker=plotly.graph_objs.bar.Marker(color="#fff7bc"),
+                marker=plotly.graph_objs.bar.Marker(color="#6baed6"),
             ),
             plotly.graph_objs.Bar(
                 name="Nostra Alpha",
                 x=bar_chart_supply_stats.index,
                 y=bar_chart_supply_stats["Nostra Alpha"],
-                marker=plotly.graph_objs.bar.Marker(color="#fec44f"),
+                marker=plotly.graph_objs.bar.Marker(color="#2171b5"),
             ),
             plotly.graph_objs.Bar(
                 name="Nostra Mainnet",
                 x=bar_chart_supply_stats.index,
                 y=bar_chart_supply_stats["Nostra Mainnet"],
-                marker=plotly.graph_objs.bar.Marker(color="#d95f0e"),
+                marker=plotly.graph_objs.bar.Marker(color="#08306b"),
             ),
         ],
     )
@@ -241,19 +237,19 @@ def get_bar_chart_figures(
                 name="zkLend",
                 x=bar_chart_collateral_stats.index,
                 y=bar_chart_collateral_stats["zkLend"],
-                marker=plotly.graph_objs.bar.Marker(color="#fff7bc"),
+                marker=plotly.graph_objs.bar.Marker(color="#fd8d3c"),
             ),
             plotly.graph_objs.Bar(
                 name="Nostra Alpha",
                 x=bar_chart_collateral_stats.index,
                 y=bar_chart_collateral_stats["Nostra Alpha"],
-                marker=plotly.graph_objs.bar.Marker(color="#fec44f"),
+                marker=plotly.graph_objs.bar.Marker(color="#a63603"),
             ),
             plotly.graph_objs.Bar(
                 name="Nostra Mainnet",
                 x=bar_chart_collateral_stats.index,
                 y=bar_chart_collateral_stats["Nostra Mainnet"],
-                marker=plotly.graph_objs.bar.Marker(color="#d95f0e"),
+                marker=plotly.graph_objs.bar.Marker(color="#7f2704"),
             ),
         ],
     )
@@ -264,19 +260,19 @@ def get_bar_chart_figures(
                 name="zkLend",
                 x=bar_chart_debt_stats.index,
                 y=bar_chart_debt_stats["zkLend"],
-                marker=plotly.graph_objs.bar.Marker(color="#fff7bc"),
+                marker=plotly.graph_objs.bar.Marker(color="#74c476"),
             ),
             plotly.graph_objs.Bar(
                 name="Nostra Alpha",
                 x=bar_chart_debt_stats.index,
                 y=bar_chart_debt_stats["Nostra Alpha"],
-                marker=plotly.graph_objs.bar.Marker(color="#fec44f"),
+                marker=plotly.graph_objs.bar.Marker(color="#238b45"),
             ),
             plotly.graph_objs.Bar(
                 name="Nostra Mainnet",
                 x=bar_chart_debt_stats.index,
                 y=bar_chart_debt_stats["Nostra Mainnet"],
-                marker=plotly.graph_objs.bar.Marker(color="#d95f0e"),
+                marker=plotly.graph_objs.bar.Marker(color="#00441b"),
             ),
         ],
     )

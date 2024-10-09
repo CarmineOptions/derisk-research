@@ -27,7 +27,6 @@ PROTOCOL_NAMES = [
     "Nostra Mainnet",
 ]  # "Hashstack V0", "Hashstack V1"
 
-
 def infer_protocol_name(input_protocol: str, valid_protocols: list[str]) -> str:
     """Find the closest matching protocol name from a list of valid protocols using fuzzy matching.
 
@@ -427,6 +426,18 @@ def main():
     streamlit.plotly_chart(figure_or_data=collateral_figure, use_container_width=True)
     streamlit.plotly_chart(figure_or_data=debt_figure, use_container_width=True)
 
+    collateral_protocol_color_map = {"zkLend": "#fd8d3c", 
+                        "Nostra Alpha": "#a63603",
+                        "Nostra Mainnet": "#7f2704"}
+    
+    debt_protocol_color_map = {"zkLend": "#74c476", 
+                        "Nostra Alpha": "#238b45",
+                        "Nostra Mainnet": "#00441b"}
+    
+    supply_protocol_color_map = {"zkLend": "#6baed6", 
+                        "Nostra Alpha": "#2171b5",
+                        "Nostra Mainnet": "#08306b"}
+
     columns = streamlit.columns(4)
     tokens = list(src.settings.TOKEN_SETTINGS.keys())
     for column, token_1, token_2 in zip(columns, tokens[:4], tokens[4:]):
@@ -437,7 +448,8 @@ def main():
                     values=f"{token} collateral",
                     names="Protocol",
                     title=f"{token} collateral",
-                    color_discrete_sequence=plotly.express.colors.sequential.Oranges_r,
+                    color='Protocol',
+                    color_discrete_map=collateral_protocol_color_map,
                 )
                 streamlit.plotly_chart(figure, True)
             for token in [token_1, token_2]:
@@ -446,7 +458,8 @@ def main():
                     values=f"{token} debt",
                     names="Protocol",
                     title=f"{token} debt",
-                    color_discrete_sequence=plotly.express.colors.sequential.Greens_r,
+                    color='Protocol',
+                    color_discrete_map=debt_protocol_color_map,
                 )
                 streamlit.plotly_chart(figure, True)
             for token in [token_1, token_2]:
@@ -455,7 +468,8 @@ def main():
                     values=f"{token} supply",
                     names="Protocol",
                     title=f"{token} supply",
-                    color_discrete_sequence=plotly.express.colors.sequential.Blues_r,
+                    color='Protocol',
+                    color_discrete_map=supply_protocol_color_map,
                 )
                 streamlit.plotly_chart(figure, True)
 
