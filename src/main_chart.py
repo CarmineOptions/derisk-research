@@ -11,6 +11,21 @@ import src.state
 import src.swap_amm
 import src.types
 
+# Constants for color mappings
+COLOR_MAP_AMM = {
+    "10kSwap_debt_token_supply": "#1f77b4",
+    "MySwap_debt_token_supply": "#ff7f0e",
+    "SithSwap_debt_token_supply": "#2ca02c",
+    "JediSwap_debt_token_supply": "#d62728"
+}
+
+COLOR_MAP_PROTOCOL = {
+    "liquidable_debt_at_interval_zkLend": "#4B16E9",
+    "liquidable_debt_at_interval_Nostra Alpha": "#E94B16",
+    "liquidable_debt_at_interval_Nostra Mainnet": "#16E94B"
+}
+
+COLOR_MAP_LIQUIDITY = {"debt_token_supply": "#E9164B"}
 
 def get_main_chart_data(
     state: src.state.State,
@@ -93,16 +108,11 @@ def get_main_chart_figure(
 ) -> plotly.graph_objs.Figure:
     # Define the AMMs and their color mappings
     amms = src.swap_amm.AMMS
-    color_map = {"10kSwap_debt_token_supply": "#1f77b4",
-                 "MySwap_debt_token_supply": "#ff7f0e",
-                 "SithSwap_debt_token_supply": "#2ca02c",
-                 "JediSwap_debt_token_supply": "#d62728"}
 
-    # TODO: Align colors with the rest of the app.
-    color_map_protocol = {"liquidable_debt_at_interval_zkLend": "#4B16E9", 
-                        "liquidable_debt_at_interval_Nostra Alpha": "#E94B16",
-                        "liquidable_debt_at_interval_Nostra Mainnet": "#16E94B"}
-    color_map_liquidity = {"debt_token_supply": "#E9164B"}
+    color_map = COLOR_MAP_AMM
+    color_map_protocol = COLOR_MAP_PROTOCOL
+    color_map_liquidity = COLOR_MAP_LIQUIDITY
+
     figure = plotly.graph_objs.Figure()
 
     customdata = src.helpers.get_custom_data(data)
