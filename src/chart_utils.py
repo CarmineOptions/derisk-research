@@ -10,6 +10,37 @@ import src.main_chart
 import src.settings
 
 
+ZKLEND = "zkLend"
+NOSTRA_ALPHA = "Nostra Alpha"
+NOSTRA_MAINNET = "Nostra Mainnet"
+
+PROTOCOL_NAMES = [
+    ZKLEND,
+    NOSTRA_ALPHA,
+    NOSTRA_MAINNET,
+]
+
+
+class ProtocolColors:
+    collateral_protocol_color_map = {
+        ZKLEND: "#ce8554",
+        NOSTRA_ALPHA: "#ec5f00",
+        NOSTRA_MAINNET: "#b84a01",
+    }
+
+    debt_protocol_color_map = {
+        ZKLEND: "#10c759",
+        NOSTRA_ALPHA: "#068a3b",
+        NOSTRA_MAINNET: "#025322",
+    }
+
+    supply_protocol_color_map = {
+        ZKLEND: "#43a4e6",
+        NOSTRA_ALPHA: "#0274c0",
+        NOSTRA_MAINNET: "#08306B",
+    }
+
+
 def parse_token_amounts(raw_token_amounts: str) -> dict[str, float]:
     """Converts token amounts in the string format to the dict format."""
     token_amounts = defaultdict(int)
@@ -228,9 +259,9 @@ def transform_main_chart_data(
             main_chart_data[f"liquidable_debt_{protocol}"] = protocol_main_chart_data[
                 "liquidable_debt"
             ]
-            main_chart_data[
-                f"liquidable_debt_at_interval_{protocol}"
-            ] = protocol_main_chart_data["liquidable_debt_at_interval"]
+            main_chart_data[f"liquidable_debt_at_interval_{protocol}"] = (
+                protocol_main_chart_data["liquidable_debt_at_interval"]
+            )
         else:
             main_chart_data["liquidable_debt"] += protocol_main_chart_data[
                 "liquidable_debt"
@@ -241,8 +272,8 @@ def transform_main_chart_data(
             main_chart_data[f"liquidable_debt_{protocol}"] = protocol_main_chart_data[
                 "liquidable_debt"
             ]
-            main_chart_data[
-                f"liquidable_debt_at_interval_{protocol}"
-            ] = protocol_main_chart_data["liquidable_debt_at_interval"]
+            main_chart_data[f"liquidable_debt_at_interval_{protocol}"] = (
+                protocol_main_chart_data["liquidable_debt_at_interval"]
+            )
 
     return main_chart_data

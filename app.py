@@ -19,6 +19,7 @@ from src.chart_utils import (
     load_stats_data,
     transform_loans_data,
     transform_main_chart_data,
+    ProtocolColors,
 )
 
 
@@ -431,25 +432,6 @@ def main():
     streamlit.plotly_chart(figure_or_data=supply_figure, use_container_width=True)
     streamlit.plotly_chart(figure_or_data=collateral_figure, use_container_width=True)
     streamlit.plotly_chart(figure_or_data=debt_figure, use_container_width=True)
-
-    class ProtocolColors:
-        collateral_protocol_color_map = {
-            ZKLEND: "#ce8554",
-            NOSTRA_ALPHA: "#ec5f00",
-            NOSTRA_MAINNET: "#b84a01",
-        }
-
-        debt_protocol_color_map = {
-            ZKLEND: "#10c759",
-            NOSTRA_ALPHA: "#068a3b",
-            NOSTRA_MAINNET: "#025322",
-        }
-
-        supply_protocol_color_map = {
-            ZKLEND: "#43a4e6",
-            NOSTRA_ALPHA: "#0274c0",
-            NOSTRA_MAINNET: "#08306B",
-        }
 
     columns = streamlit.columns(4)
     tokens = list(src.settings.TOKEN_SETTINGS.keys())

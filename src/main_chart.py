@@ -110,16 +110,12 @@ def get_main_chart_figure(
     # Define the AMMs and their color mappings
     amms = src.swap_amm.AMMS
 
-    color_map = COLOR_MAP_AMM
-    color_map_protocol = COLOR_MAP_PROTOCOL
-    color_map_liquidity = COLOR_MAP_LIQUIDITY
-
     figure = plotly.graph_objs.Figure()
 
     customdata = src.helpers.get_custom_data(data)
 
     # Add bars for each protocol and the total liquidable debt
-    for col in color_map_protocol.keys():
+    for col in COLOR_MAP_PROTOCOL.keys():
         try:
             figure.add_trace(
                 plotly.graph_objs.Bar(
@@ -128,7 +124,7 @@ def get_main_chart_figure(
                     name=col.replace(
                         "liquidable_debt_at_interval", f"Liquidable {debt_token} debt"
                     ).replace("_", " "),
-                    marker_color=color_map_protocol[col],
+                    marker_color=COLOR_MAP_PROTOCOL[col],
                     opacity=0.7,
                     customdata=customdata,
                     hovertemplate=(
@@ -149,7 +145,7 @@ def get_main_chart_figure(
             x=data["collateral_token_price"],
             y=data["debt_token_supply"],
             name=f"{debt_token} available liquidity",
-            marker_color=color_map_liquidity["debt_token_supply"],
+            marker_color=COLOR_MAP_LIQUIDITY["debt_token_supply"],
             opacity=0.5,
             yaxis="y2",
             hovertemplate=("<b>Price:</b> %{x}<br>" "<b>Volume:</b> %{y}"),
