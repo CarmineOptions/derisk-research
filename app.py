@@ -21,11 +21,17 @@ from src.chart_utils import (
     transform_main_chart_data,
 )
 
+
+ZKLEND = "zkLend"
+NOSTRA_ALPHA = "Nostra Alpha"
+NOSTRA_MAINNET = "Nostra Mainnet"
+
 PROTOCOL_NAMES = [
-    "zkLend",
-    "Nostra Alpha",
-    "Nostra Mainnet",
+    ZKLEND,
+    NOSTRA_ALPHA,
+    NOSTRA_MAINNET,
 ]  # "Hashstack V0", "Hashstack V1"
+
 
 def infer_protocol_name(input_protocol: str, valid_protocols: list[str]) -> str:
     """Find the closest matching protocol name from a list of valid protocols using fuzzy matching.
@@ -426,17 +432,24 @@ def main():
     streamlit.plotly_chart(figure_or_data=collateral_figure, use_container_width=True)
     streamlit.plotly_chart(figure_or_data=debt_figure, use_container_width=True)
 
-    collateral_protocol_color_map = {"zkLend": "#fd8d3c", 
-                        "Nostra Alpha": "#a63603",
-                        "Nostra Mainnet": "#7f2704"}
-    
-    debt_protocol_color_map = {"zkLend": "#74c476", 
-                        "Nostra Alpha": "#238b45",
-                        "Nostra Mainnet": "#00441b"}
-    
-    supply_protocol_color_map = {"zkLend": "#6baed6", 
-                        "Nostra Alpha": "#2171b5",
-                        "Nostra Mainnet": "#08306b"}
+    class ProtocolColors:
+        collateral_protocol_color_map = {
+            ZKLEND: "#ce8554",
+            NOSTRA_ALPHA: "#ec5f00",
+            NOSTRA_MAINNET: "#b84a01",
+        }
+
+        debt_protocol_color_map = {
+            ZKLEND: "#10c759",
+            NOSTRA_ALPHA: "#068a3b",
+            NOSTRA_MAINNET: "#025322",
+        }
+
+        supply_protocol_color_map = {
+            ZKLEND: "#43a4e6",
+            NOSTRA_ALPHA: "#0274c0",
+            NOSTRA_MAINNET: "#08306B",
+        }
 
     columns = streamlit.columns(4)
     tokens = list(src.settings.TOKEN_SETTINGS.keys())
@@ -448,8 +461,8 @@ def main():
                     values=f"{token} collateral",
                     names="Protocol",
                     title=f"{token} collateral",
-                    color='Protocol',
-                    color_discrete_map=collateral_protocol_color_map,
+                    color="Protocol",
+                    color_discrete_map=ProtocolColors.collateral_protocol_color_map,
                 )
                 streamlit.plotly_chart(figure, True)
             for token in [token_1, token_2]:
@@ -458,8 +471,8 @@ def main():
                     values=f"{token} debt",
                     names="Protocol",
                     title=f"{token} debt",
-                    color='Protocol',
-                    color_discrete_map=debt_protocol_color_map,
+                    color="Protocol",
+                    color_discrete_map=ProtocolColors.debt_protocol_color_map,
                 )
                 streamlit.plotly_chart(figure, True)
             for token in [token_1, token_2]:
@@ -468,8 +481,8 @@ def main():
                     values=f"{token} supply",
                     names="Protocol",
                     title=f"{token} supply",
-                    color='Protocol',
-                    color_discrete_map=supply_protocol_color_map,
+                    color="Protocol",
+                    color_discrete_map=ProtocolColors.supply_protocol_color_map,
                 )
                 streamlit.plotly_chart(figure, True)
 

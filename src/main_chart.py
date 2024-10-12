@@ -16,16 +16,17 @@ COLOR_MAP_AMM = {
     "10kSwap_debt_token_supply": "#1f77b4",
     "MySwap_debt_token_supply": "#ff7f0e",
     "SithSwap_debt_token_supply": "#2ca02c",
-    "JediSwap_debt_token_supply": "#d62728"
+    "JediSwap_debt_token_supply": "#d62728",
 }
 
 COLOR_MAP_PROTOCOL = {
     "liquidable_debt_at_interval_zkLend": "#4B16E9",
     "liquidable_debt_at_interval_Nostra Alpha": "#E94B16",
-    "liquidable_debt_at_interval_Nostra Mainnet": "#16E94B"
+    "liquidable_debt_at_interval_Nostra Mainnet": "#16E94B",
 }
 
 COLOR_MAP_LIQUIDITY = {"debt_token_supply": "#E9164B"}
+
 
 def get_main_chart_data(
     state: src.state.State,
@@ -120,24 +121,28 @@ def get_main_chart_figure(
     # Add bars for each protocol and the total liquidable debt
     for col in color_map_protocol.keys():
         try:
-            figure.add_trace(plotly.graph_objs.Bar(
-                x=data["collateral_token_price"],
-                y=data[col],
-                name = col.replace("liquidable_debt_at_interval", f"Liquidable {debt_token} debt").replace("_", " "),
-                marker_color = color_map_protocol[col],
-                opacity = 0.7,
-                customdata=customdata,
-                hovertemplate=(
-                    "<b>Price:</b> %{x}<br>"
-                    "<b>Total:</b> %{customdata[0]:,.2f}<br>"
-                    "<b>ZkLend:</b> %{customdata[1]:,.2f}<br>"
-                    "<b>Nostra Alpha:</b> %{customdata[2]:,.2f}<br>"
-                    "<b>Nostra Mainnet:</b> %{customdata[3]:,.2f}<br>"
-                ),
-            ))
-        except KeyError: # If `KeyError` is raised from accessing data[col]
-            continue     # Skip this trace
-    
+            figure.add_trace(
+                plotly.graph_objs.Bar(
+                    x=data["collateral_token_price"],
+                    y=data[col],
+                    name=col.replace(
+                        "liquidable_debt_at_interval", f"Liquidable {debt_token} debt"
+                    ).replace("_", " "),
+                    marker_color=color_map_protocol[col],
+                    opacity=0.7,
+                    customdata=customdata,
+                    hovertemplate=(
+                        "<b>Price:</b> %{x}<br>"
+                        "<b>Total:</b> %{customdata[0]:,.2f}<br>"
+                        "<b>ZkLend:</b> %{customdata[1]:,.2f}<br>"
+                        "<b>Nostra Alpha:</b> %{customdata[2]:,.2f}<br>"
+                        "<b>Nostra Mainnet:</b> %{customdata[3]:,.2f}<br>"
+                    ),
+                )
+            )
+        except KeyError:  # If `KeyError` is raised from accessing data[col]
+            continue  # Skip this trace
+
     # Add a separate trace for debt_token_supply with overlay mode
     figure.add_trace(
         plotly.graph_objs.Bar(
