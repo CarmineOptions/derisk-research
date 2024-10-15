@@ -11,6 +11,22 @@ import src.state
 import src.swap_amm
 import src.types
 
+# Constants for color mappings
+COLOR_MAP_AMM = {
+    "10kSwap_debt_token_supply": "#1f77b4",
+    "MySwap_debt_token_supply": "#ff7f0e",
+    "SithSwap_debt_token_supply": "#2ca02c",
+    "JediSwap_debt_token_supply": "#d62728",
+}
+
+COLOR_MAP_PROTOCOL = {
+    "liquidable_debt_at_interval_zkLend": "#4B16E9",
+    "liquidable_debt_at_interval_Nostra Alpha": "#E94B16",
+    "liquidable_debt_at_interval_Nostra Mainnet": "#16E94B",
+}
+
+COLOR_MAP_LIQUIDITY = {"debt_token_supply": "#E9164B"}
+
 
 def get_main_chart_data(
     state: src.state.State,
@@ -93,52 +109,43 @@ def get_main_chart_figure(
 ) -> plotly.graph_objs.Figure:
     # Define the AMMs and their color mappings
     amms = src.swap_amm.AMMS
-    color_map = {
-        "10kSwap_debt_token_supply": "#4C6DD0",
-        "MySwap_debt_token_supply": "#4CA7D0",
-        "SithSwap_debt_token_supply": "#4C99D0",
-        "JediSwap_debt_token_supply": "#4C83D0",
-    }
 
-    # TODO: Align colors with the rest of the app.
-    color_map_protocol = {
-        "liquidable_debt_at_interval_zkLend": "#fff7bc",  # light yellow
-        "liquidable_debt_at_interval_Nostra Alpha": "#fec44f",  # yellow
-        "liquidable_debt_at_interval_Nostra Mainnet": "#d95f0e",
-    }  # mustard yellow
-    color_map_liquidity = {"debt_token_supply": "#1f77b4"}  # blue
     figure = plotly.graph_objs.Figure()
 
     customdata = src.helpers.get_custom_data(data)
 
     # Add bars for each protocol and the total liquidable debt
-    for col in color_map_protocol.keys():
+    for col in COLOR_MAP_PROTOCOL.keys():
         try:
-            figure.add_trace(plotly.graph_objs.Bar(
-                x=data["collateral_token_price"],
-                y=data[col],
-                name = col.replace("liquidable_debt_at_interval", f"Liquidable {debt_token} debt").replace("_", " "),
-                marker_color = color_map_protocol[col],
-                opacity = 0.7,
-                customdata=customdata,
-                hovertemplate=(
-                    "<b>Price:</b> %{x}<br>"
-                    "<b>Total:</b> %{customdata[0]:,.2f}<br>"
-                    "<b>ZkLend:</b> %{customdata[1]:,.2f}<br>"
-                    "<b>Nostra Alpha:</b> %{customdata[2]:,.2f}<br>"
-                    "<b>Nostra Mainnet:</b> %{customdata[3]:,.2f}<br>"
-                ),
-            ))
-        except KeyError: # If `KeyError` is raised from accessing data[col]
-            continue     # Skip this trace
-    
+            figure.add_trace(
+                plotly.graph_objs.Bar(
+                    x=data["collateral_token_price"],
+                    y=data[col],
+                    name=col.replace(
+                        "liquidable_debt_at_interval", f"Liquidable {debt_token} debt"
+                    ).replace("_", " "),
+                    marker_color=COLOR_MAP_PROTOCOL[col],
+                    opacity=0.7,
+                    customdata=customdata,
+                    hovertemplate=(
+                        "<b>Price:</b> %{x}<br>"
+                        "<b>Total:</b> %{customdata[0]:,.2f}<br>"
+                        "<b>ZkLend:</b> %{customdata[1]:,.2f}<br>"
+                        "<b>Nostra Alpha:</b> %{customdata[2]:,.2f}<br>"
+                        "<b>Nostra Mainnet:</b> %{customdata[3]:,.2f}<br>"
+                    ),
+                )
+            )
+        except KeyError:  # If `KeyError` is raised from accessing data[col]
+            continue  # Skip this trace
+
     # Add a separate trace for debt_token_supply with overlay mode
     figure.add_trace(
         plotly.graph_objs.Bar(
             x=data["collateral_token_price"],
             y=data["debt_token_supply"],
             name=f"{debt_token} available liquidity",
-            marker_color=color_map_liquidity["debt_token_supply"],
+            marker_color=COLOR_MAP_LIQUIDITY["debt_token_supply"],
             opacity=0.5,
             yaxis="y2",
             hovertemplate=("<b>Price:</b> %{x}<br>" "<b>Volume:</b> %{y}"),
@@ -218,19 +225,19 @@ def get_bar_chart_figures(
                 name="zkLend",
                 x=bar_chart_supply_stats.index,
                 y=bar_chart_supply_stats["zkLend"],
-                marker=plotly.graph_objs.bar.Marker(color="#fff7bc"),
+                marker=plotly.graph_objs.bar.Marker(color="#6baed6"),
             ),
             plotly.graph_objs.Bar(
                 name="Nostra Alpha",
                 x=bar_chart_supply_stats.index,
                 y=bar_chart_supply_stats["Nostra Alpha"],
-                marker=plotly.graph_objs.bar.Marker(color="#fec44f"),
+                marker=plotly.graph_objs.bar.Marker(color="#2171b5"),
             ),
             plotly.graph_objs.Bar(
                 name="Nostra Mainnet",
                 x=bar_chart_supply_stats.index,
                 y=bar_chart_supply_stats["Nostra Mainnet"],
-                marker=plotly.graph_objs.bar.Marker(color="#d95f0e"),
+                marker=plotly.graph_objs.bar.Marker(color="#08306b"),
             ),
         ],
     )
@@ -241,19 +248,19 @@ def get_bar_chart_figures(
                 name="zkLend",
                 x=bar_chart_collateral_stats.index,
                 y=bar_chart_collateral_stats["zkLend"],
-                marker=plotly.graph_objs.bar.Marker(color="#fff7bc"),
+                marker=plotly.graph_objs.bar.Marker(color="#fd8d3c"),
             ),
             plotly.graph_objs.Bar(
                 name="Nostra Alpha",
                 x=bar_chart_collateral_stats.index,
                 y=bar_chart_collateral_stats["Nostra Alpha"],
-                marker=plotly.graph_objs.bar.Marker(color="#fec44f"),
+                marker=plotly.graph_objs.bar.Marker(color="#a63603"),
             ),
             plotly.graph_objs.Bar(
                 name="Nostra Mainnet",
                 x=bar_chart_collateral_stats.index,
                 y=bar_chart_collateral_stats["Nostra Mainnet"],
-                marker=plotly.graph_objs.bar.Marker(color="#d95f0e"),
+                marker=plotly.graph_objs.bar.Marker(color="#7f2704"),
             ),
         ],
     )
@@ -264,19 +271,19 @@ def get_bar_chart_figures(
                 name="zkLend",
                 x=bar_chart_debt_stats.index,
                 y=bar_chart_debt_stats["zkLend"],
-                marker=plotly.graph_objs.bar.Marker(color="#fff7bc"),
+                marker=plotly.graph_objs.bar.Marker(color="#74c476"),
             ),
             plotly.graph_objs.Bar(
                 name="Nostra Alpha",
                 x=bar_chart_debt_stats.index,
                 y=bar_chart_debt_stats["Nostra Alpha"],
-                marker=plotly.graph_objs.bar.Marker(color="#fec44f"),
+                marker=plotly.graph_objs.bar.Marker(color="#238b45"),
             ),
             plotly.graph_objs.Bar(
                 name="Nostra Mainnet",
                 x=bar_chart_debt_stats.index,
                 y=bar_chart_debt_stats["Nostra Mainnet"],
-                marker=plotly.graph_objs.bar.Marker(color="#d95f0e"),
+                marker=plotly.graph_objs.bar.Marker(color="#00441b"),
             ),
         ],
     )
