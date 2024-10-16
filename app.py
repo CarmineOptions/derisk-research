@@ -15,15 +15,15 @@ import src.settings
 import src.swap_amm
 import src.utils
 from src.chart_utils import (
+    NOSTRA_ALPHA,
+    NOSTRA_MAINNET,
+    PROTOCOL_NAMES,
+    ZKLEND,
+    ProtocolColors,
     get_protocol_data_mappings,
     load_stats_data,
     transform_loans_data,
     transform_main_chart_data,
-    ProtocolColors,
-    ZKLEND,
-    NOSTRA_ALPHA,
-    NOSTRA_MAINNET,
-    PROTOCOL_NAMES,
 )
 
 
@@ -385,7 +385,7 @@ def main():
                     values="amount_usd",
                     names="token",
                     title="Collateral (USD)",
-                    color_discrete_sequence=plotly.express.colors.sequential.Oranges_r,
+                    color_discrete_sequence=plotly.express.colors.sequential.Greens_r,
                 )
                 streamlit.plotly_chart(figure, True)
 
@@ -395,7 +395,7 @@ def main():
                     values="amount_usd",
                     names="token",
                     title="Debt (USD)",
-                    color_discrete_sequence=plotly.express.colors.sequential.Greens_r,
+                    color_discrete_sequence=plotly.express.colors.sequential.Reds_r,
                 )
                 streamlit.plotly_chart(figure, True)
 
