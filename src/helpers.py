@@ -141,7 +141,7 @@ def get_prices(token_decimals: dict[str, int]) -> dict[str, float]:
     URL = "https://starknet.impulse.avnu.fi/v1/tokens/short"
     response = requests.get(URL)
 
-    if response.status_code == 200:
+    if response.ok:
         # Fetch information about tokens.
         tokens_info = response.json()
 
