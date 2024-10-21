@@ -21,6 +21,14 @@ from handlers.exceptions import TokenSettingsNotFound
 from handlers.helpers import ExtraInfo
 from handlers.settings import TOKEN_SETTINGS, TokenSettings
 
+from data_handler.handlers.loan_states import (
+    HashstackV0State,
+    HashstackV1State,
+    NostraAlphaState,
+    NostraMainnetState,
+    ZkLendState,
+)
+
 
 @dataclasses.dataclass
 class NostraAlphaSpecificTokenSettings(TokenSettings):
@@ -350,3 +358,19 @@ class State(abc.ABC):
             raise TokenSettingsNotFound(address=address, protocol=self.PROTOCOL_NAME)
 
         return token_name
+
+    def get_directory(self) -> str:
+        # TODO: Improve the inference.
+        if isinstance(self, ZkLendState):
+            return "zklend_data"
+        if isinstance(self, HashstackV0State):
+            return "hashstack_v0_data"
+        if isinstance(self, HashstackV1State):
+            return "hashstack_v1_data"
+        if isinstance(self, NostraAlphaState) and not isinstance(
+            self, NostraMainnetState
+        ):
+            return "nostra_alpha_data"
+        if isinstance(self, NostraMainnetState):
+            return "nostra_mainnet_data"
+        raise ValueError

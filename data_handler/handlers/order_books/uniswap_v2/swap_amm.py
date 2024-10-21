@@ -244,3 +244,22 @@ class SwapAmm(Pair):
                 f"Trying to get pools that are not set: {self.tokens_to_id(base_token, quote_token)}"
             )
         return pools
+
+    def get_supply_at_price(
+        self,
+        collateral_token_underlying_symbol: str,
+        collateral_token_price: float,
+        debt_token_underlying_symbol: str,
+        amm: str,
+    ) -> float:
+        """
+        Get the supply at a given price in a given AMM.
+        """
+        pool: Pool = self.get_pool(
+            token_a=collateral_token_underlying_symbol,
+            token_b=debt_token_underlying_symbol,
+        )
+        return pool.supply_at_price(
+            initial_price=collateral_token_price,
+            amm=amm,
+        )

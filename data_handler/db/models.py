@@ -3,7 +3,16 @@ from uuid import uuid4
 
 from handler_tools.constants import ProtocolIDs
 from handlers.liquidable_debt.values import LendingProtocolNames
-from sqlalchemy import DECIMAL, UUID, BigInteger, Column, Integer, MetaData, String
+from sqlalchemy import (
+    DECIMAL,
+    UUID,
+    BigInteger,
+    Column,
+    Integer,
+    MetaData,
+    String,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import DeclarativeBase, Mapped
 from sqlalchemy.types import JSON
 from sqlalchemy_utils.types.choice import ChoiceType
@@ -40,6 +49,10 @@ class LoanState(BaseState):
     """
 
     __tablename__ = "loan_state"
+    __table_args__ = (
+        UniqueConstraint("protocol_id", "user", name="loan_state_protocol_id_user_key"),
+    )
+
     user = Column(String, index=True)
     deposit = Column(JSON, nullable=True)
 
