@@ -3,7 +3,6 @@ import math
 import pandas as pd
 import plotly.express
 import plotly.graph_objs
-from handlers.order_books.uniswap_v2.swap_amm import SwapAmm
 
 from dashboard_app.helpers.settings import TOKEN_SETTINGS
 from dashboard_app.helpers.tools import (
@@ -13,8 +12,9 @@ from dashboard_app.helpers.tools import (
     get_underlying_address,
     save_dataframe,
 )
-from data_handler.handler_tools.types.base import Prices
-from data_handler.handlers.state import State
+from shared.amms import SwapAmm
+from shared.state import State
+from shared.types import Prices
 
 AMMS = ("10kSwap", "MySwap", "SithSwap", "JediSwap")
 
@@ -25,7 +25,6 @@ def get_main_chart_data(
     swap_amms: SwapAmm,
     collateral_token_underlying_symbol: str,
     debt_token_underlying_symbol: str,
-    save_data: bool = False,
 ) -> pd.DataFrame:
     collateral_token_underlying_address = get_underlying_address(
         token_parameters=state.token_parameters.collateral,
@@ -85,10 +84,6 @@ def get_main_chart_data(
         )
     data["debt_token_supply"] = supplies_and_totals.apply(lambda x: x[1])
 
-    if save_data:
-        directory = state.get_directory()
-        path = f"{directory}/{collateral_token_underlying_address}-{debt_token_underlying_address}.parquet"
-        save_dataframe(data=data, path=path)
     return data
 
 

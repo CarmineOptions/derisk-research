@@ -1,20 +1,19 @@
 import logging
 import math
 from collections import defaultdict
-from functools import partial
 
 import pandas as pd
 import streamlit as st
 
-from helpers.ekubo import EkuboLiquidity
-from helpers.settings import (
+from dashboard_app.helpers.ekubo import EkuboLiquidity
+from dashboard_app.helpers.settings import (
     COLLATERAL_TOKENS,
     DEBT_TOKENS,
     STABLECOIN_BUNDLE_NAME,
     TOKEN_SETTINGS,
     UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES,
 )
-from helpers.tools import GS_BUCKET_NAME, get_prices, load_data
+from dashboard_app.helpers.tools import GS_BUCKET_NAME, get_prices, load_data
 
 
 def process_liquidity(
@@ -278,9 +277,9 @@ def transform_main_chart_data(
             main_chart_data[f"liquidable_debt_{protocol}"] = protocol_main_chart_data[
                 "liquidable_debt"
             ]
-            main_chart_data[
-                f"liquidable_debt_at_interval_{protocol}"
-            ] = protocol_main_chart_data["liquidable_debt_at_interval"]
+            main_chart_data[f"liquidable_debt_at_interval_{protocol}"] = (
+                protocol_main_chart_data["liquidable_debt_at_interval"]
+            )
         else:
             main_chart_data["liquidable_debt"] += protocol_main_chart_data[
                 "liquidable_debt"
@@ -291,8 +290,8 @@ def transform_main_chart_data(
             main_chart_data[f"liquidable_debt_{protocol}"] = protocol_main_chart_data[
                 "liquidable_debt"
             ]
-            main_chart_data[
-                f"liquidable_debt_at_interval_{protocol}"
-            ] = protocol_main_chart_data["liquidable_debt_at_interval"]
+            main_chart_data[f"liquidable_debt_at_interval_{protocol}"] = (
+                protocol_main_chart_data["liquidable_debt_at_interval"]
+            )
 
     return main_chart_data

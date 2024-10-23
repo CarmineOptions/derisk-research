@@ -8,15 +8,25 @@ import requests
 from google.cloud.storage import Client
 from starknet_py.cairo.felt import decode_shortstring
 
-from data_handler.handler_tools.types import TokenParameters
-from helpers.settings import PAIRS, UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES
-
-from .blockchain_call import func_call
+from dashboard_app.helpers.settings import (
+    PAIRS,
+    UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES,
+)
+from shared.blockchain_call import func_call
+from shared.types import TokenParameters
 
 GS_BUCKET_NAME = "derisk-persistent-state/v3"
 
 
 def float_range(start: float, stop: float, step: float) -> Iterator[float]:
+    """
+    Generator that yields float values within the specified range.
+
+    :param start: Start of the range.
+    :param stop: End of the range.
+    :param step: Step size.
+    :return: Generator of float values.
+    """
     while start < stop:
         yield start
         start += step
