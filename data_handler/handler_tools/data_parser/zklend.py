@@ -1,3 +1,8 @@
+from decimal import Decimal
+
+from serializers import AccumulatorsSyncEvent
+
+
 class ZklendDataParser:
     """
     Parses the zkLend data to human-readable format.
@@ -5,8 +10,12 @@ class ZklendDataParser:
 
     @classmethod
     def parse_accumulators_sync_event(cls, event_data):
-        # TODO: Implement parsing logic for AccumulatorsSync event
-        pass
+        parsed_event = AccumulatorsSyncEvent(
+            token=event_data[0],
+            lending_accumulator=Decimal(int(event_data[1], 16)) / Decimal("1e27"),
+            debt_accumulator=Decimal(int(event_data[2], 16)) / Decimal("1e27"),
+        )
+        return parsed_event
 
     @classmethod
     def parse_deposit_event(cls, event_data):

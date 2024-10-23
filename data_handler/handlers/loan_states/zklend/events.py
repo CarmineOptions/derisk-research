@@ -8,6 +8,7 @@ import pandas as pd
 from handlers import blockchain_call
 from handlers.helpers import get_async_symbol
 from handlers.loan_states.zklend import TokenSettings
+from handler_tools.data_parser.zklend import ZklendDataParser
 
 from db.crud import InitializerDBConnector
 from shared.helpers import add_leading_zeros
@@ -164,13 +165,11 @@ class ZkLendState(State):
         # The order of the values in the `data` column is: `token`, `lending_accumulator`, `debt_accumulator`.
         # Example: https://starkscan.co/event/0x029628b89875a98c1c64ae206e7eb65669cb478a24449f3485f5e98aba6204dc_0.
         # TODO: Integrate the ZEND token once it's allowed to be borrowed or used as collateral.
-        token = add_leading_zeros(event["data"][0])
-        collateral_interest_rate_index = decimal.Decimal(
-            str(int(event["data"][1], base=16))
-        ) / decimal.Decimal("1e27")
-        debt_interest_rate_index = decimal.Decimal(
-            str(int(event["data"][2], base=16))
-        ) / decimal.Decimal("1e27")
+        parsed_event = ZklendDataParser.parse_accumulators_sync_event(event["data"])
+
+        token = add_leading_zeros(parsed_event.token)
+        collateral_interest_rate_index = parsed_event.lending_accumulator
+        debt_interest_rate_index = parsed_event.debt_accumulator
 
         self.interest_rate_models.collateral[token] = collateral_interest_rate_index
         self.interest_rate_models.debt[token] = debt_interest_rate_index
