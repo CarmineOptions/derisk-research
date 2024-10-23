@@ -5,14 +5,15 @@ import logging
 from typing import Optional
 
 import pandas as pd
-from handler_tools.types import Portfolio
 from handlers.helpers import MAX_ROUNDING_ERRORS, get_symbol
 from handlers.settings import TokenSettings
-from handlers.state import InterestRateModels, LoanEntity, State
 
 from db.crud import InitializerDBConnector
 from shared.constants import TOKEN_SETTINGS
-from shared.helpers import TokenValues, add_leading_zeros
+from shared.helpers import add_leading_zeros
+from shared.loan_entity import LoanEntity
+from shared.state import State
+from shared.types import InterestRateModels, Portfolio, TokenValues
 
 logger = logging.getLogger(__name__)
 

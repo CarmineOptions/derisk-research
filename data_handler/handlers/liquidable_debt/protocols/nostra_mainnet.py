@@ -1,4 +1,3 @@
-from handler_tools.constants import ProtocolIDs
 from handlers.liquidable_debt.debt_handlers import (
     NostraMainnetDBLiquidableDebtDataHandler,
 )
@@ -14,6 +13,7 @@ from handlers.loan_states.nostra_mainnet.events import (
 )
 
 from db.models import LiquidableDebt
+from shared.constants import ProtocolIDs
 
 
 def run() -> None:

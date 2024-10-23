@@ -2,7 +2,6 @@ import asyncio
 from decimal import Decimal
 from typing import Iterable, Type
 
-from handler_tools.constants import ProtocolIDs
 from handlers.helpers import get_collateral_token_range, get_range
 from handlers.liquidable_debt.utils import Prices
 from handlers.liquidable_debt.values import (
@@ -13,11 +12,12 @@ from handlers.liquidable_debt.values import (
     LendingProtocolNames,
 )
 from handlers.settings import TOKEN_PAIRS
-from handlers.state import LoanEntity, State
 
 from db.crud import DBConnector
 from db.models import LoanState
-from shared.helpers import TokenValues
+from shared.constants import ProtocolIDs
+from shared.state import LoanEntity, State
+from shared.types import TokenValues
 
 
 class BaseDBLiquidableDebtDataHandler:

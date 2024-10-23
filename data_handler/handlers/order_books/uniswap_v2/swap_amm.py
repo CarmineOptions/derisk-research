@@ -3,10 +3,10 @@ from decimal import Decimal
 from typing import Optional
 
 from handlers.blockchain_call import balance_of, func_call, get_myswap_pool
-from handlers.settings import TokenSettings
 
 from shared.constants import TOKEN_SETTINGS
-from shared.helpers import TokenValues, add_leading_zeros
+from shared.helpers import add_leading_zeros
+from shared.types import TokenSettings, TokenValues
 
 
 class Pair:

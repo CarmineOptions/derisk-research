@@ -5,7 +5,16 @@ import logging
 from typing import Optional
 
 import pandas as pd
-from handler_tools.types import (
+from handlers import blockchain_call
+from handlers.helpers import get_async_symbol
+from handlers.loan_states.zklend import TokenSettings
+
+from db.crud import InitializerDBConnector
+from shared.helpers import add_leading_zeros
+from shared.loan_entity import LoanEntity
+from shared.state import State
+from shared.types import (
+    InterestRateModels,
     Portfolio,
     Prices,
     TokenParameters,
@@ -14,12 +23,6 @@ from handler_tools.types import (
     ZkLendCollateralTokenParameters,
     ZkLendDebtTokenParameters,
 )
-from handlers import blockchain_call
-from handlers.helpers import add_leading_zeros, get_async_symbol
-from handlers.loan_states.zklend import TokenSettings
-from handlers.state import InterestRateModels, LoanEntity, State
-
-from db.crud import InitializerDBConnector
 
 from .fetch_zklend_specific_token_settings import fetch_zklend_specific_token_settings
 

@@ -5,7 +5,6 @@ import logging
 from typing import Optional
 
 import pandas as pd
-from error_handler.values import ProtocolIDs
 from handler_tools.nostra_alpha_settings import (
     NOSTRA_ALPHA_ADDRESSES_TO_EVENTS,
     NOSTRA_ALPHA_CDP_MANAGER_ADDRESS,
@@ -14,21 +13,19 @@ from handler_tools.nostra_alpha_settings import (
     NOSTRA_ALPHA_INTEREST_RATE_MODEL_ADDRESS,
     NOSTRA_ALPHA_TOKEN_ADDRESSES,
 )
-from handler_tools.types import Portfolio, Prices, TokenParameters
-from handler_tools.types.nostra import (
+from handlers.helpers import blockchain_call, get_addresses, get_symbol
+from handlers.settings import TokenSettings
+from handlers.state import NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS
+
+from shared.constants import ProtocolIDs
+from shared.helpers import add_leading_zeros
+from shared.loan_entity import LoanEntity
+from shared.state import State
+from shared.types import InterestRateModels, Portfolio, Prices, TokenParameters
+from shared.types.nostra import (
     NostraAlphaCollateralTokenParameters,
     NostraDebtTokenParameters,
 )
-from handlers.helpers import blockchain_call, get_addresses, get_symbol
-from handlers.settings import TokenSettings
-from handlers.state import (
-    NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS,
-    InterestRateModels,
-    LoanEntity,
-    State,
-)
-
-from shared.helpers import add_leading_zeros
 
 LIQUIDATION_HEALTH_FACTOR_THRESHOLD = decimal.Decimal("1")
 TARGET_HEALTH_FACTOR = decimal.Decimal("1.25")

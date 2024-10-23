@@ -3,7 +3,6 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Type
 
-from handler_tools.constants import ProtocolIDs
 from handlers.liquidable_debt.utils import Prices
 from handlers.liquidable_debt.values import (
     HEALTH_FACTOR_FIELD_NAME,
@@ -19,10 +18,11 @@ from handlers.loan_states.nostra_mainnet.events import (
     NostraMainnetState,
 )
 from handlers.loan_states.zklend.events import ZkLendLoanEntity, ZkLendState
-from handlers.state import LoanEntity, State
 
 from db.crud import DBConnector
-from shared.helpers import TokenValues
+from shared.constants import ProtocolIDs
+from shared.state import LoanEntity, State
+from shared.types import TokenValues
 
 
 class BaseHealthRatioHandler:

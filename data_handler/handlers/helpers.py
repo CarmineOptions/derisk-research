@@ -8,15 +8,15 @@ from typing import Iterator
 import google.cloud.storage
 import pandas
 import starknet_py.cairo.felt as cairo_felt_type
-from error_handler import BOT
-from error_handler.values import MessageTemplates
-from handler_tools.constants import TOKEN_MAPPING, ProtocolIDs
+from handler_tools.constants import TOKEN_MAPPING
 from handlers import blockchain_call
 from handlers.settings import PAIRS
 
 from db.models import InterestRate
-from shared.constants import TOKEN_SETTINGS
-from shared.helpers import TokenValues
+from shared.constants import TOKEN_SETTINGS, ProtocolIDs
+from shared.error_handler import BOT
+from shared.error_handler.values import MessageTemplates
+from shared.types import TokenValues
 
 GS_BUCKET_NAME = "derisk-persistent-state"
 ERROR_LOGS = set()
@@ -36,11 +36,6 @@ MAX_ROUNDING_ERRORS: TokenValues = TokenValues(
         "STRK": decimal.Decimal("0.5e13"),
     },
 )
-
-
-class ExtraInfo:
-    block: int
-    timestamp: int
 
 
 class InterestRateState:

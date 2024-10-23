@@ -1,4 +1,3 @@
-from handler_tools.constants import ProtocolIDs
 from handlers.liquidable_debt.values import (
     HEALTH_FACTOR_FIELD_NAME,
     TIMESTAMP_FIELD_NAME,
@@ -7,6 +6,7 @@ from handlers.liquidable_debt.values import (
 from health_ratio_handlers import NostrAlphaHealthRatioHandler
 
 from db.models import HealthRatioLevel
+from shared.constants import ProtocolIDs
 
 
 def run():

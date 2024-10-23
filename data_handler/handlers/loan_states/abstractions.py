@@ -4,11 +4,12 @@ from typing import Dict, Optional
 
 import pandas as pd
 from handler_tools.api_connector import DeRiskAPIConnector
-from handler_tools.constants import ProtocolIDs
-from handlers.state import InterestRateModels, State
 
 from db.crud import DBConnector
 from db.models import InterestRate, LoanState
+from shared.constants import ProtocolIDs
+from shared.state import State
+from shared.types import InterestRateModels
 
 logger = logging.getLogger(__name__)
 
