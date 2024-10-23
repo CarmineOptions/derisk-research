@@ -2,7 +2,6 @@ import logging
 import uuid
 from typing import List, Optional, Type, TypeVar
 
-from handler_tools.constants import ProtocolIDs
 from sqlalchemy import Subquery, and_, create_engine, desc, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import SQLAlchemyError
@@ -17,6 +16,7 @@ from db.models import (
     OrderBookModel,
     ZkLendCollateralDebt,
 )
+from shared.constants import ProtocolIDs
 
 logger = logging.getLogger(__name__)
 ModelType = TypeVar("ModelType", bound=Base)
