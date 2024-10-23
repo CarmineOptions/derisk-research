@@ -1,16 +1,7 @@
-import dataclasses
 import decimal
 from collections import defaultdict
-from typing import Optional, Union
 
-
-@dataclasses.dataclass
-class BaseTokenParameters:
-    address: str
-    decimals: int
-    symbol: str
-    underlying_symbol: str
-    underlying_address: str
+from shared.types import TokenParameters
 
 
 class InterestRateModels(defaultdict):
@@ -22,26 +13,6 @@ class InterestRateModels(defaultdict):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(lambda: decimal.Decimal("1"), *args[1:], **kwargs)
-
-
-class TokenParameters(defaultdict):
-    """
-    A class that describes the parameters of collateral or debt tokens. These parameters are e.g. the token address,
-    symbol, decimals, underlying token symbol, etc.
-    """
-
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(
-            lambda: BaseTokenParameters(
-                address="",
-                decimals=0,
-                symbol="",
-                underlying_symbol="",
-                underlying_address="",
-            ),
-            *args[1:],
-            **kwargs,
-        )
 
 
 class Prices(defaultdict):
@@ -293,20 +264,3 @@ class Portfolio(defaultdict):
     def set_value(self, token: str, value: decimal.Decimal) -> None:
         self[token] = value
         self.round_small_value_to_zero(token=token)
-
-
-class TokenValues:
-    def __init__(
-        self,
-        values: Optional[dict[str, Union[bool, decimal.Decimal]]] = None,
-        # TODO: Only one parameter should be specified..
-        init_value: decimal.Decimal = decimal.Decimal("0"),
-    ) -> None:
-        if values:
-            # Nostra Mainnet can contain different tokens that aren't mentioned in `TOKEN_SETTINGS`
-            # assert set(values.keys()) == set(TOKEN_SETTINGS.keys())
-            self.values: dict[str, decimal.Decimal] = values
-        else:
-            self.values: dict[str, decimal.Decimal] = {
-                token: init_value for token in TOKEN_SETTINGS
-            }

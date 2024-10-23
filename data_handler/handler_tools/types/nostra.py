@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from handler_tools.types.base import BaseTokenParameters
+from shared.types import BaseTokenParameters
 
 
 @dataclass

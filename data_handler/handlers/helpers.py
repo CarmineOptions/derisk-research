@@ -11,11 +11,12 @@ import starknet_py.cairo.felt as cairo_felt_type
 from error_handler import BOT
 from error_handler.values import MessageTemplates
 from handler_tools.constants import TOKEN_MAPPING, ProtocolIDs
-from handler_tools.types import TokenValues
 from handlers import blockchain_call
-from handlers.settings import PAIRS, TOKEN_SETTINGS
+from handlers.settings import PAIRS
 
 from db.models import InterestRate
+from shared.constants import TOKEN_SETTINGS
+from shared.helpers import TokenValues
 
 GS_BUCKET_NAME = "derisk-persistent-state"
 ERROR_LOGS = set()
@@ -278,7 +279,9 @@ def upload_file_to_bucket(source_path: str, target_path: str) -> None:
             os.getenv("CREDENTIALS_PATH", "")
         )
     except FileNotFoundError as e:
-        logger.info(f"Failed to initialize the Google Cloud Storage client due to an error: {e}")
+        logger.info(
+            f"Failed to initialize the Google Cloud Storage client due to an error: {e}"
+        )
         raise FileNotFoundError
 
     # Get the target bucket.
@@ -287,7 +290,9 @@ def upload_file_to_bucket(source_path: str, target_path: str) -> None:
     # Upload the file to the bucket.
     blob = bucket.blob(target_path)
     blob.upload_from_filename(source_path)
-    logger.info(f"File = {source_path} uploaded to = gs://{GS_BUCKET_NAME}/{target_path}")
+    logger.info(
+        f"File = {source_path} uploaded to = gs://{GS_BUCKET_NAME}/{target_path}"
+    )
 
 
 def save_dataframe(data: pandas.DataFrame, path: str) -> None:
@@ -297,14 +302,6 @@ def save_dataframe(data: pandas.DataFrame, path: str) -> None:
     data.to_parquet(path, index=False, engine="fastparquet", compression="gzip")
     upload_file_to_bucket(source_path=path, target_path=path)
     os.remove(path)
-
-
-def add_leading_zeros(hash: str) -> str:
-    """
-    Converts e.g. `0x436d8d078de345c11493bd91512eae60cd2713e05bcaa0bb9f0cba90358c6e` to
-    `0x00436d8d078de345c11493bd91512eae60cd2713e05bcaa0bb9f0cba90358c6e`.
-    """
-    return "0x" + hash[2:].zfill(64)
 
 
 def get_addresses(

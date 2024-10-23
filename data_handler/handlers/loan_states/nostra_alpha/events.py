@@ -19,12 +19,7 @@ from handler_tools.types.nostra import (
     NostraAlphaCollateralTokenParameters,
     NostraDebtTokenParameters,
 )
-from handlers.helpers import (
-    add_leading_zeros,
-    blockchain_call,
-    get_addresses,
-    get_symbol,
-)
+from handlers.helpers import blockchain_call, get_addresses, get_symbol
 from handlers.settings import TokenSettings
 from handlers.state import (
     NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS,
@@ -32,6 +27,8 @@ from handlers.state import (
     LoanEntity,
     State,
 )
+
+from shared.helpers import add_leading_zeros
 
 LIQUIDATION_HEALTH_FACTOR_THRESHOLD = decimal.Decimal("1")
 TARGET_HEALTH_FACTOR = decimal.Decimal("1.25")
@@ -367,9 +364,9 @@ class NostraAlphaState(State):
         )
         # The indices are saved under the respective collateral or debt token address.
         if collateral_token:
-            self.interest_rate_models.collateral[
-                collateral_token
-            ] = collateral_interest_rate_index
+            self.interest_rate_models.collateral[collateral_token] = (
+                collateral_interest_rate_index
+            )
         self.interest_rate_models.debt[debt_token] = debt_interest_rate_index
 
     def process_non_interest_bearing_collateral_mint_event(

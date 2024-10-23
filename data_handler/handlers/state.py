@@ -15,11 +15,10 @@ from handler_tools.types import (
     Portfolio,
     Prices,
     TokenParameters,
-    TokenValues,
 )
 from handlers.exceptions import TokenSettingsNotFound
 from handlers.helpers import ExtraInfo
-from handlers.settings import TOKEN_SETTINGS, TokenSettings
+from handlers.settings import TokenSettings
 
 from data_handler.handlers.loan_states import (
     HashstackV0State,
@@ -28,6 +27,8 @@ from data_handler.handlers.loan_states import (
     NostraMainnetState,
     ZkLendState,
 )
+from shared.constants import TOKEN_SETTINGS
+from shared.helpers import TokenValues
 
 
 @dataclasses.dataclass

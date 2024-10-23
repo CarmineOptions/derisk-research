@@ -4,15 +4,6 @@ import dask.dataframe as dd
 from handlers.liquidable_debt.bases import Collector
 from handlers.liquidable_debt.exceptions import ProtocolExistenceError
 from handlers.liquidable_debt.managers import LocalStorageManager
-from handlers.liquidable_debt.values import (
-    GS_BUCKET_NAME,
-    GS_BUCKET_URL,
-    LOCAL_STORAGE_PATH,
-    LendingProtocolNames,
-)
-from sqlalchemy.exc import SQLAlchemyError
-
-from db.crud import DBConnector
 
 
 class GoogleCloudDataCollector(Collector):

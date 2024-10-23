@@ -5,17 +5,14 @@ import logging
 from typing import Optional
 
 import pandas as pd
-from handlers.helpers import (
-    MAX_ROUNDING_ERRORS,
-    Portfolio,
-    TokenValues,
-    add_leading_zeros,
-    get_symbol,
-)
-from handlers.settings import TOKEN_SETTINGS, TokenSettings
+from handler_tools.types import Portfolio
+from handlers.helpers import MAX_ROUNDING_ERRORS, get_symbol
+from handlers.settings import TokenSettings
 from handlers.state import InterestRateModels, LoanEntity, State
 
 from db.crud import InitializerDBConnector
+from shared.constants import TOKEN_SETTINGS
+from shared.helpers import TokenValues, add_leading_zeros
 
 logger = logging.getLogger(__name__)
 
@@ -495,18 +492,18 @@ class HashstackV1State(State):
         self.loan_entities[loan_id] = HashstackV1LoanEntity(user=user)
         # TODO: Make it possible to initialize `HashstackV1Portfolio`` with some token amount directly.
         original_collateral = HashstackV1Portfolio()
-        original_collateral.values[
-            original_collateral_token
-        ] = original_collateral_face_amount
+        original_collateral.values[original_collateral_token] = (
+            original_collateral_face_amount
+        )
         self.loan_entities[loan_id].original_collateral = original_collateral
         # add additional info block and timestamp
         self.loan_entities[loan_id].extra_info.block = event["block_number"]
         self.loan_entities[loan_id].extra_info.timestamp = event["timestamp"]
 
         borrowed_collateral = HashstackV1Portfolio()
-        borrowed_collateral.values[
-            borrowed_collateral_token
-        ] = borrowed_collateral_face_amount
+        borrowed_collateral.values[borrowed_collateral_token] = (
+            borrowed_collateral_face_amount
+        )
         self.loan_entities[loan_id].borrowed_collateral = borrowed_collateral
         # TODO: Make it easier to sum 2 `HashstackV1Portfolio` instances.
         self.loan_entities[loan_id].collateral.values = {
@@ -561,9 +558,9 @@ class HashstackV1State(State):
         )
 
         original_collateral = HashstackV1Portfolio()
-        original_collateral.values[
-            original_collateral_token
-        ] = original_collateral_face_amount
+        original_collateral.values[original_collateral_token] = (
+            original_collateral_face_amount
+        )
         self.loan_entities[loan_id].original_collateral = original_collateral
         self.loan_entities[loan_id].collateral.values = {
             token: (
@@ -608,9 +605,9 @@ class HashstackV1State(State):
         )
 
         new_borrowed_collateral = HashstackV1Portfolio()
-        new_borrowed_collateral.values[
-            new_borrowed_collateral_token
-        ] = new_borrowed_collateral_face_amount
+        new_borrowed_collateral.values[new_borrowed_collateral_token] = (
+            new_borrowed_collateral_face_amount
+        )
         self.loan_entities[new_loan_id].borrowed_collateral = new_borrowed_collateral
         self.loan_entities[new_loan_id].collateral.values = {
             token: (
@@ -702,13 +699,13 @@ class HashstackV1State(State):
         assert new_original_collateral_face_amount == decimal.Decimal("0")
 
         new_original_collateral = HashstackV1Portfolio()
-        new_original_collateral.values[
-            new_original_collateral_token
-        ] = new_original_collateral_face_amount
+        new_original_collateral.values[new_original_collateral_token] = (
+            new_original_collateral_face_amount
+        )
         new_borrowed_collateral = HashstackV1Portfolio()
-        new_borrowed_collateral.values[
-            new_borrowed_collateral_token
-        ] = new_borrowed_collateral_face_amount
+        new_borrowed_collateral.values[new_borrowed_collateral_token] = (
+            new_borrowed_collateral_face_amount
+        )
         self.loan_entities[new_loan_id].original_collateral = new_original_collateral
         self.loan_entities[new_loan_id].borrowed_collateral = new_borrowed_collateral
         # add additional info block and timestamp
