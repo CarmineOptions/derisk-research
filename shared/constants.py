@@ -1,6 +1,7 @@
 from decimal import Decimal
+from enum import Enum
 
-from shared.helpers import TokenSettings
+from shared.types import TokenSettings
 
 ZKLEND = "zkLend"
 NOSTRA_ALPHA = "Nostra Alpha"
@@ -49,3 +50,28 @@ TOKEN_SETTINGS: dict[str, TokenSettings] = {
         address="0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d",
     ),
 }
+
+
+class ProtocolIDs(Enum):
+    """
+    This class contains the protocol IDs that are used in the system.
+    """
+
+    # hashstack protocols
+    HASHSTACK_V0: str = "Hashstack_v0"
+    HASHSTACK_V1: str = "Hashstack_v1"
+    HASHSTACK_V1_R: str = "Hashstack_v1_r"
+    HASHSTACK_V1_D: str = "Hashstack_v1_d"
+    # nostra protocols
+    NOSTRA_ALPHA: str = "Nostra_alpha"
+    NOSTRA_MAINNET: str = "Nostra_mainnet"
+    # zkLend protocol
+    ZKLEND: str = "zkLend"
+
+    @classmethod
+    def choices(cls) -> list[str]:
+        """
+        This method returns the values of the enum.
+        :return: list of values
+        """
+        return [choice.value for choice in cls]
