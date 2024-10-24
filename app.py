@@ -3,6 +3,7 @@ import difflib
 import logging
 import math
 
+
 import numpy.random
 import pandas
 import plotly.express
@@ -20,11 +21,8 @@ from src.chart_utils import (
     transform_loans_data,
     transform_main_chart_data,
 )
-from src.helpers import (
-    extract_token_addresses,
-    fetch_token_symbols_from_set_of_loan_addresses,
-    update_loan_data_with_symbols,
-)
+from typing import Dict, Set
+import  asyncio
 
 PROTOCOL_NAMES = [
     "zkLend",
@@ -35,7 +33,32 @@ PROTOCOL_NAMES = [
 
 
     
+def fetch_token_symbols2(token_addresses: Set[str]) -> Dict[str, str]:
+    async def async_fetch():
+        return {addr: await get_underlying_token_symbol(addr) for addr in token_addresses}
+    return asyncio.run(async_fetch())
 
+async def get_underlying_token_symbol(token_address: str) -> str:
+    try:
+        underlying_token_address = await src.blockchain_call.func_call(
+            addr=token_address,
+            selector="underlyingAsset",
+            calldata=[],
+        )
+        underlying_token_address = src.helpers.add_leading_zeros(
+            hex(underlying_token_address[0])
+        )
+        underlying_token_symbol = await src.helpers.get_symbol(
+            token_address=underlying_token_address
+        )
+        return underlying_token_symbol.strip('\x00')
+    except Exception:
+        # If we can't get the underlying asset, assume the token itself is the underlying
+        try:
+            underlying_token_symbol = await src.helpers.get_symbol(token_address=token_address)
+            return underlying_token_symbol.strip('\x00')
+        except Exception:
+            return "Unknown"
 
 
 def infer_protocol_name(input_protocol: str, valid_protocols: list[str]) -> str:
@@ -179,7 +202,27 @@ def process_liquidity(
 
     return main_chart_data, collateral_token_price
 
+def extract_token_addresses(loans_data: pandas.DataFrame) -> Set[str]:
+    collateral_addresses = set()
+    debt_addresses = set()
+    
+    for _, row in loans_data.iterrows():
+        if isinstance(row['Collateral'], dict):
+            collateral_addresses.update(row['Collateral'].keys())
+        if isinstance(row['Debt'], dict):
+            debt_addresses.update(row['Debt'].keys())
+    
+    return collateral_addresses.union(debt_addresses)
 
+def update_loan_data_with_symbols(loans_data: pandas.DataFrame, token_symbols: Dict[str, str]) -> pandas.DataFrame:
+    def update_column(col):
+        if isinstance(col, dict) and col:  # Check if it's a non-empty dictionary
+            return {f"{addr} ({token_symbols.get(addr, 'Unknown')})": val for addr, val in col.items()}
+        return col  # Return the original value if it's not a non-empty dictionary
+    
+    loans_data['Collateral'] = loans_data['Collateral'].apply(update_column)
+    loans_data['Debt'] = loans_data['Debt'].apply(update_column)
+    return loans_data
 
 def main():
     streamlit.title("DeRisk")
@@ -307,7 +350,7 @@ def main():
         token_addresses = extract_token_addresses(loans_data)
         if token_addresses:
         #tobe
-            token_symbols = fetch_token_symbols_from_set_of_loan_addresses(token_addresses)
+            token_symbols = fetch_token_symbols2(token_addresses)
             loans_data = update_loan_data_with_symbols(loans_data, token_symbols)
         #tobe
         streamlit.header("Loans with low health factor")
