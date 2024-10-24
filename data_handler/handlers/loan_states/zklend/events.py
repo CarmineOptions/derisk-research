@@ -165,11 +165,13 @@ class ZkLendState(State):
         # The order of the values in the `data` column is: `token`, `lending_accumulator`, `debt_accumulator`.
         # Example: https://starkscan.co/event/0x029628b89875a98c1c64ae206e7eb65669cb478a24449f3485f5e98aba6204dc_0.
         # TODO: Integrate the ZEND token once it's allowed to be borrowed or used as collateral.
-        parsed_event = ZklendDataParser.parse_accumulators_sync_event(event["data"])
+        parsed_event_data = ZklendDataParser.parse_accumulators_sync_event(
+            event["data"]
+        )
 
-        token = add_leading_zeros(parsed_event.token)
-        collateral_interest_rate_index = parsed_event.lending_accumulator
-        debt_interest_rate_index = parsed_event.debt_accumulator
+        token = add_leading_zeros(parsed_event_data.token)
+        collateral_interest_rate_index = parsed_event_data.lending_accumulator
+        debt_interest_rate_index = parsed_event_data.debt_accumulator
 
         self.interest_rate_models.collateral[token] = collateral_interest_rate_index
         self.interest_rate_models.debt[token] = debt_interest_rate_index
