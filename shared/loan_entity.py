@@ -25,7 +25,7 @@ class LoanEntity(ABC):
     def __init__(self) -> None:
         self.collateral: Portfolio = Portfolio()
         self.debt: Portfolio = Portfolio()
-        self.extra_info: ExtraInfo = ExtraInfo()
+        self.extra_info: ExtraInfo = ExtraInfo
 
     def compute_collateral_usd(
         self,
