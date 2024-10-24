@@ -1,8 +1,9 @@
+import asyncio
 import logging
 import math
 import os
 import time
-from typing import Iterator
+from typing import Dict, Iterator, Set
 
 import google.cloud.storage
 import pandas
@@ -14,9 +15,12 @@ import src.db
 import src.settings
 import src.types
 
+from starknet_py.net.client_errors import ClientError
+
 # TODO: rename
 GS_BUCKET_NAME = "derisk-persistent-state/v3"
-
+# Define a constant for the null character that might be present in token symbols
+NULL_CHAR = '\x00'
 
 def get_events(
     addresses: tuple[str, ...],
@@ -272,3 +276,90 @@ def get_custom_data(data: pandas.DataFrame) -> list:
     customdata = list(zip(*customdata))
 
     return customdata
+
+def extract_token_addresses(loans_data: pandas.DataFrame) -> Set[str]:
+    """
+    Extracts a set of unique token addresses from the 'Collateral' and 'Debt' columns of a DataFrame.
+    
+    :param loans_data: A DataFrame containing loan information, with 'Collateral' and 'Debt' columns.
+                       Each entry in these columns is expected to be a dictionary where keys are token addresses.
+    :return: A set of unique token addresses extracted from both 'Collateral' and 'Debt' dictionaries.
+    """
+    collateral_addresses = set()
+    debt_addresses = set()
+    
+    for _, row in loans_data.iterrows():
+        if isinstance(row['Collateral'], dict):
+            collateral_addresses.update(row['Collateral'].keys())
+        if isinstance(row['Debt'], dict):
+            debt_addresses.update(row['Debt'].keys())
+    
+    return collateral_addresses.union(debt_addresses)
+
+def update_loan_data_with_symbols(loans_data: pandas.DataFrame, token_symbols: Dict[str, str]) -> pandas.DataFrame:
+    """
+    Updates the 'Collateral' and 'Debt' columns in the DataFrame to include token symbols next to each token address.
+    
+    :param loans_data: A DataFrame containing loan information, with 'Collateral' and 'Debt' columns.
+                       Each entry in these columns is expected to be a dictionary where keys are token addresses.
+    :param token_symbols: A dictionary mapping token addresses to their respective symbols.
+    :return: The updated DataFrame with token symbols included in the 'Collateral' and 'Debt' columns.
+    """
+    def update_column(col):
+        if isinstance(col, dict) and col:  # Check if it's a non-empty dictionary
+            return {f"{addr} ({token_symbols.get(addr, 'Unknown')})": val for addr, val in col.items()}
+        return col  # Return the original value if it's not a non-empty dictionary
+    
+    loans_data['Collateral'] = loans_data['Collateral'].apply(update_column)
+    loans_data['Debt'] = loans_data['Debt'].apply(update_column)
+    return loans_data
+
+def fetch_token_symbols_from_set_of_loan_addresses(token_addresses: Set[str]) -> Dict[str, str]:
+    """
+    Retrieves symbols for a set of token addresses asynchronously.
+    
+    :param token_addresses: A set of token addresses to retrieve symbols for.
+    :return: A dictionary mapping token addresses to their respective symbols.
+    """
+    async def async_fetch():
+        return {addr: await get_underlying_token_symbol(addr) for addr in token_addresses}
+    return asyncio.run(async_fetch())
+
+async def get_underlying_token_symbol(token_address: str) -> str | None:
+    """
+    Retrieves the symbol of the underlying token for a given token address.
+    If an underlying asset exists, it fetches its symbol; otherwise, it returns the symbol of the token itself.
+
+    :param token_address: The address of the token to retrieve the symbol for.
+    :return: The symbol of the underlying token or the token itself if no underlying asset exists.
+    """
+    try:
+        # Attempt to retrieve the underlying asset's address and its symbol
+        underlying_token_address = await src.blockchain_call.func_call(
+            addr=token_address,
+            selector="underlyingAsset",
+            calldata=[],
+        )
+        underlying_token_address = src.helpers.add_leading_zeros(
+            hex(underlying_token_address[0])
+        )
+        underlying_token_symbol = await src.helpers.get_symbol(
+            token_address=underlying_token_address
+        )
+        return underlying_token_symbol.strip(NULL_CHAR)
+    except ClientError as e:
+        # Log the network-related error and return 'network_error'
+        print(f"Network error while calling contract: {e}")
+        return 'network_error'
+    except (KeyError, AttributeError, ValueError) as e:
+        # Log the specific error if needed
+        print(f"Error fetching underlying asset: {e}")
+        # If retrieving the underlying asset fails, try returning the symbol of the provided token address
+        try:
+            underlying_token_symbol = await src.helpers.get_symbol(token_address=token_address)
+            return underlying_token_symbol.strip(NULL_CHAR)
+        except (KeyError, AttributeError, ValueError) as e:
+            # Log the specific error if needed
+            print(f"Error fetching token symbol: {e}")
+            # If both attempts fail, return "Unknown"
+            return "Unknown"

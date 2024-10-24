@@ -25,6 +25,16 @@ from src.chart_utils import (
     transform_loans_data,
     transform_main_chart_data,
 )
+from src.helpers import (
+    extract_token_addresses,
+    fetch_token_symbols_from_set_of_loan_addresses,
+    update_loan_data_with_symbols,
+)
+
+
+
+    
+
 
 
 def infer_protocol_name(input_protocol: str, valid_protocols: list[str]) -> str:
@@ -169,6 +179,7 @@ def process_liquidity(
     return main_chart_data, collateral_token_price
 
 
+
 def main():
     streamlit.title("DeRisk")
 
@@ -289,7 +300,15 @@ def main():
             liquidable_debt_data.round(), use_container_width=True, hide_index=True
         )
 
+
+
     if not loans_data.empty:
+        token_addresses = extract_token_addresses(loans_data)
+        if token_addresses:
+        #tobe
+            token_symbols = fetch_token_symbols_from_set_of_loan_addresses(token_addresses)
+            loans_data = update_loan_data_with_symbols(loans_data, token_symbols)
+        #tobe
         streamlit.header("Loans with low health factor")
 
         col1, _ = streamlit.columns([1, 3])
