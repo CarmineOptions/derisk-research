@@ -4,13 +4,6 @@ from decimal import Decimal
 
 import pandas as pd
 import starknet_py
-from error_handler.values import ProtocolIDs
-from handler_tools.helpers import (
-    add_leading_zeros,
-    blockchain_call,
-    get_addresses,
-    get_symbol,
-)
 from handler_tools.nostra_mainnet_settings import (
     NOSTRA_MAINNET_CDP_MANAGER_ADDRESS,
     NOSTRA_MAINNET_DEFERRED_BATCH_CALL_ADAPTER_ADDRESS,
@@ -18,14 +11,18 @@ from handler_tools.nostra_mainnet_settings import (
     NOSTRA_MAINNET_INTEREST_RATE_MODEL_ADDRESS,
     NOSTRA_MAINNET_TOKEN_ADDRESSES,
 )
-from handler_tools.types.base import InterestRateModels, Prices, TokenParameters
-from handler_tools.types.nostra import (
-    NostraDebtTokenParameters,
-    NostraMainnetCollateralTokenParameters,
-)
+from handlers.helpers import blockchain_call, get_addresses, get_symbol
 from handlers.loan_states.nostra_alpha.events import (
     NostraAlphaLoanEntity,
     NostraAlphaState,
+)
+
+from shared.constants import ProtocolIDs
+from shared.helpers import add_leading_zeros
+from shared.types import InterestRateModels, Prices, TokenParameters
+from shared.types.nostra import (
+    NostraDebtTokenParameters,
+    NostraMainnetCollateralTokenParameters,
 )
 
 logger = logging.getLogger(__name__)
@@ -271,9 +268,9 @@ class NostraMainnetState(NostraAlphaState):
         )
         # The indices are saved under the respective collateral or debt token address.
         if collateral_token:
-            self.interest_rate_models.collateral[
-                collateral_token
-            ] = collateral_interest_rate_index
+            self.interest_rate_models.collateral[collateral_token] = (
+                collateral_interest_rate_index
+            )
         self.interest_rate_models.debt[debt_token] = debt_interest_rate_index
 
     def process_collateral_transfer_event(self, event: pd.Series) -> None:

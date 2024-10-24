@@ -1,6 +1,5 @@
 import os
 import shutil
-from typing import Iterable
 
 
 class LocalStorageManager:

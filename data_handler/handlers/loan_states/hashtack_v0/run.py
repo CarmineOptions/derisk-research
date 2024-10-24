@@ -2,10 +2,12 @@ import logging
 from time import monotonic
 
 import pandas as pd
-from handler_tools.constants import ProtocolAddresses, ProtocolIDs
+from handler_tools.constants import ProtocolAddresses
 from handlers.loan_states.abstractions import HashstackBaseLoanStateComputation
-from handlers.loan_states.hashtack_v0.events import HashstackV0State, InterestRateModels
+from handlers.loan_states.hashtack_v0.events import HashstackV0State
 from handlers.loan_states.hashtack_v0.utils import HashtackInitializer
+
+from shared.constants import ProtocolIDs
 
 logger = logging.getLogger(__name__)
 

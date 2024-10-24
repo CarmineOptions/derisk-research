@@ -5,11 +5,14 @@ import logging
 from typing import Optional
 
 import pandas
-from handlers.helpers import Portfolio, TokenValues, get_symbol
-from handlers.settings import TOKEN_SETTINGS, TokenSettings
-from handlers.state import InterestRateModels, LoanEntity, State
+from handlers.helpers import get_symbol
+from handlers.settings import TokenSettings
 
 from db.crud import InitializerDBConnector
+from shared.constants import TOKEN_SETTINGS
+from shared.loan_entity import LoanEntity
+from shared.state import State
+from shared.types import InterestRateModels, Portfolio, TokenValues
 
 ADDRESS: str = "0x03dcf5c72ba60eb7b2fe151032769d49dd3df6b04fa3141dffd6e2aa162b7a6e"
 
@@ -131,9 +134,11 @@ class HashstackV0LoanEntity(LoanEntity):
             health_factor_liquidation_threshold = (
                 decimal.Decimal("1.06")
                 if self.debt_category == 1
-                else decimal.Decimal("1.05")
-                if self.debt_category == 2
-                else decimal.Decimal("1.04")
+                else (
+                    decimal.Decimal("1.05")
+                    if self.debt_category == 2
+                    else decimal.Decimal("1.04")
+                )
             )
             denominator = health_factor_liquidation_threshold * debt_usd
         else:
@@ -212,14 +217,14 @@ class HashstackV0State(State):
         )
         # TODO: Make it possible to initialize Portfolio with some token amount directly.
         original_collateral = Portfolio()
-        original_collateral.values[
-            original_collateral_token
-        ] = original_collateral_face_amount
+        original_collateral.values[original_collateral_token] = (
+            original_collateral_face_amount
+        )
         self.loan_entities[loan_id].original_collateral = original_collateral
         borrowed_collateral = Portfolio()
-        borrowed_collateral.values[
-            borrowed_collateral_token
-        ] = borrowed_collateral_face_amount
+        borrowed_collateral.values[borrowed_collateral_token] = (
+            borrowed_collateral_face_amount
+        )
         self.loan_entities[loan_id].borrowed_collateral = borrowed_collateral
         # TODO: Make it easier to sum 2 Portfolio instances.
         self.loan_entities[loan_id].collateral.values = {
@@ -273,9 +278,9 @@ class HashstackV0State(State):
             str(int(event["data"][3], base=16))
         )
         original_collateral = Portfolio()
-        original_collateral.values[
-            original_collateral_token
-        ] = original_collateral_face_amount
+        original_collateral.values[original_collateral_token] = (
+            original_collateral_face_amount
+        )
         self.loan_entities[loan_id].original_collateral = original_collateral
         self.loan_entities[loan_id].collateral.values = {
             token: (
@@ -308,9 +313,9 @@ class HashstackV0State(State):
             str(int(event["data"][3], base=16))
         )
         original_collateral = Portfolio()
-        original_collateral.values[
-            original_collateral_token
-        ] = original_collateral_face_amount
+        original_collateral.values[original_collateral_token] = (
+            original_collateral_face_amount
+        )
         #  add additional info block and timestamp
         self.loan_entities[loan_id].extra_info.block = event["block_number"]
         self.loan_entities[loan_id].extra_info.timestamp = event["timestamp"]
@@ -366,9 +371,9 @@ class HashstackV0State(State):
         debt_category = int(event["data"][10], base=16)
 
         borrowed_collateral = Portfolio()
-        borrowed_collateral.values[
-            borrowed_collateral_token
-        ] = borrowed_collateral_face_amount
+        borrowed_collateral.values[borrowed_collateral_token] = (
+            borrowed_collateral_face_amount
+        )
         self.loan_entities[loan_id].borrowed_collateral = borrowed_collateral
         self.loan_entities[loan_id].collateral.values = {
             token: (
@@ -413,9 +418,9 @@ class HashstackV0State(State):
         debt_category = int(event["data"][10], base=16)
 
         borrowed_collateral = Portfolio()
-        borrowed_collateral.values[
-            borrowed_collateral_token
-        ] = borrowed_collateral_face_amount
+        borrowed_collateral.values[borrowed_collateral_token] = (
+            borrowed_collateral_face_amount
+        )
         # add additional info block and timestamp
         self.loan_entities[loan_id].extra_info.block = event["block_number"]
         self.loan_entities[loan_id].extra_info.timestamp = event["timestamp"]
@@ -479,9 +484,9 @@ class HashstackV0State(State):
         new_debt_category = int(event["data"][24], base=16)
 
         new_borrowed_collateral = Portfolio()
-        new_borrowed_collateral.values[
-            new_borrowed_collateral_token
-        ] = new_borrowed_collateral_face_amount
+        new_borrowed_collateral.values[new_borrowed_collateral_token] = (
+            new_borrowed_collateral_face_amount
+        )
         # add additional info block and timestamp
         self.loan_entities[new_loan_id].extra_info.block = event["block_number"]
         self.loan_entities[new_loan_id].extra_info.timestamp = event["timestamp"]
@@ -530,9 +535,9 @@ class HashstackV0State(State):
             str(int(event["data"][3], base=16))
         )
         original_collateral = Portfolio()
-        original_collateral.values[
-            original_collateral_token
-        ] = original_collateral_face_amount
+        original_collateral.values[original_collateral_token] = (
+            original_collateral_face_amount
+        )
         try:
             self.loan_entities[loan_id].original_collateral = original_collateral
             self.loan_entities[loan_id].collateral.values = {
@@ -580,9 +585,9 @@ class HashstackV0State(State):
         debt_category = int(event["data"][10], base=16)
 
         borrowed_collateral = Portfolio()
-        borrowed_collateral.values[
-            borrowed_collateral_token
-        ] = borrowed_collateral_face_amount
+        borrowed_collateral.values[borrowed_collateral_token] = (
+            borrowed_collateral_face_amount
+        )
         # add additional info block and timestamp
         self.loan_entities[loan_id].extra_info.block = event["block_number"]
         self.loan_entities[loan_id].extra_info.timestamp = event["timestamp"]
@@ -649,9 +654,11 @@ class HashstackV0State(State):
             health_factor_liquidation_threshold = (
                 decimal.Decimal("1.06")
                 if loan_entity.debt_category == 1
-                else decimal.Decimal("1.05")
-                if loan_entity.debt_category == 2
-                else decimal.Decimal("1.04")
+                else (
+                    decimal.Decimal("1.05")
+                    if loan_entity.debt_category == 2
+                    else decimal.Decimal("1.04")
+                )
             )
             if health_factor >= health_factor_liquidation_threshold:
                 continue

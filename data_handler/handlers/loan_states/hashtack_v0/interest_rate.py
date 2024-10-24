@@ -3,12 +3,13 @@ import logging
 from decimal import Decimal
 
 from handler_tools.api_connector import DeRiskAPIConnector
-from handler_tools.constants import TOKEN_MAPPING, ProtocolIDs
+from handler_tools.constants import TOKEN_MAPPING
 from handlers.blockchain_call import NET
 from handlers.helpers import InterestRateState
 
 from db.crud import DBConnector
 from db.models import InterestRate
+from shared.constants import ProtocolIDs
 
 HASHSTACK_INTEREST_RATE_ADDRESS = (
     "0x01b862c518939339b950d0d21a3d4cc8ead102d6270850ac8544636e558fab68"

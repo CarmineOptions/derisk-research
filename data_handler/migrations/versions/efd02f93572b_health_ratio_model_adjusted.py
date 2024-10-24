@@ -11,8 +11,9 @@ from typing import Sequence, Union
 import sqlalchemy as sa
 import sqlalchemy_utils
 from alembic import op
-from handler_tools.constants import ProtocolIDs
 from sqlalchemy.engine import reflection
+
+from shared.constants import ProtocolIDs
 
 # revision identifiers, used by Alembic.
 revision: str = "efd02f93572b"
