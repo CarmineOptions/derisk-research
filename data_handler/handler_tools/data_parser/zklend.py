@@ -1,3 +1,6 @@
+from serializers import LiquidationEventData
+
+
 class ZklendDataParser:
     """
     Parses the zkLend data to human-readable format.
@@ -36,5 +39,21 @@ class ZklendDataParser:
 
     @classmethod
     def parse_liquidation_event(cls, event_data):
-        # TODO: Implement parsing logic for Liquidation event
-        pass
+        """
+        Convert the event list to a Liquidation event data object
+
+        :event_data - List of length 7 of the event data
+
+        Returns
+        LiquidationEventData
+        """
+        event_data = LiquidationEventData(
+            liquidator=event_data[0],
+            user=event_data[1],
+            debt_token=event_data[2],
+            debt_raw_amount=event_data[3],
+            debt_face_amount=event_data[4],
+            collateral_token=event_data[5],
+            collateral_amount=event_data[6],
+        )
+        return event_data
