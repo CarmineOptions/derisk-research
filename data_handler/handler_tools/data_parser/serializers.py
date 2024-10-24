@@ -8,6 +8,6 @@ class DataAccumulatorsSyncEvent(BaseModel):
     lending_accumulator: Decimal
     debt_accumulator: Decimal
 
-    @field_validator("lending_accumulator", "debt_accumulator", pre=True)
+    @field_validator("lending_accumulator", "debt_accumulator", mode="before")
     def hex_to_decimal(cls, v):
         return Decimal(int(v, 16)) / Decimal("1e27")
