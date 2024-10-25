@@ -145,5 +145,3 @@ class TestDBConnector:
         
         retrieved_health_ratio_level = db_connector.get_object(model=HealthRatioLevel, obj_id=health_ratio_level.id)
         assert retrieved_health_ratio_level == health_ratio_level
-
-    # Add more test cases for other methods...
