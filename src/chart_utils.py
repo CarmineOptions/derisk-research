@@ -9,6 +9,36 @@ import src.helpers
 import src.main_chart
 import src.settings
 
+ZKLEND = "zkLend"
+NOSTRA_ALPHA = "Nostra Alpha"
+NOSTRA_MAINNET = "Nostra Mainnet"
+
+PROTOCOL_NAMES = [
+    ZKLEND,
+    NOSTRA_ALPHA,
+    NOSTRA_MAINNET,
+]
+
+
+class ProtocolColors:
+    collateral_protocol_color_map = {
+        ZKLEND: "#00ff00",
+        NOSTRA_ALPHA: "#008000",
+        NOSTRA_MAINNET: "#003300",
+    }
+
+    debt_protocol_color_map = {
+        ZKLEND: "#ff3333",
+        NOSTRA_ALPHA: "#ff0000",
+        NOSTRA_MAINNET: "#660000",
+    }
+
+    supply_protocol_color_map = {
+        ZKLEND: "#6666ff",
+        NOSTRA_ALPHA: "#0000ff",
+        NOSTRA_MAINNET: "#00004d",
+    }
+
 
 def parse_token_amounts(raw_token_amounts: str) -> dict[str, float]:
     """Converts token amounts in the string format to the dict format."""

@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 from uuid import uuid4
 
 from aiogram import Bot, Dispatcher
@@ -17,8 +18,15 @@ class ErrorHandlerBot:
     SESSION_ID = str(uuid4())
     SESSION_MESSAGES = {SESSION_ID: []}
 
-    def __init__(self, token):
-        self.bot = Bot(token=token)
+    def __init__(self, token: str | None) -> None:
+        """
+        Initialize the error handler bot.
+        :param token: str | None
+        """
+        if not token:
+            self.bot = None
+        else:
+            self.bot = Bot(token=token)
 
     def _get_unique_message(self, new_message: str) -> str | None:
         """
@@ -43,6 +51,9 @@ class ErrorHandlerBot:
         :param message: str
         :return: None
         """
+        if not self.bot:
+            logger.error(f"Telegram bot token debug mode: {message}")
+            return
 
         if not self.SESSION_MESSAGES[self.SESSION_ID]:
             await self.bot.send_message(chat_id=ERROR_CHAT_ID, text=message)

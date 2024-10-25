@@ -1,4 +1,4 @@
-from error_handler.values import MessageTemplates
+from shared.error_handler.values import MessageTemplates
 
 
 class TokenSettingsNotFound(Exception):

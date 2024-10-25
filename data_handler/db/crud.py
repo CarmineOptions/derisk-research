@@ -2,8 +2,8 @@ import logging
 import uuid
 from typing import List, Optional, Type, TypeVar
 
-from handler_tools.constants import ProtocolIDs
 from sqlalchemy import Subquery, and_, create_engine, desc, func, select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Query, Session, aliased, scoped_session, sessionmaker
 
@@ -16,6 +16,7 @@ from db.models import (
     OrderBookModel,
     ZkLendCollateralDebt,
 )
+from shared.constants import ProtocolIDs
 
 logger = logging.getLogger(__name__)
 ModelType = TypeVar("ModelType", bound=Base)
@@ -224,44 +225,46 @@ class DBConnector:
     def write_loan_states_to_db(self, objects: List[LoanState]) -> None:
         """
         Writes a batch of objects to the database efficiently.
+        If an object already exists in the database (based on protocol_id and user),
+        it will be updated with the new values instead of creating a new instance.
         :param objects: List[LoanState] - A list of LoanState instances to write.
         :raise SQLAlchemyError: If the database operation fails.
         """
         db: Session = self.Session()
-        try:
-            # Fetch existing objects from the database based on protocol_id and user pair
-            existing_objects = {
-                (obj.protocol_id, obj.user): obj
-                for obj in db.execute(
-                    select(LoanState).where(
-                        (LoanState.protocol_id.in_([o.protocol_id for o in objects]))
-                        & (LoanState.user.in_([o.user for o in objects]))
-                    )
-                ).scalars()
+        loan_data = [
+            {
+                "protocol_id": obj.protocol_id,
+                "user": obj.user,
+                "collateral": obj.collateral,
+                "debt": obj.debt,
+                "timestamp": obj.timestamp,
+                "block": obj.block,
+                "deposit": obj.deposit,
             }
-            # Prepare list of objects to save
-            objects_to_save = []
-            for obj in objects:
-                existing_obj = existing_objects.get((obj.protocol_id, obj.user))
-                if existing_obj:
-                    if (
-                        obj.user != existing_obj.user
-                        or obj.collateral != existing_obj.collateral
-                        or obj.debt != existing_obj.debt
-                        or obj.protocol_id != existing_obj.protocol_id
-                    ):
-                        objects_to_save.append(obj)
-                else:
-                    objects_to_save.append(obj)
+            for obj in objects
+        ]
+        try:
+            # Use PostgreSQL's insert with on_conflict_do_update for upserting records
+            stmt = insert(LoanState).values(loan_data)
+            update_dict = {
+                "collateral": stmt.excluded.collateral,
+                "debt": stmt.excluded.debt,
+            }
+            stmt = stmt.on_conflict_do_update(
+                constraint="loan_state_protocol_id_user_key", set_=update_dict
+            )
 
-            logger.info(f"Saving {len(objects_to_save)} loan states to the database.")
-            # Save the filtered objects
-            if objects_to_save:
-                db.bulk_save_objects(objects_to_save)
-                db.commit()
-                logger.info(
-                    f"Saved {len(objects_to_save)} loan states to the database."
-                )
+            # Execute the upsert statement
+            db.execute(stmt)
+
+            logger.info(
+                f"Updating or adding {len(objects)} loan states to the database."
+            )
+
+            # Commit the changes
+            db.commit()
+            logger.info(f"Successfully updated or added {len(objects)} loan states.")
+
         except SQLAlchemyError as e:
             db.rollback()
             raise e

@@ -31,7 +31,7 @@ TOKEN_SETTINGS: dict[str, TokenSettings] = {
     "DAI": TokenSettings(
         symbol="DAI",
         decimal_factor=1e18,
-        address="0x00da114221cb83fa859dbdb4c44beeaa0bb37c7537ad5ae66fe5e0efd20e6eb3",
+        address="0x05574eb6b8789a91466f902c380d978e472db68170ff82a5b650b95a58ddf4ad",  # DAI V2
     ),
     "USDT": TokenSettings(
         symbol="USDT",

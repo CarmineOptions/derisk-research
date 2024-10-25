@@ -1,14 +1,21 @@
-from handler_tools.types.base import (
+from shared.types.base import (
     BaseTokenParameters,
     CollateralAndDebtInterestRateModels,
     CollateralAndDebtTokenParameters,
+    ExtraInfo,
     InterestRateModels,
     Portfolio,
     Prices,
     TokenParameters,
+    TokenSettings,
     TokenValues,
 )
-from handler_tools.types.zklend import (
+from shared.types.nostra import (
+    NostraAlphaCollateralTokenParameters,
+    NostraDebtTokenParameters,
+    NostraMainnetCollateralTokenParameters,
+)
+from shared.types.zklend import (
     ZkLendCollateralEnabled,
     ZkLendCollateralTokenParameters,
     ZkLendDebtTokenParameters,

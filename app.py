@@ -15,6 +15,11 @@ import src.settings
 import src.swap_amm
 import src.utils
 from src.chart_utils import (
+    NOSTRA_ALPHA,
+    NOSTRA_MAINNET,
+    PROTOCOL_NAMES,
+    ZKLEND,
+    ProtocolColors,
     get_protocol_data_mappings,
     load_stats_data,
     transform_loans_data,
@@ -25,12 +30,6 @@ from src.helpers import (
     fetch_token_symbols_from_set_of_loan_addresses,
     update_loan_data_with_symbols,
 )
-
-PROTOCOL_NAMES = [
-    "zkLend",
-    "Nostra Alpha",
-    "Nostra Mainnet",
-]  # "Hashstack V0", "Hashstack V1"
 
 
 
@@ -405,7 +404,7 @@ def main():
                     values="amount_usd",
                     names="token",
                     title="Collateral (USD)",
-                    color_discrete_sequence=plotly.express.colors.sequential.Oranges_r,
+                    color_discrete_sequence=plotly.express.colors.sequential.Greens_r,
                 )
                 streamlit.plotly_chart(figure, True)
 
@@ -415,7 +414,7 @@ def main():
                     values="amount_usd",
                     names="token",
                     title="Debt (USD)",
-                    color_discrete_sequence=plotly.express.colors.sequential.Greens_r,
+                    color_discrete_sequence=plotly.express.colors.sequential.Reds_r,
                 )
                 streamlit.plotly_chart(figure, True)
 
@@ -456,7 +455,8 @@ def main():
                     values=f"{token} collateral",
                     names="Protocol",
                     title=f"{token} collateral",
-                    color_discrete_sequence=plotly.express.colors.sequential.Oranges_r,
+                    color="Protocol",
+                    color_discrete_map=ProtocolColors.collateral_protocol_color_map,
                 )
                 streamlit.plotly_chart(figure, True)
             for token in [token_1, token_2]:
@@ -465,7 +465,8 @@ def main():
                     values=f"{token} debt",
                     names="Protocol",
                     title=f"{token} debt",
-                    color_discrete_sequence=plotly.express.colors.sequential.Greens_r,
+                    color="Protocol",
+                    color_discrete_map=ProtocolColors.debt_protocol_color_map,
                 )
                 streamlit.plotly_chart(figure, True)
             for token in [token_1, token_2]:
@@ -474,7 +475,8 @@ def main():
                     values=f"{token} supply",
                     names="Protocol",
                     title=f"{token} supply",
-                    color_discrete_sequence=plotly.express.colors.sequential.Blues_r,
+                    color="Protocol",
+                    color_discrete_map=ProtocolColors.supply_protocol_color_map,
                 )
                 streamlit.plotly_chart(figure, True)
 

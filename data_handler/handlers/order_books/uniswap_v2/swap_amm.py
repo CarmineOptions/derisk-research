@@ -3,8 +3,10 @@ from decimal import Decimal
 from typing import Optional
 
 from handlers.blockchain_call import balance_of, func_call, get_myswap_pool
-from handlers.helpers import TokenValues, add_leading_zeros
-from handlers.settings import TOKEN_SETTINGS, TokenSettings
+
+from shared.constants import TOKEN_SETTINGS
+from shared.helpers import add_leading_zeros
+from shared.types import TokenSettings, TokenValues
 
 
 class Pair:
@@ -244,3 +246,22 @@ class SwapAmm(Pair):
                 f"Trying to get pools that are not set: {self.tokens_to_id(base_token, quote_token)}"
             )
         return pools
+
+    def get_supply_at_price(
+        self,
+        collateral_token_underlying_symbol: str,
+        collateral_token_price: float,
+        debt_token_underlying_symbol: str,
+        amm: str,
+    ) -> float:
+        """
+        Get the supply at a given price in a given AMM.
+        """
+        pool: Pool = self.get_pool(
+            token_a=collateral_token_underlying_symbol,
+            token_b=debt_token_underlying_symbol,
+        )
+        return pool.supply_at_price(
+            initial_price=collateral_token_price,
+            amm=amm,
+        )
