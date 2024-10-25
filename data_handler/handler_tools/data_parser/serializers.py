@@ -28,7 +28,7 @@ class LiquidationEventData(BaseModel):
     collateral_amount: str
 
     @field_validator("liquidator", "user", "debt_token", "collateral_token")
-    def validate_valid_addresses(cls, value: str, info: ValidationInfo):
+    def validate_valid_addresses(cls, value: str, info: ValidationInfo) -> str:
         """
         Check if the value is an address and format it to having leading zeros.
 
@@ -43,7 +43,7 @@ class LiquidationEventData(BaseModel):
         return add_leading_zeros(value)
 
     @field_validator("debt_raw_amount", "debt_face_amount", "collateral_amount")
-    def validate_valid_numbers(cls, value: str, info: ValidationInfo):
+    def validate_valid_numbers(cls, value: str, info: ValidationInfo) -> Decimal:
         """
         Check if the value is a digit and convert it to a decimal from base 16 int conversion.
 
