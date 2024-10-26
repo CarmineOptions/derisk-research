@@ -88,6 +88,16 @@ class LiquidationEventData(BaseModel):
         return Decimal(str(int(value, base=16)))
 
 class RepaymentEventData(BaseModel):
+    """
+    Data model representing a repayment event in the system.
+
+    Attributes:
+        repayer (str): The address or identifier of the individual or entity making the repayment.
+        beneficiary (str): The address or identifier of the individual or entity receiving the repayment.
+        token (str): The type or symbol of the token being used for the repayment.
+        raw_amount (str): The raw amount of the repayment as provided, before any conversions or calculations.
+        face_amount (str): The face amount of the repayment, representing the value after necessary conversions.
+    """
     repayer: str
     beneficiary: str
     token: str
@@ -95,13 +105,37 @@ class RepaymentEventData(BaseModel):
     face_amount: str
 
 class RepaymentEventSerializer(BaseModel):
-    repayer: Any       # Replace `Any` with a more specific type if known (e.g., `str` or `int`)
-    beneficiary: Any   # Same here if you know the exact type
-    token: Any         # Again, replace with the specific type if known
-    raw_amount: str    # Representing this as a string, as it will be parsed as hexadecimal
-    face_amount: str   # Same as above for consistency
+    """
+    Serializer model for capturing and validating repayment event data.
+
+    Attributes:
+        repayer: The address or identifier of the entity making the repayment.
+        beneficiary: The address or identifier of the entity receiving the repayment.
+                           Specify a type here if available.
+        token: The type or symbol of the token used for the repayment.
+                     A specific type may replace `Any` if known.
+        raw_amount: The raw, unprocessed repayment amount, usually represented as a hexadecimal string.
+        face_amount: The processed or converted repayment amount for display or calculations.
+        block_number: The blockchain block number in which the transaction was recorded.
+        timestamp: The Unix timestamp of the transaction, representing the exact moment of the event.
+
+    Config:
+        arbitrary_types_allowed (bool): Allows flexibility for attributes to accept non-standard types if necessary.
+    """
+    repayer: Any    
+    beneficiary: Any
+    token: Any      
+    raw_amount: str 
+    face_amount: str
     block_number: int
     timestamp: int
 
     class Config:
-        arbitrary_types_allowed = True  # Allows flexibility for non-standard types if needed
+        """
+        Configuration for the RepaymentEventSerializer model.
+
+        Attributes:
+            arbitrary_types_allowed (bool): If set to True, allows fields to accept non-standard or arbitrary types
+                                            that are not strictly validated, adding flexibility for custom data types.
+        """
+        arbitrary_types_allowed = True
