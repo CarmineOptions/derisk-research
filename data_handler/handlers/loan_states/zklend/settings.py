@@ -4,8 +4,6 @@ from dataclasses import dataclass
 from shared.constants import TOKEN_SETTINGS
 from shared.types import TokenSettings
 
-# from handlers.loan_states.zklend.fetch_zklend_specific_token_settings import ZKLEND_SPECIFIC_TOKEN_SETTINGS
-
 
 @dataclass
 class ZkLendSpecificTokenSettings:
