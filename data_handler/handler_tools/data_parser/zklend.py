@@ -1,8 +1,14 @@
+
 from decimal import Decimal
 from typing import List, Any
 
 
 from serializers import DataAccumulatorsSyncEvent, LiquidationEventData, RepaymentEventData
+
+from typing import Any
+
+from handler_tools.data_parser.serializers import DataAccumulatorsSyncEvent, LiquidationEventData
+
 
 
 class ZklendDataParser:
