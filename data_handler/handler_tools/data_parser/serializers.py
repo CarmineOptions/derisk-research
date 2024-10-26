@@ -1,5 +1,5 @@
 from decimal import Decimal
-from pydantic import BaseModel, ValidationInfo, field_validator, validator
+from pydantic import BaseModel, ValidationInfo, field_validator
 from typing import Any
 from shared.helpers import add_leading_zeros
 
@@ -87,7 +87,7 @@ class LiquidationEventData(BaseModel):
             raise ValueError("%s field is not numeric" % info.field_name)
         return Decimal(str(int(value, base=16)))
 
-class RepaymentEventData(BaseModel):
+class RepaymentEventSerializer(BaseModel):
     """
     Data model representing a repayment event in the system.
 
@@ -104,33 +104,7 @@ class RepaymentEventData(BaseModel):
     raw_amount: str
     face_amount: str
 
-class RepaymentEventSerializer(BaseModel):
-    """
-    Serializer model for capturing and validating repayment event data.
-
-    Attributes:
-        repayer: The address or identifier of the entity making the repayment.
-        beneficiary: The address or identifier of the entity receiving the repayment.
-                           Specify a type here if available.
-        token: The type or symbol of the token used for the repayment.
-                     A specific type may replace `Any` if known.
-        raw_amount: The raw, unprocessed repayment amount, usually represented as a hexadecimal string.
-        face_amount: The processed or converted repayment amount for display or calculations.
-        block_number: The blockchain block number in which the transaction was recorded.
-        timestamp: The Unix timestamp of the transaction, representing the exact moment of the event.
-
-    Config:
-        arbitrary_types_allowed (bool): Allows flexibility for attributes to accept non-standard types if necessary.
-    """
-    repayer: Any    
-    beneficiary: Any
-    token: Any      
-    raw_amount: str 
-    face_amount: str
-    block_number: int
-    timestamp: int
-
-    @validator("beneficiary", "token", pre=True, always=True)
+    @field_validator("beneficiary", "token", pre=True, always=True)
     def add_leading_zeros(cls, value: str) -> str:
         """
         Ensures the `beneficiary` and `token` fields contain leading zeros if required.
