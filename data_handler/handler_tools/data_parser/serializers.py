@@ -87,3 +87,52 @@ class LiquidationEventData(BaseModel):
             return Decimal(int(value, base=16))
         except ValueError:
             raise ValueError("%s field is not a valid hexadecimal number" % info.field_name)
+
+
+class BorrowingEventData(BaseModel):
+    """
+    Class for converting borrowing event to an object model.
+
+    Attributes:
+        user: The address of the user.
+        token: The address of the debt token.
+        raw_amount: The raw amount of the borrowed tokens.
+        face_amount: The face amount of the borrowed tokens.
+    """
+
+    user: str
+    token: str
+    raw_amount: str
+    face_amount: str
+
+    @field_validator("user", "token")
+    def validate_valid_addresses(cls, value: str, info: ValidationInfo) -> str:
+        """
+        Check if the value is an address and format it to having leading zeros.
+
+        Raises:
+            ValueError
+
+        Returns:
+            str
+        """
+        if not value.startswith("0x"):
+            raise ValueError("Invalid address provided for %s" % info.field_name)
+        return add_leading_zeros(value)
+
+    @field_validator("raw_amount", "face_amount")
+    def validate_valid_numbers(cls, value: str, info: ValidationInfo) -> Decimal:
+        """
+        Convert the hexadecimal string value to a decimal.
+
+        Raises:
+            ValueError: If value is not a valid hexadecimal.
+
+        Returns:
+            Decimal: Converted decimal value.
+        """
+        try:
+            return Decimal(int(value, base=16))
+        except ValueError:
+            raise ValueError("%s field is not a valid hexadecimal number" % info.field_name)
+
