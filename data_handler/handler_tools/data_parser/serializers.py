@@ -1,6 +1,6 @@
 from decimal import Decimal
 from pydantic import BaseModel, ValidationInfo, field_validator
-
+from typing import Any
 from shared.helpers import add_leading_zeros
 
 
@@ -93,3 +93,15 @@ class RepaymentEventData(BaseModel):
     token: str
     raw_amount: str
     face_amount: str
+
+class RepaymentEventSerializer(BaseModel):
+    repayer: Any       # Replace `Any` with a more specific type if known (e.g., `str` or `int`)
+    beneficiary: Any   # Same here if you know the exact type
+    token: Any         # Again, replace with the specific type if known
+    raw_amount: str    # Representing this as a string, as it will be parsed as hexadecimal
+    face_amount: str   # Same as above for consistency
+    block_number: int
+    timestamp: int
+
+    class Config:
+        arbitrary_types_allowed = True  # Allows flexibility for non-standard types if needed
