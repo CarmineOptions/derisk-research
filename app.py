@@ -33,11 +33,6 @@ PROTOCOL_NAMES = [
 ]  # "Hashstack V0", "Hashstack V1"
 
 
-
-    
-
-
-
 def infer_protocol_name(input_protocol: str, valid_protocols: list[str]) -> str:
     """Find the closest matching protocol name from a list of valid protocols using fuzzy matching.
 
@@ -180,7 +175,6 @@ def process_liquidity(
     return main_chart_data, collateral_token_price
 
 
-
 def main():
     streamlit.title("DeRisk")
 
@@ -220,7 +214,7 @@ def main():
         protocols=protocols,
     )
     loans_data = transform_loans_data(protocol_loans_data_mapping, protocols)
-    #tobe
+    # tobe
     loans_data_main = loans_data.copy()
     main_chart_data = transform_main_chart_data(
         protocol_main_chart_data_mapping, current_pair, protocols
@@ -303,15 +297,15 @@ def main():
             liquidable_debt_data.round(), use_container_width=True, hide_index=True
         )
 
-
-
     if not loans_data.empty:
         token_addresses = extract_token_addresses(loans_data)
         if token_addresses:
-        #tobe
-            token_symbols = fetch_token_symbols_from_set_of_loan_addresses(token_addresses)
+            # tobe
+            token_symbols = fetch_token_symbols_from_set_of_loan_addresses(
+                token_addresses
+            )
             loans_data = update_loan_data_with_symbols(loans_data, token_symbols)
-        #tobe
+        # tobe
         streamlit.header("Loans with low health factor")
 
         col1, _ = streamlit.columns([1, 3])
