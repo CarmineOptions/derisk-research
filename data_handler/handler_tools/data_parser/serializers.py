@@ -37,7 +37,7 @@ class DataAccumulatorsSyncEvent(BaseModel):
 
 class LiquidationEventData(BaseModel):
     """
-    Class for converting liquadation event to an object model.
+    Class for converting liquidation event to an object model.
 
     Attributes:
         liquidator: The address of the liquidator.
@@ -75,14 +75,15 @@ class LiquidationEventData(BaseModel):
     @field_validator("debt_raw_amount", "debt_face_amount", "collateral_amount")
     def validate_valid_numbers(cls, value: str, info: ValidationInfo) -> Decimal:
         """
-        Check if the value is a digit and convert it to a decimal from base 16 int conversion.
+        Convert the hexadecimal string value to a decimal.
 
         Raises:
-            ValueError
+            ValueError: If value is not a valid hexadecimal.
 
         Returns:
-            Decimal
+            Decimal: Converted decimal value.
         """
-        if not value.isdigit():
-            raise ValueError("%s field is not numeric" % info.field_name)
-        return Decimal(str(int(value, base=16)))
+        try:
+            return Decimal(int(value, base=16))
+        except ValueError:
+            raise ValueError("%s field is not a valid hexadecimal number" % info.field_name)
