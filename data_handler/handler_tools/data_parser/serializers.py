@@ -1,5 +1,5 @@
 from decimal import Decimal
-from pydantic import BaseModel, ValidationInfo, field_validator
+from pydantic import BaseModel, ValidationInfo, field_validator, validator
 from typing import Any
 from shared.helpers import add_leading_zeros
 
@@ -130,6 +130,41 @@ class RepaymentEventSerializer(BaseModel):
     block_number: int
     timestamp: int
 
+    @validator("beneficiary", "token", pre=True, always=True)
+    def add_leading_zeros(cls, value: str) -> str:
+        """
+        Ensures the `beneficiary` and `token` fields contain leading zeros if required.
+
+        Args:
+            value (str): The value of the field to validate, typically an address or identifier.
+
+        Returns:
+            str: The value with added leading zeros if necessary, maintaining a consistent format.
+        """
+        return add_leading_zeros(value)
+
+    @classmethod
+    def parse_event(cls, event: pd.Series) -> "RepaymentEventSerializer":
+        """
+        Parses the repayment event data into a `RepaymentEventSerializer` instance.
+
+        Args:
+            event (pd.Series): A pandas Series containing repayment event data, 
+                               with keys "data", "block_number", and "timestamp".
+
+        Returns:
+            RepaymentEventSerializer: An instance with parsed and validated repayment event data.
+        """
+        return cls(
+            repayer=event["data"][0],
+            beneficiary=event["data"][1],
+            token=event["data"][2],
+            raw_amount=event["data"][3],
+            face_amount=event["data"][4],
+            block_number=event["block_number"],
+            timestamp=event["timestamp"]
+        )
+    
     class Config:
         """
         Configuration for the RepaymentEventSerializer model.

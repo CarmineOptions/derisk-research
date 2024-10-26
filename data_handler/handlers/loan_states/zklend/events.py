@@ -307,24 +307,14 @@ class ZkLendState(State):
 
 
     def process_repayment_event(self, event: pd.Series) -> None:
-        parsed_event = RepaymentEventSerializer.parse_obj({
-            "repayer": event["data"][0],
-            "beneficiary": event["data"][1],
-            "token": event["data"][2],
-            "raw_amount": event["data"][3],
-            "face_amount": event["data"][4],
-            "block_number": event["block_number"],
-            "timestamp": event["timestamp"]
-        })
-    
-        user = add_leading_zeros(parsed_event.beneficiary)
-        token = add_leading_zeros(parsed_event.token)
-        
+        parsed_event = RepaymentEventSerializer.parse_event(event)
+
+        user = parsed_event.beneficiary
+        token = parsed_event.token
         raw_amount = decimal.Decimal(str(int(parsed_event.raw_amount, base=16)))
 
         self.loan_entities[user].debt.increase_value(token=token, value=-raw_amount)
         
-        # Add block and timestamp information to `extra_info`
         self.loan_entities[user].extra_info.block = parsed_event.block_number
         self.loan_entities[user].extra_info.timestamp = parsed_event.timestamp
 
