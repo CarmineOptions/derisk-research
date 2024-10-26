@@ -3,24 +3,27 @@ import logging
 import math
 import os
 import time
-from typing import Dict, Iterator, Set
+from typing import Iterator, Dict, Set
 
 import google.cloud.storage
 import pandas
 import requests
 import starknet_py.cairo.felt
+from starknet_py.net.client_errors import ClientError
 
 import src.blockchain_call
 import src.db
 import src.settings
 import src.types
 
-from starknet_py.net.client_errors import ClientError
 
 # TODO: rename
 GS_BUCKET_NAME = "derisk-persistent-state/v3"
 # Define a constant for the null character that might be present in token symbols
 NULL_CHAR = '\x00'
+
+
+
 
 def get_events(
     addresses: tuple[str, ...],
