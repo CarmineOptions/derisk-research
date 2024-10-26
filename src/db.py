@@ -3,7 +3,6 @@ import os
 
 import psycopg2
 
-
 # PG_CONNECTION_STRING can be or some <value> or "" but not `None`
 PG_CONNECTION_STRING = os.environ.get("PG_CONNECTION_STRING", "")
 

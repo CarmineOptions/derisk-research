@@ -3,7 +3,7 @@ import logging
 import math
 import os
 import time
-from typing import Iterator, Dict, Set
+from typing import Dict, Iterator, Set
 
 import google.cloud.storage
 import pandas
@@ -15,7 +15,6 @@ import src.blockchain_call
 import src.db
 import src.settings
 import src.types
-
 
 # TODO: rename
 GS_BUCKET_NAME = "derisk-persistent-state/v3"
