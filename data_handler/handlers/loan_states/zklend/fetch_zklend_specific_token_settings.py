@@ -1,13 +1,12 @@
 import asyncio
 import decimal
-from dataclasses import dataclass
 
 from handler_tools.constants import ProtocolAddresses
 from handlers import blockchain_call
 from pydantic import BaseModel, field_validator
 
 from shared.constants import TOKEN_SETTINGS
-from shared.types import TokenSettings
+from data_handler.handlers.loan_states.zklend.settings import ZkLendSpecificTokenSettings
 
 SCALE_FACTOR = decimal.Decimal("1e27")
 
@@ -34,22 +33,6 @@ class ContractData(BaseModel):
         decimal_large_num = num / SCALE_FACTOR
 
         return round(decimal_large_num, 2)
-
-
-@dataclass
-class ZkLendSpecificTokenSettings:
-    # Source: https://zklend.gitbook.io/documentation/using-zklend/technical/asset-parameters.
-    collateral_factor: decimal.Decimal
-    # These are set to neutral values because zkLend doesn't use debt factors.
-    debt_factor: decimal.Decimal
-    # Source: https://zklend.gitbook.io/documentation/using-zklend/technical/asset-parameters.
-    liquidation_bonus: decimal.Decimal
-    protocol_token_address: str
-
-
-@dataclass
-class TokenSettings(ZkLendSpecificTokenSettings, TokenSettings):
-    pass
 
 
 def get_token_settings(contract_data: ContractData) -> ZkLendSpecificTokenSettings:
