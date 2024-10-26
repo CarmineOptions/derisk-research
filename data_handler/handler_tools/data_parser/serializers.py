@@ -86,3 +86,10 @@ class LiquidationEventData(BaseModel):
         if not value.isdigit():
             raise ValueError("%s field is not numeric" % info.field_name)
         return Decimal(str(int(value, base=16)))
+
+class RepaymentEventData(BaseModel):
+    repayer: str
+    beneficiary: str
+    token: str
+    raw_amount: str
+    face_amount: str
