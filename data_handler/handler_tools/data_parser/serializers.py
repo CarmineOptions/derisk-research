@@ -150,8 +150,19 @@ class RepaymentEventSerializer(BaseModel):
         """
         arbitrary_types_allowed = True
 
-        try:
-            return Decimal(int(value, base=16))
-        except ValueError:
-            raise ValueError("%s field is not a valid hexadecimal number" % info.field_name)
 
+    @staticmethod
+    def convert_hex_to_decimal(value: str) -> Decimal:
+        """
+        Converts a hexadecimal string to a Decimal, or raises an error if invalid.
+
+        Args:
+            value (str): The hexadecimal string to convert.
+
+        Returns:
+            Decimal: The converted decimal value.
+        """
+        try:
+            return Decimal(int(value, 16))
+        except ValueError:
+            raise ValueError(f"{value} is not a valid hexadecimal number")
