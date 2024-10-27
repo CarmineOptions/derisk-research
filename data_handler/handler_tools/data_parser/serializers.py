@@ -86,4 +86,6 @@ class LiquidationEventData(BaseModel):
         try:
             return Decimal(int(value, base=16))
         except ValueError:
-            raise ValueError("%s field is not a valid hexadecimal number" % info.field_name)
+            raise ValueError(
+                "%s field is not a valid hexadecimal number" % info.field_name
+            )
