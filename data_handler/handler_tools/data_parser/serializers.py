@@ -107,6 +107,34 @@ class EventAccumulatorsSync(BaseModel):
     lending_accumulator: str
     debt_accumulator: str
 
+    @field_validator("token")
+    def validate_valid_addresses(cls, value: str, info: ValidationInfo) -> str:
+        """
+        Check if the value is an address and format it to having leading zeros.
+        Raises:
+            ValueError
+        Returns:
+            str
+        """
+        if not value.startswith("0x"):
+            raise ValueError("Invalid address provided for %s" % info.field_name)
+        return add_leading_zeros(value)
+
+    @field_validator("lending_accumulator", "debt_accumulator")
+    def validate_valid_numbers(cls, value: str, info: ValidationInfo) -> Decimal:
+        """
+        Convert the hexadecimal string value to a decimal.
+        Raises:
+            ValueError: If value is not a valid hexadecimal.
+        Returns:
+            Decimal: Converted decimal value.
+        """
+        try:
+            return Decimal(int(value, base=16))
+        except ValueError:
+            raise ValueError("%s field is not a valid hexadecimal number" % info.field_name)
+
+
     @classmethod
     def from_raw_data(cls, raw_data: list[str]) -> "EventAccumulatorsSync":
         """
@@ -146,6 +174,34 @@ class EventDeposit(BaseModel):
     user: str
     token: str
     face_amount: str
+
+    @field_validator("user", "token")
+    def validate_valid_addresses(cls, value: str, info: ValidationInfo) -> str:
+        """
+        Check if the value is an address and format it to having leading zeros.
+        Raises:
+            ValueError
+        Returns:
+            str
+        """
+        if not value.startswith("0x"):
+            raise ValueError("Invalid address provided for %s" % info.field_name)
+        return add_leading_zeros(value)
+
+    @field_validator("face_amount")
+    def validate_valid_numbers(cls, value: str, info: ValidationInfo) -> Decimal:
+        """
+        Convert the hexadecimal string value to a decimal.
+        Raises:
+            ValueError: If value is not a valid hexadecimal.
+        Returns:
+            Decimal: Converted decimal value.
+        """
+        try:
+            return Decimal(int(value, base=16))
+        except ValueError:
+            raise ValueError("%s field is not a valid hexadecimal number" % info.field_name)
+
 
     @classmethod
     def from_raw_data(cls, raw_data: dict[str, list[str]]) -> "EventDeposit":

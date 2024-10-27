@@ -182,10 +182,10 @@ class ZkLendState(State):
         # The order of the values in the `data` column is: `user`, `token`, `face_amount`.
         # Example: https://starkscan.co/event/0x036185142bb51e2c1f5bfdb1e6cef81f8ea87fd4d777990014249bf5435fd31b_3.
         data = EventDeposit.from_raw_data(event)
-        user = add_leading_zeros(data.user)
-        token = add_leading_zeros(data.token)
+        user = data.user
+        token =data.token
 
-        face_amount = decimal.Decimal(str(int(data.face_amount, base=16)))
+        face_amount = data.face_amount
         raw_amount = face_amount / self.interest_rate_models.collateral[token]
 
         # add additional info block and timestamp
