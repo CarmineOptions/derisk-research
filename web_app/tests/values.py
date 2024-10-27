@@ -4,6 +4,7 @@ from uuid import uuid4
 
 import exrex
 from faker import Faker
+
 from utils.values import NotificationValidationValues, ProtocolIDs
 
 _FAKER = Faker()

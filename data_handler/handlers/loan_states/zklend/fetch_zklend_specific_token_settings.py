@@ -5,8 +5,10 @@ from handler_tools.constants import ProtocolAddresses
 from handlers import blockchain_call
 from pydantic import BaseModel, field_validator
 
+from data_handler.handlers.loan_states.zklend.settings import (
+    ZkLendSpecificTokenSettings,
+)
 from shared.constants import TOKEN_SETTINGS
-from data_handler.handlers.loan_states.zklend.settings import ZkLendSpecificTokenSettings
 
 SCALE_FACTOR = decimal.Decimal("1e27")
 

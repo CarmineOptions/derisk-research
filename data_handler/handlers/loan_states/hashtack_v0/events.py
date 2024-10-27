@@ -5,13 +5,13 @@ import logging
 from typing import Optional
 
 import pandas
-from data_handler.handlers.helpers import get_symbol
 
+from data_handler.handlers.helpers import get_symbol
 from db.crud import InitializerDBConnector
 from shared.constants import TOKEN_SETTINGS
 from shared.loan_entity import LoanEntity
 from shared.state import State
-from shared.types import InterestRateModels, Portfolio, TokenValues, TokenSettings
+from shared.types import InterestRateModels, Portfolio, TokenSettings, TokenValues
 
 ADDRESS: str = "0x03dcf5c72ba60eb7b2fe151032769d49dd3df6b04fa3141dffd6e2aa162b7a6e"
 

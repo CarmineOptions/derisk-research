@@ -29,7 +29,9 @@ class NotificationValidationValues:
 
 @dataclass(frozen=True)
 class CreateSubscriptionValues:
-    health_ratio_level_validation_message: str = f"Your health ratio level must be between {NotificationValidationValues.health_ratio_level_min_value} and {NotificationValidationValues.health_ratio_level_max_value}"
+    health_ratio_level_validation_message: str = (
+        f"Your health ratio level must be between {NotificationValidationValues.health_ratio_level_min_value} and {NotificationValidationValues.health_ratio_level_max_value}"
+    )
     create_subscription_success_message: str = "Subscription created successfully"
     create_subscription_exception_message: str = "Please provide all needed data"
     create_subscription_description_message: str = (

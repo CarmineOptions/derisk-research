@@ -1,6 +1,9 @@
 from typing import Any
 
-from handler_tools.data_parser.serializers import AccumulatorsSyncEventData, LiquidationEventData
+from handler_tools.data_parser.serializers import (
+    AccumulatorsSyncEventData,
+    LiquidationEventData,
+)
 
 
 class ZklendDataParser:

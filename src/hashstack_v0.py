@@ -467,9 +467,9 @@ class HashstackV0State(src.state.State):
         new_debt_category = int(event["data"][24], base=16)
 
         new_borrowed_collateral = src.types.Portfolio()
-        new_borrowed_collateral[
-            new_borrowed_collateral_token
-        ] = new_borrowed_collateral_face_amount
+        new_borrowed_collateral[new_borrowed_collateral_token] = (
+            new_borrowed_collateral_face_amount
+        )
         self.loan_entities[new_loan_id].borrowed_collateral = new_borrowed_collateral
         self.loan_entities[new_loan_id].collateral = src.types.Portfolio(
             **{

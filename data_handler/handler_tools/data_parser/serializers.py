@@ -1,4 +1,5 @@
 from decimal import Decimal
+
 from pydantic import BaseModel, ValidationInfo, field_validator
 
 from shared.helpers import add_leading_zeros
@@ -86,4 +87,6 @@ class LiquidationEventData(BaseModel):
         try:
             return Decimal(int(value, base=16))
         except ValueError:
-            raise ValueError("%s field is not a valid hexadecimal number" % info.field_name)
+            raise ValueError(
+                "%s field is not a valid hexadecimal number" % info.field_name
+            )

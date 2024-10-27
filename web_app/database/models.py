@@ -14,6 +14,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import DeclarativeBase, Mapped
 from sqlalchemy_utils import IPAddressType
 from sqlalchemy_utils.types.choice import ChoiceType
+
 from utils.values import ProtocolIDs
 
 

@@ -1,7 +1,9 @@
 import os
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 from requests.exceptions import HTTPError, RequestException
+
 from data_handler.handler_tools.api_connector import DeRiskAPIConnector
 
 

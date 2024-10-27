@@ -5,6 +5,7 @@ import requests
 from database.crud import DBConnector
 from database.models import NotificationData
 from fastapi import Request
+
 from utils.values import HEALTH_RATIO_URL
 
 
