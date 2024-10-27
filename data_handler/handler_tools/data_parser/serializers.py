@@ -4,7 +4,7 @@ from pydantic import BaseModel, ValidationInfo, field_validator
 from shared.helpers import add_leading_zeros
 
 
-class DataAccumulatorsSyncEvent(BaseModel):
+class AccumulatorsSyncEventData(BaseModel):
     """
     Model to parse and validate data for AccumulatorsSync event.
 

@@ -1,6 +1,6 @@
 from typing import Any
 
-from handler_tools.data_parser.serializers import DataAccumulatorsSyncEvent, EventAccumulatorsSync, LiquidationEventData
+from handler_tools.data_parser.serializers import AccumulatorsSyncEventData,EventAccumulatorsSync, LiquidationEventData
 
 
 class ZklendDataParser:
@@ -11,7 +11,7 @@ class ZklendDataParser:
     @classmethod
     def parse_accumulators_sync_event(
         cls, event_data: list[Any]
-    ) -> DataAccumulatorsSyncEvent:
+    ) -> AccumulatorsSyncEventData:
         """
         Parses the AccumulatorsSync event data into a human-readable format using the AccumulatorsSyncEvent serializer.
 
@@ -31,7 +31,7 @@ class ZklendDataParser:
             AccumulatorsSyncEvent: A Pydantic model with the parsed and validated event data in a human-readable format.
         """
         data = EventAccumulatorsSync.from_raw_data(event_data)
-        parsed_event = DataAccumulatorsSyncEvent(
+        parsed_event = AccumulatorsSyncEventData(
             token=data.token,
             lending_accumulator=data.lending_accumulator,
             debt_accumulator=data.debt_accumulator,
