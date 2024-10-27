@@ -87,3 +87,86 @@ class LiquidationEventData(BaseModel):
             return Decimal(int(value, base=16))
         except ValueError:
             raise ValueError("%s field is not a valid hexadecimal number" % info.field_name)
+        
+        
+class EventAccumulatorsSync(BaseModel):
+    """
+    A data model representing essential event data related to token transactions.
+
+    Attributes:
+        token (str): The token address involved in the event as a hexadecimal string.
+        lending_accumulator (str): The lending accumulator value associated with the token, represented as a hexadecimal string.
+        debt_accumulator (str): The debt accumulator value associated with the token, represented as a hexadecimal string.
+
+    Methods:
+        from_raw_data(cls, raw_data: List[str]) -> "EventAccumulatorsSync":
+            Creates an EventAccumulatorsSync instance from a list of raw data, mapping each list item to the respective attribute.
+    """
+
+    token: str
+    lending_accumulator: str
+    debt_accumulator: str
+
+    @classmethod
+    def from_raw_data(cls, raw_data: list[str]) -> "EventAccumulatorsSync":
+        """
+        Class method to create an EventAccumulatorsSync instance from raw data.
+
+        Args:
+            raw_data (List[str]): A list containing the token, lending_accumulator, and debt_accumulator as hexadecimal strings.
+
+        Returns:
+            EventAccumulatorsSync: An instance of EventAccumulatorsSync with fields populated from raw_data.
+
+        Example:
+            raw_data = ["0x12345", "0xabcde", "0x54321"]
+            event_data = EventAccumulatorsSync.from_raw_data(raw_data)
+        """
+        return cls(
+            token=raw_data[0],
+            lending_accumulator=raw_data[1],
+            debt_accumulator=raw_data[2],
+        )
+    
+
+class EventDeposit(BaseModel):
+    """
+    A data model representing essential deposit event data.
+
+    Attributes:
+        user (str): The user address associated with the deposit event, represented as a string.
+        token (str): The token address involved in the deposit, represented as a string.
+        face_amount (str): The face value of the deposit, represented as a string.
+
+    Methods:
+        from_raw_data(cls, raw_data: Dict[str, List[str]]) -> "EventDeposit":
+            Creates an EventDeposit instance from a dictionary of raw data, mapping each key to the respective attribute.
+    """
+
+    user: str
+    token: str
+    face_amount: str
+
+    @classmethod
+    def from_raw_data(cls, raw_data: dict[str, list[str]]) -> "EventDeposit":
+        """
+        Class method to create an EventDeposit instance from raw data.
+
+        Args:
+            raw_data (Dict[str, List[str]]): A dictionary where the keys are field names and values are lists 
+                                               containing the corresponding data as strings.
+
+        Returns:
+            EventDeposit: An instance of EventDeposit with fields populated from raw_data.
+
+        Example:
+            raw_data = {
+                "data": ["0x67890", "0x12345", "1000.0"]
+            }
+            deposit_event = EventDeposit.from_raw_data(raw_data)
+        """
+        return cls(
+            user=raw_data["data"][0],
+            token=raw_data["data"][1],
+            face_amount=raw_data["data"][2],
+        )
