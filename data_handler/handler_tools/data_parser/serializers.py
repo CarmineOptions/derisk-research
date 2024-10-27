@@ -136,3 +136,4 @@ class BorrowingEventData(BaseModel):
         except ValueError:
             raise ValueError("%s field is not a valid hexadecimal number" % info.field_name)
 
+# face_amount / self.interest_rate_models.collateral[token]
