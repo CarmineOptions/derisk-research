@@ -10,6 +10,11 @@ from data_handler.handlers.loan_states.zklend.settings import (
 )
 from shared.constants import TOKEN_SETTINGS
 
+from data_handler.handlers.loan_states.zklend.settings import (
+    ZkLendSpecificTokenSettings,
+)
+
+
 SCALE_FACTOR = decimal.Decimal("1e27")
 
 
