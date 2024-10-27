@@ -9,6 +9,7 @@ from handler_tools.data_parser.zklend import ZklendDataParser
 from handlers import blockchain_call
 from handlers.helpers import get_async_symbol
 from handlers.loan_states.zklend import TokenSettings
+from handler_tools.data_parser.serializers import EventDepositData
 from handler_tools.data_parser.zklend import ZklendDataParser
 
 from db.crud import InitializerDBConnector
@@ -180,9 +181,12 @@ class ZkLendState(State):
     def process_deposit_event(self, event: pd.Series) -> None:
         # The order of the values in the `data` column is: `user`, `token`, `face_amount`.
         # Example: https://starkscan.co/event/0x036185142bb51e2c1f5bfdb1e6cef81f8ea87fd4d777990014249bf5435fd31b_3.
-        event_data = ZklendDataParser.parse_borrowing_event(event["data"])
 
-        face_amount = event_data.face_amount
+        data = EventDepositData.from_raw_data(event)
+        user = data.user
+        token = data.token
+
+        face_amount = data.face_amount
         raw_amount = face_amount / self.interest_rate_models.collateral[token]
 
         # add additional info block and timestamp
@@ -285,9 +289,10 @@ class ZkLendState(State):
     def process_borrowing_event(self, event: pd.Series) -> None:
         # The order of the values in the `data` column is: `user`, `token`, `raw_amount`, `face_amount`.
         # Example: https://starkscan.co/event/0x076b1615750528635cf0b63ca80986b185acbd20fa37f0f2b5368a4f743931f8_3.
-        user = add_leading_zeros(event["data"][0])
-        token = add_leading_zeros(event["data"][1])
-        raw_amount = decimal.Decimal(str(int(event["data"][2], base=16)))
+        data = ZklendDataParser.parse_borrowing_event(event["data"])
+        user = data.user
+        token = data.token
+        raw_amount = data.raw_amount
 
         self.loan_entities[user].debt.increase_value(token=token, value=raw_amount)
         # add additional info block and timestamp
@@ -452,16 +457,16 @@ class ZkLendState(State):
             collateral_token_symbol = await get_async_symbol(
                 token_address=collateral_token_address
             )
-            self.token_parameters.collateral[
-                underlying_collateral_token_address
-            ] = ZkLendCollateralTokenParameters(
-                address=collateral_token_address,
-                decimals=int(reserve_data[1]),
-                symbol=collateral_token_symbol,
-                underlying_symbol=underlying_collateral_token_symbol,
-                underlying_address=underlying_collateral_token_address,
-                collateral_factor=reserve_data[4] / 1e27,
-                liquidation_bonus=reserve_data[14] / 1e27,
+            self.token_parameters.collateral[underlying_collateral_token_address] = (
+                ZkLendCollateralTokenParameters(
+                    address=collateral_token_address,
+                    decimals=int(reserve_data[1]),
+                    symbol=collateral_token_symbol,
+                    underlying_symbol=underlying_collateral_token_symbol,
+                    underlying_address=underlying_collateral_token_address,
+                    collateral_factor=reserve_data[4] / 1e27,
+                    liquidation_bonus=reserve_data[14] / 1e27,
+                )
             )
         for underlying_debt_token_address in debt_tokens:
             underlying_debt_token_symbol = await get_async_symbol(
@@ -478,13 +483,13 @@ class ZkLendState(State):
             )
             debt_token_address = add_leading_zeros(hex(reserve_data[2]))
             debt_token_symbol = await get_async_symbol(token_address=debt_token_address)
-            self.token_parameters.debt[
-                underlying_debt_token_address
-            ] = ZkLendDebtTokenParameters(
-                address=debt_token_address,
-                decimals=int(reserve_data[1]),
-                symbol=debt_token_symbol,
-                underlying_symbol=underlying_debt_token_symbol,
-                underlying_address=underlying_debt_token_address,
-                debt_factor=reserve_data[5] / 1e27,
+            self.token_parameters.debt[underlying_debt_token_address] = (
+                ZkLendDebtTokenParameters(
+                    address=debt_token_address,
+                    decimals=int(reserve_data[1]),
+                    symbol=debt_token_symbol,
+                    underlying_symbol=underlying_debt_token_symbol,
+                    underlying_address=underlying_debt_token_address,
+                    debt_factor=reserve_data[5] / 1e27,
+                )
             )
