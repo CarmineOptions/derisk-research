@@ -9,10 +9,12 @@ from shared.error_handler.notifications import ErrorHandlerBot
 class TestErrorHandlerBot:
     @pytest.fixture
     def error_handler(self):
+        """Provides an ErrorHandlerBot instance for testing"""
         return ErrorHandlerBot()
 
     @pytest.fixture
     def mock_session(self):
+        """Creates a mock session object for testing"""
         return str(uuid4())
 
     # Test Session Management
