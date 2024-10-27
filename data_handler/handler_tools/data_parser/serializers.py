@@ -86,10 +86,12 @@ class LiquidationEventData(BaseModel):
         try:
             return Decimal(int(value, base=16))
         except ValueError:
-            raise ValueError("%s field is not a valid hexadecimal number" % info.field_name)
-        
-        
-class EventAccumulatorsSync(BaseModel):
+            raise ValueError(
+                "%s field is not a valid hexadecimal number" % info.field_name
+            )
+
+
+class EventAccumulatorsSyncData(BaseModel):
     """
     A data model representing essential event data related to token transactions.
 
@@ -99,8 +101,8 @@ class EventAccumulatorsSync(BaseModel):
         debt_accumulator (str): The debt accumulator value associated with the token, represented as a hexadecimal string.
 
     Methods:
-        from_raw_data(cls, raw_data: List[str]) -> "EventAccumulatorsSync":
-            Creates an EventAccumulatorsSync instance from a list of raw data, mapping each list item to the respective attribute.
+        from_raw_data(cls, raw_data: List[str]) -> "EventAccumulatorsSyncData":
+            Creates an EventAccumulatorsSyncData instance from a list of raw data, mapping each list item to the respective attribute.
     """
 
     token: str
@@ -132,32 +134,33 @@ class EventAccumulatorsSync(BaseModel):
         try:
             return Decimal(int(value, base=16))
         except ValueError:
-            raise ValueError("%s field is not a valid hexadecimal number" % info.field_name)
-
+            raise ValueError(
+                "%s field is not a valid hexadecimal number" % info.field_name
+            )
 
     @classmethod
-    def from_raw_data(cls, raw_data: list[str]) -> "EventAccumulatorsSync":
+    def from_raw_data(cls, raw_data: list[str]) -> "EventAccumulatorsSyncData":
         """
-        Class method to create an EventAccumulatorsSync instance from raw data.
+        Class method to create an EventAccumulatorsSyncData instance from raw data.
 
         Args:
             raw_data (List[str]): A list containing the token, lending_accumulator, and debt_accumulator as hexadecimal strings.
 
         Returns:
-            EventAccumulatorsSync: An instance of EventAccumulatorsSync with fields populated from raw_data.
+            EventAccumulatorsSync: An iDatanstance of EventAccumulatorsSync with Datafields populated from raw_data.
 
         Example:
             raw_data = ["0x12345", "0xabcde", "0x54321"]
-            event_data = EventAccumulatorsSync.from_raw_data(raw_data)
+            event_data = EventAccumulatorsSync.from_Dataraw_data(raw_data)
         """
         return cls(
             token=raw_data[0],
             lending_accumulator=raw_data[1],
             debt_accumulator=raw_data[2],
         )
-    
 
-class EventDeposit(BaseModel):
+
+class EventDepositData(BaseModel):
     """
     A data model representing essential deposit event data.
 
@@ -167,8 +170,8 @@ class EventDeposit(BaseModel):
         face_amount (str): The face value of the deposit, represented as a string.
 
     Methods:
-        from_raw_data(cls, raw_data: Dict[str, List[str]]) -> "EventDeposit":
-            Creates an EventDeposit instance from a dictionary of raw data, mapping each key to the respective attribute.
+        from_raw_data(cls, raw_data: Dict[str, List[str]]) -> "EventDepositData":
+            Creates an EventDepositData instance from a dictionary of raw data, mapping each key to the respective attribute.
     """
 
     user: str
@@ -200,26 +203,27 @@ class EventDeposit(BaseModel):
         try:
             return Decimal(int(value, base=16))
         except ValueError:
-            raise ValueError("%s field is not a valid hexadecimal number" % info.field_name)
-
+            raise ValueError(
+                "%s field is not a valid hexadecimal number" % info.field_name
+            )
 
     @classmethod
-    def from_raw_data(cls, raw_data: dict[str, list[str]]) -> "EventDeposit":
+    def from_raw_data(cls, raw_data: dict[str, list[str]]) -> "EventDepositData":
         """
-        Class method to create an EventDeposit instance from raw data.
+        Class method to create an EventDepositData instance from raw data.
 
         Args:
-            raw_data (Dict[str, List[str]]): A dictionary where the keys are field names and values are lists 
+            raw_data (Dict[str, List[str]]): A dictionary where the keys are field names and values are lists
                                                containing the corresponding data as strings.
 
         Returns:
-            EventDeposit: An instance of EventDeposit with fields populated from raw_data.
+            EventDepositData: An instance of EventDepositData with fields populated from raw_data.
 
         Example:
             raw_data = {
                 "data": ["0x67890", "0x12345", "1000.0"]
             }
-            deposit_event = EventDeposit.from_raw_data(raw_data)
+            deposit_event = EventDepositData.from_raw_data(raw_data)
         """
         return cls(
             user=raw_data["data"][0],
