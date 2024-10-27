@@ -86,7 +86,45 @@ class LiquidationEventData(BaseModel):
         try:
             return Decimal(int(value, base=16))
         except ValueError:
-            raise ValueError(
-                "%s field is not a valid hexadecimal number" % info.field_name
-            )
+            raise ValueError("%s field is not a valid hexadecimal number" % info.field_name)
 
+class WithdrawalEventData(BaseModel):
+    user: str
+    amount: Decimal
+    token: str
+
+    @field_validator("user", "token")
+    def validate_addresses(cls, value: str) -> str:
+        """
+        Validates that the provided address starts with '0x' and formats it with leading zeros.
+
+        Args:
+            value (str): The address string to validate.
+
+        Returns:
+            str: The validated and formatted address.
+
+        Raises:
+            ValueError: If the provided address does not start with '0x'.
+        """
+        if not value.startswith("0x"):
+            raise ValueError(f"Invalid address provided: {value}")
+        return add_leading_zeros(value)
+
+    @field_validator("amount", mode="before")
+    def validate_amount(cls, value: str) -> Decimal:
+        """
+        Validates that the provided amount is numeric and converts it to a Decimal.
+
+        Args:
+            value (str): The amount string to validate.
+
+        Returns:
+            Decimal: The validated and converted amount as a Decimal.
+
+        Raises:
+            ValueError: If the provided amount is not numeric.
+        """
+        if not value.isdigit():
+            raise ValueError("Amount field is not numeric")
+        return Decimal(value)
