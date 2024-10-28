@@ -1,3 +1,29 @@
+"""Add EventBaseModel and ZkLend event models
+
+Revision ID: 2dfa022f3110
+Revises: 64a870953fa5
+Create Date: 2024-10-28 18:13:14.699281
+
+"""
+
+import logging
+
+import sqlalchemy as sa
+from alembic import op
+from sqlalchemy.dialects.postgresql import ENUM, UUID
+from sqlalchemy.engine.reflection import Inspector
+
+from shared.constants import ProtocolIDs
+
+revision = "2dfa022f3110"
+down_revision = "64a870953fa5"
+branch_labels = None
+depends_on = None
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
 def upgrade() -> None:
     """
     Perform the upgrade migration to create the 'accumulators_sync_event_data'
@@ -17,7 +43,6 @@ def upgrade() -> None:
     bind = op.get_bind()
     inspector = Inspector.from_engine(bind)
 
-    
     if "accumulators_sync_event_data" not in inspector.get_table_names():
         op.create_table(
             "accumulators_sync_event_data",
@@ -42,9 +67,10 @@ def upgrade() -> None:
         )
         logger.info("Table 'accumulators_sync_event_data' created successfully.")
     else:
-        logger.info("Table 'accumulators_sync_event_data' already exists, skipping creation.")
+        logger.info(
+            "Table 'accumulators_sync_event_data' already exists, skipping creation."
+        )
 
-    
     if "liquidation_event_data" not in inspector.get_table_names():
         op.create_table(
             "liquidation_event_data",
@@ -74,3 +100,30 @@ def upgrade() -> None:
         logger.info("Table 'liquidation_event_data' created successfully.")
     else:
         logger.info("Table 'liquidation_event_data' already exists, skipping creation.")
+
+
+def downgrade() -> None:
+    """
+    Perform the downgrade migration to remove the 'accumulators_sync_event_data'
+    and 'liquidation_event_data' tables from the database if they exist.
+
+    This migration drops the tables and their associated indexes if they exist, reversing the changes made
+    in the `upgrade` function.
+    """
+
+    bind = op.get_bind()
+    inspector = Inspector.from_engine(bind)
+
+    if "liquidation_event_data" in inspector.get_table_names():
+        op.drop_table("liquidation_event_data")
+        logger.info("Table 'liquidation_event_data' dropped successfully.")
+    else:
+        logger.info("Table 'liquidation_event_data' does not exist, skipping drop.")
+
+    if "accumulators_sync_event_data" in inspector.get_table_names():
+        op.drop_table("accumulators_sync_event_data")
+        logger.info("Table 'accumulators_sync_event_data' dropped successfully.")
+    else:
+        logger.info(
+            "Table 'accumulators_sync_event_data' does not exist, skipping drop."
+        )
