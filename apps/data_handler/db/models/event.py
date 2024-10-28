@@ -45,5 +45,4 @@ class EventBaseModel(Base):
     
     __mapper_args__ = {
         "polymorphic_identity": "event_base",
-        "polymorphic_on": type,
-    }
+        "polymorphic_on": type,}
