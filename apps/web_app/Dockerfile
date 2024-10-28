@@ -8,7 +8,7 @@ WORKDIR /app
 
 ENV PYTHONPATH "${PYTHONPATH}:/app"
 
-COPY pyproject.toml /app
+COPY web_app/pyproject.toml /app
 ADD . /app
 
 RUN apt-get update \
