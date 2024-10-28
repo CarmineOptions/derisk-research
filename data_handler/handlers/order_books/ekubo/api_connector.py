@@ -1,6 +1,6 @@
 import time
 
-from handlers.order_books.abstractions import AbstractionAPIConnector
+from data_handler.handlers.order_books.abstractions import AbstractionAPIConnector
 
 
 class EkuboAPIConnector(AbstractionAPIConnector):

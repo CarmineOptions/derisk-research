@@ -1,10 +1,18 @@
+
+from decimal import Decimal
+from typing import List, Any
+
+
+from serializers import DataAccumulatorsSyncEvent, LiquidationEventData, RepaymentEventData
+
 from typing import Any
 
-from handler_tools.data_parser.serializers import (
+from data_handler.handler_tools.data_parser.serializers import (
     AccumulatorsSyncEventData,
     EventAccumulatorsSyncData,
     LiquidationEventData,
 )
+
 
 
 class ZklendDataParser:
@@ -64,9 +72,25 @@ class ZklendDataParser:
         pass
 
     @classmethod
-    def parse_repayment_event(cls, event_data):
-        # TODO: Implement parsing logic for Repayment event
-        pass
+    def parse_repayment_event(cls, event_data: List[Any]) -> RepaymentEventData:
+        """
+        Parses the Repayment event data into a human-readable format using the RepaymentEventData serializer.
+
+        Args:
+            event_data (List[Any]): A list containing the raw repayment event data, typically with 5 elements:
+                repayer, beneficiary, token, raw_amount, and face_amount.
+
+        Returns:
+            RepaymentEventData: A Pydantic model with the parsed and validated repayment event data in a human-readable format.
+        """
+        parsed_event = RepaymentEventData(
+            repayer=event_data[0],
+            beneficiary=event_data[1],
+            token=event_data[2],
+            raw_amount=event_data[3],
+            face_amount=event_data[4],
+        )
+        return parsed_event
 
     @classmethod
     def parse_liquidation_event(cls, event_data):

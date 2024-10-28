@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from db.crud import DBConnector
+from data_handler.db.crud import DBConnector
 
 
 class OrderBookProcessor:
