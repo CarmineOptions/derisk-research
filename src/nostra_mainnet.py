@@ -405,9 +405,9 @@ class NostraMainnetState(src.nostra_alpha.NostraAlphaState):
         )
         # The indices are saved under the respective collateral or debt token address.
         if collateral_token:
-            self.interest_rate_models.collateral[
-                collateral_token
-            ] = collateral_interest_rate_index
+            self.interest_rate_models.collateral[collateral_token] = (
+                collateral_interest_rate_index
+            )
         self.interest_rate_models.debt[debt_token] = debt_interest_rate_index
 
     def process_collateral_transfer_event(self, event: pandas.Series) -> None:

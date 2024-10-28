@@ -1,7 +1,7 @@
 
 from decimal import Decimal
 from pydantic import BaseModel, ValidationInfo, field_validator
-
+from typing import Any
 from shared.helpers import add_leading_zeros
 
 
@@ -84,9 +84,98 @@ class LiquidationEventData(BaseModel):
         Returns:
             Decimal: Converted decimal value.
         """
+
+        if not value.isdigit():
+            raise ValueError("%s field is not numeric" % info.field_name)
+        return Decimal(str(int(value, base=16)))
+
+class RepaymentEventSerializer(BaseModel):
+    """
+    Data model representing a repayment event in the system.
+
+    Attributes:
+        repayer (str): The address or identifier of the individual or entity making the repayment.
+        beneficiary (str): The address or identifier of the individual or entity receiving the repayment.
+        token (str): The type or symbol of the token being used for the repayment.
+        raw_amount (str): The raw amount of the repayment as provided, before any conversions or calculations.
+        face_amount (str): The face amount of the repayment, representing the value after necessary conversions.
+    """
+    repayer: str
+    beneficiary: str
+    token: str
+    raw_amount: str
+    face_amount: str
+
+    @field_validator("beneficiary", "token", pre=True, always=True)
+    def add_leading_zeros(cls, value: str) -> str:
+        """
+        Ensures the `beneficiary` and `token` fields contain leading zeros if required.
+
+        Args:
+            value (str): The value of the field to validate, typically an address or identifier.
+
+        Returns:
+            str: The value with added leading zeros if necessary, maintaining a consistent format.
+        """
+        return add_leading_zeros(value)
+
+    def get_raw_amount_as_decimal(self) -> Decimal:
+        """
+        Converts the hexadecimal `raw_amount` to a Decimal value.
+
+        Returns:
+            Decimal: The converted decimal value of `raw_amount`.
+        """
+        return self.convert_hex_to_decimal(self.raw_amount)
+    
+    @classmethod
+    def parse_event(cls, event: pd.Series) -> "RepaymentEventSerializer":
+        """
+        Parses the repayment event data into a `RepaymentEventSerializer` instance.
+
+        Args:
+            event (pd.Series): A pandas Series containing repayment event data, 
+                               with keys "data", "block_number", and "timestamp".
+
+        Returns:
+            RepaymentEventSerializer: An instance with parsed and validated repayment event data.
+        """
+        return cls(
+            repayer=event["data"][0],
+            beneficiary=event["data"][1],
+            token=event["data"][2],
+            raw_amount=event["data"][3],
+            face_amount=event["data"][4],
+            block_number=event["block_number"],
+            timestamp=event["timestamp"]
+        )
+    
+    class Config:
+        """
+        Configuration for the RepaymentEventSerializer model.
+
+        Attributes:
+            arbitrary_types_allowed (bool): If set to True, allows fields to accept non-standard or arbitrary types
+                                            that are not strictly validated, adding flexibility for custom data types.
+        """
+        arbitrary_types_allowed = True
+
+
+    @staticmethod
+    def convert_hex_to_decimal(value: str) -> Decimal:
+        """
+        Converts a hexadecimal string to a Decimal, or raises an error if invalid.
+
+        Args:
+            value (str): The hexadecimal string to convert.
+
+        Returns:
+            Decimal: The converted decimal value.
+        """
         try:
-            return Decimal(int(value, base=16))
+            return Decimal(int(value, 16))
         except ValueError:
+
             raise ValueError(
                 "%s field is not a valid hexadecimal number" % info.field_name
             )
@@ -278,4 +367,3 @@ class BorrowingEventData(BaseModel):
             return Decimal(int(value, base=16))
         except ValueError:
             raise ValueError("%s field is not a valid hexadecimal number" % info.field_name)
-

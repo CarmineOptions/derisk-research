@@ -52,9 +52,9 @@ class State(abc.ABC):
                 loan_entity["collateral"].decode("utf-8")
             ).items():
                 if collateral_amount:
-                    self.loan_entities[user].collateral[
-                        collateral_token
-                    ] = decimal.Decimal(str(collateral_amount))
+                    self.loan_entities[user].collateral[collateral_token] = (
+                        decimal.Decimal(str(collateral_amount))
+                    )
             for debt_token, debt_amount in json.loads(
                 loan_entity["debt"].decode("utf-8")
             ).items():
