@@ -183,6 +183,7 @@ class ZkLendState(State):
     def process_deposit_event(self, event: pd.Series) -> None:
         # The order of the values in the `data` column is: `user`, `token`, `face_amount`.
         # Example: https://starkscan.co/event/0x036185142bb51e2c1f5bfdb1e6cef81f8ea87fd4d777990014249bf5435fd31b_3.
+
         data = EventDepositData.from_raw_data(event)
         user = data.user
         token = data.token
@@ -290,9 +291,10 @@ class ZkLendState(State):
     def process_borrowing_event(self, event: pd.Series) -> None:
         # The order of the values in the `data` column is: `user`, `token`, `raw_amount`, `face_amount`.
         # Example: https://starkscan.co/event/0x076b1615750528635cf0b63ca80986b185acbd20fa37f0f2b5368a4f743931f8_3.
-        user = add_leading_zeros(event["data"][0])
-        token = add_leading_zeros(event["data"][1])
-        raw_amount = decimal.Decimal(str(int(event["data"][2], base=16)))
+        data = ZklendDataParser.parse_borrowing_event(event["data"])
+        user = data.user
+        token = data.token
+        raw_amount = data.raw_amount
 
         self.loan_entities[user].debt.increase_value(token=token, value=raw_amount)
         # add additional info block and timestamp
