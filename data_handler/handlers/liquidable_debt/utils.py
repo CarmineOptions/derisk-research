@@ -2,6 +2,10 @@ import time
 from decimal import Decimal
 
 import requests
+from starknet_py.hash.selector import get_selector_from_name
+from starknet_py.net.client_models import Call
+from starknet_py.net.full_node_client import FullNodeClient
+
 from data_handler.handlers.helpers import get_symbol
 from data_handler.handlers.settings import (
     HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS,
@@ -10,10 +14,6 @@ from data_handler.handlers.settings import (
     JediSwapPoolSettings,
     MySwapPoolSettings,
 )
-from starknet_py.hash.selector import get_selector_from_name
-from starknet_py.net.client_models import Call
-from starknet_py.net.full_node_client import FullNodeClient
-
 from shared.constants import TOKEN_SETTINGS
 from shared.helpers import add_leading_zeros
 from shared.types import TokenValues

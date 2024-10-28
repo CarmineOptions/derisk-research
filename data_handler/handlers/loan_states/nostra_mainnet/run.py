@@ -2,7 +2,11 @@ import logging
 from time import monotonic
 
 import pandas as pd
-from data_handler.handler_tools.constants import NOSTRA_EVENTS_MAPPING, ProtocolAddresses
+
+from data_handler.handler_tools.constants import (
+    NOSTRA_EVENTS_MAPPING,
+    ProtocolAddresses,
+)
 from data_handler.handler_tools.nostra_mainnet_settings import (
     NOSTRA_MAINNET_ADDRESSES_TO_EVENTS,
     NOSTRA_MAINNET_EVENTS_TO_METHODS,
@@ -11,7 +15,6 @@ from data_handler.handler_tools.nostra_mainnet_settings import (
 )
 from data_handler.handlers.loan_states.abstractions import LoanStateComputationBase
 from data_handler.handlers.loan_states.nostra_mainnet.events import NostraMainnetState
-
 from shared.constants import ProtocolIDs
 
 logger = logging.getLogger(__name__)

@@ -11,8 +11,9 @@ from typing import Sequence, Union
 import sqlalchemy as sa
 import sqlalchemy_utils
 from alembic import op
-from data_handler.handlers.liquidable_debt.values import LendingProtocolNames
 from sqlalchemy.dialects import postgresql
+
+from data_handler.handlers.liquidable_debt.values import LendingProtocolNames
 
 # revision identifiers, used by Alembic.
 revision: str = "e813bfbd573f"

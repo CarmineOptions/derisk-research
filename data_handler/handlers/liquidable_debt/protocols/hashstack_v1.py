@@ -1,3 +1,4 @@
+from data_handler.db.models import LiquidableDebt
 from data_handler.handlers.liquidable_debt.values import (
     COLLATERAL_FIELD_NAME,
     GS_BUCKET_NAME,
@@ -7,8 +8,6 @@ from data_handler.handlers.liquidable_debt.values import (
     LendingProtocolNames,
 )
 from data_handler.handlers.loan_states.hashtack_v1.events import HashstackV1State
-
-from data_handler.db.models import LiquidableDebt
 
 
 def run() -> None:

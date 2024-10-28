@@ -4,6 +4,7 @@ from decimal import Decimal
 
 import pandas as pd
 import starknet_py
+
 from data_handler.handler_tools.nostra_mainnet_settings import (
     NOSTRA_MAINNET_CDP_MANAGER_ADDRESS,
     NOSTRA_MAINNET_DEFERRED_BATCH_CALL_ADAPTER_ADDRESS,
@@ -16,7 +17,6 @@ from data_handler.handlers.loan_states.nostra_alpha.events import (
     NostraAlphaLoanEntity,
     NostraAlphaState,
 )
-
 from shared.constants import ProtocolIDs
 from shared.helpers import add_leading_zeros
 from shared.types import InterestRateModels, Prices, TokenParameters

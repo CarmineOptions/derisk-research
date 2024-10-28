@@ -3,6 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Type
 
+from data_handler.db.crud import DBConnector
 from data_handler.handlers.liquidable_debt.utils import Prices
 from data_handler.handlers.liquidable_debt.values import (
     HEALTH_FACTOR_FIELD_NAME,
@@ -17,9 +18,10 @@ from data_handler.handlers.loan_states.nostra_mainnet.events import (
     NostraMainnetLoanEntity,
     NostraMainnetState,
 )
-from data_handler.handlers.loan_states.zklend.events import ZkLendLoanEntity, ZkLendState
-
-from data_handler.db.crud import DBConnector
+from data_handler.handlers.loan_states.zklend.events import (
+    ZkLendLoanEntity,
+    ZkLendState,
+)
 from shared.constants import ProtocolIDs
 from shared.state import LoanEntity, State
 from shared.types import TokenValues

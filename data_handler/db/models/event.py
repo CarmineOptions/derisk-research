@@ -41,11 +41,13 @@ class EventBaseModel(Base):
 
     __tablename__ = "event_base_model"
 
+    id: Mapped[UUID] = mapped_column(UUID, primary_key=True, default=uuid4)
     event_name: Mapped[str] = mapped_column(String, index=True)
     block_number: Mapped[int] = mapped_column(Integer, index=True)
     protocol_id: Mapped[str] = mapped_column(Enum(ProtocolIDs), index=True)
+    type: Mapped[str] = mapped_column(String, nullable=False)
 
     __mapper_args__ = {
         "polymorphic_identity": "event_base",
         "polymorphic_on": type,
-    }   
+    }

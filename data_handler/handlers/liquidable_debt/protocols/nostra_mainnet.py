@@ -1,3 +1,4 @@
+from data_handler.db.models import LiquidableDebt
 from data_handler.handlers.liquidable_debt.debt_handlers import (
     NostraMainnetDBLiquidableDebtDataHandler,
 )
@@ -11,8 +12,6 @@ from data_handler.handlers.loan_states.nostra_mainnet.events import (
     NostraMainnetLoanEntity,
     NostraMainnetState,
 )
-
-from data_handler.db.models import LiquidableDebt
 from shared.constants import ProtocolIDs
 
 

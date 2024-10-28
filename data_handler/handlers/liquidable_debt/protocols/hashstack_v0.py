@@ -1,3 +1,4 @@
+from data_handler.db.models import LiquidableDebt
 from data_handler.handlers.liquidable_debt.debt_handlers import (
     HashstackV0DBLiquidableDebtDataHandler,
 )
@@ -11,8 +12,6 @@ from data_handler.handlers.loan_states.hashtack_v0.events import (
     HashstackV0LoanEntity,
     HashstackV0State,
 )
-
-from data_handler.db.models import LiquidableDebt
 from shared.constants import ProtocolIDs
 
 

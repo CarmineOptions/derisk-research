@@ -2,6 +2,8 @@ import asyncio
 from decimal import Decimal
 from typing import Iterable, Type
 
+from data_handler.db.crud import DBConnector
+from data_handler.db.models import LoanState
 from data_handler.handlers.helpers import get_collateral_token_range, get_range
 from data_handler.handlers.liquidable_debt.utils import Prices
 from data_handler.handlers.liquidable_debt.values import (
@@ -12,9 +14,6 @@ from data_handler.handlers.liquidable_debt.values import (
     LendingProtocolNames,
 )
 from data_handler.handlers.settings import TOKEN_PAIRS
-
-from data_handler.db.crud import DBConnector
-from data_handler.db.models import LoanState
 from shared.constants import ProtocolIDs
 from shared.state import LoanEntity, State
 from shared.types import TokenValues

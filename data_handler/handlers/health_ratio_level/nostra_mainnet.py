@@ -1,11 +1,11 @@
+from health_ratio_handlers import NostrMainnetHealthRatioHandler
+
+from data_handler.db.models import HealthRatioLevel
 from data_handler.handlers.liquidable_debt.values import (
     HEALTH_FACTOR_FIELD_NAME,
     TIMESTAMP_FIELD_NAME,
     USER_FIELD_NAME,
 )
-from health_ratio_handlers import NostrMainnetHealthRatioHandler
-
-from data_handler.db.models import HealthRatioLevel
 from shared.constants import ProtocolIDs
 
 

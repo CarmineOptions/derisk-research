@@ -9,14 +9,11 @@ import google.cloud.storage
 import pandas
 import starknet_py.cairo.felt as cairo_felt_type
 
+from data_handler.db.models import InterestRate
 from data_handler.handler_tools.constants import TOKEN_MAPPING
 from data_handler.handlers import blockchain_call
 from data_handler.handlers.settings import PAIRS
 from db.models import InterestRate
-
-
-from data_handler.db.models import InterestRate
-
 from shared.constants import TOKEN_SETTINGS, ProtocolIDs
 from shared.error_handler import BOT
 from shared.error_handler.values import MessageTemplates

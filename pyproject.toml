@@ -25,6 +25,7 @@ pydantic = "^2.9.2"
 pytest = "^8.3.3"
 python-dotenv = "^1.0.1"
 alembic = "^1.13.3"
+sqlalchemy-utils = "^0.41.2"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.8.0"

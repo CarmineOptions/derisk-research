@@ -6,13 +6,15 @@ import os
 from decimal import Decimal
 
 import pandas as pd
-from data_handler.handlers.blockchain_call import func_call
-from data_handler.handlers.order_books.abstractions import OrderBookBase
-from data_handler.handlers.order_books.commons import get_logger
-from data_handler.handlers.order_books.myswap.api_connection.api_connector import MySwapAPIConnector
 
 from data_handler.db.crud import DBConnector
 from data_handler.db.models import OrderBookModel
+from data_handler.handlers.blockchain_call import func_call
+from data_handler.handlers.order_books.abstractions import OrderBookBase
+from data_handler.handlers.order_books.commons import get_logger
+from data_handler.handlers.order_books.myswap.api_connection.api_connector import (
+    MySwapAPIConnector,
+)
 
 MYSWAP_CL_MM_ADDRESS = (
     "0x01114c7103e12c2b2ecbd3a2472ba9c48ddcbf702b1c242dd570057e26212111"
