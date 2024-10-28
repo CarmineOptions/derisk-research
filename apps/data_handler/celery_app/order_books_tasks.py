@@ -1,6 +1,6 @@
 import logging
 
-from celery_app.celery_conf import app
+from data_handler.celery_app.celery_conf import app
 from data_handler.handlers.order_books.constants import TOKEN_MAPPING
 from data_handler.handlers.order_books.ekubo.api_connector import EkuboAPIConnector
 from data_handler.handlers.order_books.ekubo.main import EkuboOrderBook
