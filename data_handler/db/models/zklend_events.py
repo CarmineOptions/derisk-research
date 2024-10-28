@@ -24,7 +24,7 @@ class AccumulatorsSyncEventData(EventBaseModel):
     )
     debt_accumulator: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
 
-    __mapper_args__ = {"polymorphic_identity": "accumulators_sync_event"}
+    __mapper_args__ = {"polymorphic_on": "protocol_id"}
 
 
 class LiquidationEventData(EventBaseModel):
@@ -45,4 +45,4 @@ class LiquidationEventData(EventBaseModel):
     collateral_token: Mapped[str] = mapped_column(String, nullable=False)
     collateral_amount: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
 
-    __mapper_args__ = {"polymorphic_identity": "liquidation_event"}
+    __mapper_args__ = {"polymorphic_on": "protocol_id"}
