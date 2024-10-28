@@ -2,6 +2,7 @@ import asyncio
 import logging
 from decimal import Decimal
 
+
 from handlers.blockchain_call import NET
 from handlers.helpers import InterestRateState
 
@@ -9,6 +10,15 @@ from data_handler.handler_tools.api_connector import DeRiskAPIConnector
 from data_handler.handler_tools.constants import TOKEN_MAPPING
 from db.crud import DBConnector
 from db.models import InterestRate
+
+from data_handler.handler_tools.api_connector import DeRiskAPIConnector
+from data_handler.handler_tools.constants import TOKEN_MAPPING
+from data_handler.handlers.blockchain_call import NET
+from data_handler.handlers.helpers import InterestRateState
+
+from data_handler.db.crud import DBConnector
+from data_handler.db.models import InterestRate
+
 from shared.constants import ProtocolIDs
 
 HASHSTACK_INTEREST_RATE_ADDRESS = (

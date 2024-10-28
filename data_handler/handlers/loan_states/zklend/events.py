@@ -5,6 +5,7 @@ import logging
 from typing import Optional
 
 import pandas as pd
+
 from handler_tools.data_parser.zklend import ZklendDataParser
 from handlers import blockchain_call
 from handlers.helpers import get_async_symbol
@@ -15,6 +16,16 @@ from handler_tools.data_parser.zklend import ZklendDataParser
 
 
 from db.crud import InitializerDBConnector
+
+from data_handler.handler_tools.data_parser.zklend import ZklendDataParser
+from data_handler.handlers import blockchain_call
+from data_handler.handlers.helpers import get_async_symbol
+from data_handler.handlers.loan_states.zklend import TokenSettings
+from data_handler.handler_tools.data_parser.serializers import EventDepositData
+from data_handler.handler_tools.data_parser.zklend import ZklendDataParser
+
+from data_handler.db.crud import InitializerDBConnector
+
 from shared.helpers import add_leading_zeros
 from shared.loan_entity import LoanEntity
 from shared.state import State

@@ -6,8 +6,12 @@ from typing import Optional
 
 import pandas
 
+
 from data_handler.handlers.helpers import get_symbol
 from db.crud import InitializerDBConnector
+
+from data_handler.db.crud import InitializerDBConnector
+
 from shared.constants import TOKEN_SETTINGS
 from shared.loan_entity import LoanEntity
 from shared.state import State

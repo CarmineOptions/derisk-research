@@ -3,8 +3,8 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-from db import SQLALCHEMY_DATABASE_URL
-from db.models import *
+from data_handler.db import SQLALCHEMY_DATABASE_URL
+from data_handler.db.models import *
 
 config = context.config
 config.set_main_option("sqlalchemy.url", SQLALCHEMY_DATABASE_URL)

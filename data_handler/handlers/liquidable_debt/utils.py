@@ -2,8 +2,8 @@ import time
 from decimal import Decimal
 
 import requests
-from handlers.helpers import get_symbol
-from handlers.settings import (
+from data_handler.handlers.helpers import get_symbol
+from data_handler.handlers.settings import (
     HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS,
     JEDISWAP_POOL_SETTINGS,
     MYSWAP_POOL_SETTINGS,
