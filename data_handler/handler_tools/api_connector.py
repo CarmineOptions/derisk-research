@@ -21,7 +21,9 @@ class DeRiskAPIConnector:
             raise ValueError("DERISK_API_URL environment variable is not set")
 
     @staticmethod
-    def _validate_data(from_address: str, min_block_number: int, max_block_number: int) -> None:
+    def _validate_data(
+        from_address: str, min_block_number: int, max_block_number: int
+    ) -> None:
         """
         Check the data for the DeRisk API.
         :param from_address: From address.
