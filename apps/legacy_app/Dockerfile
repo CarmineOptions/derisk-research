@@ -3,12 +3,12 @@ FROM python:3.10
 WORKDIR /app
 
 RUN pip install poetry
-COPY pyproject.toml poetry.lock* ./
+COPY legacy_app/pyproject.toml legacy_app/poetry.lock* ./
 RUN poetry config virtualenvs.create false \
   && poetry install --no-interaction --no-ansi
 
-COPY ./src ./src
-COPY app.py .
-COPY update_data.py .
+COPY legacy_app/src legacy_app/src
+COPY legacy_app/app.py .
+COPY legacy_app/update_data.py .
 
 CMD ["streamlit", "run", "app.py"]

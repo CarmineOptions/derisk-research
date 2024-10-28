@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 # Step 1: Install dependencies with Poetry
 echo "Starting poetry install..."
 if poetry install; then
@@ -26,8 +27,6 @@ else
   echo "Poetry shell activation failed. Exiting."
   exit 1
 fi
-
-
 
 
 echo "Setup completed successfully."
