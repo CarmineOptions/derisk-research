@@ -313,7 +313,7 @@ class ZkLendState(State):
 
         user = parsed_event.beneficiary
         token = parsed_event.token
-        raw_amount = decimal.Decimal(str(int(parsed_event.raw_amount, base=16)))
+        raw_amount = parsed_event.get_raw_amount_as_decimal()
 
         self.loan_entities[user].debt.increase_value(token=token, value=-raw_amount)
         

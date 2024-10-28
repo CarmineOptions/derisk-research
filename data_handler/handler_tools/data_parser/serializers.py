@@ -118,6 +118,15 @@ class RepaymentEventSerializer(BaseModel):
         """
         return add_leading_zeros(value)
 
+    def get_raw_amount_as_decimal(self) -> Decimal:
+        """
+        Converts the hexadecimal `raw_amount` to a Decimal value.
+
+        Returns:
+            Decimal: The converted decimal value of `raw_amount`.
+        """
+        return self.convert_hex_to_decimal(self.raw_amount)
+    
     @classmethod
     def parse_event(cls, event: pd.Series) -> "RepaymentEventSerializer":
         """
