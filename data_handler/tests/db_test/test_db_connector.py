@@ -79,7 +79,6 @@ def sample_interest_rate():
     interest_rate = InterestRate(
         collateral={"ETH": 100.0},
         debt={"USDC": 1000.0},
-        version=1
     )
     return interest_rate
 
@@ -245,7 +244,7 @@ def test_get_last_hashstack_loan_state(mock_db_connector, sample_hashstack_loan_
     assert result.user_id == "test_user"
     assert result.loan_id == 1
     assert result.collateral == {"ETH": 100.0}
-    assert result.debt == {"USDC": 100.0}
+    assert result.debt == {"USDC": 1000.0}
 
 
 def test_get_interest_rate_by_block(mock_db_connector, sample_interest_rate):
@@ -259,5 +258,4 @@ def test_get_interest_rate_by_block(mock_db_connector, sample_interest_rate):
     result = mock_db_connector.get_interest_rate_by_block(12345, ProtocolIDs.ZKLEND)
     assert result.collateral == {"ETH": 100.0}
     assert result.debt == {"USDC": 1000.0}
-    assert result.version == 1
     

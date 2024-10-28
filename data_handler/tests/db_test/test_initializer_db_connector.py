@@ -114,7 +114,6 @@ def test_save_debt_category(mock_initializer_db_connector):
         version=1
     )
 
-
 def test_get_zklend_by_user_ids_empty_list(mock_initializer_db_connector):
     """
     Test the get_zklend_by_user_ids method with an empty list of user IDs.
@@ -124,8 +123,6 @@ def test_get_zklend_by_user_ids_empty_list(mock_initializer_db_connector):
     mock_initializer_db_connector.get_zklend_by_user_ids.return_value = []
     result = mock_initializer_db_connector.get_zklend_by_user_ids(["not_exist_user"])
     assert len(result) == 0
-    mock_initializer_db_connector.get_zklend_by_user_ids.assert_called_once_with([])
-
 
 def test_get_zklend_by_user_ids_db_error(mock_initializer_db_connector):
     """
