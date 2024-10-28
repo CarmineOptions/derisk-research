@@ -122,7 +122,7 @@ def test_get_zklend_by_user_ids_empty_list(mock_initializer_db_connector):
     :return: None
     """
     mock_initializer_db_connector.get_zklend_by_user_ids.return_value = []
-    result = mock_initializer_db_connector.get_zklend_by_user_ids([])
+    result = mock_initializer_db_connector.get_zklend_by_user_ids(["not_exist_user"])
     assert len(result) == 0
     mock_initializer_db_connector.get_zklend_by_user_ids.assert_called_once_with([])
 
@@ -145,9 +145,9 @@ def test_save_collateral_enabled_by_user_update(mock_initializer_db_connector, s
     :param sample_zklend_collateral_debt: Sample zklend collateral debt
     :return: None
     """
-    new_collateral_enabled = {"ETH": False, "BTC": True}
-    new_collateral = {"ETH": 200.0, "BTC": 1.0}
-    new_debt = {"USDC": 2000.0}
+    new_collateral_enabled = {"ETH": True}
+    new_collateral = {"ETH": 100.0}
+    new_debt = {"USDC": 1000.0}
 
     mock_initializer_db_connector.save_collateral_enabled_by_user(
         user_id="test_user",

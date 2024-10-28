@@ -32,7 +32,7 @@ def sample_loan_state(mock_db_connector):
 
 
 @pytest.fixture(scope="function")
-def sample_batch_loan_states(mock_db_connector):
+def sample_batch_loan_states():
     """
     Sample batch loan states for testing.
     :param mock_db_connector: Mock DBConnector
@@ -52,7 +52,7 @@ def sample_batch_loan_states(mock_db_connector):
     
 
 @pytest.fixture(scope="function")
-def sample_hashstack_loan_state(mock_db_connector):
+def sample_hashstack_loan_state():
     """
     Sample hashstack loan state for testing.
     :param mock_db_connector: Mock DBConnector
@@ -60,7 +60,7 @@ def sample_hashstack_loan_state(mock_db_connector):
     """
     return HashtackCollateralDebt(
         user_id="test_user",
-        loan_id="test_loan",
+        loan_id=1,
         collateral={"ETH": 100.0},
         debt={"USDC": 1000.0},
         original_collateral={"ETH": 120.0},
@@ -244,8 +244,8 @@ def test_get_last_hashstack_loan_state(mock_db_connector, sample_hashstack_loan_
     result = mock_db_connector.get_last_hashstack_loan_state("test_user")
     assert result.user_id == "test_user"
     assert result.loan_id == 1
-    assert result.collateral == 100.0
-    assert result.debt == 50.0
+    assert result.collateral == {"ETH": 100.0}
+    assert result.debt == {"USDC": 100.0}
 
 
 def test_get_interest_rate_by_block(mock_db_connector, sample_interest_rate):
