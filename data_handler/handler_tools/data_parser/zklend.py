@@ -11,7 +11,6 @@ from handler_tools.data_parser.serializers import (
     EventAccumulatorsSyncData,
 )
 
-
 class ZklendDataParser:
     """
     Parses the zkLend data to human-readable format.

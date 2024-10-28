@@ -1,8 +1,8 @@
-from handlers.liquidable_debt.values import LendingProtocolNames
+from data_handler.handlers.liquidable_debt.values import LendingProtocolNames
 from sqlalchemy import DECIMAL, BigInteger, Column, String
 from sqlalchemy_utils.types.choice import ChoiceType
 
-from db.models.base import Base
+from data_handler.db.models.base import Base
 from shared.constants import ProtocolIDs
 
 

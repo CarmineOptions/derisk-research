@@ -7,8 +7,8 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Query, Session, aliased, scoped_session, sessionmaker
 
-from db.database import SQLALCHEMY_DATABASE_URL
-from db.models import (
+from data_handler.db.database import SQLALCHEMY_DATABASE_URL
+from data_handler.db.models import (
     Base,
     HashtackCollateralDebt,
     InterestRate,
