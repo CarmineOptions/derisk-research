@@ -4,6 +4,8 @@ import decimal
 import logging
 from typing import Optional
 
+from serializers import RepaymentEventSerializer
+
 import pandas as pd
 from data_handler.handler_tools.data_parser.zklend import ZklendDataParser
 from data_handler.handlers import blockchain_call
@@ -305,23 +307,23 @@ class ZkLendState(State):
                 )
             )
 
-    def process_repayment_event(self, event: pd.Series) -> None:
-        # The order of the values in the `data` column is: `repayer`, `beneficiary`, `token`, `raw_amount`,
-        # `face_amount`.
-        # Example: https://starkscan.co/event/0x06fa3dd6e12c9a66aeacd2eefa5a2ff2915dd1bb4207596de29bd0e8cdeeae66_5.
-        user = add_leading_zeros(event["data"][1])
-        token = add_leading_zeros(event["data"][2])
 
-        raw_amount = decimal.Decimal(str(int(event["data"][3], base=16)))
+    def process_repayment_event(self, event: pd.Series) -> None:
+        parsed_event = RepaymentEventSerializer.parse_event(event)
+
+        user = parsed_event.beneficiary
+        token = parsed_event.token
+        raw_amount = parsed_event.get_raw_amount_as_decimal()
 
         self.loan_entities[user].debt.increase_value(token=token, value=-raw_amount)
-        # add additional info block and timestamp
-        self.loan_entities[user].extra_info.block = event["block_number"]
-        self.loan_entities[user].extra_info.timestamp = event["timestamp"]
+        
+        self.loan_entities[user].extra_info.block = parsed_event.block_number
+        self.loan_entities[user].extra_info.timestamp = parsed_event.timestamp
+
         if user == self.verbose_user:
             logging.info(
                 "In block number = {}, raw amount = {} of token = {} was repayed.".format(
-                    event["block_number"],
+                    parsed_event.block_number,
                     raw_amount,
                     token,
                 )
