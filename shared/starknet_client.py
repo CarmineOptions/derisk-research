@@ -20,7 +20,7 @@ class StarknetClient:
         Args:
             network_url (str): The URL of the Starknet network to connect to
         """
-        self.network = Network(network_url)
+        self.network = Network(node_url)
 
     async def func_call(
         self, 
