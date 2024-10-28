@@ -5,7 +5,7 @@ import logging
 from typing import Optional
 
 import pandas as pd
-from handler_tools.nostra_alpha_settings import (
+from data_handler.handler_tools.nostra_alpha_settings import (
     NOSTRA_ALPHA_ADDRESSES_TO_EVENTS,
     NOSTRA_ALPHA_CDP_MANAGER_ADDRESS,
     NOSTRA_ALPHA_DEFERRED_BATCH_CALL_ADAPTER_ADDRESS,
@@ -13,9 +13,9 @@ from handler_tools.nostra_alpha_settings import (
     NOSTRA_ALPHA_INTEREST_RATE_MODEL_ADDRESS,
     NOSTRA_ALPHA_TOKEN_ADDRESSES,
 )
-from handlers.helpers import blockchain_call, get_addresses, get_symbol
-from handlers.settings import TokenSettings
-from handlers.state import NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS
+from data_handler.handlers.helpers import blockchain_call, get_addresses, get_symbol
+from data_handler.handlers.settings import TokenSettings
+from data_handler.handlers.state import NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS
 
 from shared.constants import ProtocolIDs
 from shared.helpers import add_leading_zeros

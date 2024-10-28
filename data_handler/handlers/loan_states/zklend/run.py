@@ -2,10 +2,10 @@ import logging
 from time import monotonic
 
 import pandas as pd
-from handler_tools.constants import ProtocolAddresses
-from handlers.loan_states.abstractions import LoanStateComputationBase
-from handlers.loan_states.zklend.events import ZkLendState
-from handlers.loan_states.zklend.utils import ZkLendInitializer
+from data_handler.handler_tools.constants import ProtocolAddresses
+from data_handler.handlers.loan_states.abstractions import LoanStateComputationBase
+from data_handler.handlers.loan_states.zklend.events import ZkLendState
+from data_handler.handlers.loan_states.zklend.utils import ZkLendInitializer
 
 from shared.constants import ProtocolIDs
 from shared.state import State

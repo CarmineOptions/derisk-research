@@ -3,23 +3,23 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Type
 
-from handlers.liquidable_debt.utils import Prices
-from handlers.liquidable_debt.values import (
+from data_handler.handlers.liquidable_debt.utils import Prices
+from data_handler.handlers.liquidable_debt.values import (
     HEALTH_FACTOR_FIELD_NAME,
     TIMESTAMP_FIELD_NAME,
     USER_FIELD_NAME,
 )
-from handlers.loan_states.nostra_alpha.events import (
+from data_handler.handlers.loan_states.nostra_alpha.events import (
     NostraAlphaLoanEntity,
     NostraAlphaState,
 )
-from handlers.loan_states.nostra_mainnet.events import (
+from data_handler.handlers.loan_states.nostra_mainnet.events import (
     NostraMainnetLoanEntity,
     NostraMainnetState,
 )
-from handlers.loan_states.zklend.events import ZkLendLoanEntity, ZkLendState
+from data_handler.handlers.loan_states.zklend.events import ZkLendLoanEntity, ZkLendState
 
-from db.crud import DBConnector
+from data_handler.db.crud import DBConnector
 from shared.constants import ProtocolIDs
 from shared.state import LoanEntity, State
 from shared.types import TokenValues
@@ -27,7 +27,7 @@ from shared.types import TokenValues
 
 class BaseHealthRatioHandler:
     """
-    A base handler class that collects data from DB,
+    A base handler class that collects data from data_handler.db,
     computes health_ratio level and stores it in the database.
     """
 
@@ -86,7 +86,7 @@ class BaseHealthRatioHandler:
 
 class ZkLendHealthRatioHandler(BaseHealthRatioHandler):
     """
-    A zkLend handler that collects data from DB,
+    A zkLend handler that collects data from data_handler.db,
     computes health_ratio level and stores it in the database.
 
     :cvar CONNECTOR: A DB connection object.
@@ -149,7 +149,7 @@ class ZkLendHealthRatioHandler(BaseHealthRatioHandler):
 
 class NostrAlphaHealthRatioHandler(BaseHealthRatioHandler):
     """
-    A Nostra Alha handler that collects data from DB,
+    A Nostra Alha handler that collects data from data_handler.db,
     computes health_ratio level and stores it in the database.
     """
 
@@ -212,7 +212,7 @@ class NostrAlphaHealthRatioHandler(BaseHealthRatioHandler):
 
 class NostrMainnetHealthRatioHandler(BaseHealthRatioHandler):
     """
-    A Nostra Mainnet handler that collects data from DB,
+    A Nostra Mainnet handler that collects data from data_handler.db,
     computes health_ratio level and stores it in the database.
     """
 

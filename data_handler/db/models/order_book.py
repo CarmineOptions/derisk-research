@@ -1,7 +1,7 @@
 from sqlalchemy import DECIMAL, BigInteger, Column, String
 from sqlalchemy.types import JSON
 
-from db.models.base import Base
+from data_handler.db.models.base import Base
 
 
 class OrderBookModel(Base):

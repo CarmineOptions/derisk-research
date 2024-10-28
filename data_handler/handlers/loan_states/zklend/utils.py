@@ -2,8 +2,8 @@ from decimal import Decimal
 
 import pandas as pd
 
-from db.crud import InitializerDBConnector
-from db.models import ZkLendCollateralDebt
+from data_handler.db.crud import InitializerDBConnector
+from data_handler.db.models import ZkLendCollateralDebt
 
 
 class ZkLendInitializer:

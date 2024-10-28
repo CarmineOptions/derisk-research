@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Optional
 
-from handlers.blockchain_call import balance_of, func_call, get_myswap_pool
+from data_handler.handlers.blockchain_call import balance_of, func_call, get_myswap_pool
 
 from shared.constants import TOKEN_SETTINGS
 from shared.helpers import add_leading_zeros
