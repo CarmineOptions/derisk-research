@@ -2,8 +2,8 @@ import asyncio
 import logging
 from decimal import Decimal
 
-from handler_tools.api_connector import DeRiskAPIConnector
-from handler_tools.constants import TOKEN_MAPPING
+from data_handler.handler_tools.api_connector import DeRiskAPIConnector
+from data_handler.handler_tools.constants import TOKEN_MAPPING
 from handlers.blockchain_call import NET
 from handlers.helpers import InterestRateState
 
