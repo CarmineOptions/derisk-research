@@ -28,3 +28,9 @@ make setup
 ```
 make app
 ```
+
+## Web app (Notification app)
+1. To set up this project run next command for local development in `derisk-research` directory:
+```
+docker-compose -f devops/dev/docker-compose.notification-app.yaml up --build
+```
