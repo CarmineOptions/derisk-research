@@ -20,6 +20,24 @@ class DeRiskAPIConnector:
         if self.api_url is None:
             raise ValueError("DERISK_API_URL environment variable is not set")
 
+    @staticmethod
+    def _validate_data(
+        from_address: str, min_block_number: int, max_block_number: int
+    ) -> None:
+        """
+        Check the data for the DeRisk API.
+        :param from_address: From address.
+        :param min_block_number: block number.
+        :param max_block_number: max block number.
+        :return: None
+        """
+        if not isinstance(from_address, str):
+            raise TypeError("from_address must be a string")
+        if not isinstance(min_block_number, int):
+            raise TypeError("min_block_number must be an integer")
+        if not isinstance(max_block_number, int):
+            raise TypeError("max_block_number must be an integer")
+
     def get_data(
         self, from_address: str, min_block_number: int, max_block_number: int
     ) -> dict:
@@ -42,10 +60,11 @@ class DeRiskAPIConnector:
             631000
         )
         """
+        self._validate_data(from_address, min_block_number, max_block_number)
         params = {
             "from_address": from_address,
-            "min_block_number": min_block_number,  # start with 0 (just first time)
-            "max_block_number": max_block_number,  # to endless (just first time)
+            "min_block_number": min_block_number,
+            "max_block_number": max_block_number,
         }
         try:
             response = requests.get(self.api_url, params=params)

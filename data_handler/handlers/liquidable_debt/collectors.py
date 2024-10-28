@@ -1,9 +1,9 @@
 from typing import Iterable
 
 import dask.dataframe as dd
-from handlers.liquidable_debt.bases import Collector
-from handlers.liquidable_debt.exceptions import ProtocolExistenceError
-from handlers.liquidable_debt.managers import LocalStorageManager
+from data_handler.handlers.liquidable_debt.bases import Collector
+from data_handler.handlers.liquidable_debt.exceptions import ProtocolExistenceError
+from data_handler.handlers.liquidable_debt.managers import LocalStorageManager
 
 
 class GoogleCloudDataCollector(Collector):
