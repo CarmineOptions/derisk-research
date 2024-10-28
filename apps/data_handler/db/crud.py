@@ -2,12 +2,13 @@ import logging
 import uuid
 from typing import List, Optional, Type, TypeVar
 
+from data_handler.db.database import SQLALCHEMY_DATABASE_URL
+from shared.constants import ProtocolIDs
 from sqlalchemy import Subquery, and_, create_engine, desc, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Query, Session, aliased, scoped_session, sessionmaker
 
-from data_handler.db.database import SQLALCHEMY_DATABASE_URL
 from data_handler.db.models import (
     Base,
     HashtackCollateralDebt,
@@ -16,7 +17,6 @@ from data_handler.db.models import (
     OrderBookModel,
     ZkLendCollateralDebt,
 )
-from shared.constants import ProtocolIDs
 
 logger = logging.getLogger(__name__)
 ModelType = TypeVar("ModelType", bound=Base)

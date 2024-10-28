@@ -1,18 +1,17 @@
-
+"""
+This module contains the logic to parse the zkLend data to human-readable format.
+"""
 from decimal import Decimal
-from typing import List, Any
+from typing import Any, List
 
-
-from serializers import DataAccumulatorsSyncEvent, LiquidationEventData, RepaymentEventData
-
-from typing import Any
-
-from data_handler.handler_tools.data_parser.serializers import (
+from handler_tools.data_parser.serializers import (
     AccumulatorsSyncEventData,
+    BorrowingEventData,
+    DataAccumulatorsSyncEvent,
     EventAccumulatorsSyncData,
     LiquidationEventData,
+    RepaymentEventData,
 )
-
 
 
 class ZklendDataParser:
@@ -67,9 +66,22 @@ class ZklendDataParser:
         pass
 
     @classmethod
-    def parse_borrowing_event(cls, event_data):
-        # TODO: Implement parsing logic for Borrowing event
-        pass
+    def parse_borrowing_event(cls, event_data) -> BorrowingEventData:
+        """
+        Convert the event list to a Borrowing event data object
+
+        :event_data - List of length 4 of the event data
+
+        Returns:
+            BorrowingEventData
+        """
+        event_data = BorrowingEventData(
+            user=event_data[0],
+            token=event_data[1],
+            raw_amount=event_data[2],
+            face_amount=event_data[3],
+        )
+        return event_data
 
     @classmethod
     def parse_repayment_event(cls, event_data: List[Any]) -> RepaymentEventData:

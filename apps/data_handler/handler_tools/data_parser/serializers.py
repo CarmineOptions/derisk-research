@@ -1,6 +1,6 @@
 from decimal import Decimal
+
 from pydantic import BaseModel, ValidationInfo, field_validator
-from typing import Any
 from shared.helpers import add_leading_zeros
 
 
@@ -88,6 +88,7 @@ class LiquidationEventData(BaseModel):
             raise ValueError("%s field is not numeric" % info.field_name)
         return Decimal(str(int(value, base=16)))
 
+
 class RepaymentEventSerializer(BaseModel):
     """
     Data model representing a repayment event in the system.
@@ -99,6 +100,7 @@ class RepaymentEventSerializer(BaseModel):
         raw_amount (str): The raw amount of the repayment as provided, before any conversions or calculations.
         face_amount (str): The face amount of the repayment, representing the value after necessary conversions.
     """
+
     repayer: str
     beneficiary: str
     token: str
@@ -126,14 +128,14 @@ class RepaymentEventSerializer(BaseModel):
             Decimal: The converted decimal value of `raw_amount`.
         """
         return self.convert_hex_to_decimal(self.raw_amount)
-    
+
     @classmethod
     def parse_event(cls, event: pd.Series) -> "RepaymentEventSerializer":
         """
         Parses the repayment event data into a `RepaymentEventSerializer` instance.
 
         Args:
-            event (pd.Series): A pandas Series containing repayment event data, 
+            event (pd.Series): A pandas Series containing repayment event data,
                                with keys "data", "block_number", and "timestamp".
 
         Returns:
@@ -146,9 +148,9 @@ class RepaymentEventSerializer(BaseModel):
             raw_amount=event["data"][3],
             face_amount=event["data"][4],
             block_number=event["block_number"],
-            timestamp=event["timestamp"]
+            timestamp=event["timestamp"],
         )
-    
+
     class Config:
         """
         Configuration for the RepaymentEventSerializer model.
@@ -157,8 +159,8 @@ class RepaymentEventSerializer(BaseModel):
             arbitrary_types_allowed (bool): If set to True, allows fields to accept non-standard or arbitrary types
                                             that are not strictly validated, adding flexibility for custom data types.
         """
-        arbitrary_types_allowed = True
 
+        arbitrary_types_allowed = True
 
     @staticmethod
     def convert_hex_to_decimal(value: str) -> Decimal:
@@ -174,7 +176,6 @@ class RepaymentEventSerializer(BaseModel):
         try:
             return Decimal(int(value, 16))
         except ValueError:
-
             raise ValueError(
                 "%s field is not a valid hexadecimal number" % info.field_name
             )
@@ -320,3 +321,52 @@ class EventDepositData(BaseModel):
             face_amount=raw_data["data"][2],
         )
 
+
+class BorrowingEventData(BaseModel):
+    """
+    Class for converting borrowing event to an object model.
+
+    Attributes:
+        user: The address of the user.
+        token: The address of the debt token.
+        raw_amount: The raw amount of the borrowed tokens.
+        face_amount: The face amount of the borrowed tokens.
+    """
+
+    user: str
+    token: str
+    raw_amount: str
+    face_amount: str
+
+    @field_validator("user", "token")
+    def validate_valid_addresses(cls, value: str, info: ValidationInfo) -> str:
+        """
+        Check if the value is an address and format it to having leading zeros.
+
+        Raises:
+            ValueError
+
+        Returns:
+            str
+        """
+        if not value.startswith("0x"):
+            raise ValueError("Invalid address provided for %s" % info.field_name)
+        return add_leading_zeros(value)
+
+    @field_validator("raw_amount", "face_amount")
+    def validate_valid_numbers(cls, value: str, info: ValidationInfo) -> Decimal:
+        """
+        Convert the hexadecimal string value to a decimal.
+
+        Raises:
+            ValueError: If value is not a valid hexadecimal.
+
+        Returns:
+            Decimal: Converted decimal value.
+        """
+        try:
+            return Decimal(int(value, base=16))
+        except ValueError:
+            raise ValueError(
+                "%s field is not a valid hexadecimal number" % info.field_name
+            )

@@ -5,7 +5,6 @@ import decimal
 import logging
 
 import pandas
-
 import src.helpers
 import src.settings
 import src.state
