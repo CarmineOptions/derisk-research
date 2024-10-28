@@ -3,10 +3,10 @@ from decimal import Decimal
 from typing import Union
 
 import pandas as pd
-from handlers.loan_states.hashtack_v0.events import HashstackV0LoanEntity
+from data_handler.handlers.loan_states.hashtack_v0.events import HashstackV0LoanEntity
 
-from db.crud import InitializerDBConnector
-from db.models import HashtackCollateralDebt
+from data_handler.db.crud import InitializerDBConnector
+from data_handler.db.models import HashtackCollateralDebt
 
 logger = logging.getLogger(__name__)
 
