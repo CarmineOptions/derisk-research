@@ -1,11 +1,12 @@
+import asyncio
 import time
+from decimal import Decimal
+from typing import Any, List, Optional, Union
 
-from typing import List, Optional, Union, Any
+from starknet_py.hash.selector import get_selector_from_name
 from starknet_py.net.client_models import Call
 from starknet_py.net.networks import Network
-from starknet_py.hash.selector import get_selector_from_name
-import asyncio
-from decimal import Decimal
+
 
 class StarknetClient:
     """
@@ -23,11 +24,7 @@ class StarknetClient:
         self.network = Network(node_url)
 
     async def func_call(
-        self, 
-        addr: int, 
-        selector: str, 
-        calldata: List[int],
-        retries: int = 1
+        self, addr: int, selector: str, calldata: List[int], retries: int = 1
     ) -> List[int]:
         """
         Make a call to a Starknet contract.
@@ -55,11 +52,7 @@ class StarknetClient:
                     raise e
                 await asyncio.sleep(10)
 
-    async def balance_of(
-        self, 
-        token_address: int, 
-        account_address: int
-    ) -> Decimal:
+    async def balance_of(self, token_address: int, account_address: int) -> Decimal:
         """
         Get token balance for an account.
 
@@ -70,18 +63,14 @@ class StarknetClient:
         Returns:
             Decimal: Token balance
         """
-        result = await self.func_call(
-            token_address,
-            "balanceOf",
-            [account_address]
-        )
+        result = await self.func_call(token_address, "balanceOf", [account_address])
         return Decimal(result[0]) if result else Decimal(0)
 
     async def get_myswap_pool(
-        self, 
+        self,
         pool_address: int,
         token_a_address: Optional[int] = None,
-        token_b_address: Optional[int] = None
+        token_b_address: Optional[int] = None,
     ) -> dict:
         """
         Get MySwap pool information.
@@ -92,7 +81,7 @@ class StarknetClient:
             token_b_address (Optional[int]): Address of token B
         """
         reserves = await self.func_call(pool_address, "get_reserves", [])
-        
+
         if not (token_a_address and token_b_address):
             token_a = await self.func_call(pool_address, "token0", [])
             token_b = await self.func_call(pool_address, "token1", [])
@@ -104,5 +93,5 @@ class StarknetClient:
             "token_a": token_a_address,
             "token_b": token_b_address,
             "reserve_a": reserves[0],
-            "reserve_b": reserves[1]
+            "reserve_b": reserves[1],
         }

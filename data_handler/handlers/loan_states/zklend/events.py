@@ -9,7 +9,6 @@ from handler_tools.data_parser.zklend import ZklendDataParser
 from handlers import blockchain_call
 from handlers.helpers import get_async_symbol
 from handlers.loan_states.zklend import TokenSettings
-from handler_tools.data_parser.zklend import ZklendDataParser
 
 from db.crud import InitializerDBConnector
 from shared.helpers import add_leading_zeros
