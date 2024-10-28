@@ -17,7 +17,7 @@ def upgrade() -> None:
     bind = op.get_bind()
     inspector = Inspector.from_engine(bind)
 
-    # Create accumulators_sync_event_data table
+    
     if "accumulators_sync_event_data" not in inspector.get_table_names():
         op.create_table(
             "accumulators_sync_event_data",
@@ -44,7 +44,7 @@ def upgrade() -> None:
     else:
         logger.info("Table 'accumulators_sync_event_data' already exists, skipping creation.")
 
-    # Create liquidation_event_data table
+    
     if "liquidation_event_data" not in inspector.get_table_names():
         op.create_table(
             "liquidation_event_data",
