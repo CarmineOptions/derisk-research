@@ -1,0 +1,79 @@
+version: '3.8'
+
+networks:
+  data_handler_network:
+    driver: bridge
+
+services:
+  backend:
+    build:
+      context: ../apps
+      dockerfile: data_handler/Dockerfile
+    restart: always
+    volumes:
+      - ../apps/:/app
+    env_file:
+      - ../apps/data_handler/.env
+    expose:
+      - "8000"
+    networks:
+      - data_handler_network
+  celery:
+    build:
+      context: ../apps
+      dockerfile: data_handler/Dockerfile
+    command: celery -A data_handler.celery_app.celery_conf worker --loglevel=INFO
+    environment:
+      - PYTHONPATH=/app
+    volumes:
+      - ../apps/:/app
+    depends_on:
+      - redis
+    networks:
+      - data_handler_network
+
+  celery_beat:
+    build:
+      context: ../apps/data_handler/nginx
+      dockerfile: Dockerfile
+    command: celery -A celery_app.celery_conf beat --loglevel=INFO
+    environment:
+      - PYTHONPATH=/app
+    volumes:
+      - ../apps:/app
+    depends_on:
+      - redis
+    networks:
+      - data_handler_network
+
+  redis:
+    image: redis:latest
+    restart: always
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - data_handler_network
+
+  nginx:
+    restart: unless-stopped
+    image: nginx
+    container_name: nginx
+    build:
+      context: ../apps/data_handler/nginx
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx:/etc/nginx/user_conf.d:ro
+      - ../apps/data_handler/nginx:/app
+    depends_on:
+      - backend
+    networks:
+      - data_handler_network
+
+
+volumes:
+  db_data:
+  redis_data:

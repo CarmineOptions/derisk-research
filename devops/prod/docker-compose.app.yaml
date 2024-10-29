@@ -1,0 +1,13 @@
+version: '3.9'
+
+services:
+  streamlit:
+    build:
+      context: ../../apps
+      dockerfile: legacy_app/Dockerfile
+    ports:
+      - 8501:8501
+    env_file:
+      - ../../apps/legacy_app/.env
+    volumes:
+      - ../../apps/legacy_app/storage_credentials.json:/app/storage_credentials.json

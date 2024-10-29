@@ -1,0 +1,95 @@
+version: '3.8'
+
+networks:
+  app_network:
+    driver: bridge
+
+services:
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_HOST_AUTH_METHOD: md5
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - app_network
+
+  backend:
+    build:
+        context: ../../apps
+        dockerfile: web_app/Dockerfile
+    restart: always
+    volumes:
+      - ../../apps/web_app:/app
+    env_file:
+      - ../../apps/web_app/.env
+    expose:
+      - "8000"
+    depends_on:
+      - db
+    networks:
+      - app_network
+
+  celery:
+    build:
+      context: ../../apps
+      dockerfile: web_app/Dockerfile
+    command: celery -A derisk_alert.celery_conf worker --loglevel=INFO
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - db
+    networks:
+      - app_network
+
+  celery_beat:
+    build:
+      context: ../../apps
+      dockerfile: web_app/Dockerfile
+    command: celery -A derisk_alert.celery_conf beat --loglevel=INFO
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - db
+    networks:
+      - app_network
+
+  redis:
+    image: redis:latest
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app_network
+
+  nginx:
+    restart: unless-stopped
+    image: nginx
+    container_name: nginx
+    build:
+      context: ../../apps/web_app/nginx
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ../../apps/web_app/nginx:/etc/nginx/user_conf.d:ro
+      - ../../apps/web_app/nginx:/app
+    depends_on:
+      - backend
+    networks:
+      - app_network
+
+volumes:
+  db_data:
+  redis_data:

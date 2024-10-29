@@ -1,0 +1,45 @@
+version: '3.8'
+
+networks:
+  app_network:
+    driver: bridge
+
+services:
+  db:
+    image: postgres:16
+    container_name: postgres_dev
+    environment:
+      POSTGRES_DB: web_app
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ../../apps/web_app/init-db:/docker-entrypoint-initdb.d
+    networks:
+      - app_network
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ../../apps
+      dockerfile: web_app/Dockerfile
+    restart: always
+    volumes:
+      - ../../apps/web_app:/app
+    env_file:
+      - ../../apps/web_app/.env
+    expose:
+      - "8000"
+    depends_on:
+      - db
+    networks:
+      - app_network
+
+volumes:
+  db_data:
