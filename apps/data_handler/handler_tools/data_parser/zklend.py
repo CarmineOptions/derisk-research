@@ -1,23 +1,13 @@
 """
 This module contains the logic to parse the zkLend data to human-readable format.
 """
-from decimal import Decimal
 from typing import List
-
-
-from serializers import DataAccumulatorsSyncEvent, LiquidationEventData, RepaymentEventData
 
 from typing import Any
 
 from data_handler.handler_tools.data_parser.serializers import (
-    DataAccumulatorsSyncEvent,
-    LiquidationEventData,
-)
-from data_handler.handler_tools.data_parser.serializers import (
     AccumulatorsSyncEventData,
     BorrowingEventData,
-    DataAccumulatorsSyncEvent,
-    EventAccumulatorsSyncData,
     LiquidationEventData,
     RepaymentEventData,
 )
@@ -50,13 +40,11 @@ class ZklendDataParser:
         Returns:
             AccumulatorsSyncEvent: A Pydantic model with the parsed and validated event data in a human-readable format.
         """
-        data = EventAccumulatorsSyncData.from_raw_data(event_data)
-        parsed_event = AccumulatorsSyncEventData(
-            token=data.token,
-            lending_accumulator=data.lending_accumulator,
-            debt_accumulator=data.debt_accumulator,
+        return AccumulatorsSyncEventData(
+                token=event_data[0],
+                lending_accumulator=event_data[1],
+                debt_accumulator=event_data[2],
         )
-        return parsed_event
 
     @classmethod
     def parse_deposit_event(cls, event_data):
