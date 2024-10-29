@@ -7,8 +7,8 @@ like `event_name`, `block_number`, and `protocol_id`, using the `ProtocolIDs` e
 num to enforce valid protocol IDs. 
 Fields are indexed for efficient querying.
 """
-
-from sqlalchemy import Column, Enum, Integer, MetaData, String
+from sqlalchemy_utils.types.choice import ChoiceType
+from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from data_handler.db.models.base import Base
@@ -31,18 +31,15 @@ class EventBaseModel(Base):
     The block number in which the event occurred. This field is also indexed to allow
     efficient filtering by block number.
     protocol_id : str
-    The protocol identifier associated with the event. This uses an enumeration (Enum)
-    to ensure that only valid protocol IDs,
-    as defined in the `ProtocolIDs` enum class, are stored. It is indexed to speed up
-    queries based on protocol type.
     """
 
     __tablename__ = "event_base_model"
+    __abstract__ = True
     
     event_name: Mapped[str] = mapped_column(String, index=True)
     block_number: Mapped[int] = mapped_column(Integer, index=True)
-    protocol_id: Mapped[str] = mapped_column(Enum(ProtocolIDs), index=True)
+    protocol_id = Column(ChoiceType(ProtocolIDs, impl=String()), nullable=False)
     
     __mapper_args__ = {
         "polymorphic_identity": "event_base",
-        "polymorphic_on": type,}
+    }
