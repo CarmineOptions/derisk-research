@@ -1,3 +1,6 @@
+"""
+This module contains the logic to parse the zkLend data to human-readable format.
+"""
 from typing import Any, List
 from data_handler.handler_tools.data_parser.serializers import (
     DataAccumulatorsSyncEvent,
@@ -5,6 +8,7 @@ from data_handler.handler_tools.data_parser.serializers import (
     WithdrawalEventData,
     BorrowingEventData,
     RepaymentEventData,
+    DepositEventData,
 )
 
 
@@ -32,13 +36,23 @@ class ZklendDataParser:
             lending_accumulator=event_data[1],
             debt_accumulator=event_data[2],
         )
-        return parsed_event
 
     @classmethod
+    def parse_deposit_event(cls, event_data: List[Any]) -> DepositEventData:
+        """
+        Convert the event list to a Deposit event data object
+        :param event_data: list of length 4 of the event data
+        :return: DepositEventData
+        """
+        return DepositEventData(
+            user=event_data[0],
+            token=event_data[1],
+            face_amount=event_data[2],
+        )
+      
     def parse_withdrawal_event(cls, event_data: list[Any]) -> WithdrawalEventData:
         """
         Parses the Withdrawal event data into a human-readable format using the WithdrawalEventData serializer.
-
         Args:
             event_data (list[Any]): A list containing the raw event data, typically with 3 elements:
                 user address, amount withdrawn, and token address.
@@ -64,13 +78,12 @@ class ZklendDataParser:
         Returns:
             BorrowingEventData: A model with the parsed event data.
         """
-        parsed_event = BorrowingEventData(
+        return BorrowingEventData(
             user=event_data[0],
             token=event_data[1],
             raw_amount=event_data[2],
             face_amount=event_data[3],
         )
-        return parsed_event
 
     @classmethod
     def parse_repayment_event(cls, event_data: List[Any]) -> RepaymentEventData:
