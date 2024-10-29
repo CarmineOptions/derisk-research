@@ -16,8 +16,7 @@ class AccumulatorsSyncEventData(EventBaseModel):
     """
 
     __tablename__ = "accumulators_sync_event_data"
-
-    id: Mapped[UUID] = mapped_column(UUID, primary_key=True, default=uuid4)
+    
     token: Mapped[str] = mapped_column(String, nullable=False)
     lending_accumulator: Mapped[Decimal] = mapped_column(
         Numeric(38, 18), nullable=False
@@ -35,8 +34,7 @@ class LiquidationEventData(EventBaseModel):
     """
 
     __tablename__ = "liquidation_event_data"
-
-    id: Mapped[UUID] = mapped_column(UUID, primary_key=True, default=uuid4)
+    
     liquidator: Mapped[str] = mapped_column(String, nullable=False)
     user: Mapped[str] = mapped_column(String, nullable=False)
     debt_token: Mapped[str] = mapped_column(String, nullable=False)
