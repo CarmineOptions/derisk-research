@@ -5,10 +5,10 @@ import logging
 from typing import Optional
 
 import pandas as pd
-from handler_tools.data_parser.zklend import ZklendDataParser
-from handlers import blockchain_call
-from handlers.helpers import get_async_symbol
-from handlers.loan_states.zklend import TokenSettings
+from data_handler.handler_tools.data_parser.zklend import ZklendDataParser
+from data_handler.handlers import blockchain_call
+from data_handler.handlers.helpers import get_async_symbol
+from data_handler.handlers.loan_states.zklend import TokenSettings
 from serializers import RepaymentEventSerializer
 
 import pandas as pd
