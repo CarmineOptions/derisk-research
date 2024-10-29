@@ -12,6 +12,7 @@ from data_handler.handlers.loan_states.zklend import TokenSettings
 from shared.helpers import add_leading_zeros
 from shared.loan_entity import LoanEntity
 from shared.state import State
+from data_handler.handlers.loan_states.zklend.settings import ZKLEND_SPECIFIC_TOKEN_SETTINGS
 
 from data_handler.handlers import blockchain_call
 from shared.types import (
@@ -49,7 +50,7 @@ EVENTS_METHODS_MAPPING: dict[str, str] = {
     "zklend::market::Market::Liquidation": "process_liquidation_event",
 }
 
-ZKLEND_SPECIFIC_TOKEN_SETTINGS = asyncio.run(fetch_zklend_specific_token_settings())
+# ZKLEND_SPECIFIC_TOKEN_SETTINGS = asyncio.run(fetch_zklend_specific_token_settings())
 
 
 class ZkLendLoanEntity(LoanEntity):
@@ -307,12 +308,12 @@ class ZkLendState(State):
 
         user = data.beneficiary
         token = data.token
-        raw_amount = data.row_amount
+        raw_amount = data.raw_amount
 
         self.loan_entities[user].debt.increase_value(token=token, value=-raw_amount)
 
-        self.loan_entities[user].extra_info.block = data.block_number
-        self.loan_entities[user].extra_info.timestamp = data.timestamp
+        self.loan_entities[user].extra_info.block = event.block_number
+        self.loan_entities[user].extra_info.timestamp = event.timestamp
 
         if user == self.verbose_user:
             logging.info(

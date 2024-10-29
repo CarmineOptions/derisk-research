@@ -10,6 +10,7 @@ from data_handler.handler_tools.data_parser.serializers import (
     BorrowingEventData,
     LiquidationEventData,
     RepaymentEventData,
+    DepositEventData,
 )
 
 
@@ -47,9 +48,17 @@ class ZklendDataParser:
         )
 
     @classmethod
-    def parse_deposit_event(cls, event_data):
-        # TODO: Implement parsing logic for Deposit event
-        pass
+    def parse_deposit_event(cls, event_data: List[Any]) -> DepositEventData:
+        """
+        Convert the event list to a Deposit event data object
+        :param event_data: list of length 4 of the event data
+        :return: DepositEventData
+        """
+        return DepositEventData(
+            user=event_data[0],
+            token=event_data[1],
+            face_amount=event_data[2],
+        )
 
     @classmethod
     def parse_collateral_enabled_disabled_event(cls, event_data):
@@ -72,13 +81,12 @@ class ZklendDataParser:
         Returns:
             BorrowingEventData
         """
-        event_data = BorrowingEventData(
+        return BorrowingEventData(
             user=event_data[0],
             token=event_data[1],
             raw_amount=event_data[2],
             face_amount=event_data[3],
         )
-        return event_data
 
     @classmethod
     def parse_repayment_event(cls, event_data: List[Any]) -> RepaymentEventData:
