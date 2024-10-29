@@ -5,19 +5,10 @@ import logging
 from typing import Optional
 
 import pandas as pd
-from data_handler.handler_tools.data_parser.zklend import ZklendDataParser
-from data_handler.handlers import blockchain_call
-from data_handler.handlers.helpers import get_async_symbol
-from data_handler.handlers.loan_states.zklend import TokenSettings
-from serializers import RepaymentEventSerializer
-
-import pandas as pd
 from data_handler.db.crud import InitializerDBConnector
-from data_handler.handler_tools.data_parser.serializers import EventDepositData
 from data_handler.handler_tools.data_parser.zklend import ZklendDataParser
 from data_handler.handlers.helpers import get_async_symbol
 from data_handler.handlers.loan_states.zklend import TokenSettings
-from serializers import RepaymentEventSerializer
 from shared.helpers import add_leading_zeros
 from shared.loan_entity import LoanEntity
 from shared.state import State
@@ -189,12 +180,10 @@ class ZkLendState(State):
         # The order of the values in the `data` column is: `user`, `token`, `face_amount`.
         # Example: https://starkscan.co/event/0x036185142bb51e2c1f5bfdb1e6cef81f8ea87fd4d777990014249bf5435fd31b_3.
 
-        data = EventDepositData.from_raw_data(event)
-        user = data.user
-        token = data.token
+        data = ZklendDataParser.parse_deposit_event(event["data"])
+        user, token = data.user, data.token
 
-        face_amount = data.face_amount
-        raw_amount = face_amount / self.interest_rate_models.collateral[token]
+        raw_amount = data.face_amount / self.interest_rate_models.collateral[token]
 
         # add additional info block and timestamp
         self.loan_entities[user].extra_info.block = event["block_number"]
@@ -297,8 +286,7 @@ class ZkLendState(State):
         # The order of the values in the `data` column is: `user`, `token`, `raw_amount`, `face_amount`.
         # Example: https://starkscan.co/event/0x076b1615750528635cf0b63ca80986b185acbd20fa37f0f2b5368a4f743931f8_3.
         data = ZklendDataParser.parse_borrowing_event(event["data"])
-        user = data.user
-        token = data.token
+        user, token = data.user, data.token
         raw_amount = data.raw_amount
 
         self.loan_entities[user].debt.increase_value(token=token, value=raw_amount)
@@ -315,21 +303,21 @@ class ZkLendState(State):
             )
 
     def process_repayment_event(self, event: pd.Series) -> None:
-        parsed_event = RepaymentEventSerializer.parse_event(event)
+        data = ZklendDataParser.parse_repayment_event(event["data"])
 
-        user = parsed_event.beneficiary
-        token = parsed_event.token
-        raw_amount = parsed_event.get_raw_amount_as_decimal()
+        user = data.beneficiary
+        token = data.token
+        raw_amount = data.row_amount
 
         self.loan_entities[user].debt.increase_value(token=token, value=-raw_amount)
 
-        self.loan_entities[user].extra_info.block = parsed_event.block_number
-        self.loan_entities[user].extra_info.timestamp = parsed_event.timestamp
+        self.loan_entities[user].extra_info.block = data.block_number
+        self.loan_entities[user].extra_info.timestamp = data.timestamp
 
         if user == self.verbose_user:
             logging.info(
                 "In block number = {}, raw amount = {} of token = {} was repayed.".format(
-                    parsed_event.block_number,
+                    data.block_number,
                     raw_amount,
                     token,
                 )
@@ -341,25 +329,27 @@ class ZkLendState(State):
         # Example: https://starkscan.co/event/0x07b8ec709df1066d9334d56b426c45440ca1f1bb841285a5d7b33f9d1008f256_5.
 
         data = ZklendDataParser.parse_liquidation_event(event["data"])
+        user = data.user
+
         collateral_raw_amount = (
             data.collateral_amount
             / self.interest_rate_models.collateral[data.collateral_token]
         )
         # add additional info block and timestamp
-        self.loan_entities[data.user].extra_info.block = event["block_number"]
-        self.loan_entities[data.user].extra_info.timestamp = event["timestamp"]
+        self.loan_entities[user].extra_info.block = event["block_number"]
+        self.loan_entities[user].extra_info.timestamp = event["timestamp"]
 
-        self.loan_entities[data.user].debt.increase_value(
+        self.loan_entities[user].debt.increase_value(
             token=data.debt_token, value=-data.debt_raw_amount
         )
-        self.loan_entities[data.user].deposit.increase_value(
+        self.loan_entities[user].deposit.increase_value(
             token=data.collateral_token, value=-collateral_raw_amount
         )
-        if self.loan_entities[data.user].collateral_enabled[data.collateral_token]:
-            self.loan_entities[data.user].collateral.increase_value(
+        if self.loan_entities[user].collateral_enabled[data.collateral_token]:
+            self.loan_entities[user].collateral.increase_value(
                 token=data.collateral_token, value=-collateral_raw_amount
             )
-        if data.user == self.verbose_user:
+        if user == self.verbose_user:
             logging.info(
                 "In block number = {}, debt of raw amount = {} of token = {} and collateral of raw amount = {} of "
                 "token = {} were liquidated.".format(
