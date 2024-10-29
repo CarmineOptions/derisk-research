@@ -4,7 +4,16 @@ This module contains the logic to parse the zkLend data to human-readable format
 from decimal import Decimal
 from typing import Any, List
 
+
+from serializers import DataAccumulatorsSyncEvent, LiquidationEventData, RepaymentEventData
+
+from typing import Any
+
 from handler_tools.data_parser.serializers import (
+    DataAccumulatorsSyncEvent,
+    LiquidationEventData,
+)
+from data_handler.handler_tools.data_parser.serializers import (
     AccumulatorsSyncEventData,
     BorrowingEventData,
     DataAccumulatorsSyncEvent,

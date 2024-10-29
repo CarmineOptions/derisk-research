@@ -20,6 +20,7 @@ from data_handler.handlers.state import NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS
 from shared.constants import ProtocolIDs
 from shared.helpers import add_leading_zeros
 from shared.loan_entity import LoanEntity
+from shared.starknet_client import StarknetClient
 from shared.state import State
 from shared.types import InterestRateModels, Portfolio, Prices, TokenParameters
 from shared.types.nostra import (
@@ -230,8 +231,9 @@ class NostraAlphaState(State):
         """
         Collects the token parameters for all the tokens in the protocol.
         """
+        stark_client = StarknetClient()
         for token_address in self.TOKEN_ADDRESSES:
-            decimals = await blockchain_call.func_call(
+            decimals = await stark_client.func_call(
                 addr=token_address,
                 selector="decimals",
                 calldata=[],
@@ -244,7 +246,7 @@ class NostraAlphaState(State):
             )
             self.token_addresses_to_events[token_address] = event
 
-            underlying_token_address = await blockchain_call.func_call(
+            underlying_token_address = await stark_client.func_call(
                 addr=token_address,
                 selector="underlyingAsset",
                 calldata=[],
@@ -258,7 +260,7 @@ class NostraAlphaState(State):
 
             if event == "collateral":
                 # The order of the arguments is: `id`, `asset`, `collateralFactor`, ``, `priceOracle`.
-                collateral_data = await blockchain_call.func_call(
+                collateral_data = await stark_client.func_call(
                     addr=self.CDP_MANAGER_ADDRESS,
                     selector="getCollateralData",
                     calldata=[underlying_token_address],
@@ -267,7 +269,7 @@ class NostraAlphaState(State):
 
                 # The order of the arguments is: `protocolFee`, ``, `protocolFeeRecipient`, `liquidatorFeeBeta`, ``,
                 # `liquidatorFeeMax`, ``.
-                liquidation_settings = await blockchain_call.func_call(
+                liquidation_settings = await stark_client.func_call(
                     addr=self.CDP_MANAGER_ADDRESS,
                     selector="getLiquidationSettings",
                     calldata=[underlying_token_address],
@@ -290,7 +292,7 @@ class NostraAlphaState(State):
                 )
             else:
                 # The order of the arguments is: `id`, `debtTier`, `debtToken`, `debtFactor`, ``, `priceOracle`.
-                debt_data = await blockchain_call.func_call(
+                debt_data = await stark_client.func_call(
                     addr=self.CDP_MANAGER_ADDRESS,
                     selector="getDebtData",
                     calldata=[token_address],
