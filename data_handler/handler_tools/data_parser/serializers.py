@@ -89,6 +89,15 @@ class LiquidationEventData(BaseModel):
             raise ValueError("%s field is not a valid hexadecimal number" % info.field_name)
 
 class WithdrawalEventData(BaseModel):
+    """
+    Class for representing withdrawal event data.
+
+    Attributes:
+        user (str): The address of the user making the withdrawal.
+        amount (Decimal): The amount withdrawn.
+        token (str): The address of the token being withdrawn.
+    """
+
     user: str
     amount: Decimal
     token: str

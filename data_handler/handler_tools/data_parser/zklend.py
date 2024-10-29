@@ -68,7 +68,7 @@ class ZklendDataParser:
             WithdrawalEventData: A Pydantic model with the parsed and validated event data in a human-readable format.
         """
         
-        parsed_event = WithdrawalEventData(
+        return WithdrawalEventData(
             user=event_data[0],
             amount=event_data[1],
             token=event_data[2],
