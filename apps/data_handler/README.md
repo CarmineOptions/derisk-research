@@ -60,21 +60,21 @@ docker-compose down
 ## Data migrations
 In this project is using `alembic` for data migrations.
 For generating new migration use this command:
-
+In folder `apps` run these commands:
 ```bash
-alembic revision --autogenerate -m "your message"
+alembic -c data_handler/alembic.ini revision --autogenerate -m "your message"
 ```
 
 After generating new migration, you need to apply it:
 
 ```bash
-alembic upgrade head
+alembic -c data_handler/alembic.ini upgrade head
 ```
 
 For downgrading migration:
 
 ```bash
-alembic downgrade -1
+alembic -c data_handler/alembic.ini downgrade -1
 ```
 
 Useful commands:

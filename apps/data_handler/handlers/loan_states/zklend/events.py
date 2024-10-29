@@ -13,20 +13,13 @@ from handler_tools.data_parser.zklend import ZklendDataParser
 from handler_tools.data_parser.serializers import WithdrawalEventData
 
 from db.crud import InitializerDBConnector
-from serializers import RepaymentEventSerializer
 
-import pandas as pd
+from serializers import RepaymentEventSerializer
 from data_handler.db.crud import InitializerDBConnector
 from data_handler.handler_tools.data_parser.serializers import EventDepositData
-from data_handler.handler_tools.data_parser.zklend import ZklendDataParser
-from data_handler.handlers.helpers import get_async_symbol
-from data_handler.handlers.loan_states.zklend import TokenSettings
-from serializers import RepaymentEventSerializer
 from shared.helpers import add_leading_zeros
 from shared.loan_entity import LoanEntity
 from shared.state import State
-
-from data_handler.handlers import blockchain_call
 from shared.types import (
     InterestRateModels,
     Portfolio,

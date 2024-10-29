@@ -8,7 +8,6 @@ from sqlalchemy import Subquery, and_, create_engine, desc, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Query, Session, aliased, scoped_session, sessionmaker
-from data_handler.db.crud import DBConnector
 
 
 from data_handler.db.models import (
@@ -20,7 +19,6 @@ from data_handler.db.models import (
     ZkLendCollateralDebt,
 )
 
-from data_handler.db.models.base import Base
 from data_handler.db.models.zklend_events import (
     AccumulatorsSyncEventData,
     LiquidationEventData,

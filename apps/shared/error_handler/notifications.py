@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import os
 from uuid import uuid4
 
 from aiogram import Bot, Dispatcher
@@ -14,21 +13,35 @@ logging.basicConfig(level=logging.INFO)
 dispatcher = Dispatcher()
 
 
+from uuid import uuid4
+from typing import Optional
+
+class Message:
+    def __init__(self, text: str, is_sent: bool):
+        self.text = text
+        self.is_sent = is_sent
+
 class ErrorHandlerBot:
     SESSION_ID = str(uuid4())
     SESSION_MESSAGES = {SESSION_ID: []}
 
-    def __init__(self, token: str | None) -> None:
+    def __init__(self, token: Optional[str]) -> None:
         """
         Initialize the error handler bot.
-        :param token: str | None
+        :param token: Optional[str]
         """
         if not token:
             self.bot = None
         else:
             self.bot = Bot(token=token)
 
-    def _get_unique_message(self, new_message: str) -> str | None:
+    def add_message(self, message):
+        """Add message to session, enforce type"""
+        if not isinstance(message, Message):
+            raise TypeError("Only Message instances are allowed")
+        self.SESSION_MESSAGES[self.SESSION_ID].append(message)
+
+    def _get_unique_message(self, new_message: str) -> Optional[str]:
         """
         Check if the message is unique.
         :param new_message: str
@@ -57,22 +70,16 @@ class ErrorHandlerBot:
 
         if not self.SESSION_MESSAGES[self.SESSION_ID]:
             await self.bot.send_message(chat_id=ERROR_CHAT_ID, text=message)
-            self.SESSION_MESSAGES[self.SESSION_ID].append(
-                Message(text=message, is_sent=True)
-            )
+            self.add_message(Message(text=message, is_sent=True))
             await self.bot.close()
 
         elif self._get_unique_message(message):
             await self.bot.send_message(chat_id=ERROR_CHAT_ID, text=message)
-            self.SESSION_MESSAGES[self.SESSION_ID].append(
-                Message(text=message, is_sent=True)
-            )
+            self.add_message(Message(text=message, is_sent=True))
             await self.bot.close()
 
         else:
-            self.SESSION_MESSAGES[self.SESSION_ID].append(
-                Message(text=message, is_sent=False)
-            )
+            self.add_message(Message(text=message, is_sent=False))
 
 
 BOT = ErrorHandlerBot(TELEGRAM_TOKEN)

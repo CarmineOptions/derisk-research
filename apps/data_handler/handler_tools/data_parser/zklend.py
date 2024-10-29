@@ -1,7 +1,11 @@
-<<<<<<< HEAD
-from typing import Any
-
-from handler_tools.data_parser.serializers import DataAccumulatorsSyncEvent, LiquidationEventData, WithdrawalEventData
+from typing import Any, List
+from data_handler.handler_tools.data_parser.serializers import (
+    DataAccumulatorsSyncEvent,
+    LiquidationEventData,
+    WithdrawalEventData,
+    BorrowingEventData,
+    RepaymentEventData,
+)
 
 
 class ZklendDataParser:
@@ -14,22 +18,14 @@ class ZklendDataParser:
         cls, event_data: list[Any]
     ) -> DataAccumulatorsSyncEvent:
         """
-        Parses the AccumulatorsSync event data into a human-readable format using the AccumulatorsSyncEvent serializer.
-
-        The event data is fetched from on-chain logs and is structured in the following way:
-        - event_data[0]: The token address (as a hexadecimal string).
-        - event_data[1]: Lending accumulator value (as a hexadecimal string).
-        - event_data[2]: Debt accumulator value (as a hexadecimal string).
-
-        Example of raw event data can be found on Starkscan:
-        https://starkscan.co/event/0x029628b89875a98c1c64ae206e7eb65669cb478a24449f3485f5e98aba6204dc_0
+        Parses the AccumulatorsSync event data into a human-readable format using the DataAccumulatorsSyncEvent serializer.
 
         Args:
             event_data (list[Any]): A list containing the raw event data, typically with 3 elements:
-                token, lending accumulator (hexadecimal string), and debt accumulator (hexadecimal string).
+                token, lending accumulator, and debt accumulator.
 
         Returns:
-            AccumulatorsSyncEvent: A Pydantic model with the parsed and validated event data in a human-readable format.
+            DataAccumulatorsSyncEvent: A model with the parsed event data.
         """
         parsed_event = DataAccumulatorsSyncEvent(
             token=event_data[0],
@@ -39,208 +35,42 @@ class ZklendDataParser:
         return parsed_event
 
     @classmethod
-    def parse_deposit_event(cls, event_data):
-        # TODO: Implement parsing logic for Deposit event
-        pass
-
-    @classmethod
-    def parse_collateral_enabled_disabled_event(cls, event_data):
-        # TODO: Implement parsing logic for CollateralEnabled event
-        # TODO put it together with disabled event
-        pass
-
-    @classmethod
     def parse_withdrawal_event(cls, event_data: list[Any]) -> WithdrawalEventData:
         """
         Parses the Withdrawal event data into a human-readable format using the WithdrawalEventData serializer.
-
-        The event data is fetched from on-chain logs and is structured in the following way:
-        - event_data[0]: The user address (as a hexadecimal string).
-        - event_data[1]: The amount withdrawn (as a string).
-        - event_data[2]: The token address (as a hexadecimal string).
-        - event_data[3]: Additional data, if applicable (e.g., transaction ID).
-
-        Args:
-            event_data (list[Any]): A list containing the raw event data, typically with 3 or more elements:
-                user address, amount withdrawn, token address, and additional data.
-
-        Returns:
-            WithdrawalEventData: A Pydantic model with the parsed and validated event data in a human-readable format.
-        """
-        
-        parsed_event = WithdrawalEventData(
-            user=event_data[0],
-            amount=event_data[1],
-            token=event_data[2],
-        )
-        return parsed_event
-
-    @classmethod
-    def parse_borrowing_event(cls, event_data):
-        # TODO: Implement parsing logic for Borrowing event
-        pass
-
-    @classmethod
-    def parse_repayment_event(cls, event_data):
-        # TODO: Implement parsing logic for Repayment event
-        pass
-
-    @classmethod
-    def parse_liquidation_event(cls, event_data):
-        """
-        Convert the event list to a Liquidation event data object
-
-        :event_data - List of length 7 of the event data
-
-        Returns
-        LiquidationEventData
-        """
-        event_data = LiquidationEventData(
-            liquidator=event_data[0],
-            user=event_data[1],
-            debt_token=event_data[2],
-            debt_raw_amount=event_data[3],
-            debt_face_amount=event_data[4],
-            collateral_token=event_data[5],
-            collateral_amount=event_data[6],
-        )
-        return event_data
-
-=======
->>>>>>> 50068a6 (resolves conflicts)
-"""
-This module contains the logic to parse the zkLend data to human-readable format.
-"""
-from decimal import Decimal
-from typing import Any, List
-
-
-from serializers import DataAccumulatorsSyncEvent, LiquidationEventData, RepaymentEventData
-
-from typing import Any
-
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD:data_handler/handler_tools/data_parser/zklend.py
-from handler_tools.data_parser.serializers import AccumulatorsSyncEventData, LiquidationEventData, WithdrawalEventData
-
-=======
->>>>>>> 50068a6 (resolves conflicts)
-from handler_tools.data_parser.serializers import (
-    DataAccumulatorsSyncEvent,
-    LiquidationEventData,
-)
-from data_handler.handler_tools.data_parser.serializers import (
-    AccumulatorsSyncEventData,
-    BorrowingEventData,
-    DataAccumulatorsSyncEvent,
-    EventAccumulatorsSyncData,
-    LiquidationEventData,
-    RepaymentEventData,
-<<<<<<< HEAD
-    
-)
-=======
-)
->>>>>>> upstream/master:apps/data_handler/handler_tools/data_parser/zklend.py
-
-
->>>>>>> 50068a6 (resolves conflicts)
-class ZklendDataParser:
-    """
-    Parses the zkLend data to human-readable format.
-    """
-
-    @classmethod
-    def parse_accumulators_sync_event(
-        cls, event_data: list[Any]
-    ) -> AccumulatorsSyncEventData:
-        """
-        Parses the AccumulatorsSync event data into a human-readable format using the AccumulatorsSyncEvent serializer.
-
-        The event data is fetched from on-chain logs and is structured in the following way:
-        - event_data[0]: The token address (as a hexadecimal string).
-        - event_data[1]: Lending accumulator value (as a hexadecimal string).
-        - event_data[2]: Debt accumulator value (as a hexadecimal string).
-
-        Example of raw event data can be found on Starkscan:
-        https://starkscan.co/event/0x029628b89875a98c1c64ae206e7eb65669cb478a24449f3485f5e98aba6204dc_0
 
         Args:
             event_data (list[Any]): A list containing the raw event data, typically with 3 elements:
-                token, lending accumulator (hexadecimal string), and debt accumulator (hexadecimal string).
+                user address, amount withdrawn, and token address.
 
         Returns:
-            AccumulatorsSyncEvent: A Pydantic model with the parsed and validated event data in a human-readable format.
+            WithdrawalEventData: A model with the parsed event data.
         """
-        data = EventAccumulatorsSyncData.from_raw_data(event_data)
-        parsed_event = AccumulatorsSyncEventData(
-            token=data.token,
-            lending_accumulator=data.lending_accumulator,
-            debt_accumulator=data.debt_accumulator,
-        )
-        return parsed_event
-
-    @classmethod
-    def parse_deposit_event(cls, event_data):
-        # TODO: Implement parsing logic for Deposit event
-        pass
-
-    @classmethod
-    def parse_collateral_enabled_disabled_event(cls, event_data):
-        # TODO: Implement parsing logic for CollateralEnabled event
-        # TODO put it together with disabled event
-        pass
-
-    @classmethod
-<<<<<<< HEAD
-    def parse_withdrawal_event(cls, event_data):
-        # TODO: Implement parsing logic for Withdrawal event
-        pass
-=======
-    def parse_withdrawal_event(cls, event_data: list[Any]) -> WithdrawalEventData:
-        """
-        Parses the Withdrawal event data into a human-readable format using the WithdrawalEventData serializer.
-
-        The event data is fetched from on-chain logs and is structured in the following way:
-        - event_data[0]: The user address (as a hexadecimal string).
-        - event_data[1]: The amount withdrawn (as a string).
-        - event_data[2]: The token address (as a hexadecimal string).
-        - event_data[3]: Additional data, if applicable (e.g., transaction ID).
-
-        Args:
-            event_data (list[Any]): A list containing the raw event data, typically with 3 or more elements:
-                user address, amount withdrawn, token address, and additional data.
-
-        Returns:
-            WithdrawalEventData: A Pydantic model with the parsed and validated event data in a human-readable format.
-        """
-        
         parsed_event = WithdrawalEventData(
             user=event_data[0],
             amount=event_data[1],
             token=event_data[2],
         )
         return parsed_event
->>>>>>> 50068a6 (resolves conflicts)
 
     @classmethod
-    def parse_borrowing_event(cls, event_data) -> BorrowingEventData:
+    def parse_borrowing_event(cls, event_data: list[Any]) -> BorrowingEventData:
         """
-        Convert the event list to a Borrowing event data object
+        Parses the Borrowing event data.
 
-        :event_data - List of length 4 of the event data
+        Args:
+            event_data (list[Any]): A list containing the raw event data, typically with 4 elements.
 
         Returns:
-            BorrowingEventData
+            BorrowingEventData: A model with the parsed event data.
         """
-        event_data = BorrowingEventData(
+        parsed_event = BorrowingEventData(
             user=event_data[0],
             token=event_data[1],
             raw_amount=event_data[2],
             face_amount=event_data[3],
         )
-        return event_data
+        return parsed_event
 
     @classmethod
     def parse_repayment_event(cls, event_data: List[Any]) -> RepaymentEventData:
@@ -248,11 +78,10 @@ class ZklendDataParser:
         Parses the Repayment event data into a human-readable format using the RepaymentEventData serializer.
 
         Args:
-            event_data (List[Any]): A list containing the raw repayment event data, typically with 5 elements:
-                repayer, beneficiary, token, raw_amount, and face_amount.
+            event_data (List[Any]): A list containing the raw repayment event data, typically with 5 elements.
 
         Returns:
-            RepaymentEventData: A Pydantic model with the parsed and validated repayment event data in a human-readable format.
+            RepaymentEventData: A model with the parsed event data.
         """
         parsed_event = RepaymentEventData(
             repayer=event_data[0],
@@ -264,16 +93,17 @@ class ZklendDataParser:
         return parsed_event
 
     @classmethod
-    def parse_liquidation_event(cls, event_data):
+    def parse_liquidation_event(cls, event_data: list[Any]) -> LiquidationEventData:
         """
-        Convert the event list to a Liquidation event data object
+        Parses the Liquidation event data.
 
-        :event_data - List of length 7 of the event data
+        Args:
+            event_data (list[Any]): A list containing the raw liquidation event data, typically with 7 elements.
 
-        Returns
-        LiquidationEventData
+        Returns:
+            LiquidationEventData: A model with the parsed event data.
         """
-        event_data = LiquidationEventData(
+        parsed_event = LiquidationEventData(
             liquidator=event_data[0],
             user=event_data[1],
             debt_token=event_data[2],
@@ -282,4 +112,4 @@ class ZklendDataParser:
             collateral_token=event_data[5],
             collateral_amount=event_data[6],
         )
-        return event_data
+        return parsed_event

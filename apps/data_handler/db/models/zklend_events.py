@@ -1,7 +1,6 @@
 from decimal import Decimal
-from uuid import UUID, uuid4
 
-from sqlalchemy import Column, Numeric, String
+from sqlalchemy import  Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from data_handler.db.models.event import EventBaseModel
@@ -23,8 +22,6 @@ class AccumulatorsSyncEventData(EventBaseModel):
     )
     debt_accumulator: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
 
-    __mapper_args__ = {"polymorphic_on": "protocol_id"}
-
 
 class LiquidationEventData(EventBaseModel):
     """
@@ -43,4 +40,3 @@ class LiquidationEventData(EventBaseModel):
     collateral_token: Mapped[str] = mapped_column(String, nullable=False)
     collateral_amount: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
 
-    __mapper_args__ = {"polymorphic_on": "protocol_id"}
