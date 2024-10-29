@@ -9,3 +9,6 @@ setup:
 
 test_data_handler:
 	pytest apps/data_handler
+
+test_shared:
+	pytest apps/shared
