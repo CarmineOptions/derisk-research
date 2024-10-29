@@ -34,3 +34,10 @@ make app
 ```
 docker-compose -f devops/dev/docker-compose.notification-app.yaml up --build
 ```
+
+
+## Shared package (Common code shared between the components)
+1. How to run test cases for shared package, run next command in root folder:
+```bash
+make test_shared
+```
