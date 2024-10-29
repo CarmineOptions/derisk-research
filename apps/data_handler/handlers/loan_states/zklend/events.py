@@ -9,6 +9,10 @@ from handler_tools.data_parser.zklend import ZklendDataParser
 from handlers import blockchain_call
 from handlers.helpers import get_async_symbol
 from handlers.loan_states.zklend import TokenSettings
+from handler_tools.data_parser.zklend import ZklendDataParser
+from handler_tools.data_parser.serializers import WithdrawalEventData
+
+from db.crud import InitializerDBConnector
 from serializers import RepaymentEventSerializer
 
 import pandas as pd
@@ -269,30 +273,39 @@ class ZkLendState(State):
     def process_withdrawal_event(self, event: pd.Series) -> None:
         # The order of the values in the `data` column is: `user`, `token`, `face_amount`.
         # Example: https://starkscan.co/event/0x03472cf7511687a55bc7247f8765c4bbd2c18b70e09b2a10a77c61f567bfd2cb_4.
+      
         user = add_leading_zeros(event["data"][0])
         token = add_leading_zeros(event["data"][1])
+        face_amount =int(event["data"][2], base=16)
+    
+     # Calculate the raw amount from face amount
+    raw_amount = decimal.Decimal(str(WithdrawalEventData.face_amount)) / self.interest_rate_models.collateral[WithdrawalEventData.token]
 
-        face_amount = decimal.Decimal(str(int(event["data"][2], base=16)))
-        raw_amount = face_amount / self.interest_rate_models.collateral[token]
+    # Add additional info: block number and timestamp
+    self.loan_entities[WithdrawalEventData.user].extra_info.block = event["block_number"]
+    self.loan_entities[WithdrawalEventData.user].extra_info.timestamp = event["timestamp"]
 
-        # add additional info block and timestamp
-        self.loan_entities[user].extra_info.block = event["block_number"]
-        self.loan_entities[user].extra_info.timestamp = event["timestamp"]
+    # Update the user's deposit and collateral values
+    self.loan_entities[WithdrawalEventData.user].deposit.increase_value(
+        token=WithdrawalEventData.token, 
+        value=-raw_amount
+    )
 
-        self.loan_entities[user].deposit.increase_value(token=token, value=-raw_amount)
-        if self.loan_entities[user].collateral_enabled[token]:
-            self.loan_entities[user].collateral.increase_value(
-                token=token, value=-raw_amount
+    if self.loan_entities[WithdrawalEventData.user].collateral_enabled[WithdrawalEventData.token]:
+        self.loan_entities[WithdrawalEventData.user].collateral.increase_value(
+            token=WithdrawalEventData.token, 
+            value=-raw_amount
+        )
+
+    # Log the information if the user matches the verbose user
+    if WithdrawalEventData.user == self.verbose_user:
+        logging.info(
+            "In block number = {}, raw amount = {} of token = {} was withdrawn.".format(
+                event["block_number"],
+                raw_amount,
+                WithdrawalEventData.token,
             )
-        if user == self.verbose_user:
-            logging.info(
-                "In block number = {}, raw amount = {} of token = {} was withdrawn.".format(
-                    event["block_number"],
-                    raw_amount,
-                    token,
-                )
-            )
-
+        )
     def process_borrowing_event(self, event: pd.Series) -> None:
         # The order of the values in the `data` column is: `user`, `token`, `raw_amount`, `face_amount`.
         # Example: https://starkscan.co/event/0x076b1615750528635cf0b63ca80986b185acbd20fa37f0f2b5368a4f743931f8_3.
