@@ -1,6 +1,6 @@
 from typing import Any
 
-from handler_tools.data_parser.serializers import DataAccumulatorsSyncEvent, LiquidationEventData, WithdrawalEventData
+from handler_tools.data_parser.serializers import AccumulatorsSyncEventData, LiquidationEventData, WithdrawalEventData
 
 
 
