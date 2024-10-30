@@ -23,15 +23,15 @@ jobs:
           --health-interval 10s 
           --health-timeout 5s 
           --health-retries 5
-
+          
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
+      - name: Install Docker Compose
+        run: |
+          sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
 
       - name: Set up Docker for Data Handler
         run: |
