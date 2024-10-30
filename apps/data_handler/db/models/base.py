@@ -1,3 +1,7 @@
+"""
+Defines base ORM models for managing protocol state with unique IDs, timestamps, and collateral/debt data.
+"""
+
 from uuid import uuid4
 
 from sqlalchemy import UUID, BigInteger, Column, MetaData, String
