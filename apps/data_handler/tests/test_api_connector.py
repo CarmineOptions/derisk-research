@@ -1,15 +1,21 @@
+"""Tests for the DeRiskAPIConnector class.
+
+Validates API connector initialization, data retrieval, and error handling functionality.
+"""
+
 import os
 import unittest
 from unittest.mock import MagicMock, patch
 
 from data_handler.handler_tools.api_connector import DeRiskAPIConnector
-from requests.exceptions import HTTPError
-from unittest.mock import patch, MagicMock
 from requests.exceptions import HTTPError, RequestException
-from data_handler.handler_tools.api_connector import DeRiskAPIConnector
 
 
 class TestDeRiskAPIConnector(unittest.TestCase):
+    """Test suite for DeRiskAPIConnector functionality.
+    
+    Covers initialization, data retrieval, and error handling scenarios.
+    """
     DERISK_API_URL = "https://api.derisk.io"
 
     @patch.dict(os.environ, {"DERISK_API_URL": DERISK_API_URL})
@@ -34,17 +40,14 @@ class TestDeRiskAPIConnector(unittest.TestCase):
         )
 
         connector = DeRiskAPIConnector()
-        result = connector.get_data(
-            "0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05",
-            630000,
-            631000,
-        )
+        test_addr = "0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05"
+        result = connector.get_data(test_addr, 630000, 631000)
 
         self.assertEqual(result, json_data)
         mock_get.assert_called_once_with(
             self.DERISK_API_URL,
             params={
-                "from_address": "0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05",
+                "from_address": test_addr,
                 "min_block_number": 630000,
                 "max_block_number": 631000,
             },
@@ -57,11 +60,8 @@ class TestDeRiskAPIConnector(unittest.TestCase):
         mock_get.side_effect = RequestException("Mocked request exception")
 
         connector = DeRiskAPIConnector()
-        result = connector.get_data(
-            "0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05",
-            630000,
-            631000,
-        )
+        test_addr = "0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05"
+        result = connector.get_data(test_addr, 630000, 631000)
 
         self.assertIn("error", result)
         self.assertEqual(result["error"], "Mocked request exception")
@@ -70,27 +70,16 @@ class TestDeRiskAPIConnector(unittest.TestCase):
     def test_get_data_type_errors(self):
         """Test that get_data() raises TypeError for invalid types."""
         connector = DeRiskAPIConnector()
+        test_addr = "0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05"
 
         # Invalid from_address type
         with self.assertRaises(TypeError):
-            connector.get_data(
-                from_address=123456,  # Non-string input for from_address
-                min_block_number=630000,
-                max_block_number=631000,
-            )
+            connector.get_data(123456, 630000, 631000)
 
         # Invalid min_block_number type
         with self.assertRaises(TypeError):
-            connector.get_data(
-                from_address="0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05",
-                min_block_number="invalid",  # String instead of int
-                max_block_number=631000,
-            )
+            connector.get_data(test_addr, "invalid", 631000)
 
         # Invalid max_block_number type
         with self.assertRaises(TypeError):
-            connector.get_data(
-                from_address="0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05",
-                min_block_number=630000,
-                max_block_number="invalid",  # String instead of int
-            )
+            connector.get_data(test_addr, 630000, "invalid")

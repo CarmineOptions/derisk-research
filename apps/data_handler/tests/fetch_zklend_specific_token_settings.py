@@ -1,3 +1,9 @@
+"""Test functionality for fetching and managing ZkLend-specific token settings.
+
+Contains mock data and test cases for validating token settings retrieval,
+blockchain calls, and data transformation for the ZkLend protocol.
+"""
+
 import asyncio
 import decimal
 
@@ -8,9 +14,13 @@ from data_handler.handlers.loan_states.zklend.fetch_zklend_specific_token_settin
 from shared.types import TokenSettings
 
 
-# Mock response for the on chain call (func_call)
 class MockBlockchainCall:
+    """Mock implementation of blockchain call functionality for testing."""
     async def func_call(self, addr, selector, calldata):
+        """Simulate blockchain call with mock reserve data response.
+        
+        Returns mock data structure matching expected blockchain response format.
+        """
         return [
             {"name": "enabled", "type": "core::bool", "value": "1"},
             {"name": "decimals", "type": "core::felt252", "value": "18"},
@@ -88,6 +98,7 @@ class MockBlockchainCall:
 
 
 class ProtocolAddresses:
+    """Container for protocol-specific contract addresses."""
     def __init__(self):
         self.ZKLEND_MARKET_ADDRESSES = "0xMarketAddress"
 
@@ -140,8 +151,15 @@ TOKEN_SETTINGS: dict[str, TokenSettings] = {
 }
 
 
-# Function to call the mock of func_call
 async def get_token_reserve_data(token_setting_address: str):
+    """Get token reserve data from the ZkLend market contract.
+    
+    Args:
+        token_setting_address: Address of the token to query.
+        
+    Returns:
+        List of reserve data fields from the contract.
+    """
     reserve_data = await src.blockchain_call.func_call(
         addr=ProtocolAddresses().ZKLEND_MARKET_ADDRESSES,
         selector="get_reserve_data",
@@ -150,25 +168,8 @@ async def get_token_reserve_data(token_setting_address: str):
     return reserve_data
 
 
-async def fetch_zklend_specific_token_settings():
-    """
-    Fetch ZkLend specific token settings.
-    """
-    # New dict to store ZkLendSpecificTokenSettings
-    zklend_specific_token_settings: dict[str, ZkLendSpecificTokenSettings] = {}
-
-    # TOKEN_SETTINGS from /derisk-research/data_handler/handlers/settings.py
-    # For each tokenSetting in TOKEN_SETTINGS, get the data from zklend
-    for symbol, token_setting in TOKEN_SETTINGS.items():
-        reserve_data = await get_token_reserve_data(token_setting.address)
-        zklend_specific_token_setting = get_token_settings(reserve_data)
-        zklend_specific_token_settings[symbol] = zklend_specific_token_setting
-
-    return zklend_specific_token_settings
-
-
-# Test the functionality
 async def main():
+    """Main test function for validating token settings retrieval."""
     new_settings = await fetch_zklend_specific_token_settings()
     for symbol, settings in new_settings.items():
         print(f"{symbol}: {settings}")

@@ -1,3 +1,8 @@
+"""
+Module for interacting with the DeRisk API. Provides functionality to retrieve data
+from the DeRisk API using HTTP GET requests with address and block number ranges.
+"""
+
 import os
 
 import requests

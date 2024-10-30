@@ -1,7 +1,11 @@
+"""
+Celery tasks module for handling loan states and order book computations.
+Provides tasks for different protocols including zkLend, Nostra, Hashstack, and Uniswap V2.
+"""
+
 import logging
 from time import monotonic
 
-# from data_handler.handlers.loan_states.nostra_mainnet.run import NostraMainnetStateComputation
 from data_handler.handlers.liquidable_debt.protocols import (
     hashstack_v0,
     hashstack_v1,
@@ -9,70 +13,23 @@ from data_handler.handlers.liquidable_debt.protocols import (
     nostra_mainnet,
     zklend,
 )
-
-# from data_handler.handlers.loan_states.hashtack_v0.run import HashtackV0StateComputation
-# from data_handler.handlers.loan_states.hashtack_v1.run import HashtackV1StateComputation
-# from data_handler.handlers.loan_states.zklend.run import ZkLendLoanStateComputation
 from data_handler.handlers.loan_states.nostra_alpha.run import NostraAlphaStateComputation
 from data_handler.handlers.order_books.constants import TOKEN_MAPPING
-from data_handler.handlers.order_books.ekubo.api_connector import EkuboAPIConnector
 from data_handler.handlers.order_books.uniswap_v2.main import UniswapV2OrderBook
-
 from data_handler.db.crud import DBConnector
 from data_handler.db.models import OrderBookModel
-
 from .celery_conf import app
 
 connector = DBConnector()
 
 
-# @app.task(name="run_loan_states_computation_for_hashtack_v0")
-# def run_loan_states_computation_for_hashtack_v0():
-#     start = monotonic()
-#     logging.basicConfig(level=logging.INFO)
-#
-#     logging.info("Starting Hashtack V0 loan state computation")
-#     computation = HashtackV0StateComputation()
-#     computation.run()
-#
-#     logging.info(
-#         "Finished Hashtack V0 loan state computation, Time taken: %s seconds",
-#         monotonic() - start,
-#     )
-
-
-# @app.task(name="run_loan_states_computation_for_hashtack_v1")
-# def run_loan_states_computation_for_hashtack_v1():
-#     start = monotonic()
-#     logging.basicConfig(level=logging.INFO)
-#
-#     logging.info("Starting Hashtack V1 loan state computation")
-#     computation = HashtackV1StateComputation()
-#     computation.run()
-#
-#     logging.info(
-#         "Finished Hashtack V1 loan state computation, Time taken: %s seconds",
-#         monotonic() - start,
-#     )
-
-
-# @app.task(name="run_loan_states_computation_for_zklend")
-# def run_loan_states_computation_for_zklend():
-#     start = monotonic()
-#     logging.basicConfig(level=logging.INFO)
-#
-#     logging.info("Starting zkLend loan state computation")
-#     computation = ZkLendLoanStateComputation()
-#     computation.run()
-#
-#     logging.info(
-#         "Finished zkLend loan state computation, Time taken: %s seconds",
-#         monotonic() - start,
-#     )
-
-
 @app.task(name="run_loan_states_computation_for_nostra_alpha")
 def run_loan_states_computation_for_nostra_alpha():
+    """
+    Execute loan state computation for Nostra Alpha protocol.
+    
+    Measures execution time and logs the progress of the computation.
+    """
     start = monotonic()
     logging.basicConfig(level=logging.INFO)
 
@@ -86,26 +43,15 @@ def run_loan_states_computation_for_nostra_alpha():
     )
 
 
-# @app.task(name="run_loan_states_computation_for_nostra_mainnet")
-# def run_loan_states_computation_for_nostra_mainnet():
-#     start = monotonic()
-#     logging.basicConfig(level=logging.INFO)
-#
-#     logging.info("Starting Nostra Mainnet loan state computation")
-#     computation = NostraMainnetStateComputation()
-#     computation.run()
-#
-#     logging.info(
-#         "Finished Nostra Mainnet loan state computation, Time taken: %s seconds",
-#         monotonic() - start,
-#     )
-#
-
-
 @app.task(name="uniswap_v2_order_book")
 def uniswap_v2_order_book():
     """
-    Fetch the current price and liquidity of the pair from the Uniswap V2 AMMs.
+    Fetch current price and liquidity for all token pairs from Uniswap V2 AMMs.
+    
+    Iterates through all possible token combinations and stores their order book data.
+    
+    Raises:
+        Exception: Logs any errors during processing of individual token pairs
     """
     all_tokens = set(TOKEN_MAPPING.keys())
     for base_token in TOKEN_MAPPING:
@@ -124,6 +70,11 @@ def uniswap_v2_order_book():
 
 @app.task(name="run_liquidable_debt_computation_for_zklend")
 def run_liquidable_debt_computation_for_zklend():
+    """
+    Execute liquidable debt computation for zkLend protocol.
+    
+    Logs the start and completion of the computation process.
+    """
     logging.info("Starting zkLend liquidable debt computation")
     zklend.run()
     logging.info("zkLend liquidable debt computation finished")
@@ -131,6 +82,11 @@ def run_liquidable_debt_computation_for_zklend():
 
 @app.task(name="run_liquidable_debt_computation_for_nostra_alpha")
 def run_liquidable_debt_computation_for_nostra_alpha():
+    """
+    Execute liquidable debt computation for Nostra Alpha protocol.
+    
+    Logs the start and completion of the computation process.
+    """
     logging.info("Starting nostra alpha liquidable debt computation")
     nostra_alpha.run()
     logging.info("Nostra alpha liquidable debt computation finished")
@@ -138,6 +94,11 @@ def run_liquidable_debt_computation_for_nostra_alpha():
 
 @app.task(name="run_liquidable_debt_computation_for_hashstack_v0")
 def run_liquidable_debt_computation_for_hashstack_v0():
+    """
+    Execute liquidable debt computation for Hashstack V0 protocol.
+    
+    Logs the start and completion of the computation process.
+    """
     logging.info("Starting hashstack v0 liquidable debt computation")
     hashstack_v0.run()
     logging.info("Hashstack v0 liquidable debt computation finished")
@@ -145,6 +106,11 @@ def run_liquidable_debt_computation_for_hashstack_v0():
 
 @app.task(name="run_liquidable_debt_computation_for_nostra_mainnet")
 def run_liquidable_debt_computation_for_nostra_mainnet():
+    """
+    Execute liquidable debt computation for Nostra Mainnet protocol.
+    
+    Logs the start and completion of the computation process.
+    """
     logging.info("Starting nostra mainnet liquidable debt computation")
     nostra_mainnet.run()
     logging.info("Nostra mainnet liquidable debt computation finished")
@@ -152,6 +118,11 @@ def run_liquidable_debt_computation_for_nostra_mainnet():
 
 @app.task(name="run_liquidable_debt_computation_for_hashstack_v1")
 def run_liquidable_debt_computation_for_hashstack_v1():
+    """
+    Execute liquidable debt computation for Hashstack V1 protocol.
+    
+    Logs the start and completion of the computation process.
+    """
     logging.info("Starting hashstack v1 liquidable debt computation")
     hashstack_v1.run()
     logging.info("Hashstack v1 liquidable debt computation finished")
