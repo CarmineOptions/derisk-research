@@ -1,3 +1,8 @@
+"""
+This FastAPI app provides endpoints for retrieving loan states, interest rates, \
+health ratios, and order book data 
+from the database, with rate limiting applied to each route.
+"""
 import logging
 from typing import List, Optional
 
