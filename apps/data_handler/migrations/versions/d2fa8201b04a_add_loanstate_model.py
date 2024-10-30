@@ -43,15 +43,9 @@ def upgrade() -> None:
             sa.Column("id", sa.UUID(), nullable=False),
             sa.PrimaryKeyConstraint("id"),
         )
-        op.create_index(
-            op.f("ix_loan_state_block"), "loan_state", ["block"], unique=False
-        )
-        op.create_index(
-            op.f("ix_loan_state_timestamp"), "loan_state", ["timestamp"], unique=False
-        )
-        op.create_index(
-            op.f("ix_loan_state_user"), "loan_state", ["user"], unique=False
-        )
+        op.create_index(op.f("ix_loan_state_block"), "loan_state", ["block"], unique=False)
+        op.create_index(op.f("ix_loan_state_timestamp"), "loan_state", ["timestamp"], unique=False)
+        op.create_index(op.f("ix_loan_state_user"), "loan_state", ["user"], unique=False)
         ### end Alembic commands ###
     else:
         print("Table 'loan_state' already exists, skipping creation.")

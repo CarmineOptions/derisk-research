@@ -1,15 +1,24 @@
+"""
+Calculates and stores health ratios for Nostra 
+Mainnet users in the database.
+"""
+
 from data_handler.handlers.liquidable_debt.values import (
     HEALTH_FACTOR_FIELD_NAME,
     TIMESTAMP_FIELD_NAME,
     USER_FIELD_NAME,
 )
 from health_ratio_handlers import NostrMainnetHealthRatioHandler
-
 from data_handler.db.models import HealthRatioLevel
 from shared.constants import ProtocolIDs
 
 
 def run():
+    """
+    Instantiates the NostrMainnetHealthRatioHandler
+    to calculate health ratios for Nostra Mainnet
+    users and writes the results to the database.
+    """
     handler = NostrMainnetHealthRatioHandler()
 
     data = handler.calculate_health_ratio()

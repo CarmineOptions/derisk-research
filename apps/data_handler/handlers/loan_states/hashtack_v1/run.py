@@ -19,8 +19,7 @@ class HashtackV1StateComputation(HashstackBaseLoanStateComputation):
 
     PROTOCOL_TYPE = ProtocolIDs.HASHSTACK_V1.value
     PROTOCOL_ADDRESSES = (
-        ProtocolAddresses().HASHSTACK_V1_R_TOKENS
-        | ProtocolAddresses().HASHSTACK_V1_D_TOKENS
+        ProtocolAddresses().HASHSTACK_V1_R_TOKENS | ProtocolAddresses().HASHSTACK_V1_D_TOKENS
     )
     FIRST_EVENTS = ["updated_supply_token_price", "updated_debt_token_price"]
 
@@ -42,9 +41,7 @@ class HashtackV1StateComputation(HashstackBaseLoanStateComputation):
         # init HashtackInitializer
         hashtack_initializer = HashtackInitializer(hashtack_v1_state)
         loan_ids = hashtack_initializer.get_loan_ids(df)
-        hashtack_initializer.set_last_loan_states_per_loan_ids(
-            list(set(loan_ids)), version=1
-        )
+        hashtack_initializer.set_last_loan_states_per_loan_ids(list(set(loan_ids)), version=1)
 
         # Filter out events that are not in the mapping
         df_filtered = df[df["key_name"].isin(events_mapping.keys())]

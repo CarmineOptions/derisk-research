@@ -24,9 +24,7 @@ class HaikoOrderBook(OrderBookBase):
         self.haiko_connector = HaikoAPIConnector()
         self.blast_connector = HaikoBlastAPIConnector()
         self.apply_filtering = apply_filtering
-        self.logger = get_logger(
-            "Haiko", Path().resolve().joinpath("./logs"), echo=True
-        )
+        self.logger = get_logger("Haiko", Path().resolve().joinpath("./logs"), echo=True)
 
         self.token_a_price = Decimal(0)
         self.token_b_price = Decimal(0)
@@ -62,9 +60,7 @@ class HaikoOrderBook(OrderBookBase):
 
     def _check_tokens_supported(self) -> None:
         """Check if a pair of tokens is supported by Haiko"""
-        supported_tokens = self.haiko_connector.get_supported_tokens(
-            existing_only=False
-        )
+        supported_tokens = self.haiko_connector.get_supported_tokens(existing_only=False)
         if isinstance(supported_tokens, dict) and supported_tokens.get("error"):
             raise RuntimeError(f"Unexpected error from API: {supported_tokens}")
         valid_tokens = self._get_valid_tokens_addresses()
@@ -112,13 +108,9 @@ class HaikoOrderBook(OrderBookBase):
             self._calculate_order_book(market_depth_list, Decimal(market["currPrice"]))
 
         self.sort_asks_bids()
-        self.current_price = max(tokens_markets, key=lambda x: Decimal(x["tvl"]))[
-            "currPrice"
-        ]
+        self.current_price = max(tokens_markets, key=lambda x: Decimal(x["tvl"]))["currPrice"]
 
-    def _calculate_order_book(
-        self, market_ticks_liquidity: list, current_price: Decimal
-    ) -> None:
+    def _calculate_order_book(self, market_ticks_liquidity: list, current_price: Decimal) -> None:
         self.set_current_price(current_price)
         price_range = self.calculate_price_range()
         asks, bids = [], []
@@ -236,9 +228,7 @@ class HaikoOrderBook(OrderBookBase):
         return liquidity_delta / 10**self.token_a_decimal
 
     def tick_to_price(self, tick: Decimal) -> Decimal:
-        return Decimal("1.00001") ** tick * (
-            10 ** (self.token_a_decimal - self.token_b_decimal)
-        )
+        return Decimal("1.00001") ** tick * (10 ** (self.token_a_decimal - self.token_b_decimal))
 
     def _filter_markets_data(self, all_markets_data: list) -> list:
         """
@@ -261,9 +251,7 @@ if __name__ == "__main__":
     # token_1 = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"  # ETH
     # token_0 = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"  # ETH
     # token_1 = "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"  # USDC
-    token_0 = (
-        "0x042b8f0484674ca266ac5d08e4ac6a3fe65bd3129795def2dca5c34ecc5f96d2"  # wstETH
-    )
+    token_0 = "0x042b8f0484674ca266ac5d08e4ac6a3fe65bd3129795def2dca5c34ecc5f96d2"  # wstETH
     token_1 = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"  # ETH
     # token_0 = "0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d"  # STRK
     # token_1 = "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"  # USDC

@@ -62,10 +62,6 @@ def downgrade() -> None:
     inspector = Inspector.from_engine(conn)
 
     if inspector.has_table("health_ratio_level"):
-        op.drop_index(
-            op.f("ix_health_ratio_level_user_id"), table_name="health_ratio_level"
-        )
-        op.drop_index(
-            op.f("ix_health_ratio_level_timestamp"), table_name="health_ratio_level"
-        )
+        op.drop_index(op.f("ix_health_ratio_level_user_id"), table_name="health_ratio_level")
+        op.drop_index(op.f("ix_health_ratio_level_timestamp"), table_name="health_ratio_level")
         op.drop_table("health_ratio_level")

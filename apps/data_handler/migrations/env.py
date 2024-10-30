@@ -1,3 +1,11 @@
+"""
+Alembic migrations configuration script that supports both online and offline database 
+migrations. Configures SQLAlchemy database connection settings and metadata for schema 
+version control. Provides functions to run migrations in either offline mode (without 
+database connection) or online mode (with active database connection and transaction 
+management).
+"""
+
 from logging.config import fileConfig
 
 from alembic import context

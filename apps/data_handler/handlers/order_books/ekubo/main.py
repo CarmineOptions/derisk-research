@@ -35,9 +35,7 @@ class EkuboOrderBook(OrderBookBase):
         pools = self.connector.get_pools()
         df = pd.DataFrame(pools)
         # filter pool data by token_a and token_b
-        pool_df = df.loc[
-            (df["token0"] == self.token_a) & (df["token1"] == self.token_b)
-        ]
+        pool_df = df.loc[(df["token0"] == self.token_a) & (df["token1"] == self.token_b)]
 
         # set current price
         self.set_current_price()
@@ -78,14 +76,10 @@ class EkuboOrderBook(OrderBookBase):
 
         # Filter asks and bids by price range
         self.asks = [
-            (price, supply)
-            for price, supply in self.asks
-            if min_price < price < max_price
+            (price, supply) for price, supply in self.asks if min_price < price < max_price
         ]
         self.bids = [
-            (price, supply)
-            for price, supply in self.bids
-            if min_price < price < max_price
+            (price, supply) for price, supply in self.bids if min_price < price < max_price
         ]
 
     def add_asks(self, liquidity_data: list[dict], row: pd.Series) -> None:
@@ -107,9 +101,7 @@ class EkuboOrderBook(OrderBookBase):
         prev_sqrt = self._get_pure_sqrt_ratio(prev_tick)
         next_sqrt = self._get_pure_sqrt_ratio(next_tick)
 
-        supply = abs(
-            ((glob_liq / prev_sqrt) - (glob_liq / next_sqrt)) / 10**self.token_a_decimal
-        )
+        supply = abs(((glob_liq / prev_sqrt) - (glob_liq / next_sqrt)) / 10**self.token_a_decimal)
         price = self.tick_to_price(prev_tick)
         self.asks.append((price, supply))
 
@@ -125,8 +117,7 @@ class EkuboOrderBook(OrderBookBase):
             next_sqrt = self._get_pure_sqrt_ratio(curr_tick)
 
             supply = abs(
-                ((glob_liq / prev_sqrt) - (glob_liq / next_sqrt))
-                / 10**self.token_a_decimal
+                ((glob_liq / prev_sqrt) - (glob_liq / next_sqrt)) / 10**self.token_a_decimal
             )
             price = self.tick_to_price(prev_tick)
             self.asks.append((price, supply))
@@ -149,9 +140,7 @@ class EkuboOrderBook(OrderBookBase):
         prev_sqrt = self._get_pure_sqrt_ratio(prev_tick)
         next_sqrt = self._get_pure_sqrt_ratio(next_tick)
 
-        supply = abs(
-            ((glob_liq * prev_sqrt) - (glob_liq * next_sqrt)) / 10**self.token_b_decimal
-        )
+        supply = abs(((glob_liq * prev_sqrt) - (glob_liq * next_sqrt)) / 10**self.token_b_decimal)
         price = self.tick_to_price(prev_tick)
         self.bids.append((price, supply))
 
@@ -166,8 +155,7 @@ class EkuboOrderBook(OrderBookBase):
             next_sqrt = self._get_pure_sqrt_ratio(curr_tick)
 
             supply = (
-                abs(((glob_liq * prev_sqrt) - (glob_liq * next_sqrt)))
-                / 10**self.token_b_decimal
+                abs(((glob_liq * prev_sqrt) - (glob_liq * next_sqrt))) / 10**self.token_b_decimal
             )
             price = self.tick_to_price(prev_tick)
             self.bids.append((price, supply))
@@ -199,9 +187,7 @@ class EkuboOrderBook(OrderBookBase):
                 bid_data.append(sorted_data)
         return ask_data, bid_data
 
-    def calculate_liquidity_amount(
-        self, tick: Decimal, liquidity_pair_total: Decimal
-    ) -> Decimal:
+    def calculate_liquidity_amount(self, tick: Decimal, liquidity_pair_total: Decimal) -> Decimal:
         """
         Calculate the liquidity amount based on the liquidity delta and sqrt ratio.
         :param tick: Decimal - The sqrt ratio.
@@ -231,9 +217,7 @@ def debug_code() -> None:
     This function is used to test the EkuboOrderBook class.
     """
     token_a = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"  # ETH
-    token_b = (
-        "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"  # USDC
-    )
+    token_b = "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"  # USDC
     order_book = EkuboOrderBook(token_a, token_b)
     order_book.fetch_price_and_liquidity()
     print(order_book.get_order_book(), "\n")

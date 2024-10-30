@@ -1,3 +1,9 @@
+"""
+Defines token-specific settings and configuration for the Nostra Alpha protocol and related loan 
+entities. Contains dataclasses and dictionaries mapping token symbols to their parameters including
+collateral factors, debt factors, fees, and protocol addresses.
+"""
+
 import dataclasses
 import decimal
 
@@ -7,11 +13,15 @@ from shared.types import TokenSettings
 
 @dataclasses.dataclass
 class NostraAlphaSpecificTokenSettings(TokenSettings):
+    """
+    Token settings specific to Nostra Alpha protocol. Contains configuration parameters
+    for collateral, debt, liquidation fees and protocol addresses sourced from Starkscan.
+    See example transaction: 0x06f619127a63ddb5328807e535e56baa1e244c8923a3b59c123d41dcbed315da
+    """
+
     # TODO: Load these via chain calls?
-    # Source: Starkscan, e.g.
-    # https://starkscan.co/call/0x06f619127a63ddb5328807e535e56baa1e244c8923a3b50c123d41dcbed315da_1_1 for ETH.
     collateral_factor: decimal.Decimal
-    # TODO: Add source.
+    # TODO: Add source
     debt_factor: decimal.Decimal
     # TODO: Add sources for liquidation parameters.
     liquidator_fee_beta: decimal.Decimal
@@ -49,7 +59,7 @@ NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS: dict[str, NostraAlphaSpecificTokenSettings
         address="0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8",
         collateral_factor=decimal.Decimal("0.9"),
         debt_factor=decimal.Decimal("0.95"),
-        liquidator_fee_beta=decimal.Decimal("1.65"),
+        liquidator_feSe_beta=decimal.Decimal("1.65"),
         liquidator_fee_max=decimal.Decimal("0.15"),
         protocol_fee=decimal.Decimal("0.02"),
         protocol_token_address="0x05327df4c669cb9be5c1e2cf79e121edef43c1416fac884559cd94fcb7e6e232",
@@ -115,12 +125,28 @@ NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS: dict[str, NostraAlphaSpecificTokenSettings
 
 @dataclasses.dataclass
 class SpecificTokenSettings:
+    """
+    Base class for token-specific settings handling collateral and debt factors.
+    Contains core parameters used to calculate lending and borrowing limits.
+
+    Attributes:
+        collateral_factor (decimal.Decimal): Factor determining the maximum borrowing power
+            of the collateral token.
+        debt_factor (decimal.Decimal): Factor determining the maximum debt that can be
+            taken against the collateral.
+    """
+
     collateral_factor: decimal.Decimal
     debt_factor: decimal.Decimal
 
 
 @dataclasses.dataclass
 class TokenSettings(SpecificTokenSettings, TokenSettings):
+    """
+    Combined token settings class that inherits from both SpecificTokenSettings and TokenSettings.
+    Merges collateral and debt factors with other token parameters into a single settings class.
+    """
+
     pass
 
 

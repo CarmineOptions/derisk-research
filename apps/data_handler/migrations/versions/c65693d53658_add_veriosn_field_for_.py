@@ -20,9 +20,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     # ### Step 1: Add the new column as nullable ###
-    op.add_column(
-        "hashtack_collateral_debt", sa.Column("version", sa.Integer(), nullable=True)
-    )
+    op.add_column("hashtack_collateral_debt", sa.Column("version", sa.Integer(), nullable=True))
 
     # ### Step 2: Set default value (0) for existing records ###
     op.execute("UPDATE hashtack_collateral_debt SET version = 0")

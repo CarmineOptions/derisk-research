@@ -54,12 +54,8 @@ class Pool(Pair):
 
     def supply_at_price(self, initial_price: Decimal):
         # assuming constant product function
-        constant = Decimal(
-            self.tokens[0].balance_converted * self.tokens[1].balance_converted
-        )
-        return (initial_price * constant).sqrt() * (
-            Decimal("1") - Decimal("0.95").sqrt()
-        )
+        constant = Decimal(self.tokens[0].balance_converted * self.tokens[1].balance_converted)
+        return (initial_price * constant).sqrt() * (Decimal("1") - Decimal("0.95").sqrt())
 
 
 class MySwapPool(Pool):

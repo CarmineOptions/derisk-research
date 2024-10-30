@@ -40,9 +40,7 @@ def upgrade() -> None:
             sa.Column("id", sa.UUID(), nullable=False),
             sa.PrimaryKeyConstraint("id"),
         )
-        op.create_index(
-            op.f("ix_interest_rate_block"), "interest_rate", ["block"], unique=False
-        )
+        op.create_index(op.f("ix_interest_rate_block"), "interest_rate", ["block"], unique=False)
         op.create_index(
             op.f("ix_interest_rate_timestamp"),
             "interest_rate",
@@ -63,12 +61,8 @@ def upgrade() -> None:
             sa.PrimaryKeyConstraint("id"),
         )
         op.create_index(op.f("ix_orderbook_dex"), "orderbook", ["dex"], unique=False)
-        op.create_index(
-            op.f("ix_orderbook_token_a"), "orderbook", ["token_a"], unique=False
-        )
-        op.create_index(
-            op.f("ix_orderbook_token_b"), "orderbook", ["token_b"], unique=False
-        )
+        op.create_index(op.f("ix_orderbook_token_a"), "orderbook", ["token_a"], unique=False)
+        op.create_index(op.f("ix_orderbook_token_b"), "orderbook", ["token_b"], unique=False)
     # ### end Alembic commands ###
 
 

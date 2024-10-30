@@ -1,18 +1,29 @@
+"""Token and liquidity pool settings for various DeFi protocols.
+
+Contains configuration classes and constants for token addresses, decimal factors,
+trading pairs, and pool settings for JediSwap and mySwap protocols.
+"""
+
 import dataclasses
 from decimal import Decimal
 
 
 @dataclasses.dataclass
 class TokenSettings:
+    """Configuration for token settings including symbol, decimal factor and address."""
+
     symbol: str
     # Source: Starkscan, e.g.
-    # https://starkscan.co/token/0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7 for ETH.
+    # https://starkscan.co/token/0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7
+    # for ETH.
     decimal_factor: Decimal
     address: str
 
 
 @dataclasses.dataclass
 class JediSwapPoolSettings:
+    """Settings for JediSwap liquidity pools including address and token pairs."""
+
     symbol: str
     address: str
     token_1: str
@@ -175,6 +186,8 @@ JEDISWAP_POOL_SETTINGS: dict[str, JediSwapPoolSettings] = {
 
 @dataclasses.dataclass
 class MySwapPoolSettings:
+    """Settings for mySwap liquidity pools including pool ID and token pairs."""
+
     symbol: str
     address: str
     myswap_id: int
@@ -185,44 +198,44 @@ class MySwapPoolSettings:
 MYSWAP_POOL_SETTINGS: dict[str, MySwapPoolSettings] = {
     "mySwap: DAI/ETH Pool": MySwapPoolSettings(
         symbol="mySwap: DAI/ETH Pool",
-        address="0x010884171baf1914edc28d7afb619b40a4051cfae78a094a55d230f19e944a28",
+        address=("0x010884171baf1914edc28d7afb619b40a4051cfae78a094a55d230f19e944a28"),
         myswap_id=2,
-        token_1="0x00da114221cb83fa859dbdb4c44beeaa0bb37c7537ad5ae66fe5e0efd20e6eb3",
-        token_2="0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+        token_1=("0x00da114221cb83fa859dbdb4c44beeaa0bb37c7537ad5ae66fe5e0efd20e6eb3"),
+        token_2=("0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"),
     ),
     "mySwap: DAI/USDC Pool": MySwapPoolSettings(
         symbol="mySwap: DAI/USDC Pool",
-        address="0x010884171baf1914edc28d7afb619b40a4051cfae78a094a55d230f19e944a28",
+        address=("0x010884171baf1914edc28d7afb619b40a4051cfae78a094a55d230f19e944a28"),
         myswap_id=6,
-        token_1="0x00da114221cb83fa859dbdb4c44beeaa0bb37c7537ad5ae66fe5e0efd20e6eb3",
-        token_2="0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8",
+        token_1=("0x00da114221cb83fa859dbdb4c44beeaa0bb37c7537ad5ae66fe5e0efd20e6eb3"),
+        token_2=("0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"),
     ),
     "mySwap: ETH/USDC Pool": MySwapPoolSettings(
         symbol="mySwap: ETH/USDC Pool",
-        address="0x010884171baf1914edc28d7afb619b40a4051cfae78a094a55d230f19e944a28",
+        address=("0x010884171baf1914edc28d7afb619b40a4051cfae78a094a55d230f19e944a28"),
         myswap_id=1,
-        token_1="0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
-        token_2="0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8",
+        token_1=("0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"),
+        token_2=("0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"),
     ),
     "mySwap: ETH/USDT Pool": MySwapPoolSettings(
         symbol="mySwap: ETH/USDT Pool",
-        address="0x010884171baf1914edc28d7afb619b40a4051cfae78a094a55d230f19e944a28",
+        address=("0x010884171baf1914edc28d7afb619b40a4051cfae78a094a55d230f19e944a28"),
         myswap_id=4,
-        token_1="0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
-        token_2="0x068f5c6a61780768455de69077e07e89787839bf8166decfbf92b645209c0fb8",
+        token_1=("0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"),
+        token_2=("0x068f5c6a61780768455de69077e07e89787839bf8166decfbf92b645209c0fb8"),
     ),
     "mySwap: USDC/USDT Pool": MySwapPoolSettings(
         symbol="mySwap: USDC/USDT Pool",
-        address="0x010884171baf1914edc28d7afb619b40a4051cfae78a094a55d230f19e944a28",
+        address=("0x010884171baf1914edc28d7afb619b40a4051cfae78a094a55d230f19e944a28"),
         myswap_id=5,
-        token_1="0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8",
-        token_2="0x068f5c6a61780768455de69077e07e89787839bf8166decfbf92b645209c0fb8",
+        token_1=("0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"),
+        token_2=("0x068f5c6a61780768455de69077e07e89787839bf8166decfbf92b645209c0fb8"),
     ),
     "mySwap: WBTC/USDC Pool": MySwapPoolSettings(
         symbol="mySwap: WBTC/USDC Pool",
-        address="0x010884171baf1914edc28d7afb619b40a4051cfae78a094a55d230f19e944a28",
+        address=("0x010884171baf1914edc28d7afb619b40a4051cfae78a094a55d230f19e944a28"),
         myswap_id=3,
-        token_1="0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac",
-        token_2="0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8",
+        token_1=("0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac"),
+        token_2=("0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"),
     ),
 }

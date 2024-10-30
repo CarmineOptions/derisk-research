@@ -86,9 +86,7 @@ class NostraMainnetStateComputation(LoanStateComputationBase):
         :return: pd.DataFrame
         """
         nostra_mainnet_state = NostraMainnetState()
-        events_with_interest_rate = (
-            list(self.EVENTS_MAPPING.keys()) + self.INTEREST_RATES_KEYS
-        )
+        events_with_interest_rate = list(self.EVENTS_MAPPING.keys()) + self.INTEREST_RATES_KEYS
 
         # Init DataFrame
         df = pd.DataFrame(data)

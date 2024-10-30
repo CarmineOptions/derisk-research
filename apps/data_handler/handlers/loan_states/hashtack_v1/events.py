@@ -1,3 +1,8 @@
+"""
+Hashstack V1 event handling and token settings module.
+Manages token configurations, addresses mappings, and event processing for the Hashstack V1 protocol.
+"""
+
 import copy
 import dataclasses
 import decimal
@@ -254,9 +259,7 @@ TOKEN_SETTINGS: dict[str, CustomTokenSettings] = {
         collateral_factor=HASHSTACK_V1_SPECIFIC_TOKEN_SETTINGS[token].collateral_factor,
         debt_factor=HASHSTACK_V1_SPECIFIC_TOKEN_SETTINGS[token].debt_factor,
     )
-    for token, token_settings in (
-        TOKEN_SETTINGS | HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS
-    ).items()
+    for token, token_settings in (TOKEN_SETTINGS | HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS).items()
 }
 
 
@@ -275,10 +278,7 @@ EVENTS_METHODS_MAPPING: dict[str, str] = {
 MAX_ROUNDING_ERRORS: TokenValues = MAX_ROUNDING_ERRORS
 # TODO: The additional tokens are not allowed in `TokenValues`, fix this.
 MAX_ROUNDING_ERRORS.values.update(
-    {
-        token: decimal.Decimal("0.5e13")
-        for token in HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS
-    }
+    {token: decimal.Decimal("0.5e13") for token in HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS}
 )
 
 
@@ -290,10 +290,7 @@ class HashstackV1Portfolio(Portfolio):
     def __init__(self) -> None:
         super().__init__()
         self.values.update(
-            {
-                token: decimal.Decimal("0")
-                for token in HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS
-            }
+            {token: decimal.Decimal("0") for token in HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS}
         )
 
 
@@ -306,10 +303,7 @@ class HashstackV1InterestRateModels(TokenValues):
     def __init__(self) -> None:
         super().__init__(init_value=decimal.Decimal("1"))
         self.values.update(
-            {
-                token: decimal.Decimal("1")
-                for token in HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS
-            }
+            {token: decimal.Decimal("1") for token in HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS}
         )
 
 
@@ -480,31 +474,21 @@ class HashstackV1State(State):
         debt_token = self.ADDRESSES_TO_TOKENS[add_leading_zeros(event["data"][2])]
         debt_face_amount = decimal.Decimal(str(int(event["data"][3], base=16)))
         borrowed_collateral_token = get_symbol(add_leading_zeros(event["data"][5]))
-        borrowed_collateral_face_amount = decimal.Decimal(
-            str(int(event["data"][6], base=16))
-        )
-        original_collateral_token = self.ADDRESSES_TO_TOKENS[
-            add_leading_zeros(event["data"][13])
-        ]
-        original_collateral_face_amount = decimal.Decimal(
-            str(int(event["data"][14], base=16))
-        )
+        borrowed_collateral_face_amount = decimal.Decimal(str(int(event["data"][6], base=16)))
+        original_collateral_token = self.ADDRESSES_TO_TOKENS[add_leading_zeros(event["data"][13])]
+        original_collateral_face_amount = decimal.Decimal(str(int(event["data"][14], base=16)))
 
         self.loan_entities[loan_id] = HashstackV1LoanEntity(user=user)
         # TODO: Make it possible to initialize `HashstackV1Portfolio`` with some token amount directly.
         original_collateral = HashstackV1Portfolio()
-        original_collateral.values[original_collateral_token] = (
-            original_collateral_face_amount
-        )
+        original_collateral.values[original_collateral_token] = original_collateral_face_amount
         self.loan_entities[loan_id].original_collateral = original_collateral
         # add additional info block and timestamp
         self.loan_entities[loan_id].extra_info.block = event["block_number"]
         self.loan_entities[loan_id].extra_info.timestamp = event["timestamp"]
 
         borrowed_collateral = HashstackV1Portfolio()
-        borrowed_collateral.values[borrowed_collateral_token] = (
-            borrowed_collateral_face_amount
-        )
+        borrowed_collateral.values[borrowed_collateral_token] = borrowed_collateral_face_amount
         self.loan_entities[loan_id].borrowed_collateral = borrowed_collateral
         # TODO: Make it easier to sum 2 `HashstackV1Portfolio` instances.
         self.loan_entities[loan_id].collateral.values = {
@@ -551,17 +535,11 @@ class HashstackV1State(State):
         # Example: https://starkscan.co/event/0x027b7e40273848af37e092eaec38311ac1d2e6c3fc2724020736e9f322b6fcf7_0.
         loan_id = int(event["data"][0], base=16)
 
-        original_collateral_token = self.ADDRESSES_TO_TOKENS[
-            add_leading_zeros(event["data"][1])
-        ]
-        original_collateral_face_amount = decimal.Decimal(
-            str(int(event["data"][2], base=16))
-        )
+        original_collateral_token = self.ADDRESSES_TO_TOKENS[add_leading_zeros(event["data"][1])]
+        original_collateral_face_amount = decimal.Decimal(str(int(event["data"][2], base=16)))
 
         original_collateral = HashstackV1Portfolio()
-        original_collateral.values[original_collateral_token] = (
-            original_collateral_face_amount
-        )
+        original_collateral.values[original_collateral_token] = original_collateral_face_amount
         self.loan_entities[loan_id].original_collateral = original_collateral
         self.loan_entities[loan_id].collateral.values = {
             token: (
@@ -601,9 +579,7 @@ class HashstackV1State(State):
         new_borrowed_collateral_token = self.ADDRESSES_TO_TOKENS[
             add_leading_zeros(event["data"][17])
         ]
-        new_borrowed_collateral_face_amount = decimal.Decimal(
-            str(int(event["data"][18], base=16))
-        )
+        new_borrowed_collateral_face_amount = decimal.Decimal(str(int(event["data"][18], base=16)))
 
         new_borrowed_collateral = HashstackV1Portfolio()
         new_borrowed_collateral.values[new_borrowed_collateral_token] = (
@@ -685,15 +661,11 @@ class HashstackV1State(State):
         new_borrowed_collateral_token = self.ADDRESSES_TO_TOKENS[
             add_leading_zeros(event["data"][17])
         ]
-        new_borrowed_collateral_face_amount = decimal.Decimal(
-            str(int(event["data"][18], base=16))
-        )
+        new_borrowed_collateral_face_amount = decimal.Decimal(str(int(event["data"][18], base=16)))
         new_original_collateral_token = self.ADDRESSES_TO_TOKENS[
             add_leading_zeros(event["data"][25])
         ]
-        new_original_collateral_face_amount = decimal.Decimal(
-            str(int(event["data"][26], base=16))
-        )
+        new_original_collateral_face_amount = decimal.Decimal(str(int(event["data"][26], base=16)))
         # Based on the documentation, it seems that it's only possible to repay the whole amount.
         assert new_debt_face_amount == decimal.Decimal("0")
         assert new_borrowed_collateral_face_amount == decimal.Decimal("0")
@@ -779,9 +751,7 @@ class HashstackV1State(State):
                 continue
 
             # Find out how much of the `debt_token` will be liquidated.
-            max_liquidated_amount += loan_entity.compute_debt_to_be_liquidated(
-                debt_usd=debt_usd
-            )
+            max_liquidated_amount += loan_entity.compute_debt_to_be_liquidated(debt_usd=debt_usd)
         return max_liquidated_amount
 
     def compute_number_of_active_users(self) -> int:

@@ -1,13 +1,16 @@
+"""
+Defines the base class for data collectors.
+"""
+
 from abc import ABC, abstractmethod
 
 
 class Collector(ABC):
     """
-    Base class for collectors.
-
-    :method: `collect_data` -> Collects data from the specified storage.
+    Abstract base class for data collectors.
     """
 
     @abstractmethod
     def collect_data(self, *args, **kwargs):
+        """Abstract method to collect data from a specified storage."""
         pass

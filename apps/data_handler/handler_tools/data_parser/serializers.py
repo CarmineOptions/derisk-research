@@ -1,3 +1,9 @@
+"""
+Defines data models and a parser for handling 
+zkLend DeFi event data, including liquidation, repayment, 
+borrowing, deposit, withdrawal, and accumulator sync events.
+"""
+
 from decimal import Decimal
 from pydantic import BaseModel, ValidationInfo, field_validator
 from shared.helpers import add_leading_zeros
@@ -55,9 +61,7 @@ class LiquidationEventData(BaseModel):
         try:
             return Decimal(int(value, 16))
         except ValueError:
-            raise ValueError(
-                f"{info.field_name} field is not a valid hexadecimal number"
-            )
+            raise ValueError(f"{info.field_name} field is not a valid hexadecimal number")
 
 
 class RepaymentEventData(BaseModel):
@@ -107,9 +111,7 @@ class RepaymentEventData(BaseModel):
         try:
             return Decimal(int(value, 16))
         except ValueError:
-            raise ValueError(
-                f"{info.field_name} field is not a valid hexadecimal number"
-            )
+            raise ValueError(f"{info.field_name} field is not a valid hexadecimal number")
 
 
 class AccumulatorsSyncEventData(BaseModel):
@@ -155,9 +157,7 @@ class AccumulatorsSyncEventData(BaseModel):
         try:
             return Decimal(int(value, 16))
         except ValueError:
-            raise ValueError(
-                f"{info.field_name} field is not a valid hexadecimal number"
-            )
+            raise ValueError(f"{info.field_name} field is not a valid hexadecimal number")
 
 
 class DepositEventData(BaseModel):
@@ -203,9 +203,7 @@ class DepositEventData(BaseModel):
         try:
             return Decimal(int(value, 16))
         except ValueError:
-            raise ValueError(
-                f"{info.field_name} field is not a valid hexadecimal number"
-            )
+            raise ValueError(f"{info.field_name} field is not a valid hexadecimal number")
 
 
 class BorrowingEventData(BaseModel):
@@ -253,9 +251,7 @@ class BorrowingEventData(BaseModel):
         try:
             return Decimal(int(value, 16))
         except ValueError:
-            raise ValueError(
-                f"{info.field_name} field is not a valid hexadecimal number"
-            )
+            raise ValueError(f"{info.field_name} field is not a valid hexadecimal number")
 
 
 class WithdrawalEventData(BaseModel):
@@ -315,9 +311,7 @@ class ZkLendDataParser:
     """
 
     @classmethod
-    def parse_accumulators_sync_event(
-        cls, event_data: List[Any]
-    ) -> AccumulatorsSyncEventData:
+    def parse_accumulators_sync_event(cls, event_data: List[Any]) -> AccumulatorsSyncEventData:
         """
         Parses the AccumulatorsSync event data using the AccumulatorsSyncEventData model.
 
