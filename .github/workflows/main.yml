@@ -1,0 +1,51 @@
+name: CI Workflow
+
+on:
+  push:
+    branches:
+      - ci/setup-github-workflow
+  pull_request:
+    branches:
+      - ci/setup-github-workflow
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres" 
+          --health-interval 10s 
+          --health-timeout 5s 
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Set up Docker for Data Handler
+        run: |
+          docker-compose -f devops/dev/docker-compose.data-handler.yaml up -d --build
+
+      - name: Install dependencies for Legacy App
+        run: |
+          cd apps/legacy_app
+          ./setup.sh
+
+      - name: Test Data Handler
+        run: |
+          make test_data_handler
+
+      - name: Test Shared
+        run: |
+          make test_shared
