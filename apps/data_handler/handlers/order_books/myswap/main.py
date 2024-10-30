@@ -9,7 +9,9 @@ import pandas as pd
 from data_handler.handlers.blockchain_call import func_call
 from data_handler.handlers.order_books.abstractions import OrderBookBase
 from data_handler.handlers.order_books.commons import get_logger
-from data_handler.handlers.order_books.myswap.api_connection.api_connector import MySwapAPIConnector
+from data_handler.handlers.order_books.myswap.api_connection.api_connector import (
+    MySwapAPIConnector,
+)
 
 from data_handler.db.crud import DBConnector
 from data_handler.db.models import OrderBookModel

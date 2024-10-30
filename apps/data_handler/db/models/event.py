@@ -7,6 +7,7 @@ like `event_name`, `block_number`, and `protocol_id`, using the `ProtocolIDs` e
 num to enforce valid protocol IDs. 
 Fields are indexed for efficient querying.
 """
+
 from sqlalchemy_utils.types.choice import ChoiceType
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
@@ -35,11 +36,11 @@ class EventBaseModel(Base):
 
     __tablename__ = "event_base_model"
     __abstract__ = True
-    
+
     event_name: Mapped[str] = mapped_column(String, index=True)
     block_number: Mapped[int] = mapped_column(Integer, index=True)
     protocol_id = Column(ChoiceType(ProtocolIDs, impl=String()), nullable=False)
-    
+
     __mapper_args__ = {
         "polymorphic_identity": "event_base",
     }
