@@ -1,5 +1,7 @@
 """
-Defines base ORM models for managing protocol state with unique IDs, timestamps, and collateral/debt data.
+Defines base ORM models for managing protocol 
+state with 
+unique IDs, timestamps, and collateral/debt data.
 """
 
 from uuid import uuid4

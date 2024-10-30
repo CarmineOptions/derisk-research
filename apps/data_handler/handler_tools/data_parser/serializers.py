@@ -1,3 +1,8 @@
+"""
+Defines data models and a parser for handling 
+zkLend DeFi event data, including liquidation, repayment, 
+borrowing, deposit, withdrawal, and accumulator sync events.
+"""
 from decimal import Decimal
 from pydantic import BaseModel, ValidationInfo, field_validator
 from shared.helpers import add_leading_zeros

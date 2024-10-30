@@ -1,5 +1,8 @@
 """
-Defines SQLAlchemy models for liquidable debt and health ratio level, capturing debt data and user health metrics.
+Defines SQLAlchemy models for 
+liquidable debt and health ratio 
+level, capturing debt data and 
+user health metrics.
 """
 
 from data_handler.handlers.liquidable_debt.values import LendingProtocolNames

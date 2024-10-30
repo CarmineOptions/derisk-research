@@ -1,3 +1,6 @@
+"""
+Calculates health ratios for Nostra Alpha users and stores them in the database.
+"""
 from data_handler.handlers.liquidable_debt.values import (
     HEALTH_FACTOR_FIELD_NAME,
     TIMESTAMP_FIELD_NAME,
@@ -10,6 +13,9 @@ from shared.constants import ProtocolIDs
 
 
 def run():
+    """
+    Calculates and stores health ratios for Nostra Alpha users in the database.
+    """
     handler = NostrAlphaHealthRatioHandler()
 
     data = handler.calculate_health_ratio()

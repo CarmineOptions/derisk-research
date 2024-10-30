@@ -1,3 +1,9 @@
+"""
+Defines database models for `AccumulatorsSyncEventData` 
+and `LiquidationEventData`, capturing 
+sync and liquidation event details such 
+as token addresses, accumulators, and transaction amounts.
+"""
 from decimal import Decimal
 
 from sqlalchemy import  Numeric, String

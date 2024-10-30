@@ -1,3 +1,8 @@
+"""
+Defines the OrderBookModel for storing order book 
+entries, including token pairs, DEX info, and price data.
+"""
+
 from sqlalchemy import DECIMAL, BigInteger, Column, String
 from sqlalchemy.types import JSON
 

@@ -1,5 +1,7 @@
 """
-This module provides classes and structures for managing loan states, liquidable debt, order book data, 
+This module provides classes and structures for managing 
+loan states, 
+liquidable debt, order book data, 
 and ZkLend event handling in a DeFi system.
 """
 

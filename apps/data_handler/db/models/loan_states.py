@@ -1,3 +1,21 @@
+"""
+Defines SQLAlchemy models for loan states, interest rates, 
+and collateral-debt tracking for ZkLend and Hashtack.
+"""
+
+from decimal import Decimal
+
+from sqlalchemy import Column, Integer, String, UniqueConstraint
+from sqlalchemy.types import JSON
+
+from data_handler.db.models.base import Base, BaseState
+
+
+class LoanState(BaseState):
+    """
+    Model for the `loan_state` table, tracking protocol-specific loan details.
+    """
+    __
 from decimal import Decimal
 
 from sqlalchemy import Column, Integer, String, UniqueConstraint
