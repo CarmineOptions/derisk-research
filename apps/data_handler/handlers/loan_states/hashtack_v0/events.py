@@ -298,9 +298,10 @@ class HashstackV0State(State):
         )
         if self.loan_entities[loan_id].user == self.verbose_user:
             logging.info(
-                "In block number = {}, face amount = {} of token = {} was borrowed "
-                "against original collateral face amount = {} of token = {} and "
-                "borrowed collateral face amount = {} of token = {}.".format(
+                "In block number = {}, face amount = {} of token = {} "
+                "was borrowed against original collateral face amount = {} "
+                "of token = {} and borrowed collateral face amount = {} "
+                "of token = {}.".format(
                     event["block_number"],
                     debt_face_amount,
                     debt_token,

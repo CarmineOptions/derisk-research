@@ -1,3 +1,7 @@
+"""
+Hashstack V1 event handling and token settings module.
+Manages token configurations, addresses mappings, and event processing for the Hashstack V1 protocol.
+"""
 import copy
 import dataclasses
 import decimal
