@@ -9,6 +9,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Query, Session, aliased, scoped_session, sessionmaker
 
+
 from data_handler.db.models import (
     Base,
     HashtackCollateralDebt,
@@ -17,6 +18,12 @@ from data_handler.db.models import (
     OrderBookModel,
     ZkLendCollateralDebt,
 )
+
+from data_handler.db.models.zklend_events import (
+    AccumulatorsSyncEventData,
+    LiquidationEventData,
+)
+
 
 logger = logging.getLogger(__name__)
 ModelType = TypeVar("ModelType", bound=Base)
@@ -571,3 +578,124 @@ class InitializerDBConnector:
             logger.info(f"Saved debt category for loan_id {loan_id}")
         finally:
             session.close()
+
+
+class ZkLendEventDBConnector(DBConnector):
+    """
+    Provides CRUD operations specifically for ZkLend events, such as accumulator sync
+    and liquidation events.
+    Methods:
+    - create_accumulator_event: Creates an AccumulatorsSyncEventData record.
+    - create_liquidation_event: Creates a LiquidationEventData record.
+    - get_all_events: Retrieves events based on filtering criteria such as protocol_id,
+    event_name, or block_number.
+    """
+
+    def create_accumulator_event(
+        self, protocol_id: str, event_name: str, block_number: int, event_data: dict
+    ) -> None:
+        """
+        Creates an AccumulatorsSyncEventData record in the database.
+        :param protocol_id: The protocol ID for the event.
+        :param event_name: The name of the event.
+        :param block_number: The block number associated with the event.
+        :param event_data: A dictionary containing 'token', 'lending_accumulator', and
+        'debt_accumulator'.
+        """
+        db = self.Session()
+        try:
+            event = AccumulatorsSyncEventData(
+                protocol_id=protocol_id,
+                event_name=event_name,
+                block_number=block_number,
+                token=event_data.get("token"),
+                lending_accumulator=event_data.get("lending_accumulator"),
+                debt_accumulator=event_data.get("debt_accumulator"),
+            )
+            db.add(event)
+            db.commit()
+        except SQLAlchemyError as e:
+            db.rollback()
+            logger.error(f"Error creating AccumulatorsSyncEventData: {e}")
+            raise e
+        finally:
+            db.close()
+
+    def create_liquidation_event(
+        self, protocol_id: str, event_name: str, block_number: int, event_data: dict
+    ) -> None:
+        """
+        Creates a LiquidationEventData record in the database.
+        :param protocol_id: The protocol ID for the event.
+        :param event_name: The name of the event.
+        :param block_number: The block number associated with the event.
+        :param event_data: A dictionary containing 'liquidator', 'user', 'debt_token',
+        'debt_raw_amount', 'debt_face_amount',
+        'collateral_token', and 'collateral_amount'.
+        """
+        db = self.Session()
+        try:
+            event = LiquidationEventData(
+                protocol_id=protocol_id,
+                event_name=event_name,
+                block_number=block_number,
+                liquidator=event_data.get("liquidator"),
+                user=event_data.get("user"),
+                debt_token=event_data.get("debt_token"),
+                debt_raw_amount=event_data.get("debt_raw_amount"),
+                debt_face_amount=event_data.get("debt_face_amount"),
+                collateral_token=event_data.get("collateral_token"),
+                collateral_amount=event_data.get("collateral_amount"),
+            )
+            db.add(event)
+            db.commit()
+        except SQLAlchemyError as e:
+            db.rollback()
+            logger.error(f"Error creating LiquidationEventData: {e}")
+            raise e
+        finally:
+            db.close()
+
+    def get_all_events(
+        self,
+        protocol_id: Optional[str] = None,
+        event_name: Optional[str] = None,
+        block_number: Optional[int] = None,
+    ) -> List[Base]:
+        """
+        Retrieves events based on filtering criteria such as protocol_id,
+        event_name, or block_number.
+        :param protocol_id: Optional protocol ID to filter by.
+        :param event_name: Optional event name to filter by.
+        :param block_number: Optional block number to filter by.
+        :return: A list of events matching the criteria.
+        """
+        db = self.Session()
+        try:
+
+            def apply_filters(query):
+                """
+                Inner function to apply filters based on the provided parameters.
+                :param query: The SQLAlchemy query object.
+                :return: The query with filters applied.
+                """
+                if protocol_id is not None:
+                    query = query.filter_by(protocol_id=protocol_id)
+                if event_name is not None:
+                    query = query.filter_by(event_name=event_name)
+                if block_number is not None:
+                    query = query.filter_by(block_number=block_number)
+                return query
+
+            accumulator_query = apply_filters(db.query(AccumulatorsSyncEventData))
+            liquidation_query = apply_filters(db.query(LiquidationEventData))
+            combined_query = accumulator_query.union(liquidation_query)
+            events = combined_query.all()
+            return events
+
+        except SQLAlchemyError as e:
+            logger.error(f"Error retrieving events: {e}")
+            raise e
+
+        finally:
+            db.close()

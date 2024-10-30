@@ -5,6 +5,9 @@ from data_handler.handler_tools.constants import ProtocolAddresses
 from data_handler.handlers import blockchain_call
 from pydantic import BaseModel, field_validator
 
+from data_handler.handlers.loan_states.zklend.settings import (
+    ZkLendSpecificTokenSettings,
+)
 from shared.constants import TOKEN_SETTINGS
 from data_handler.handlers.loan_states.zklend.settings import (
     ZkLendSpecificTokenSettings,

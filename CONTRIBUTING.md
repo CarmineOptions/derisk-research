@@ -7,7 +7,7 @@
     - Easy tasks: Assigned on a first-come, first-served basis. No further assignment is required.
     - Medium and Complex tasks: Prospective assignees must outline their approach to the task. Assignments will be based on these proposals to ensure optimal match and prioritization. The higher the complexity of the task, the more detailed description of the approach is needed.
 4. Initial Commit Requirement
-    - If no commits are made or the assignee is unreachable within 24 hours post-assignment, we reserve the right to reassign the task.
+    - If no commits are made or the assignee is unreachable within `12` hours post-assignment, we reserve the right to reassign the task.
     - We also reserve the right to reassign tasks if it becomes clear they cannot be completed by the hackathon's end.
 5. Submission Guidelines
     - Submit a pull request (PR) from the forked repository.

@@ -1,43 +1,12 @@
 from decimal import Decimal
-
 from pydantic import BaseModel, ValidationInfo, field_validator
 from shared.helpers import add_leading_zeros
-
-
-class AccumulatorsSyncEventData(BaseModel):
-    """
-    Model to parse and validate data for AccumulatorsSync event.
-
-    This model validates and converts the lending and debt accumulators from hexadecimal
-    strings to `Decimal` format, scaled by `1e27`.
-
-    Attributes:
-        token (str): The token address as a hexadecimal string.
-        lending_accumulator (Decimal): The lending accumulator value, converted from hex to Decimal.
-        debt_accumulator (Decimal): The debt accumulator value, converted from hex to Decimal.
-    """
-
-    token: str
-    lending_accumulator: Decimal
-    debt_accumulator: Decimal
-
-    @field_validator("lending_accumulator", "debt_accumulator", mode="before")
-    def hex_to_decimal(cls, v: str) -> Decimal:
-        """
-        Converts a hexadecimal string to a Decimal value, scaled by 1e27.
-
-        Args:
-            v (str): The hexadecimal string to be converted.
-
-        Returns:
-            Decimal: The converted decimal value scaled by 1e27.
-        """
-        return Decimal(int(v, 16)) / Decimal("1e27")
+from typing import List, Any
 
 
 class LiquidationEventData(BaseModel):
     """
-    Class for converting liquidation event to an object model.
+    Data model representing a liquidation event in the system.
 
     Attributes:
         liquidator: The address of the liquidator.
@@ -58,24 +27,24 @@ class LiquidationEventData(BaseModel):
     collateral_amount: str
 
     @field_validator("liquidator", "user", "debt_token", "collateral_token")
-    def validate_valid_addresses(cls, value: str, info: ValidationInfo) -> str:
+    def validate_address(cls, value: str, info: ValidationInfo) -> str:
         """
-        Check if the value is an address and format it to having leading zeros.
+        Validates if the value is a valid address and formats it to have leading zeros.
 
         Raises:
-            ValueError
+            ValueError: If the provided address is invalid.
 
         Returns:
-            str
+            str: Formatted address with leading zeros.
         """
         if not value.startswith("0x"):
-            raise ValueError("Invalid address provided for %s" % info.field_name)
+            raise ValueError(f"Invalid address provided for {info.field_name}")
         return add_leading_zeros(value)
 
     @field_validator("debt_raw_amount", "debt_face_amount", "collateral_amount")
-    def validate_valid_numbers(cls, value: str, info: ValidationInfo) -> Decimal:
+    def validate_numeric_string(cls, value: str, info: ValidationInfo) -> Decimal:
         """
-        Convert the hexadecimal string value to a decimal.
+        Converts a hexadecimal string value to a decimal.
 
         Raises:
             ValueError: If value is not a valid hexadecimal.
@@ -83,22 +52,24 @@ class LiquidationEventData(BaseModel):
         Returns:
             Decimal: Converted decimal value.
         """
+        try:
+            return Decimal(int(value, 16))
+        except ValueError:
+            raise ValueError(
+                f"{info.field_name} field is not a valid hexadecimal number"
+            )
 
-        if not value.isdigit():
-            raise ValueError("%s field is not numeric" % info.field_name)
-        return Decimal(str(int(value, base=16)))
 
-
-class RepaymentEventSerializer(BaseModel):
+class RepaymentEventData(BaseModel):
     """
     Data model representing a repayment event in the system.
 
     Attributes:
-        repayer (str): The address or identifier of the individual or entity making the repayment.
-        beneficiary (str): The address or identifier of the individual or entity receiving the repayment.
-        token (str): The type or symbol of the token being used for the repayment.
-        raw_amount (str): The raw amount of the repayment as provided, before any conversions or calculations.
-        face_amount (str): The face amount of the repayment, representing the value after necessary conversions.
+        repayer: The address of the repayer.
+        beneficiary: The address of the beneficiary.
+        token: The token address used for repayment.
+        raw_amount: The raw amount of the repayment in hexadecimal.
+        face_amount: The face amount of the repayment in hexadecimal.
     """
 
     repayer: str
@@ -107,92 +78,48 @@ class RepaymentEventSerializer(BaseModel):
     raw_amount: str
     face_amount: str
 
-    @field_validator("beneficiary", "token", pre=True, always=True)
-    def add_leading_zeros(cls, value: str) -> str:
+    @field_validator("repayer", "beneficiary", "token")
+    def validate_address(cls, value: str, info: ValidationInfo) -> str:
         """
-        Ensures the `beneficiary` and `token` fields contain leading zeros if required.
+        Validates if the value is a valid address and formats it to have leading zeros.
 
-        Args:
-            value (str): The value of the field to validate, typically an address or identifier.
+        Raises:
+            ValueError: If the provided address is invalid.
 
         Returns:
-            str: The value with added leading zeros if necessary, maintaining a consistent format.
+            str: Formatted address with leading zeros.
         """
+        if not value.startswith("0x"):
+            raise ValueError(f"Invalid address provided for {info.field_name}")
         return add_leading_zeros(value)
 
-    def get_raw_amount_as_decimal(self) -> Decimal:
+    @field_validator("raw_amount", "face_amount")
+    def validate_numeric_string(cls, value: str, info: ValidationInfo) -> Decimal:
         """
-        Converts the hexadecimal `raw_amount` to a Decimal value.
+        Converts a hexadecimal string value to a decimal.
+
+        Raises:
+            ValueError: If value is not a valid hexadecimal.
 
         Returns:
-            Decimal: The converted decimal value of `raw_amount`.
-        """
-        return self.convert_hex_to_decimal(self.raw_amount)
-
-    @classmethod
-    def parse_event(cls, event: pd.Series) -> "RepaymentEventSerializer":
-        """
-        Parses the repayment event data into a `RepaymentEventSerializer` instance.
-
-        Args:
-            event (pd.Series): A pandas Series containing repayment event data,
-                               with keys "data", "block_number", and "timestamp".
-
-        Returns:
-            RepaymentEventSerializer: An instance with parsed and validated repayment event data.
-        """
-        return cls(
-            repayer=event["data"][0],
-            beneficiary=event["data"][1],
-            token=event["data"][2],
-            raw_amount=event["data"][3],
-            face_amount=event["data"][4],
-            block_number=event["block_number"],
-            timestamp=event["timestamp"],
-        )
-
-    class Config:
-        """
-        Configuration for the RepaymentEventSerializer model.
-
-        Attributes:
-            arbitrary_types_allowed (bool): If set to True, allows fields to accept non-standard or arbitrary types
-                                            that are not strictly validated, adding flexibility for custom data types.
-        """
-
-        arbitrary_types_allowed = True
-
-    @staticmethod
-    def convert_hex_to_decimal(value: str) -> Decimal:
-        """
-        Converts a hexadecimal string to a Decimal, or raises an error if invalid.
-
-        Args:
-            value (str): The hexadecimal string to convert.
-
-        Returns:
-            Decimal: The converted decimal value.
+            Decimal: Converted decimal value.
         """
         try:
             return Decimal(int(value, 16))
         except ValueError:
             raise ValueError(
-                "%s field is not a valid hexadecimal number" % info.field_name
+                f"{info.field_name} field is not a valid hexadecimal number"
             )
 
 
-class EventAccumulatorsSyncData(BaseModel):
+class AccumulatorsSyncEventData(BaseModel):
     """
-    A data model representing essential event data related to token transactions.
+    Data model representing an accumulators sync event in the system.
 
     Attributes:
-        token (str): The token address involved in the event as a hexadecimal string.
-        lending_accumulator (str): The lending accumulator value associated with the token, represented as a hexadecimal string.
-        debt_accumulator (str): The debt accumulator value associated with the token, represented as a hexadecimal string.
-
-    Methods:
-        from_raw_data(cls, raw_data: List[str]) -> "EventAccumulatorsSyncData":
-            Creates an EventAccumulatorsSyncData instance from a list of raw data, mapping each list item to the respective attribute.
+        token: The token address involved in the event.
+        lending_accumulator: The lending accumulator value.
+        debt_accumulator: The debt accumulator value.
     """
 
     token: str
@@ -200,68 +127,47 @@ class EventAccumulatorsSyncData(BaseModel):
     debt_accumulator: str
 
     @field_validator("token")
-    def validate_valid_addresses(cls, value: str, info: ValidationInfo) -> str:
+    def validate_address(cls, value: str, info: ValidationInfo) -> str:
         """
-        Check if the value is an address and format it to having leading zeros.
+        Validates if the value is a valid address and formats it to have leading zeros.
+
         Raises:
-            ValueError
+            ValueError: If the provided address is invalid.
+
         Returns:
-            str
+            str: Formatted address with leading zeros.
         """
         if not value.startswith("0x"):
-            raise ValueError("Invalid address provided for %s" % info.field_name)
+            raise ValueError(f"Invalid address provided for {info.field_name}")
         return add_leading_zeros(value)
 
     @field_validator("lending_accumulator", "debt_accumulator")
-    def validate_valid_numbers(cls, value: str, info: ValidationInfo) -> Decimal:
+    def validate_numeric_string(cls, value: str, info: ValidationInfo) -> Decimal:
         """
-        Convert the hexadecimal string value to a decimal.
+        Converts a hexadecimal string value to a decimal.
+
         Raises:
             ValueError: If value is not a valid hexadecimal.
+
         Returns:
             Decimal: Converted decimal value.
         """
         try:
-            return Decimal(int(value, base=16))
+            return Decimal(int(value, 16))
         except ValueError:
             raise ValueError(
-                "%s field is not a valid hexadecimal number" % info.field_name
+                f"{info.field_name} field is not a valid hexadecimal number"
             )
 
-    @classmethod
-    def from_raw_data(cls, raw_data: list[str]) -> "EventAccumulatorsSyncData":
-        """
-        Class method to create an EventAccumulatorsSyncData instance from raw data.
 
-        Args:
-            raw_data (List[str]): A list containing the token, lending_accumulator, and debt_accumulator as hexadecimal strings.
-
-        Returns:
-            EventAccumulatorsSync: An iDatanstance of EventAccumulatorsSync with Datafields populated from raw_data.
-
-        Example:
-            raw_data = ["0x12345", "0xabcde", "0x54321"]
-            event_data = EventAccumulatorsSync.from_Dataraw_data(raw_data)
-        """
-        return cls(
-            token=raw_data[0],
-            lending_accumulator=raw_data[1],
-            debt_accumulator=raw_data[2],
-        )
-
-
-class EventDepositData(BaseModel):
+class DepositEventData(BaseModel):
     """
-    A data model representing essential deposit event data.
+    Data model representing a deposit event in the system.
 
     Attributes:
-        user (str): The user address associated with the deposit event, represented as a string.
-        token (str): The token address involved in the deposit, represented as a string.
-        face_amount (str): The face value of the deposit, represented as a string.
-
-    Methods:
-        from_raw_data(cls, raw_data: Dict[str, List[str]]) -> "EventDepositData":
-            Creates an EventDepositData instance from a dictionary of raw data, mapping each key to the respective attribute.
+        user: The user address making the deposit.
+        token: The token address for the deposit.
+        face_amount: The face amount of the deposit in hexadecimal.
     """
 
     user: str
@@ -269,68 +175,48 @@ class EventDepositData(BaseModel):
     face_amount: str
 
     @field_validator("user", "token")
-    def validate_valid_addresses(cls, value: str, info: ValidationInfo) -> str:
+    def validate_address(cls, value: str, info: ValidationInfo) -> str:
         """
-        Check if the value is an address and format it to having leading zeros.
+        Validates if the value is a valid address and formats it to have leading zeros.
+
         Raises:
-            ValueError
+            ValueError: If the provided address is invalid.
+
         Returns:
-            str
+            str: Formatted address with leading zeros.
         """
         if not value.startswith("0x"):
-            raise ValueError("Invalid address provided for %s" % info.field_name)
+            raise ValueError(f"Invalid address provided for {info.field_name}")
         return add_leading_zeros(value)
 
     @field_validator("face_amount")
-    def validate_valid_numbers(cls, value: str, info: ValidationInfo) -> Decimal:
+    def validate_numeric_string(cls, value: str, info: ValidationInfo) -> Decimal:
         """
-        Convert the hexadecimal string value to a decimal.
+        Converts a hexadecimal string value to a decimal.
+
         Raises:
             ValueError: If value is not a valid hexadecimal.
+
         Returns:
             Decimal: Converted decimal value.
         """
         try:
-            return Decimal(int(value, base=16))
+            return Decimal(int(value, 16))
         except ValueError:
             raise ValueError(
-                "%s field is not a valid hexadecimal number" % info.field_name
+                f"{info.field_name} field is not a valid hexadecimal number"
             )
-
-    @classmethod
-    def from_raw_data(cls, raw_data: dict[str, list[str]]) -> "EventDepositData":
-        """
-        Class method to create an EventDepositData instance from raw data.
-
-        Args:
-            raw_data (Dict[str, List[str]]): A dictionary where the keys are field names and values are lists
-                                               containing the corresponding data as strings.
-
-        Returns:
-            EventDepositData: An instance of EventDepositData with fields populated from raw_data.
-
-        Example:
-            raw_data = {
-                "data": ["0x67890", "0x12345", "1000.0"]
-            }
-            deposit_event = EventDepositData.from_raw_data(raw_data)
-        """
-        return cls(
-            user=raw_data["data"][0],
-            token=raw_data["data"][1],
-            face_amount=raw_data["data"][2],
-        )
 
 
 class BorrowingEventData(BaseModel):
     """
-    Class for converting borrowing event to an object model.
+    Data model representing a borrowing event in the system.
 
     Attributes:
-        user: The address of the user.
-        token: The address of the debt token.
-        raw_amount: The raw amount of the borrowed tokens.
-        face_amount: The face amount of the borrowed tokens.
+        user: The user address involved in borrowing.
+        token: The token address borrowed.
+        raw_amount: The raw amount of the borrowed tokens in hexadecimal.
+        face_amount: The face amount of the borrowed tokens in hexadecimal.
     """
 
     user: str
@@ -339,24 +225,24 @@ class BorrowingEventData(BaseModel):
     face_amount: str
 
     @field_validator("user", "token")
-    def validate_valid_addresses(cls, value: str, info: ValidationInfo) -> str:
+    def validate_address(cls, value: str, info: ValidationInfo) -> str:
         """
-        Check if the value is an address and format it to having leading zeros.
+        Validates if the value is a valid address and formats it to have leading zeros.
 
         Raises:
-            ValueError
+            ValueError: If the provided address is invalid.
 
         Returns:
-            str
+            str: Formatted address with leading zeros.
         """
         if not value.startswith("0x"):
-            raise ValueError("Invalid address provided for %s" % info.field_name)
+            raise ValueError(f"Invalid address provided for {info.field_name}")
         return add_leading_zeros(value)
 
     @field_validator("raw_amount", "face_amount")
-    def validate_valid_numbers(cls, value: str, info: ValidationInfo) -> Decimal:
+    def validate_numeric_string(cls, value: str, info: ValidationInfo) -> Decimal:
         """
-        Convert the hexadecimal string value to a decimal.
+        Converts a hexadecimal string value to a decimal.
 
         Raises:
             ValueError: If value is not a valid hexadecimal.
@@ -365,8 +251,159 @@ class BorrowingEventData(BaseModel):
             Decimal: Converted decimal value.
         """
         try:
-            return Decimal(int(value, base=16))
+            return Decimal(int(value, 16))
         except ValueError:
             raise ValueError(
-                "%s field is not a valid hexadecimal number" % info.field_name
+                f"{info.field_name} field is not a valid hexadecimal number"
             )
+
+
+class WithdrawalEventData(BaseModel):
+    """
+    Class for representing withdrawal event data.
+
+    Attributes:
+        user (str): The address of the user making the withdrawal.
+        amount (Decimal): The amount withdrawn.
+        token (str): The address of the token being withdrawn.
+    """
+
+    user: str
+    amount: Decimal
+    token: str
+
+    @field_validator("user", "token")
+    def validate_addresses(cls, value: str) -> str:
+        """
+        Validates that the provided address starts with '0x' and formats it with leading zeros.
+
+        Args:
+            value (str): The address string to validate.
+
+        Returns:
+            str: The validated and formatted address.
+
+        Raises:
+            ValueError: If the provided address does not start with '0x'.
+        """
+        if not value.startswith("0x"):
+            raise ValueError(f"Invalid address provided: {value}")
+        return add_leading_zeros(value)
+
+    @field_validator("amount", mode="before")
+    def validate_amount(cls, value: str) -> Decimal:
+        """
+        Validates that the provided amount is numeric and converts it to a Decimal.
+
+        Args:
+            value (str): The amount string to validate.
+
+        Returns:
+            Decimal: The validated and converted amount as a Decimal.
+
+        Raises:
+            ValueError: If the provided amount is not numeric.
+        """
+        if not value.isdigit():
+            raise ValueError("Amount field is not numeric")
+        return Decimal(value)
+
+
+class ZkLendDataParser:
+    """
+    Parser class to convert zkLend data events to human-readable formats.
+    """
+
+    @classmethod
+    def parse_accumulators_sync_event(
+        cls, event_data: List[Any]
+    ) -> AccumulatorsSyncEventData:
+        """
+        Parses the AccumulatorsSync event data using the AccumulatorsSyncEventData model.
+
+        Args:
+            event_data (List[Any]): A list containing the raw event data.
+
+        Returns:
+            AccumulatorsSyncEventData: Parsed event data in a human-readable format.
+        """
+        return AccumulatorsSyncEventData(
+            token=event_data[0],
+            lending_accumulator=event_data[1],
+            debt_accumulator=event_data[2],
+        )
+
+    @classmethod
+    def parse_deposit_event(cls, event_data: List[Any]) -> DepositEventData:
+        """
+        Parses the Deposit event data using the DepositEventData model.
+
+        Args:
+            event_data (List[Any]): A list containing the raw event data.
+
+        Returns:
+            DepositEventData: Parsed deposit event data.
+        """
+        return DepositEventData(
+            user=event_data[0],
+            token=event_data[1],
+            face_amount=event_data[2],
+        )
+
+    @classmethod
+    def parse_borrowing_event(cls, event_data: List[Any]) -> BorrowingEventData:
+        """
+        Parses the Borrowing event data using the BorrowingEventData model.
+
+        Args:
+            event_data (List[Any]): A list containing the raw event data.
+
+        Returns:
+            BorrowingEventData: Parsed borrowing event data.
+        """
+        return BorrowingEventData(
+            user=event_data[0],
+            token=event_data[1],
+            raw_amount=event_data[2],
+            face_amount=event_data[3],
+        )
+
+    @classmethod
+    def parse_repayment_event(cls, event_data: List[Any]) -> RepaymentEventData:
+        """
+        Parses the Repayment event data using the RepaymentEventData model.
+
+        Args:
+            event_data (List[Any]): A list containing the raw repayment event data.
+
+        Returns:
+            RepaymentEventData: Parsed repayment event data.
+        """
+        return RepaymentEventData(
+            repayer=event_data[0],
+            beneficiary=event_data[1],
+            token=event_data[2],
+            raw_amount=event_data[3],
+            face_amount=event_data[4],
+        )
+
+    @classmethod
+    def parse_liquidation_event(cls, event_data: List[Any]) -> LiquidationEventData:
+        """
+        Parses the Liquidation event data using the LiquidationEventData model.
+
+        Args:
+            event_data (List[Any]): A list containing the raw liquidation event data.
+
+        Returns:
+            LiquidationEventData: Parsed liquidation event data.
+        """
+        return LiquidationEventData(
+            liquidator=event_data[0],
+            user=event_data[1],
+            debt_token=event_data[2],
+            debt_raw_amount=event_data[3],
+            debt_face_amount=event_data[4],
+            collateral_token=event_data[5],
+            collateral_amount=event_data[6],
+        )
