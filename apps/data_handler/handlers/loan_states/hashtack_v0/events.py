@@ -34,7 +34,8 @@ class HashstackV0SpecificTokenSettings:
 
 @dataclasses.dataclass
 class TokenSettings(HashstackV0SpecificTokenSettings, TokenSettings):
-    """Extended token settings class that combines Hashstack V0 specific settings with base settings."""
+    """Extended token settings class that combines Hashstack V0 specific settings 
+    with base settings."""
     pass
 
 
@@ -419,7 +420,8 @@ class HashstackV0State(State):
         # `l3_integration`, `created_at`, [`amount_withdrawn`] 
         # `amount_withdrawn`, ``, [`timestamp`] `timestamp`.
         # Example:
-        #  https://starkscan.co/event/0x05bb8614095fac1ac9b405c27e7ce870804e85aa5924ef2494fec46792b6b8dc_2.
+        #  https://starkscan.co/event/0x05bb8614095fac1ac9b405c27e7ce870804e85 \
+        # aa5924ef2494fec46792b6b8dc_2.
         loan_id = int(event["data"][0], base=16)
         user = event["data"][1]
         # TODO: Is this assert needed?
@@ -493,7 +495,8 @@ class HashstackV0State(State):
             # `, `is_loan_withdrawn`, `debt_category`, `state`,
             # `l3_integration`, `created_at`, [`timestamp`] `timestamp`.
             # Example: 
-            # https://starkscan.co/event/0x07731e48d33f6b916f4e4e81e9cee1d282e20e970717e11ad440f73cc1a73484_1.
+            # https://starkscan.co/event/0x07731e48d33f6b916f4e4e81e9cee1d282e2 \
+            # 0e970717e11ad440f73cc1a73484_1.
             loan_id = int(event["data"][0], base=16)
             user = event["data"][1]
             assert self.loan_entities[loan_id].user == user
@@ -504,7 +507,8 @@ class HashstackV0State(State):
             borrowed_collateral_face_amount = decimal.Decimal(
                 str(int(event["data"][7], base=16))
             )
-            # Based on the documentation, it seems that it's only possible to repay the whole amount.
+            # Based on the documentation, it seems that it's only possible to 
+            # repay the whole amount.
             assert borrowed_collateral_face_amount == decimal.Decimal("0")
             debt_category = int(event["data"][10], base=16)
 
@@ -696,7 +700,8 @@ class HashstackV0State(State):
         # `l3_integration`, `created_at`, [`liquidator`]
         #  `liquidator`, [`timestamp`] `timestamp`.
         # Example:
-        #  https://starkscan.co/event/0x0774bebd15505d3f950c362d813dc81c6320ae92cb396b6469fd1ac5d8ff62dc_8.
+        #  https://starkscan.co/event/0x0774bebd15505d3f950c362d813dc81c6320ae9 \
+        # 2cb396b6469fd1ac5d8ff62dc_8.
         loan_id = int(event["data"][0], base=16)
         user = event["data"][1]
         assert self.loan_entities[loan_id].user == user
@@ -707,7 +712,8 @@ class HashstackV0State(State):
         borrowed_collateral_face_amount = decimal.Decimal(
             str(int(event["data"][7], base=16))
         )
-        # Based on the documentation, it seems that it's only possible to liquidate the whole amount.
+        # Based on the documentation, it seems that it's only
+        #  possible to liquidate the whole amount.
         assert borrowed_collateral_face_amount == decimal.Decimal("0")
         debt_category = int(event["data"][10], base=16)
 
@@ -798,6 +804,12 @@ class HashstackV0State(State):
         return max_liquidated_amount
 
     def compute_number_of_active_users(self) -> int:
+        """
+        Count the number of unique users who have either collateral or debt.
+        
+        Returns:
+            int: Number of unique users with active positions (collateral or debt)
+        """
         unique_active_users = {
             loan_entity.user
             for loan_entity in self.loan_entities.values()
@@ -806,6 +818,12 @@ class HashstackV0State(State):
         return len(unique_active_users)
 
     def compute_number_of_active_borrowers(self) -> int:
+        """
+        Count the number of unique users who currently have outstanding debt.
+
+        Returns:
+            int: Number of unique users with active loans
+        """
         unique_active_borrowers = {
             loan_entity.user
             for loan_entity in self.loan_entities.values()
