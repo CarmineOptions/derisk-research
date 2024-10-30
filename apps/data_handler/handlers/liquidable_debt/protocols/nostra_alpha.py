@@ -1,3 +1,5 @@
+"""Module docstring placeholder."""
+
 from data_handler.handlers.liquidable_debt.debt_handlers import (
     NostraAlphaDBLiquidableDebtDataHandler,
 )
@@ -25,9 +27,7 @@ def run() -> None:
         loan_state_class=NostraAlphaState, loan_entity_class=NostraAlphaLoanEntity
     )
 
-    data = handler.calculate_liquidable_debt(
-        protocol_name=ProtocolIDs.NOSTRA_ALPHA.value
-    )
+    data = handler.calculate_liquidable_debt(protocol_name=ProtocolIDs.NOSTRA_ALPHA.value)
 
     for liquidable_debt_info in data:
         db_row = LiquidableDebt(

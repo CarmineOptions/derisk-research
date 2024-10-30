@@ -1,3 +1,5 @@
+"""Module docstring placeholder."""
+
 import logging
 from time import monotonic
 
@@ -29,7 +31,7 @@ class NostraMainnetStateComputation(LoanStateComputationBase):
     PROTOCOL_ADDRESSES = ProtocolAddresses().NOSTRA_MAINNET_ADDRESSES
     INTEREST_RATES_KEYS = ["InterestStateUpdated"]
     EVENTS_METHODS_MAPPING = NOSTRA_MAINNET_EVENTS_TO_METHODS
-    ADDRESSES_TO_EVENTS = (NOSTRA_MAINNET_ADDRESSES_TO_EVENTS,)
+    ADDRESSES_TO_EVENTS = (NOSTRA_MAINNET_ADDRESSES_TO_EVENTS, )
 
     EVENTS_MAPPING = NOSTRA_EVENTS_MAPPING
 
@@ -89,9 +91,7 @@ class NostraMainnetStateComputation(LoanStateComputationBase):
         :return: pd.DataFrame
         """
         nostra_mainnet_state = NostraMainnetState()
-        events_with_interest_rate = (
-            list(self.EVENTS_MAPPING.keys()) + self.INTEREST_RATES_KEYS
-        )
+        events_with_interest_rate = (list(self.EVENTS_MAPPING.keys()) + self.INTEREST_RATES_KEYS)
 
         # Init DataFrame
         df = pd.DataFrame(data)

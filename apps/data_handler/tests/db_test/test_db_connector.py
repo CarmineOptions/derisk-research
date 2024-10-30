@@ -49,8 +49,7 @@ def sample_batch_loan_states():
             timestamp=1000000,
             block=12345,
             deposit=10.0,
-        )
-        for i in range(3)
+        ) for i in range(3)
     ]
     return batch_loan_states
 
@@ -120,9 +119,7 @@ def test_get_object_positive(mock_db_connector, sample_loan_state):
     mock_db_connector.get_object.return_value = sample_loan_state
     result = mock_db_connector.get_object(LoanState, sample_loan_state.id)
     assert result.user == "test_user"
-    mock_db_connector.get_object.assert_called_once_with(
-        LoanState, sample_loan_state.id
-    )
+    mock_db_connector.get_object.assert_called_once_with(LoanState, sample_loan_state.id)
 
 
 def test_get_object_not_found(mock_db_connector):
@@ -145,9 +142,7 @@ def test_delete_object_positive(mock_db_connector, sample_loan_state):
     """
     mock_db_connector.delete_object.return_value = None
     mock_db_connector.delete_object(LoanState, sample_loan_state.id)
-    mock_db_connector.delete_object.assert_called_once_with(
-        LoanState, sample_loan_state.id
-    )
+    mock_db_connector.delete_object.assert_called_once_with(LoanState, sample_loan_state.id)
 
 
 def test_get_latest_block_loans(mock_db_connector):
@@ -211,9 +206,7 @@ def test_get_last_interest_rate_record_by_protocol_id(mock_db_connector):
     mock_db_connector.get_last_interest_rate_record_by_protocol_id.return_value = (
         mock_interest_rate
     )
-    result = mock_db_connector.get_last_interest_rate_record_by_protocol_id(
-        ProtocolIDs.ZKLEND
-    )
+    result = mock_db_connector.get_last_interest_rate_record_by_protocol_id(ProtocolIDs.ZKLEND)
     assert result.protocol_id == ProtocolIDs.ZKLEND.value
     assert result.block == 12345
 
@@ -226,9 +219,7 @@ def test_write_batch_to_db(mock_db_connector, sample_batch_loan_states):
     :return: None
     """
     mock_db_connector.write_batch_to_db(sample_batch_loan_states)
-    mock_db_connector.write_batch_to_db.assert_called_once_with(
-        sample_batch_loan_states
-    )
+    mock_db_connector.write_batch_to_db.assert_called_once_with(sample_batch_loan_states)
 
 
 def test_get_loans(mock_db_connector, sample_batch_loan_states):
@@ -253,9 +244,7 @@ def test_get_last_hashstack_loan_state(mock_db_connector, sample_hashstack_loan_
     :param sample_hashstack_loan_state: Sample hashstack loan state
     :return: None
     """
-    mock_db_connector.get_last_hashstack_loan_state.return_value = (
-        sample_hashstack_loan_state
-    )
+    mock_db_connector.get_last_hashstack_loan_state.return_value = (sample_hashstack_loan_state)
     result = mock_db_connector.get_last_hashstack_loan_state("test_user")
     assert result.user_id == "test_user"
     assert result.loan_id == 1

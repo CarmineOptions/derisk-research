@@ -1,9 +1,12 @@
+"""Module docstring placeholder."""
+
 import time
 
 from data_handler.handlers.order_books.abstractions import AbstractionAPIConnector
 
 
 class EkuboAPIConnector(AbstractionAPIConnector):
+    """class docstring"""
     API_URL = "https://mainnet-api.ekubo.org"
 
     @classmethod

@@ -1,3 +1,5 @@
+"""Module docstring placeholder."""
+
 from sqlalchemy import DECIMAL, BigInteger, Column, String
 from sqlalchemy.types import JSON
 

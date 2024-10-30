@@ -19,9 +19,7 @@ class ZklendDataParser:
     """
 
     @classmethod
-    def parse_accumulators_sync_event(
-        cls, event_data: list[Any]
-    ) -> DataAccumulatorsSyncEvent:
+    def parse_accumulators_sync_event(cls, event_data: list[Any]) -> DataAccumulatorsSyncEvent:
         """
         Parses the AccumulatorsSync event data into a human-readable format using the DataAccumulatorsSyncEvent serializer.
 

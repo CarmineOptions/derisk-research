@@ -1,3 +1,5 @@
+"""Module docstring placeholder."""
+
 from uuid import uuid4
 
 from sqlalchemy import UUID, BigInteger, Column, MetaData, String

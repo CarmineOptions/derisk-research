@@ -1,9 +1,18 @@
+"""
+Module for processing order book data, allowing calculation of the quantity of a base token needed 
+to impact the price by a specified ratio on various DEX platforms.
+"""
 from decimal import Decimal
 
 from data_handler.db.crud import DBConnector
 
 
 class OrderBookProcessor:
+    """
+    Processes order book data for a specified DEX and token pair, enabling calculation of the
+    quantity needed to achieve a specified price change ratio.
+    """
+
     def __init__(self, dex: str, token_a: str, token_b: str):
         """
         Initialize the order book processor.
@@ -23,9 +32,7 @@ class OrderBookProcessor:
         """
         # Fetch order book
         connector = DBConnector()
-        order_book = connector.get_latest_order_book(
-            self.dex, self.token_a, self.token_b
-        )
+        order_book = connector.get_latest_order_book(self.dex, self.token_a, self.token_b)
         if not order_book:
             raise ValueError("No order book found for the given DEX and token pair.")
 

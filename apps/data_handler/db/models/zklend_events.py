@@ -1,3 +1,5 @@
+"""Module docstring placeholder."""
+
 from decimal import Decimal
 
 from sqlalchemy import Numeric, String
@@ -17,9 +19,7 @@ class AccumulatorsSyncEventData(EventBaseModel):
     __tablename__ = "accumulators_sync_event_data"
 
     token: Mapped[str] = mapped_column(String, nullable=False)
-    lending_accumulator: Mapped[Decimal] = mapped_column(
-        Numeric(38, 18), nullable=False
-    )
+    lending_accumulator: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
     debt_accumulator: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
 
 

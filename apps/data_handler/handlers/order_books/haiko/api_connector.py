@@ -1,7 +1,10 @@
+"""Module docstring placeholder."""
+
 from data_handler.handlers.order_books.abstractions import AbstractionAPIConnector
 
 
 class HaikoAPIConnector(AbstractionAPIConnector):
+    """class docstring"""
     API_URL = "https://app.haiko.xyz/api/v1"
 
     @classmethod
@@ -105,6 +108,7 @@ class HaikoAPIConnector(AbstractionAPIConnector):
 
 
 class HaikoBlastAPIConnector(AbstractionAPIConnector):
+    """class docstring"""
     API_URL = "https://starknet-mainnet.blastapi.io"
     PROJECT_ID = "a419bd5a-ec9e-40a7-93a4-d16467fb79b3"
 

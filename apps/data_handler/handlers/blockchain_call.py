@@ -1,3 +1,6 @@
+"""
+Provides utility functions for making blockchain calls on StarkNet.
+"""
 import time
 
 import starknet_py.cairo.felt
@@ -10,6 +13,9 @@ NET = FullNodeClient(node_url="https://starknet-mainnet.public.blastapi.io")
 
 
 async def func_call(addr, selector, calldata):
+    """
+    Executes a contract call with retry on StarkNet.
+    """
     call = starknet_py.net.client_models.Call(
         to_addr=addr,
         selector=starknet_py.hash.selector.get_selector_from_name(selector),
@@ -17,20 +23,25 @@ async def func_call(addr, selector, calldata):
     )
     try:
         res = await NET.call_contract(call)
-    except:
+    except BaseException:
         time.sleep(10)
         res = await NET.call_contract(call)
     return res
 
 
 async def balance_of(token_addr, holder_addr):
-    res = await func_call(
-        int(token_addr, base=16), "balanceOf", [int(holder_addr, base=16)]
-    )
+    """
+    Retrieves the token balance of a specified holder.
+    """
+    res = await func_call(int(token_addr, base=16), "balanceOf", [int(holder_addr, base=16)])
     return res[0]
 
 
 async def get_myswap_pool(id):
+    """
+    Fetches details of a MySwap pool by ID.
+    """
+
     res = await func_call(
         467359278613506166151492726487752216059557962335532790304583050955123345960,
         "get_pool",

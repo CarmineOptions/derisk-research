@@ -1,3 +1,5 @@
+"""Module docstring placeholder."""
+
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -10,6 +12,7 @@ from .constants import TOKEN_MAPPING, TokenConfig
 
 
 class OrderBookBase(ABC):
+    """class docstring"""
     DEX: str = None
     MIN_PRICE_RANGE = Decimal("0.0001")
     MAX_PRICE_RANGE = Decimal("100.0")
@@ -84,7 +87,7 @@ class OrderBookBase(ABC):
         :param tick: tick value
         :return: square root ratio
         """
-        return (Decimal("1.000001").sqrt() ** tick) * (Decimal(2) ** 128)
+        return (Decimal("1.000001").sqrt()**tick) * (Decimal(2)**128)
 
     @abstractmethod
     def tick_to_price(self, tick: Decimal) -> Decimal:

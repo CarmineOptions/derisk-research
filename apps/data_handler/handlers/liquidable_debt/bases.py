@@ -1,3 +1,5 @@
+"""Module docstring placeholder."""
+
 from abc import ABC, abstractmethod
 
 
@@ -10,4 +12,5 @@ class Collector(ABC):
 
     @abstractmethod
     def collect_data(self, *args, **kwargs):
+        """fn docstring"""
         pass

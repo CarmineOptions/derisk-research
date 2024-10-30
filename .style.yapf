@@ -1,0 +1,6 @@
+[style]
+based_on_style = pep8
+column_limit = 100
+split_before_logical_operator = true
+dedent_closing_brackets = true
+split_before_first_argument = true

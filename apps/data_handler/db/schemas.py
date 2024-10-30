@@ -1,3 +1,5 @@
+"""Module docstring placeholder."""
+
 import decimal
 from decimal import Decimal
 from typing import Dict, List, Optional
@@ -6,7 +8,7 @@ from pydantic import BaseModel, field_validator
 
 
 class LoanStateBase(BaseModel):
-    protocol_id: str
+    """class docstring"""
     block: int
     timestamp: int
     user: Optional[str]
@@ -15,10 +17,12 @@ class LoanStateBase(BaseModel):
     deposit: Optional[Dict]
 
     class Config:
+        """class docstring"""
         from_attributes = True
 
 
 class LoanStateResponse(LoanStateBase):
+    """class docstring"""
     pass
 
 

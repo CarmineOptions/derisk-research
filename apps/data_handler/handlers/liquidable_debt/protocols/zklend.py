@@ -1,3 +1,5 @@
+"""Module docstring placeholder."""
+
 import logging
 
 from data_handler.handlers.liquidable_debt.debt_handlers import (

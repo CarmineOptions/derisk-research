@@ -1,3 +1,5 @@
+"""Module docstring placeholder."""
+
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Set
@@ -6,6 +8,7 @@ from typing import Set
 # Temporary solution.
 # TODO remove it when all protocols with interest rate models will be available
 class AvailableProtocolID(Enum):
+    """class docstring"""
     # nostra protocols
     NOSTRA_ALPHA: str = "Nostra_alpha"
     NOSTRA_MAINNET: str = "Nostra_mainnet"
@@ -23,9 +26,8 @@ class ProtocolAddresses:
         default_factory=lambda: "0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05"
     )
     HASHSTACK_V0_ADDRESSES: Set[str] = field(
-        default_factory=lambda: {
-            "0x03dcf5c72ba60eb7b2fe151032769d49dd3df6b04fa3141dffd6e2aa162b7a6e"
-        }
+        default_factory=lambda:
+        {"0x03dcf5c72ba60eb7b2fe151032769d49dd3df6b04fa3141dffd6e2aa162b7a6e"}
     )
     HASHSTACK_V1_R_TOKENS: Set[str] = field(
         default_factory=lambda: {
@@ -110,10 +112,14 @@ class ProtocolAddresses:
 
 
 NOSTRA_EVENTS_MAPPING = {
-    "Mint": "process_debt_mint_event",
-    "Burn": "process_debt_burn_event",
-    "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Burn": "process_debt_burn_event",
-    "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Mint": "process_debt_mint_event",
+    "Mint":
+    "process_debt_mint_event",
+    "Burn":
+    "process_debt_burn_event",
+    "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Burn":
+    "process_debt_burn_event",
+    "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Mint":
+    "process_debt_mint_event",
 }
 
 FIRST_RUNNING_MAPPING = {

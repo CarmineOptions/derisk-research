@@ -1,10 +1,10 @@
 """
 Module: event.py
 
-Defines the `EventBaseModel` class for storing event data in the database. 
-This model includes attributes 
+Defines the `EventBaseModel` class for storing event data in the database.
+This model includes attributes
 like `event_name`, `block_number`, and `protocol_id`, using the `ProtocolIDs` e
-num to enforce valid protocol IDs. 
+num to enforce valid protocol IDs.
 Fields are indexed for efficient querying.
 """
 

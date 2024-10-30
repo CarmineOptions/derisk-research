@@ -1,3 +1,5 @@
+"""Module docstring placeholder."""
+
 class ProtocolExistenceError(Exception):
     """
     An exception that should be raised when a given protocol doesn't exist.

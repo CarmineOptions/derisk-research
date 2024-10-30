@@ -1,3 +1,8 @@
+"""
+Defines FastAPI endpoints for querying loan states, interest rates, 
+user health ratios, and order book records, with a 10 requests/second rate 
+limit per endpoint.
+"""
 import logging
 from typing import List, Optional
 
@@ -107,10 +112,8 @@ def get_last_interest_rate_by_block(
         raise HTTPException(status_code=400, detail="Invalid protocol ID")
 
     last_record = (
-        db.query(InterestRate)
-        .filter(InterestRate.protocol_id == protocol)
-        .order_by(InterestRate.block.desc())
-        .first()
+        db.query(InterestRate).filter(InterestRate.protocol_id == protocol
+                                      ).order_by(InterestRate.block.desc()).first()
     )
 
     return last_record
@@ -120,12 +123,8 @@ def get_last_interest_rate_by_block(
 @app.get("/health-ratio-per-user/{protocol}/")
 async def get_health_ratio_per_user(
     request: Request,
-    protocol: str = Path(
-        ...,
-    ),
-    user_id: str = Query(
-        ...,
-    ),
+    protocol: str = Path(..., ),
+    user_id: str = Query(..., ),
     db: Session = Depends(get_database),
 ):
     """
@@ -143,18 +142,13 @@ async def get_health_ratio_per_user(
         raise HTTPException(status_code=400, detail="Invalid protocol ID")
 
     if not user_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="User ID is required"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User ID is required")
 
     row = (
-        db.query(HealthRatioLevel)
-        .filter(
+        db.query(HealthRatioLevel).filter(
             HealthRatioLevel.protocol_id == protocol,
             HealthRatioLevel.user_id == user_id,
-        )
-        .order_by(desc(HealthRatioLevel.timestamp))
-        .first()
+        ).order_by(desc(HealthRatioLevel.timestamp)).first()
     )
 
     if not row:
@@ -181,14 +175,11 @@ def get_orderbook(
     logger.info(f"Fetching order book records for {base_token}/{quote_token} on {dex}")
 
     records = (
-        db.query(OrderBookModel)
-        .filter(
+        db.query(OrderBookModel).filter(
             OrderBookModel.token_a == base_token,
             OrderBookModel.token_b == quote_token,
             OrderBookModel.dex == dex,
-        )
-        .order_by(OrderBookModel.timestamp.desc())
-        .first()
+        ).order_by(OrderBookModel.timestamp.desc()).first()
     )
     print(f"Found {records} order book records")
     logger.info(f"Found {records} order book records")

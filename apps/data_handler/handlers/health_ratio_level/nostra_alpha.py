@@ -1,3 +1,5 @@
+"""Module docstring placeholder."""
+
 from data_handler.handlers.liquidable_debt.values import (
     HEALTH_FACTOR_FIELD_NAME,
     TIMESTAMP_FIELD_NAME,
@@ -10,6 +12,7 @@ from shared.constants import ProtocolIDs
 
 
 def run():
+    """fn docstring"""
     handler = NostrAlphaHealthRatioHandler()
 
     data = handler.calculate_health_ratio()

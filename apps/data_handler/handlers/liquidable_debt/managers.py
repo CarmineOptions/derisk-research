@@ -1,3 +1,5 @@
+"""Module docstring placeholder."""
+
 import os
 import shutil
 

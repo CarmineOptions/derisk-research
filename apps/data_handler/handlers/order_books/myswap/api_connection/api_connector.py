@@ -1,7 +1,10 @@
+"""Module docstring placeholder."""
+
 from data_handler.handlers.order_books.abstractions import AbstractionAPIConnector
 
 
 class MySwapAPIConnector(AbstractionAPIConnector):
+    """class docstring"""
     API_URL = "https://myswap-cl-charts.s3.amazonaws.com"
 
     @classmethod

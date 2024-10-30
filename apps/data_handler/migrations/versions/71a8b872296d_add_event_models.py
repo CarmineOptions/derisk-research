@@ -25,12 +25,8 @@ def upgrade() -> None:
     op.create_table(
         "accumulators_sync_event_data",
         sa.Column("token", sa.String(), nullable=False),
-        sa.Column(
-            "lending_accumulator", sa.Numeric(precision=38, scale=18), nullable=False
-        ),
-        sa.Column(
-            "debt_accumulator", sa.Numeric(precision=38, scale=18), nullable=False
-        ),
+        sa.Column("lending_accumulator", sa.Numeric(precision=38, scale=18), nullable=False),
+        sa.Column("debt_accumulator", sa.Numeric(precision=38, scale=18), nullable=False),
         sa.Column("event_name", sa.String(), nullable=False),
         sa.Column("block_number", sa.Integer(), nullable=False),
         sa.Column(
@@ -58,16 +54,10 @@ def upgrade() -> None:
         sa.Column("liquidator", sa.String(), nullable=False),
         sa.Column("user", sa.String(), nullable=False),
         sa.Column("debt_token", sa.String(), nullable=False),
-        sa.Column(
-            "debt_raw_amount", sa.Numeric(precision=38, scale=18), nullable=False
-        ),
-        sa.Column(
-            "debt_face_amount", sa.Numeric(precision=38, scale=18), nullable=False
-        ),
+        sa.Column("debt_raw_amount", sa.Numeric(precision=38, scale=18), nullable=False),
+        sa.Column("debt_face_amount", sa.Numeric(precision=38, scale=18), nullable=False),
         sa.Column("collateral_token", sa.String(), nullable=False),
-        sa.Column(
-            "collateral_amount", sa.Numeric(precision=38, scale=18), nullable=False
-        ),
+        sa.Column("collateral_amount", sa.Numeric(precision=38, scale=18), nullable=False),
         sa.Column("event_name", sa.String(), nullable=False),
         sa.Column("block_number", sa.Integer(), nullable=False),
         sa.Column(
