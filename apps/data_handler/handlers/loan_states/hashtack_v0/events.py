@@ -88,13 +88,20 @@ EVENTS_METHODS_MAPPING: dict[str, str] = {
 
 class HashstackV0LoanEntity(LoanEntity):
     """
-    A class that describes the Hashstack V0 loan entity. On top of the abstract `LoanEntity`, it implements the `user`,
-    `debt_category`, `original_collateral` and `borrowed_collateral` attributes in order to help with accounting for
-    the changes in collateral. This is because under Hashstack V0, each user can have multiple loans which are treated
-    completely separately (including liquidations). The `debt_category` attribute determines liquidation conditions.
-    Also, because Hashstack V0 provides leverage to its users, we split `collateral` into `original_collateral`
-    (collateral deposited by the user directly) and `borrowed_collateral` (the current state, i.e. token and amount of
-    the borrowed funds). We also use face amounts (no need to convert amounts using interest rates) because Hashstack
+    A class that describes the Hashstack V0 loan entity. 
+    On top of the abstract `LoanEntity`, it implements the `user`,
+    `debt_category`, `original_collateral` and `borrowed_collateral` 
+    attributes in order to help with accounting for
+    the changes in collateral. This is because under Hashstack V0, 
+    each user can have multiple loans which are treated
+    completely separately (including liquidations). The `debt_category` 
+    attribute determines liquidation conditions.
+    Also, because Hashstack V0 provides leverage to its users, we split
+      `collateral` into `original_collateral`
+    (collateral deposited by the user directly) and `borrowed_collateral` 
+    (the current state, i.e. token and amount of
+    the borrowed funds). We also use face amounts 
+    (no need to convert amounts using interest rates) because Hashstack
     V0 doesn't publish interest rate events.
     """
 
@@ -129,7 +136,8 @@ class HashstackV0LoanEntity(LoanEntity):
                 prices=prices,
             )
         if standardized:
-            # Denominator is the value of (risk-adjusted) collateral at which the loan entity can be liquidated.
+            # Denominator is the value of (risk-adjusted) collateral 
+            # at which the loan entity can be liquidated.
             health_factor_liquidation_threshold = (
                 decimal.Decimal("1.06")
                 if self.debt_category == 1
@@ -164,8 +172,10 @@ class HashstackV0LoanEntity(LoanEntity):
 
 class HashstackV0State(State):
     """
-    A class that describes the state of all Hashstack V0 loan entities. It implements a method for correct processing
-    of every relevant event. Hashstack V0 events always contain the final state of the loan entity's collateral and
+    A class that describes the state of all Hashstack V0 loan entities.
+      It implements a method for correct processing
+    of every relevant event. Hashstack V0 events always contain 
+    the final state of the loan entity's collateral and
     debt, thus we always rewrite the balances whenever they are updated.
     """
 
@@ -181,15 +191,21 @@ class HashstackV0State(State):
             verbose_user=verbose_user,
         )
 
-    # TODO: Reduce most of the events processing to `rewrite_original_collateral`, `rewrite_borrowed_collateral`, and
+    # TODO: Reduce most of the events processing to `rewrite_original_collateral`, 
+    # `rewrite_borrowed_collateral`, and
     # `rewrite_debt`?
 
     def process_new_loan_event(self, event: pandas.Series) -> None:
-        # The order of the values in the `data` column is: [`loan_record`] `id`, `owner`, `market`, `commitment`,
-        # `amount`, ``, `current_market`, `current_amount`, ``, `is_loan_withdrawn`, `debt_category`, `state`,
-        # `l3_integration`, `created_at`, [`collateral`] `market`, `amount`, ``, `current_amount`, ``, `commitment`,
-        # `timelock_validity`, `is_timelock_activated`, `activation_time`, [`timestamp`] `timestamp`.
-        # Example: https://starkscan.co/event/0x04ff9acb9154603f1fc14df328a3ea53a6c58087aaac0bfbe9cc7f2565777db8_2.
+        # The order of the values in the `data` column is: 
+        # [`loan_record`] `id`, `owner`, `market`, `commitment`,
+        # `amount`, ``, `current_market`, `current_amount`, ``, 
+        # `is_loan_withdrawn`, `debt_category`, `state`,
+        # `l3_integration`, `created_at`, [`collateral`] `market`, `amount`, ``, `current_amount`, `
+        # `, `commitment`,
+        # `timelock_validity`, `is_timelock_activated`, `activation_time`,
+        #  [`timestamp`] `timestamp`.
+        # Example: https://starkscan.co/event/0x04ff9acb9154603f1fc14df328a3ea53a6c \
+        # 58087aaac0bfbe9cc7f2565777db8_2.
         loan_id = int(event["data"][0], base=16)
         user = event["data"][1]
         debt_token = get_symbol(event["data"][2])
@@ -270,7 +286,9 @@ class HashstackV0State(State):
         # The order of the values in the `data` column is: [`collateral_record`] `market`, `amount`, ``,
         # `current_amount`, ``, `commitment`, `timelock_validity`, `is_timelock_activated`, `activation_time`,
         # [`loan_id`] `loan_id`, [`amount_added`] `amount_added`, ``, [`timestamp`] `timestamp`.
-        # Example: https://starkscan.co/event/0x02df71b02fce15f2770533328d1e645b957ac347d96bd730466a2e087f24ee07_2.
+        # Example:
+        # https://starkscan.co/event/0x02df71b02fce15f2770533328d1e645b957ac347d96bd730466a2e087f24ee07_2
+
         loan_id = int(event["data"][9], base=16)
         original_collateral_token = get_symbol(event["data"][0])
         original_collateral_face_amount = decimal.Decimal(
@@ -302,10 +320,13 @@ class HashstackV0State(State):
             )
 
     def process_collateral_withdrawal_event(self, event: pandas.Series) -> None:
-        # The order of the values in the `data` column is: [`collateral_record`] `market`, `amount`, ``,
+        # The order of the values in the `data` column is: [`collateral_record`] 
+        # `market`, `amount`, ``,
         # `current_amount`, ``, `commitment`, `timelock_validity`, `is_timelock_activated`, `activation_time`,
-        # [`loan_id`] `loan_id`, [`amount_withdrawn`] `amount_withdrawn`, ``, [`timestamp`] `timestamp`.
-        # Example: https://starkscan.co/event/0x03809ebcaad1647f2c6d5294706e0dc619317c240b5554848c454683a18b75ba_5.
+        # [`loan_id`] `loan_id`, [`amount_withdrawn`] `amount_withdrawn`, ``, 
+        # [`timestamp`] `timestamp`.
+        # Example: 
+        # https://starkscan.co/event/0x03809ebcaad1647f2c6d5294706e0dc619317c240b5554848c454683a18b75ba_5.
         loan_id = int(event["data"][9], base=16)
         original_collateral_token = get_symbol(event["data"][0])
         original_collateral_face_amount = decimal.Decimal(
@@ -337,10 +358,14 @@ class HashstackV0State(State):
             )
 
     def process_loan_withdrawal_event(self, event: pandas.Series) -> None:
-        # The order of the values in the `data` column is: [`loan_record`] `id`, `owner`, `market`, `commitment`,
-        # `amount`, ``, `current_market`, `current_amount`, ``, `is_loan_withdrawn`, `debt_category`, `state`,
-        # `l3_integration`, `created_at`, [`amount_withdrawn`] `amount_withdrawn`, ``, [`timestamp`] `timestamp`.
-        # Example: https://starkscan.co/event/0x05bb8614095fac1ac9b405c27e7ce870804e85aa5924ef2494fec46792b6b8dc_2.
+        # The order of the values in the `data` column is: 
+        # [`loan_record`] `id`, `owner`, `market`, `commitment`,
+        # `amount`, ``, `current_market`, `current_amount`, ``,
+        #  `is_loan_withdrawn`, `debt_category`, `state`,
+        # `l3_integration`, `created_at`, [`amount_withdrawn`] 
+        # `amount_withdrawn`, ``, [`timestamp`] `timestamp`.
+        # Example:
+        #  https://starkscan.co/event/0x05bb8614095fac1ac9b405c27e7ce870804e85aa5924ef2494fec46792b6b8dc_2.
         loan_id = int(event["data"][0], base=16)
         user = event["data"][1]
         # TODO: Is this assert needed?
@@ -398,10 +423,13 @@ class HashstackV0State(State):
             )
 
     def process_loan_repaid_event(self, event: pandas.Series) -> None:
-        # The order of the values in the `data` column is: [`loan_record`] `id`, `owner`, `market`, `commitment`,
-        # `amount`, ``, `current_market`, `current_amount`, ``, `is_loan_withdrawn`, `debt_category`, `state`,
+        # The order of the values in the `data`
+        #  column is: [`loan_record`] `id`, `owner`, `market`, `commitment`,
+        # `amount`, ``, `current_market`, `current_amount`, `
+        # `, `is_loan_withdrawn`, `debt_category`, `state`,
         # `l3_integration`, `created_at`, [`timestamp`] `timestamp`.
-        # Example: https://starkscan.co/event/0x07731e48d33f6b916f4e4e81e9cee1d282e20e970717e11ad440f73cc1a73484_1.
+        # Example: 
+        # https://starkscan.co/event/0x07731e48d33f6b916f4e4e81e9cee1d282e20e970717e11ad440f73cc1a73484_1.
         loan_id = int(event["data"][0], base=16)
         user = event["data"][1]
         assert self.loan_entities[loan_id].user == user
@@ -449,11 +477,15 @@ class HashstackV0State(State):
             )
 
     def process_loan_swap_event(self, event: pandas.Series) -> None:
-        # The order of the values in the `data` column is: [`old_loan_record`] `id`, `owner`, `market`, `commitment`,
-        # `amount`, ``, `current_market`, `current_amount`, ``, `is_loan_withdrawn`, `debt_category`, `state`,
-        # `l3_integration`, `created_at`, [`new_loan_record`] `id`, `owner`, `market`, `commitment`, `amount`, ``,
-        # `current_market`, `current_amount`, ``, `is_loan_withdrawn`, `debt_category`, `state`, `l3_integration`,
+        # The order of the values in the `data` column is: 
+        # [`old_loan_record`] `id`, `owner`, `market`, `commit
+        # , `is_loan_withdrawn`, `debt_category`, `state`,
+        # `l3_integration`, `created_at`, [`new_loan_record`] `id`, `owner`, `market`,
+        #  `commitment`, `amount`, ``,
+        # `current_market`, `current_amount`, ``, `is_loan_withdrawn`,
+        #  `debt_category`, `state`, `l3_integration`,
         # `created_at`, [`timestamp`] `timestamp`.
+        # 
         # Example: https://starkscan.co/event/0x00ad0b6b00ce68a1d7f5b79cd550d7f4a15b1708b632b88985a4f6faeb42d5b1_7.
         old_loan_id = int(event["data"][0], base=16)
         old_user = event["data"][1]
@@ -523,11 +555,15 @@ class HashstackV0State(State):
             )
 
     def process_loan_interest_deducted_event(self, event: pandas.Series) -> None:
-        # The order of the values in the `data` column is: [`collateral_record`] `market`, `amount`, ``,
-        # `current_amount`, ``, `commitment`, `timelock_validity`, `is_timelock_activated`, `activation_time`,
-        # [`accrued_interest`] `accrued_interest`, ``, [`loan_id`] `loan_id`, [`amount_withdrawn`] `amount_withdrawn`,
+        # The order of the values in the 
+        # `data` column is: [`collateral_record`] `market`, `amount`, ``,
+        # `current_amount`, ``, `commitment`, `timelock_validity`, 
+        # `is_timelock_activated`, `activation_time`,
+        # [`accrued_interest`] `accrued_interest`, ``, 
+        # [`loan_id`] `loan_id`, [`amount_withdrawn`] `amount_withdrawn`,
         # ``, [`timestamp`] `timestamp`.
-        # Example: https://starkscan.co/event/0x050db0ed93d7abbfb152e16608d4cf4dbe0b686b134f890dd0ad8418b203c580_2.
+        # Example: 
+        # https://starkscan.co/event/0x050db0ed93d7abbfb152e16608d4cf4dbe0b686b134f890dd0ad8418b203c580_2.
         loan_id = int(event["data"][11], base=16)
         original_collateral_token = get_symbol(event["data"][0])
         original_collateral_face_amount = decimal.Decimal(
@@ -565,10 +601,14 @@ class HashstackV0State(State):
             )
 
     def process_liquidated_event(self, event: pandas.Series) -> None:
-        # The order of the values in the `data` column is: [`loan_record`] `id`, `owner`, `market`, `commitment`,
-        # `amount`, ``, `current_market`, `current_amount`, ``, `is_loan_withdrawn`, `debt_category`, `state`,
-        # `l3_integration`, `created_at`, [`liquidator`] `liquidator`, [`timestamp`] `timestamp`.
-        # Example: https://starkscan.co/event/0x0774bebd15505d3f950c362d813dc81c6320ae92cb396b6469fd1ac5d8ff62dc_8.
+        # The order of the values in the `data` column is: 
+        # [`loan_record`] `id`, `owner`, `market`, `commitment`,
+        # `amount`, ``, `current_market`, `current_amount`, ``
+        # , `is_loan_withdrawn`, `debt_category`, `state`,
+        # `l3_integration`, `created_at`, [`liquidator`]
+        #  `liquidator`, [`timestamp`] `timestamp`.
+        # Example:
+        #  https://starkscan.co/event/0x0774bebd15505d3f950c362d813dc81c6320ae92cb396b6469fd1ac5d8ff62dc_8.
         loan_id = int(event["data"][0], base=16)
         user = event["data"][1]
         assert self.loan_entities[loan_id].user == user
