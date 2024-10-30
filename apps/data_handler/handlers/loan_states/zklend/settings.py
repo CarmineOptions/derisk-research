@@ -82,9 +82,7 @@ TOKEN_SETTINGS: dict[str, TokenSettings] = {
         collateral_factor=ZKLEND_SPECIFIC_TOKEN_SETTINGS[token].collateral_factor,
         debt_factor=ZKLEND_SPECIFIC_TOKEN_SETTINGS[token].debt_factor,
         liquidation_bonus=ZKLEND_SPECIFIC_TOKEN_SETTINGS[token].liquidation_bonus,
-        protocol_token_address=ZKLEND_SPECIFIC_TOKEN_SETTINGS[
-            token
-        ].protocol_token_address,
+        protocol_token_address=ZKLEND_SPECIFIC_TOKEN_SETTINGS[token].protocol_token_address,
     )
     for token in TOKEN_SETTINGS
 }

@@ -27,7 +27,7 @@ connector = DBConnector()
 def run_loan_states_computation_for_nostra_alpha():
     """
     Execute loan state computation for Nostra Alpha protocol.
-    
+
     Measures execution time and logs the progress of the computation.
     """
     start = monotonic()
@@ -47,9 +47,9 @@ def run_loan_states_computation_for_nostra_alpha():
 def uniswap_v2_order_book():
     """
     Fetch current price and liquidity for all token pairs from Uniswap V2 AMMs.
-    
+
     Iterates through all possible token combinations and stores their order book data.
-    
+
     Raises:
         Exception: Logs any errors during processing of individual token pairs
     """
@@ -72,7 +72,7 @@ def uniswap_v2_order_book():
 def run_liquidable_debt_computation_for_zklend():
     """
     Execute liquidable debt computation for zkLend protocol.
-    
+
     Logs the start and completion of the computation process.
     """
     logging.info("Starting zkLend liquidable debt computation")
@@ -84,7 +84,7 @@ def run_liquidable_debt_computation_for_zklend():
 def run_liquidable_debt_computation_for_nostra_alpha():
     """
     Execute liquidable debt computation for Nostra Alpha protocol.
-    
+
     Logs the start and completion of the computation process.
     """
     logging.info("Starting nostra alpha liquidable debt computation")
@@ -96,7 +96,7 @@ def run_liquidable_debt_computation_for_nostra_alpha():
 def run_liquidable_debt_computation_for_hashstack_v0():
     """
     Execute liquidable debt computation for Hashstack V0 protocol.
-    
+
     Logs the start and completion of the computation process.
     """
     logging.info("Starting hashstack v0 liquidable debt computation")
@@ -108,7 +108,7 @@ def run_liquidable_debt_computation_for_hashstack_v0():
 def run_liquidable_debt_computation_for_nostra_mainnet():
     """
     Execute liquidable debt computation for Nostra Mainnet protocol.
-    
+
     Logs the start and completion of the computation process.
     """
     logging.info("Starting nostra mainnet liquidable debt computation")
@@ -120,7 +120,7 @@ def run_liquidable_debt_computation_for_nostra_mainnet():
 def run_liquidable_debt_computation_for_hashstack_v1():
     """
     Execute liquidable debt computation for Hashstack V1 protocol.
-    
+
     Logs the start and completion of the computation process.
     """
     logging.info("Starting hashstack v1 liquidable debt computation")

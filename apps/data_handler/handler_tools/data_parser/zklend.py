@@ -1,6 +1,7 @@
 """
 This module contains the logic to parse the zkLend data to human-readable format.
 """
+
 from typing import Any, List
 from data_handler.handler_tools.data_parser.serializers import (
     DataAccumulatorsSyncEvent,
@@ -18,11 +19,9 @@ class ZklendDataParser:
     """
 
     @classmethod
-    def parse_accumulators_sync_event(
-        cls, event_data: list[Any]
-    ) -> DataAccumulatorsSyncEvent:
+    def parse_accumulators_sync_event(cls, event_data: list[Any]) -> DataAccumulatorsSyncEvent:
         """
-        Parses the AccumulatorsSync event data into a human-readable 
+        Parses the AccumulatorsSync event data into a human-readable
         format using the DataAccumulatorsSyncEvent serializer.
 
         Args:
@@ -54,7 +53,7 @@ class ZklendDataParser:
     @classmethod
     def parse_withdrawal_event(cls, event_data: list[Any]) -> WithdrawalEventData:
         """
-        Parses the Withdrawal event data into a human-readable format 
+        Parses the Withdrawal event data into a human-readable format
         using the WithdrawalEventData serializer.
 
         The event data is fetched from on-chain logs and is structured in the following way:
@@ -64,12 +63,12 @@ class ZklendDataParser:
         - event_data[3]: Additional data, if applicable (e.g., transaction ID).
 
         Args:
-            event_data (list[Any]): A list containing the raw event data, 
+            event_data (list[Any]): A list containing the raw event data,
             typically with 3 or more elements:
                 user address, amount withdrawn, token address, and additional data.
 
         Returns:
-            WithdrawalEventData: A Pydantic model with the parsed and 
+            WithdrawalEventData: A Pydantic model with the parsed and
             validated event data in a human-readable format.
         """
         return WithdrawalEventData(
@@ -84,7 +83,7 @@ class ZklendDataParser:
         Parses the Borrowing event data.
 
         Args:
-            event_data (list[Any]): A list containing the raw 
+            event_data (list[Any]): A list containing the raw
             event data, typically with 4 elements.
 
         Returns:
@@ -100,11 +99,11 @@ class ZklendDataParser:
     @classmethod
     def parse_repayment_event(cls, event_data: List[Any]) -> RepaymentEventData:
         """
-        Parses the Repayment event data into a human-readable 
+        Parses the Repayment event data into a human-readable
         format using the RepaymentEventData serializer.
 
         Args:
-            event_data (List[Any]): A list containing the raw 
+            event_data (List[Any]): A list containing the raw
             repayment event data, typically with 5 elements.
 
         Returns:
@@ -125,7 +124,7 @@ class ZklendDataParser:
         Parses the Liquidation event data.
 
         Args:
-            event_data (list[Any]): A list containing the raw 
+            event_data (list[Any]): A list containing the raw
             liquidation event data, typically with 7 elements.
 
         Returns:

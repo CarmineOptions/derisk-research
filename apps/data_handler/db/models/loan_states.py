@@ -15,7 +15,10 @@ class LoanState(BaseState):
     """
     Model for the `loan_state` table, tracking protocol-specific loan details.
     """
+
     __
+
+
 from decimal import Decimal
 
 from sqlalchemy import Column, Integer, String, UniqueConstraint
@@ -47,9 +50,7 @@ class InterestRate(BaseState):
 
     def get_json_deserialized(self) -> tuple[dict[str, Decimal], dict[str, Decimal]]:
         """Deserialize the JSON fields of the model from str to the Decimal type."""
-        collateral = {
-            token_name: Decimal(value) for token_name, value in self.collateral.items()
-        }
+        collateral = {token_name: Decimal(value) for token_name, value in self.collateral.items()}
         debt = {token_name: Decimal(value) for token_name, value in self.debt.items()}
         return collateral, debt
 

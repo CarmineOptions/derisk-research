@@ -3,6 +3,7 @@ Defines protocol-specific constants including contract addresses, event mappings
 identifiers for various DeFi protocols on StarkNet (Nostra Alpha/Mainnet, zkLend, Hashstack). 
 Contains configuration for block numbers, token symbols, and event processing.
 """
+
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Set
@@ -15,6 +16,7 @@ class AvailableProtocolID(Enum):
     Enum class defining available protocol identifiers for DeFi protocols on StarkNet.
     Currently includes Nostra (Alpha and Mainnet) and zkLend protocols.
     """
+
     # nostra protocols
     NOSTRA_ALPHA: str = "Nostra_alpha"
     NOSTRA_MAINNET: str = "Nostra_mainnet"
@@ -29,9 +31,7 @@ class ProtocolAddresses:
     """
 
     ZKLEND_MARKET_ADDRESSES: str = field(
-        default_factory=lambda:
-            "0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05"
-
+        default_factory=lambda: "0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05"
     )
     HASHSTACK_V0_ADDRESSES: Set[str] = field(
         default_factory=lambda: {

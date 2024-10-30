@@ -1,6 +1,7 @@
 """
 Calculates health ratios for Nostra Alpha users and stores them in the database.
 """
+
 from data_handler.handlers.liquidable_debt.values import (
     HEALTH_FACTOR_FIELD_NAME,
     TIMESTAMP_FIELD_NAME,

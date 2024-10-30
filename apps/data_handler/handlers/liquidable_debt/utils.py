@@ -28,9 +28,7 @@ async def balance_of(token_addr: str, holder_addr: str) -> int:
     :param holder_addr: address of holder
     :return: balance of `token_addr` and `holder_addr`
     """
-    res = await func_call(
-        int(token_addr, base=16), "balanceOf", [int(holder_addr, base=16)]
-    )
+    res = await func_call(int(token_addr, base=16), "balanceOf", [int(holder_addr, base=16)])
     return res[0]
 
 
@@ -42,9 +40,7 @@ async def func_call(addr: int, selector: int, calldata: list[int] = None) -> lis
     :param calldata: The data to call the contract function with.
     :return: A list of the results of the contract function call.
     """
-    call = Call(
-        to_addr=addr, selector=get_selector_from_name(selector), calldata=calldata
-    )
+    call = Call(to_addr=addr, selector=get_selector_from_name(selector), calldata=calldata)
     try:
         res = await NET.call_contract(call)
     except:
@@ -157,7 +153,9 @@ class LPTokenPools:
 
 
 class Prices:
-    URL = "https://api.coingecko.com/api/v3/simple/price?ids={token_ids}&vs_currencies={vs_currency}"
+    URL = (
+        "https://api.coingecko.com/api/v3/simple/price?ids={token_ids}&vs_currencies={vs_currency}"
+    )
 
     def __init__(self):
         self.tokens = [
@@ -190,9 +188,7 @@ class Prices:
                 (id, symbol) = token
                 self.prices.values[symbol] = Decimal(data[id][self.vs_currency])
         else:
-            raise Exception(
-                f"Failed getting prices, status code = {response.status_code}."
-            )
+            raise Exception(f"Failed getting prices, status code = {response.status_code}.")
 
     async def get_lp_token_prices(self) -> None:
         """
@@ -231,7 +227,5 @@ class Prices:
         )
         return (token_1_value + token_2_value) / (
             pool.total_lp_supply
-            / HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS[
-                pool.settings.symbol
-            ].decimal_factor
+            / HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS[pool.settings.symbol].decimal_factor
         )

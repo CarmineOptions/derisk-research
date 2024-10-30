@@ -3,6 +3,7 @@ This FastAPI app provides endpoints for retrieving loan states, interest rates, 
 health ratios, and order book data 
 from the database, with rate limiting applied to each route.
 """
+
 import logging
 from typing import List, Optional
 
@@ -139,9 +140,7 @@ async def get_health_ratio_per_user(
         raise HTTPException(status_code=400, detail="Invalid protocol ID")
 
     if not user_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="User ID is required"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User ID is required")
 
     row = (
         db.query(HealthRatioLevel)

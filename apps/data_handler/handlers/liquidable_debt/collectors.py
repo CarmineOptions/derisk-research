@@ -12,7 +12,7 @@ from data_handler.handlers.liquidable_debt.managers import LocalStorageManager
 
 class GoogleCloudDataCollector(Collector):
     """
-    Collector for retrieving protocol data 
+    Collector for retrieving protocol data
     from Google Cloud Storage and saving it locally.
     """
 
@@ -28,7 +28,7 @@ class GoogleCloudDataCollector(Collector):
         url: str,
     ) -> str:
         """
-        Collects data from Google Cloud Storage 
+        Collects data from Google Cloud Storage
         bucket and saves it to local storage.
         """
         cls._check_protocol_existence(protocol_name, available_protocols)
@@ -52,12 +52,10 @@ class GoogleCloudDataCollector(Collector):
         path: str,
     ) -> None:
         """
-        Downloads parquet file to local 
+        Downloads parquet file to local
         storage from Google Cloud Storage.
         """
-        data = dd.read_parquet(
-            url.format(bucket_name=bucket_name, protocol_name=protocol_name)
-        )
+        data = dd.read_parquet(url.format(bucket_name=bucket_name, protocol_name=protocol_name))
         dd.to_parquet(df=data, path=path.format(protocol_name=protocol_name))
 
     @classmethod
@@ -69,7 +67,7 @@ class GoogleCloudDataCollector(Collector):
     def _check_protocol_existence(
         cls, protocol_name: str, available_protocols: Iterable[str]
     ) -> None:
-        """Checks if the specified protocol exists 
+        """Checks if the specified protocol exists
         in the list of available protocols."""
         if not cls._protocol_exists(
             protocol_name=protocol_name,
@@ -88,6 +86,6 @@ class GoogleCloudDataCollector(Collector):
 
 class DBDataCollector(Collector):
     """Placeholder collector for retrieving data from the database."""
-    
+
     def collect_data(self):
         pass

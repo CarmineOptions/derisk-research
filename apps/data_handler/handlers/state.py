@@ -3,6 +3,7 @@ Defines token-specific settings and configuration for the Nostra Alpha protocol 
 entities. Contains dataclasses and dictionaries mapping token symbols to their parameters including
 collateral factors, debt factors, fees, and protocol addresses.
 """
+
 import dataclasses
 import decimal
 
@@ -17,6 +18,7 @@ class NostraAlphaSpecificTokenSettings(TokenSettings):
     for collateral, debt, liquidation fees and protocol addresses sourced from Starkscan.
     See example transaction: 0x06f619127a63ddb5328807e535e56baa1e244c8923a3b59c123d41dcbed315da
     """
+
     # TODO: Load these via chain calls?
     collateral_factor: decimal.Decimal
     # TODO: Add source
@@ -26,6 +28,7 @@ class NostraAlphaSpecificTokenSettings(TokenSettings):
     liquidator_fee_max: decimal.Decimal
     protocol_fee: decimal.Decimal
     protocol_token_address: str
+
 
 NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS: dict[str, NostraAlphaSpecificTokenSettings] = {
     "ETH": NostraAlphaSpecificTokenSettings(
@@ -127,12 +130,13 @@ class SpecificTokenSettings:
     Contains core parameters used to calculate lending and borrowing limits.
 
     Attributes:
-        collateral_factor (decimal.Decimal): Factor determining the maximum borrowing power 
+        collateral_factor (decimal.Decimal): Factor determining the maximum borrowing power
             of the collateral token.
         debt_factor (decimal.Decimal): Factor determining the maximum debt that can be
             taken against the collateral.
     """
-    collateral_factor: decimal.Decimal 
+
+    collateral_factor: decimal.Decimal
     debt_factor: decimal.Decimal
 
 
@@ -142,7 +146,9 @@ class TokenSettings(SpecificTokenSettings, TokenSettings):
     Combined token settings class that inherits from both SpecificTokenSettings and TokenSettings.
     Merges collateral and debt factors with other token parameters into a single settings class.
     """
+
     pass
+
 
 LOAN_ENTITY_SPECIFIC_TOKEN_SETTINGS: dict[str, SpecificTokenSettings] = {
     "ETH": SpecificTokenSettings(

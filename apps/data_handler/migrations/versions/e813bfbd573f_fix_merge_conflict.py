@@ -27,9 +27,7 @@ def upgrade() -> None:
     inspector = sa.inspect(bind)
 
     # Check if columns already exist before adding them
-    existing_columns = [
-        column["name"] for column in inspector.get_columns("liquidable_debt")
-    ]
+    existing_columns = [column["name"] for column in inspector.get_columns("liquidable_debt")]
 
     if "protocol_name" not in existing_columns:
         op.add_column(
@@ -51,9 +49,7 @@ def upgrade() -> None:
             sa.Column("collateral_token", sa.String(), nullable=False),
         )
     if "debt_token" not in existing_columns:
-        op.add_column(
-            "liquidable_debt", sa.Column("debt_token", sa.String(), nullable=False)
-        )
+        op.add_column("liquidable_debt", sa.Column("debt_token", sa.String(), nullable=False))
 
     # Drop columns if they exist
     if "protocol" in existing_columns:
@@ -72,20 +68,14 @@ def upgrade() -> None:
         op.drop_column("liquidable_debt", "risk_adjusted_collateral")
 
     # Drop the index if it exists
-    existing_indexes = [
-        index["name"] for index in inspector.get_indexes("liquidable_debt")
-    ]
+    existing_indexes = [index["name"] for index in inspector.get_indexes("liquidable_debt")]
     if "ix_liquidable_debt_user" in existing_indexes:
         op.drop_index("ix_liquidable_debt_user", table_name="liquidable_debt")
 
     # Add a new column to another table
-    existing_orderbook_columns = [
-        column["name"] for column in inspector.get_columns("orderbook")
-    ]
+    existing_orderbook_columns = [column["name"] for column in inspector.get_columns("orderbook")]
     if "current_price" not in existing_orderbook_columns:
-        op.add_column(
-            "orderbook", sa.Column("current_price", sa.DECIMAL(), nullable=True)
-        )
+        op.add_column("orderbook", sa.Column("current_price", sa.DECIMAL(), nullable=True))
 
 
 def downgrade() -> None:
@@ -132,13 +122,9 @@ def downgrade() -> None:
     )
     op.add_column(
         "liquidable_debt",
-        sa.Column(
-            "protocol", sa.VARCHAR(length=255), autoincrement=False, nullable=False
-        ),
+        sa.Column("protocol", sa.VARCHAR(length=255), autoincrement=False, nullable=False),
     )
-    op.create_index(
-        "ix_liquidable_debt_user", "liquidable_debt", ["user"], unique=False
-    )
+    op.create_index("ix_liquidable_debt_user", "liquidable_debt", ["user"], unique=False)
     op.drop_column("liquidable_debt", "debt_token")
     op.drop_column("liquidable_debt", "collateral_token")
     op.drop_column("liquidable_debt", "collateral_token_price")

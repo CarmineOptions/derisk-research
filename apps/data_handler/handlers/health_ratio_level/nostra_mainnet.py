@@ -15,7 +15,7 @@ from shared.constants import ProtocolIDs
 
 def run():
     """
-    Instantiates the NostrMainnetHealthRatioHandler 
+    Instantiates the NostrMainnetHealthRatioHandler
     to calculate health ratios for Nostra Mainnet
     users and writes the results to the database.
     """

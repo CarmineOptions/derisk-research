@@ -5,6 +5,7 @@ version control. Provides functions to run migrations in either offline mode (wi
 database connection) or online mode (with active database connection and transaction 
 management).
 """
+
 from logging.config import fileConfig
 
 from alembic import context

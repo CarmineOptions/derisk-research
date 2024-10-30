@@ -16,9 +16,10 @@ from shared.types import TokenSettings
 
 class MockBlockchainCall:
     """Mock implementation of blockchain call functionality for testing."""
+
     async def func_call(self, addr, selector, calldata):
         """Simulate blockchain call with mock reserve data response.
-        
+
         Returns mock data structure matching expected blockchain response format.
         """
         return [
@@ -99,6 +100,7 @@ class MockBlockchainCall:
 
 class ProtocolAddresses:
     """Container for protocol-specific contract addresses."""
+
     def __init__(self):
         self.ZKLEND_MARKET_ADDRESSES = "0xMarketAddress"
 
@@ -153,10 +155,10 @@ TOKEN_SETTINGS: dict[str, TokenSettings] = {
 
 async def get_token_reserve_data(token_setting_address: str):
     """Get token reserve data from the ZkLend market contract.
-    
+
     Args:
         token_setting_address: Address of the token to query.
-        
+
     Returns:
         List of reserve data fields from the contract.
     """

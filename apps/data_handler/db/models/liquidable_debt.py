@@ -21,9 +21,7 @@ class LiquidableDebt(Base):
     __tablename__ = "liquidable_debt"
 
     liquidable_debt = Column(DECIMAL, nullable=False)
-    protocol_name = Column(
-        ChoiceType(LendingProtocolNames, impl=String()), nullable=False
-    )
+    protocol_name = Column(ChoiceType(LendingProtocolNames, impl=String()), nullable=False)
     collateral_token_price = Column(DECIMAL, nullable=False)
     collateral_token = Column(String, nullable=False)
     debt_token = Column(String, nullable=False)

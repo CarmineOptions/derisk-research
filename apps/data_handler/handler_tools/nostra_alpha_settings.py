@@ -59,7 +59,7 @@ NOSTRA_ALPHA_CDP_MANAGER_ADDRESS: str = (
     "0x06d272e18e66289eeb874d0206a23afba148ef35f250accfdfdca085a478aec0"
 )
 
-# This seems to be a magical address, it's first event is a withdrawal. 
+# This seems to be a magical address, it's first event is a withdrawal.
 # Ignore it's loan state changes.
 NOSTRA_ALPHA_DEFERRED_BATCH_CALL_ADAPTER_ADDRESS: str = (
     "0x05a0042fa9bb87ed72fbee4d5a2da416528ebc84a569081ad02e9ad60b0af7d7"
@@ -83,7 +83,7 @@ NOSTRA_ALPHA_ADDRESSES_TO_EVENTS: dict[str, str] = {
     "0x06b59e2a746e141f90ec8b6e88e695265567ab3bdcf27059b4a15c89b0b7bd53": (
         "non_interest_bearing_collateral"
     ),
-    # Interest bearing collateral addresses 
+    # Interest bearing collateral addresses
     "0x070f8a4fcd75190661ca09a7300b7c93fab93971b67ea712c664d7948a8a54c6": (
         "interest_bearing_collateral"
     ),

@@ -23,9 +23,7 @@ class OrderBookProcessor:
         """
         # Fetch order book
         connector = DBConnector()
-        order_book = connector.get_latest_order_book(
-            self.dex, self.token_a, self.token_b
-        )
+        order_book = connector.get_latest_order_book(self.dex, self.token_a, self.token_b)
         if not order_book:
             raise ValueError("No order book found for the given DEX and token pair.")
 
