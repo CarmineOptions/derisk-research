@@ -133,3 +133,21 @@ class ZklendDataParser:
             collateral_amount=event_data[6],
         )
         return parsed_event
+
+ @classmethod
+    def parse_collateral_enabled_disabled_event(cls, event_data: list[Any]) -> dict:
+        """
+        Parses the Collateral Enabled/Disabled event data into a human-readable format.
+
+        Args:
+            event_data (list[Any]): A list containing the raw event data, where
+                event_data[0] is the user and event_data[1] is the status (enabled/disabled).
+
+        Returns:
+            dict: A dictionary with parsed event data as `user` and `status`.
+        """
+        parsed_event = {
+            "user": event_data[0],
+            "status": "enabled" if event_data[1] else "disabled"
+        }
+        return parsed_event
