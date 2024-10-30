@@ -37,10 +37,9 @@ jobs:
         run: |
           docker-compose -f devops/dev/docker-compose.data-handler.yaml up -d --build
 
-      - name: Install dependencies for Legacy App
+      - name: Set up Legacy App
         run: |
-          cd apps/legacy_app
-          ./setup.sh
+          make setup
 
       - name: Test Data Handler
         run: |
