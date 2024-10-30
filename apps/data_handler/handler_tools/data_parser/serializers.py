@@ -2,6 +2,66 @@ from decimal import Decimal
 from pydantic import BaseModel, ValidationInfo, field_validator
 from shared.helpers import add_leading_zeros
 from typing import List, Any
+from decimal import Decimal
+from pydantic import BaseModel, ValidationInfo, field_validator
+
+
+class CollateralEventData(BaseModel):
+    """
+    Data model representing collateral enable/disable events in the system.
+    Used for both CollateralEnabled and CollateralDisabled events.
+
+    Attributes:
+        user: The address of the user whose collateral status is being modified.
+        token: The address of the token being enabled/disabled as collateral.
+    """
+
+    user: str
+    token: str
+
+    @field_validator("user", "token")
+    def validate_address(cls, value: str, info: ValidationInfo) -> str:
+        """
+        Validates if the value is a valid address and formats it to have leading zeros.
+
+        Args:
+            value (str): The address string to validate.
+            info (ValidationInfo): Information about the field being validated.
+
+        Raises:
+            ValueError: If the provided address is invalid.
+
+        Returns:
+            str: Formatted address with leading zeros.
+        """
+        if not value.startswith("0x"):
+            raise ValueError(f"Invalid address provided for {info.field_name}")
+        return add_leading_zeros(value)
+
+
+# Update ZkLendDataParser class with new methods
+class ZkLendDataParser:
+    """
+    Parser class to convert zkLend data events to human-readable formats.
+    """
+    # ... (existing methods remain the same)
+
+    @classmethod
+    def parse_collateral_event(cls, event_data: List[Any]) -> CollateralEventData:
+        """
+        Parses both CollateralEnabled and CollateralDisabled event data using 
+        the CollateralEventData model.
+
+        Args:
+            event_data (List[Any]): A list containing the raw event data.
+
+        Returns:
+            CollateralEventData: Parsed collateral event data.
+        """
+        return CollateralEventData(
+            user=event_data[0],
+            token=event_data[1]
+        )
 
 
 class LiquidationEventData(BaseModel):
