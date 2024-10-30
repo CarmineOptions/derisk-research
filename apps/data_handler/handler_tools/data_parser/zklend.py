@@ -3,7 +3,7 @@ This module contains the logic to parse the zkLend data to human-readable format
 """
 from typing import Any, List
 from data_handler.handler_tools.data_parser.serializers import (
-    DataAccumulatorsSyncEvent,
+    AccumulatorsSyncEventData,
     LiquidationEventData,
     WithdrawalEventData,
     BorrowingEventData,
@@ -20,18 +20,18 @@ class ZklendDataParser:
     @classmethod
     def parse_accumulators_sync_event(
         cls, event_data: list[Any]
-    ) -> DataAccumulatorsSyncEvent:
+    ) -> AccumulatorsSyncEventData:
         """
-        Parses the AccumulatorsSync event data into a human-readable format using the DataAccumulatorsSyncEvent serializer.
+        Parses the AccumulatorsSync event data into a human-readable format using the AccumulatorsSyncEventData serializer.
 
         Args:
             event_data (list[Any]): A list containing the raw event data, typically with 3 elements:
                 token, lending accumulator, and debt accumulator.
 
         Returns:
-            DataAccumulatorsSyncEvent: A model with the parsed event data.
+            AccumulatorsSyncEventData: A model with the parsed event data.
         """
-        parsed_event = DataAccumulatorsSyncEvent(
+        parsed_event = AccumulatorsSyncEventData(
             token=event_data[0],
             lending_accumulator=event_data[1],
             debt_accumulator=event_data[2],
