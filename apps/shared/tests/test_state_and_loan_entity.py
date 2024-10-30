@@ -1,4 +1,3 @@
-# Save this as apps/shared/tests/test_state_and_loan_entity.py
 import pytest
 from decimal import Decimal
 import pandas as pd
@@ -49,9 +48,6 @@ with patch.dict(
         TokenParameters,
         InterestRateModels,
         Prices,
-        TokenValues,
-        CollateralAndDebtInterestRateModels,
-        CollateralAndDebtTokenParameters,
     )
     from shared.loan_entity import LoanEntity
     from shared.state import State
