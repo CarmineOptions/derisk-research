@@ -1,6 +1,7 @@
 """
 This module contains the logic to parse the zkLend data to human-readable format.
 """
+
 from typing import Any, List
 from data_handler.handler_tools.data_parser.serializers import (
     AccumulatorsSyncEventData,
@@ -9,6 +10,7 @@ from data_handler.handler_tools.data_parser.serializers import (
     BorrowingEventData,
     RepaymentEventData,
     DepositEventData,
+    CollateralEnabledDisabledEventData,
 )
 
 
@@ -31,7 +33,7 @@ class ZklendDataParser:
         Returns:
             AccumulatorsSyncEventData: A model with the parsed event data.
         """
-        parsed_event = AccumulatorsSyncEventData(
+        return AccumulatorsSyncEventData(
             token=event_data[0],
             lending_accumulator=event_data[1],
             debt_accumulator=event_data[2],
@@ -103,14 +105,13 @@ class ZklendDataParser:
         Returns:
             RepaymentEventData: A model with the parsed event data.
         """
-        parsed_event = RepaymentEventData(
+        return RepaymentEventData(
             repayer=event_data[0],
             beneficiary=event_data[1],
             token=event_data[2],
             raw_amount=event_data[3],
             face_amount=event_data[4],
         )
-        return parsed_event
 
     @classmethod
     def parse_liquidation_event(cls, event_data: list[Any]) -> LiquidationEventData:
@@ -123,7 +124,7 @@ class ZklendDataParser:
         Returns:
             LiquidationEventData: A model with the parsed event data.
         """
-        parsed_event = LiquidationEventData(
+        return LiquidationEventData(
             liquidator=event_data[0],
             user=event_data[1],
             debt_token=event_data[2],
@@ -132,4 +133,22 @@ class ZklendDataParser:
             collateral_token=event_data[5],
             collateral_amount=event_data[6],
         )
-        return parsed_event
+
+    @classmethod
+    def parse_collateral_enabled_disabled_event(
+        cls, event_data: dict[str, list[str]]
+    ) -> CollateralEnabledDisabledEventData:
+        """
+        Parses the Collateral enabled/disabled event data.
+
+        Args:
+            event_data (Dict[str, List[str]]): A dictionary where the keys are field names and values are lists
+                                               containing the corresponding data as strings.:
+
+        Returns:
+            CollateralEnabledDisabledEventData: A model with the parsed event data.
+        """
+        return CollateralEnabledDisabledEventData(
+            user=event_data["data"][0],
+            token=event_data["data"][1],
+        )

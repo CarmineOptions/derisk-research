@@ -13,7 +13,9 @@ from data_handler.handlers.loan_states.zklend import TokenSettings
 from shared.helpers import add_leading_zeros
 from shared.loan_entity import LoanEntity
 from shared.state import State
-from data_handler.handlers.loan_states.zklend.settings import ZKLEND_SPECIFIC_TOKEN_SETTINGS
+from data_handler.handlers.loan_states.zklend.settings import (
+    ZKLEND_SPECIFIC_TOKEN_SETTINGS,
+)
 
 from data_handler.handlers import blockchain_call
 
@@ -208,8 +210,9 @@ class ZkLendState(State):
     def process_collateral_enabled_event(self, event: pd.Series) -> None:
         # The order of the values in the `data` column is: `user`, `token`.
         # Example: https://starkscan.co/event/0x036185142bb51e2c1f5bfdb1e6cef81f8ea87fd4d777990014249bf5435fd31b_6.
-        user = add_leading_zeros(event["data"][0])
-        token = add_leading_zeros(event["data"][1])
+        data = ZklendDataParser.parse_collateral_enabled_disabled_event(event)
+        user = data.user
+        token = data.token
 
         # add additional info block and timestamp
         self.loan_entities[user].extra_info.block = event["block_number"]
@@ -238,8 +241,9 @@ class ZkLendState(State):
     def process_collateral_disabled_event(self, event: pd.Series) -> None:
         # The order of the values in the `data` column is: `user`, `token`.
         # Example: https://starkscan.co/event/0x0049b445bed84e0118795dbd22d76610ccac2ad626f8f04a1fc7e38113c2afe7_0.
-        user = add_leading_zeros(event["data"][0])
-        token = add_leading_zeros(event["data"][1])
+        data = ZklendDataParser.parse_collateral_enabled_disabled_event(event)
+        user = data.user
+        token = data.token
 
         # add additional info block and timestamp
         self.loan_entities[user].extra_info.block = event["block_number"]
@@ -264,23 +268,22 @@ class ZkLendState(State):
         data = ZklendDataParser.parse_withdrawal_event(event["data"])
         user, token = data.user, data.token
 
-         # Calculate the raw amount from face amount
-        raw_amount = decimal.Decimal(str(data.face_amount)) / self.interest_rate_models.collateral[token]
+        # Calculate the raw amount from face amount
+        raw_amount = (
+            decimal.Decimal(str(data.face_amount))
+            / self.interest_rate_models.collateral[token]
+        )
 
         # Add additional info: block number and timestamp
         self.loan_entities[user].extra_info.block = event["block_number"]
         self.loan_entities[user].extra_info.timestamp = event["timestamp"]
 
         # Update the user's deposit and collateral values
-        self.loan_entities[user].deposit.increase_value(
-            token=token,
-            value=-raw_amount
-        )
+        self.loan_entities[user].deposit.increase_value(token=token, value=-raw_amount)
 
         if self.loan_entities[user].collateral_enabled[token]:
             self.loan_entities[user].collateral.increase_value(
-                token=token,
-                value=-raw_amount
+                token=token, value=-raw_amount
             )
 
         # Log the information if the user matches the verbose user
@@ -464,16 +467,16 @@ class ZkLendState(State):
             collateral_token_symbol = await get_async_symbol(
                 token_address=collateral_token_address
             )
-            self.token_parameters.collateral[
-                underlying_collateral_token_address
-            ] = ZkLendCollateralTokenParameters(
-                address=collateral_token_address,
-                decimals=int(reserve_data[1]),
-                symbol=collateral_token_symbol,
-                underlying_symbol=underlying_collateral_token_symbol,
-                underlying_address=underlying_collateral_token_address,
-                collateral_factor=reserve_data[4] / 1e27,
-                liquidation_bonus=reserve_data[14] / 1e27,
+            self.token_parameters.collateral[underlying_collateral_token_address] = (
+                ZkLendCollateralTokenParameters(
+                    address=collateral_token_address,
+                    decimals=int(reserve_data[1]),
+                    symbol=collateral_token_symbol,
+                    underlying_symbol=underlying_collateral_token_symbol,
+                    underlying_address=underlying_collateral_token_address,
+                    collateral_factor=reserve_data[4] / 1e27,
+                    liquidation_bonus=reserve_data[14] / 1e27,
+                )
             )
         for underlying_debt_token_address in debt_tokens:
             underlying_debt_token_symbol = await get_async_symbol(
@@ -490,13 +493,13 @@ class ZkLendState(State):
             )
             debt_token_address = add_leading_zeros(hex(reserve_data[2]))
             debt_token_symbol = await get_async_symbol(token_address=debt_token_address)
-            self.token_parameters.debt[
-                underlying_debt_token_address
-            ] = ZkLendDebtTokenParameters(
-                address=debt_token_address,
-                decimals=int(reserve_data[1]),
-                symbol=debt_token_symbol,
-                underlying_symbol=underlying_debt_token_symbol,
-                underlying_address=underlying_debt_token_address,
-                debt_factor=reserve_data[5] / 1e27,
+            self.token_parameters.debt[underlying_debt_token_address] = (
+                ZkLendDebtTokenParameters(
+                    address=debt_token_address,
+                    decimals=int(reserve_data[1]),
+                    symbol=debt_token_symbol,
+                    underlying_symbol=underlying_debt_token_symbol,
+                    underlying_address=underlying_debt_token_address,
+                    debt_factor=reserve_data[5] / 1e27,
+                )
             )

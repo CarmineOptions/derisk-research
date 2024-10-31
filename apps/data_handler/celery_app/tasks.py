@@ -13,7 +13,9 @@ from data_handler.handlers.liquidable_debt.protocols import (
 # from data_handler.handlers.loan_states.hashtack_v0.run import HashtackV0StateComputation
 # from data_handler.handlers.loan_states.hashtack_v1.run import HashtackV1StateComputation
 # from data_handler.handlers.loan_states.zklend.run import ZkLendLoanStateComputation
-from data_handler.handlers.loan_states.nostra_alpha.run import NostraAlphaStateComputation
+from data_handler.handlers.loan_states.nostra_alpha.run import (
+    NostraAlphaStateComputation,
+)
 from data_handler.handlers.order_books.constants import TOKEN_MAPPING
 from data_handler.handlers.order_books.ekubo.api_connector import EkuboAPIConnector
 from data_handler.handlers.order_books.uniswap_v2.main import UniswapV2OrderBook
