@@ -17,7 +17,10 @@ from data_handler.handlers.loan_states.nostra_mainnet.events import (
     NostraMainnetLoanEntity,
     NostraMainnetState,
 )
-from data_handler.handlers.loan_states.zklend.events import ZkLendLoanEntity, ZkLendState
+from data_handler.handlers.loan_states.zklend.events import (
+    ZkLendLoanEntity,
+    ZkLendState,
+)
 
 from data_handler.db.crud import DBConnector
 from shared.constants import ProtocolIDs

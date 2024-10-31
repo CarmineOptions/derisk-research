@@ -111,13 +111,18 @@ class TestErrorHandlerBot:
     async def test_concurrent_message_addition(self, error_handler):
         """Test adding messages concurrently"""
         import asyncio
+        from asyncio import Lock
+
+        lock = Lock()
 
         async def add_message(message):
-            error_handler.SESSION_MESSAGES[error_handler.SESSION_ID].append(
-                {"role": "user", "content": message}
-            )
+            async with lock:
+                error_handler.SESSION_MESSAGES[error_handler.SESSION_ID].append(
+                    {"role": "user", "content": message}
+                )
             await asyncio.sleep(0.1)
 
+        error_handler.SESSION_MESSAGES[error_handler.SESSION_ID].clear()
         # Create multiple concurrent tasks
         tasks = [add_message(f"Message {i}") for i in range(5)]
         await asyncio.gather(*tasks)

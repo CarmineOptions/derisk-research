@@ -9,8 +9,17 @@ from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
 from data_handler.db.database import Base, engine, get_database
-from data_handler.db.models import HealthRatioLevel, InterestRate, LoanState, OrderBookModel
-from data_handler.db.schemas import InterestRateModel, LoanStateResponse, OrderBookResponseModel
+from data_handler.db.models import (
+    HealthRatioLevel,
+    InterestRate,
+    LoanState,
+    OrderBookModel,
+)
+from data_handler.db.schemas import (
+    InterestRateModel,
+    LoanStateResponse,
+    OrderBookResponseModel,
+)
 from shared.constants import ProtocolIDs
 
 logger = logging.getLogger(__name__)
