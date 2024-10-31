@@ -3,10 +3,10 @@ name: CI Workflow
 on:
   push:
     branches:
-      - ci/setup-github-workflow
+      - main
   pull_request:
     branches:
-      - ci/setup-github-workflow
+      - main
 
 jobs:
   run_tests:
