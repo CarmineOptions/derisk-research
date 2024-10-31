@@ -51,14 +51,8 @@ jobs:
           echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
           poetry run pytest
 
-      - name: Install dependencies for Shared
-        working-directory: ./apps/shared
-        run: |
-          echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
-          poetry install
-
       - name: Run Tests for Shared
         working-directory: ./apps/shared
         run: |
           echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
-          poetry run pytest apps/shared
+          pytest apps/shared
