@@ -1,6 +1,7 @@
 """
 This module contains the logic to parse the zkLend data to human-readable format.
 """
+
 from typing import Any, List
 from data_handler.handler_tools.data_parser.serializers import (
     DataAccumulatorsSyncEvent,
@@ -9,6 +10,7 @@ from data_handler.handler_tools.data_parser.serializers import (
     BorrowingEventData,
     RepaymentEventData,
     DepositEventData,
+    CollateralEnabledDisabledEventData,
 )
 
 
@@ -131,5 +133,25 @@ class ZklendDataParser:
             debt_face_amount=event_data[4],
             collateral_token=event_data[5],
             collateral_amount=event_data[6],
+        )
+        return parsed_event
+
+    @classmethod
+    def parse_collateral_enabled_disabled_event(
+        cls, event_data: dict[str, list[str]]
+    ) -> CollateralEnabledDisabledEventData:
+        """
+        Parses the Collateral enabled/disabled event data.
+
+        Args:
+            event_data (Dict[str, List[str]]): A dictionary where the keys are field names and values are lists
+                                               containing the corresponding data as strings.:
+
+        Returns:
+            CollateralEnabledDisabledEventData: A model with the parsed event data.
+        """
+        parsed_event = CollateralEnabledDisabledEventData(
+            user=event_data["data"][0],
+            token=event_data["data"][1],
         )
         return parsed_event
