@@ -6,10 +6,7 @@ import pandas as pd
 from unittest.mock import MagicMock
 from datetime import datetime
 from shared.constants import ProtocolIDs
-from sqlalchemy.exc import SQLAlchemyError
-from data_handler.db.models import InterestRate, LoanState
 from data_handler.handlers.loan_states.abstractions import (
-    LoanStateComputationBase,
     HashstackBaseLoanStateComputation
 )
 
@@ -29,7 +26,6 @@ def mock_hashstack_computation(mock_api_connector, mock_db_connector):
     computation.save_data = HashstackBaseLoanStateComputation.save_data.__get__(computation)
     computation.get_data.return_value = [{"test": "data"}]
     computation.get_addresses_data.return_value = [{"test": "data"}, {"test": "data"}]
-    # computation.save_data.return_value = None
     computation.process_event.return_value = None
     computation.run.return_value = None
     computation.last_block = 1000
