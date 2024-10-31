@@ -42,7 +42,8 @@ class MySwapOrderBook(OrderBookBase):
         self._decimals_diff = Decimal(10**(self.token_a_decimal - self.token_b_decimal))
 
     def _get_clean_addresses(self) -> tuple[str, str]:
-        """Remove leading zeroes from token addresses. Raise Value Error if address can't be converted to int."""
+        """Remove leading zeroes from token addresses. 
+        Raise Value Error if address can't be converted to int."""
         try:
             return hex(int(self.token_a, base=16)), hex(int(self.token_b, base=16))
         except ValueError:
@@ -222,7 +223,8 @@ class MySwapOrderBook(OrderBookBase):
         """
         Convert tick value to price.
         :param tick: Decimal - Tick value
-        Formula derived from base Uniswap V3 formula - 1.0001 ** tick. Ticks in MySwap are unsigned values,
+        Formula derived from base Uniswap V3 formula - 1.0001 ** tick. 
+        Ticks in MySwap are unsigned values,
         so we convert them to signed by subtracting max tick.
         """
         return (Decimal("1.0001")**(tick - MAX_MYSWAP_TICK) * Decimal(2**128) * self._decimals_diff)

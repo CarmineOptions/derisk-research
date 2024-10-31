@@ -52,8 +52,10 @@ async def func_call(addr: int, selector: int, calldata: list[int] = None) -> lis
 
 class JediSwapPool:
     """
-    This class implements JediSwap pools where Hashstack V1 users can spend their debt. To properly account for their
-    token holdings, we collect the total supply of LP tokens and the amounts of both tokens in the pool.
+    This class implements JediSwap pools where Hashstack V1 users can 
+    spend their debt. To properly account for their
+    token holdings, we collect the total supply of LP tokens and the amounts of both 
+    tokens in the pool.
     """
 
     def __init__(self, settings: JediSwapPoolSettings) -> None:
@@ -86,8 +88,10 @@ class JediSwapPool:
 
 class MySwapPool:
     """
-    This class implements MySwap pools where Hashstack V1 users can spend their debt. To properly account for their
-    token holdings, we collect the total supply of LP tokens and the amounts of both tokens in the pool.
+    This class implements MySwap pools where Hashstack V1 users can spend their debt. 
+    To properly account for their
+    token holdings, we collect the total supply of LP tokens and the amounts of both tokens 
+    in the pool.
     """
 
     def __init__(self, settings: MySwapPoolSettings) -> None:
@@ -111,7 +115,8 @@ class MySwapPool:
             )[0]
         )
         self.token_amounts = TokenValues()
-        # The order of the values returned is: `name`, `token_a_address`, `token_a_reserves`, ``, `token_b_address`,
+        # The order of the values returned is: `name`, `token_a_address`,
+        #  `token_a_reserves`, ``, `token_b_address`,
         # `token_b_reserves`, ``, `fee_percentage`, `cfmm_type`, `liq_token`.
         pool = await func_call(
             addr=self.settings.address,
@@ -127,7 +132,8 @@ class MySwapPool:
 class LPTokenPools:
     """
     This class initializes all JediSwap and MySwap pools configured in `JEDISWAP_POOL_SETTINGS` and
-    `MYSWAP_POOL_SETTINGS` and collects the total supply of LP tokens and the amounts of both tokens in each pool.
+    `MYSWAP_POOL_SETTINGS` and collects the total supply of LP 
+    tokens and the amounts of both tokens in each pool.
     """
 
     def __init__(self) -> None:
@@ -144,7 +150,8 @@ class LPTokenPools:
 
     async def get_data(self) -> None:
         """
-        This method collects the total supply of LP tokens and the amounts of both tokens in the pool.
+        This method collects the total supply of LP tokens 
+        and the amounts of both tokens in the pool.
         :return: None
         """
         for pool in self.pools.values():
@@ -153,7 +160,8 @@ class LPTokenPools:
 
 class Prices:
     """ This class fetches token prices from Coingecko API. """
-    URL = "https://api.coingecko.com/api/v3/simple/price?ids={token_ids}&vs_currencies={vs_currency}"
+    URL = "https://api.coingecko.com/api/v3/simple/price"\
+          "?ids={token_ids}&vs_currencies={vs_currency}"
 
     def __init__(self):
         self.tokens = [

@@ -20,7 +20,8 @@ class HaikoOrderBook(OrderBookBase):
         Initialize the HaikoOrderBook object.
         :param token_a: baseToken hexadecimal address
         :param token_b: quoteToken hexadecimal address
-        :param apply_filtering: bool - If True apply min and max price filtering to the order book data
+        :param apply_filtering: bool - 
+        If True apply min and max price filtering to the order book data
         """
         super().__init__(token_a, token_b)
         self.haiko_connector = HaikoAPIConnector()

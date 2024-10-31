@@ -348,7 +348,8 @@ class DBConnector:
 
     def get_interest_rate_by_block(self, block_number: int, protocol_id: str) -> InterestRate:
         """
-        Fetch the closest InterestRate instance by block number that is less than or equal to the given block number.
+        Fetch the closest InterestRate instance by block number that is less than or equal 
+        to the given block number.
 
         :param protocol_id: The protocol ID to search for.
         :param block_number: The block number to search for.

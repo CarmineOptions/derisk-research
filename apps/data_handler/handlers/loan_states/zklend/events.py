@@ -1,7 +1,8 @@
 """
 zkLend Event Handlers
 
-This module handles events for zkLend loan entities, tracking deposits, borrowings, repayments, collateral status, and liquidations.
+This module handles events for zkLend loan entities, tracking deposits, 
+borrowings, repayments, collateral status, and liquidations.
 
 Classes:
     - ZkLendLoanEntity: Manages deposit and collateral status for loans.
@@ -68,11 +69,16 @@ EVENTS_METHODS_MAPPING: dict[str, str] = {
 
 class ZkLendLoanEntity(LoanEntity):
     """
-    A class that describes the zkLend loan entity. On top of the abstract `LoanEntity`, it implements the `deposit` and
-    `collateral_enabled` attributes in order to help with accounting for the changes in collateral. This is because
-    under zkLend, collateral is the amount deposited that is specificaly flagged with `collateral_enabled` set to True
-    for the given token. To properly account for the changes in collateral, we must hold the information about the
-    given token's deposits being enabled as collateral or not and the amount of the deposits. We keep all balances in raw
+    A class that describes the zkLend loan entity. On top of the abstract `LoanEntity`, 
+    it implements the `deposit` and
+    `collateral_enabled` attributes in order to help with accounting for the changes in 
+    collateral. This is because
+    under zkLend, collateral is the amount deposited that is specificaly flagged with
+      `collateral_enabled` set to True
+    for the given token. To properly account for the changes in collateral, we must hold the 
+    information about the
+    given token's deposits being enabled as collateral or not and the amount of the deposits. 
+    We keep all balances in raw
     amounts.
     """
 
@@ -154,7 +160,8 @@ class ZkLendLoanEntity(LoanEntity):
 
 class ZkLendState(State):
     """
-    A class that describes the state of all zkLend loan entities. It implements methods for correct processing of every
+    A class that describes the state 
+    of all zkLend loan entities. It implements methods for correct processing of every
     relevant event.
     """
 
@@ -171,9 +178,11 @@ class ZkLendState(State):
         self.db_connector = InitializerDBConnector()
 
     def process_accumulators_sync_event(self, event: pd.Series) -> None:
-        """Processes an accumulators sync event, updating collateral and debt interest rate models based on the latest data."""
+        """Processes an accumulators sync event, updating collateral and 
+        debt interest rate models based on the latest data."""
         # The order of the values in the `data` column is: `token`, `lending_accumulator`, `debt_accumulator`.
-        # Example: https://starkscan.co/event/0x029628b89875a98c1c64ae206e7eb65669cb478a24449f3485f5e98aba6204dc_0.
+        # Example: 
+        # https://starkscan.co/event/0x029628b89875a98c1c64ae206e7eb65669cb478a24449f3485f5e98aba6204dc_0.
         # TODO: Integrate the ZEND token once it's allowed to be borrowed or used as collateral.
         parsed_event_data = ZklendDataParser.parse_accumulators_sync_event(event["data"])
 
@@ -185,7 +194,8 @@ class ZkLendState(State):
         self.interest_rate_models.debt[token] = debt_interest_rate_index
 
     def process_deposit_event(self, event: pd.Series) -> None:
-        """Handles a deposit event, increasing the user's deposit and optionally setting it as collateral."""
+        """Handles a deposit event, increasing the user's
+          deposit and optionally setting it as collateral."""
         # The order of the values in the `data` column is: `user`, `token`, `face_amount`.
         # Example:
         # https://starkscan.co/event/0x036185142bb51e2c1f5bfdb1e6cef81f8ea87fd4d777990014249bf5435fd31b_3.
@@ -212,7 +222,8 @@ class ZkLendState(State):
             )
 
     def process_collateral_enabled_event(self, event: pd.Series) -> None:
-        """Processes a collateral enablement event, activating the specified token as collateral for the user."""
+        """Processes a collateral enablement event, 
+        activating the specified token as collateral for the user."""
         # The order of the values in the `data` column is: `user`, `token`.
         # Example:
         # https://starkscan.co/event/0x036185142bb51e2c1f5bfdb1e6cef81f8ea87fd4d777990014249bf5435fd31b_6.
@@ -244,7 +255,8 @@ class ZkLendState(State):
             )
 
     def process_collateral_disabled_event(self, event: pd.Series) -> None:
-        """Processes a collateral disablement event, setting collateral for the specified token to zero for the user."""
+        """Processes a collateral disablement event, 
+        setting collateral for the specified token to zero for the user."""
         # The order of the values in the `data` column is: `user`, `token`.
         # Example:
         # https://starkscan.co/event/0x0049b445bed84e0118795dbd22d76610ccac2ad626f8f04a1fc7e38113c2afe7_0.
@@ -266,7 +278,8 @@ class ZkLendState(State):
             )
 
     def process_withdrawal_event(self, event: pd.Series) -> None:
-        """Handles a withdrawal event by reducing the user's deposit and collateral, adjusting based on the raw amount withdrawn."""
+        """Handles a withdrawal event by reducing 
+        the user's deposit and collateral, adjusting based on the raw amount withdrawn."""
         # The order of the values in the `data` column is: `user`, `token`, `face_amount`.
         # Example:
         # https://starkscan.co/event/0x03472cf7511687a55bc7247f8765c4bbd2c18b70e09b2a10a77c61f567bfd2cb_4.
@@ -300,8 +313,10 @@ class ZkLendState(State):
             )
 
     def process_borrowing_event(self, event: pd.Series) -> None:
-        """Processes a borrowing event, increasing the user's debt by the raw amount borrowed for the specified token."""
-        # The order of the values in the `data` column is: `user`, `token`, `raw_amount`, `face_amount`.
+        """Processes a borrowing event, increasing the user's debt by the 
+        raw amount borrowed for the specified token."""
+        # The order of the values in the `data` column is: `user`,
+        #  `token`, `raw_amount`, `face_amount`.
         # Example:
         # https://starkscan.co/event/0x076b1615750528635cf0b63ca80986b185acbd20fa37f0f2b5368a4f743931f8_3.
         data = ZklendDataParser.parse_borrowing_event(event["data"])
@@ -322,7 +337,8 @@ class ZkLendState(State):
             )
 
     def process_repayment_event(self, event: pd.Series) -> None:
-        """Processes a repayment event, updating the user’s debt by reducing it according to the raw amount repaid."""
+        """Processes a repayment event, updating the user’s debt by 
+        reducing it according to the raw amount repaid."""
         data = ZklendDataParser.parse_repayment_event(event["data"])
 
         user = data.beneficiary
@@ -344,8 +360,10 @@ class ZkLendState(State):
             )
 
     def process_liquidation_event(self, event: pd.Series) -> None:
-        """Processes a liquidation event, adjusting the user's debt and collateral values based on liquidation amounts."""
-        # The order of the arguments is: `liquidator`, `user`, `debt_token`, `debt_raw_amount`, `debt_face_amount`,
+        """Processes a liquidation event, adjusting the user's debt and collateral 
+        values based on liquidation amounts."""
+        # The order of the arguments is: `liquidator`, `user`, `debt_token`,
+        #  `debt_raw_amount`, `debt_face_amount`,
         # `collateral_token`, `collateral_amount`.
         # Example:
         # https://starkscan.co/event/0x07b8ec709df1066d9334d56b426c45440ca1f1bb841285a5d7b33f9d1008f256_5.
@@ -434,7 +452,8 @@ class ZkLendState(State):
             if health_factor >= 1.0 or health_factor <= 0.0:
                 continue
 
-            # Find out how much of the `debt_token` will be liquidated. We assume that the liquidator receives the
+            # Find out how much of the `debt_token` will be liquidated. 
+            # We assume that the liquidator receives the
             # collateral token of interest even though it might not be the most
             # optimal choice for the liquidator.
             max_liquidated_amount += loan_entity.compute_debt_to_be_liquidated(
@@ -454,15 +473,19 @@ class ZkLendState(State):
         collateral_tokens = {y for x in self.loan_entities.values() for y in x.collateral.keys()}
         debt_tokens = {y for x in self.loan_entities.values() for y in x.debt.keys()}
 
-        # Get parameters for each collateral and debt token. Under zkLend, the collateral token in the events data is
+        # Get parameters for each collateral and debt token. Under zkLend, 
+        # the collateral token in the events data is
         # the underlying token directly.
         for underlying_collateral_token_address in collateral_tokens:
             underlying_collateral_token_symbol = await get_async_symbol(
                 token_address=underlying_collateral_token_address
             )
-            # The order of the arguments is: `enabled`, `decimals`, `z_token_address`, `interest_rate_model`,
-            # `collateral_factor`, `borrow_factor`, `reserve_factor`, `last_update_timestamp`, `lending_accumulator`,
-            # `debt_accumulator`, `current_lending_rate`, `current_borrowing_rate`, `raw_total_debt`, `flash_loan_fee`,
+            # The order of the arguments is: 
+            # `enabled`, `decimals`, `z_token_address`, `interest_rate_model`,
+            # `collateral_factor`, `borrow_factor`, 
+            # `reserve_factor`, `last_update_timestamp`, `lending_accumulator`,
+            # `debt_accumulator`, `current_lending_rate`, `current_borrowing_rate`, 
+            # `raw_total_debt`, `flash_loan_fee`,
             # `liquidation_bonus`, `debt_limit`.
             reserve_data = await blockchain_call.func_call(
                 addr=ZKLEND_MARKET,
@@ -486,9 +509,12 @@ class ZkLendState(State):
             underlying_debt_token_symbol = await get_async_symbol(
                 token_address=underlying_debt_token_address
             )
-            # The order of the arguments is: `enabled`, `decimals`, `z_token_address`, `interest_rate_model`,
-            # `collateral_factor`, `borrow_factor`, `reserve_factor`, `last_update_timestamp`, `lending_accumulator`,
-            # `debt_accumulator`, `current_lending_rate`, `current_borrowing_rate`, `raw_total_debt`, `flash_loan_fee`,
+            # The order of the arguments is: `enabled`, `decimals`, 
+            # `z_token_address`, `interest_rate_model`,
+            # `collateral_factor`, `borrow_factor`, `reserve_factor`, 
+            # `last_update_timestamp`, `lending_accumulator`,
+            # `debt_accumulator`, `current_lending_rate`, `current_borrowing_rate`, 
+            # `raw_total_debt`, `flash_loan_fee`,
             # `liquidation_bonus`, `debt_limit`.
             reserve_data = await blockchain_call.func_call(
                 addr=ZKLEND_MARKET,

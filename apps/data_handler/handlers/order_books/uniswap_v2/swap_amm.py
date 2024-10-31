@@ -1,5 +1,6 @@
 """
-Module for handling Swap AMM pools, including Pool, Pair, and MySwapPool classes for liquidity and balance operations.
+Module for handling Swap AMM pools, including Pool, Pair, 
+and MySwapPool classes for liquidity and balance operations.
 """
 from dataclasses import dataclass
 from decimal import Decimal
@@ -81,8 +82,10 @@ class Pool(Pair):
 
 class MySwapPool(Pool):
     """
-    This class implements MySwap pools where Hashstack V1 users can spend their debt. To properly account for their
-    token holdings, we collect the total supply of LP tokens and the amounts of both tokens in the pool.
+    This class implements MySwap pools where Hashstack V1
+      users can spend their debt. To properly account for their
+    token holdings, we collect the total supply of LP 
+    tokens and the amounts of both tokens in the pool.
     """
 
     def __init__(self, *args, **kwargs) -> None:
@@ -107,7 +110,8 @@ class MySwapPool(Pool):
             )[0]
         )
         self.token_amounts = TokenValues()
-        # The order of the values returned is: `name`, `token_a_address`, `token_a_reserves`, ``, `token_b_address`,
+        # The order of the values returned is: `name`, `token_a_address`, 
+        # `token_a_reserves`, ``, `token_b_address`,
         # `token_b_reserves`, ``, `fee_percentage`, `cfmm_type`, `liq_token`.
         pool = await func_call(
             addr=self.addresses[-1],

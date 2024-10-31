@@ -149,7 +149,8 @@ NOSTRA_MAINNET_EVENTS_TO_METHODS = {
 NOSTRA_MAINNET_EVENTS_TO_ORDER: dict[str, str] = {
     "InterestStateUpdated":
     0,
-    "nostra::lending::interest_rate_model::interest_rate_model::InterestRateModel::InterestStateUpdated":
+    "nostra::lending::interest_rate_model::interest_rate_model::"
+    "InterestRateModel::InterestStateUpdated":
     1,
     "Transfer":
     2,

@@ -32,7 +32,8 @@ logger = logging.getLogger(__name__)
 
 class NostraMainnetLoanEntity(NostraAlphaLoanEntity):
     """
-    A class that describes the state of all Nostra Mainnet loan entities. All methods for correct processing of every
+    A class that describes the state of all Nostra Mainnet loan entities.
+      All methods for correct processing of every
     relevant event are implemented in `.nostra_alpha.NostraAlphaState`.
     """
 
@@ -56,7 +57,8 @@ class NostraMainnetLoanEntity(NostraAlphaLoanEntity):
         risk_adjusted_debt_usd: float | None = None,
     ) -> float:
         """
-        Computes the amount of debt that can be liquidated given the current state of the loan entity.
+        Computes the amount of debt that can be liquidated given the 
+        current state of the loan entity.
         :param collateral_token_addresses: Collateral token addresses.
         :param debt_token_addresses:  Debt token addresses.
         :param prices: Prices of all tokens.
@@ -106,7 +108,8 @@ class NostraMainnetLoanEntity(NostraAlphaLoanEntity):
 
 class NostraMainnetState(NostraAlphaState):
     """
-    A class that describes the state of all Nostra Mainnet loan entities. All methods for correct processing of every
+    A class that describes the state of all Nostra Mainnet 
+    loan entities. All methods for correct processing of every
     relevant event are implemented in `.nostra_alpha.NostraAlphaState`.
     """
 
@@ -203,7 +206,8 @@ class NostraMainnetState(NostraAlphaState):
                 )
             getattr(self.token_parameters, event)[token_address] = token_parameters
 
-        # Create the mapping between the debt token addresses and the respective interest bearing collateral token
+        # Create the mapping between 
+        # the debt token addresses and the respective interest bearing collateral token
         # addresses.
         for debt_token_parameters in self.token_parameters.debt.values():
             interest_bearing_collateral_token_addresses = [
@@ -225,7 +229,8 @@ class NostraMainnetState(NostraAlphaState):
         :param event: Event data.
         """
         if event["keys"] == [self.INTEREST_STATE_UPDATED_KEY]:
-            # The order of the values in the `data` column is: `debtToken`, `lendingRate`, ``, `borrowRate`, ``,
+            # The order of the values in the `data` column is: 
+            # `debtToken`, `lendingRate`, ``, `borrowRate`, ``,
             # `lendIndex`, ``, `borrowIndex`, ``.
             # Example:
             # https://starkscan.co/event/0x0735fc1d2fdd75ec049af40073a09ffc948c45467752d3123eb2b8c1d3f46edb_7.
@@ -235,7 +240,8 @@ class NostraMainnetState(NostraAlphaState):
             debt_interest_rate_index = Decimal(str(int(event["data"][7], base=16))
                                                ) / Decimal("1e18")
         elif (len(event["keys"]) == 2 and event["keys"][0] == self.INTEREST_STATE_UPDATED_KEY):
-            # The order of the values in the `data` column is: `lendingRate`, ``, `borrowingRate`, ``, `lendingIndex`,
+            # The order of the values in the `data` column is: `lendingRate`, 
+            # ``, `borrowingRate`, ``, `lendingIndex`,
             # ``, `borrowingIndex`, ``.
             # Example:
             # https://starkscan.co/event/0x046d972ab22bd443534b32fdeabb1e4751ae6fa92610e9e2d4833764367d08f8_10.
@@ -262,7 +268,8 @@ class NostraMainnetState(NostraAlphaState):
         :param event: Event data.
         """
         if event["keys"] == [self.TRANSFER_KEY]:
-            # The order of the values in the `data` column is: `sender`, `recipient`, `value`, ``. Alternatively,
+            # The order of the values in the `data` column is: `sender`, 
+            # `recipient`, `value`, ``. Alternatively,
             # `from_`, `to`, `value`, ``.
             # Example:
             # https://starkscan.co/event/0x00489af46e28392d1c3e4007476328ba4ccf4bd84f4f5565fda0888d5518a70b_3.
@@ -382,7 +389,8 @@ class NostraMainnetState(NostraAlphaState):
         :param event: Event data.
         """
         if event["keys"] == [self.TRANSFER_KEY]:
-            # The order of the values in the `data` column is: `sender`, `recipient`, `value`, ``. Alternatively,
+            # The order of the values in the `data` column is: `sender`, 
+            # `recipient`, `value`, ``. Alternatively,
             # `from_`, `to`, `value`, ``.
             # Example:
             # https://starkscan.co/event/0x070f2c92bda051dc9f4daaef5582c7c2727b1ab07f04484c1f6a6109e1f9a0f6_2.
@@ -503,7 +511,8 @@ class NostraMainnetState(NostraAlphaState):
         debt_token_underlying_address: str,
     ) -> float:
         """
-        Computes the maximum amount of debt that can be liquidated given the current state of the loan entities.
+        Computes the maximum amount of debt that can be 
+        liquidated given the current state of the loan entities.
         :param prices: Prices of all tokens.
         :param collateral_token_underlying_address: Collateral token underlying address.
         :param collateral_token_price: Collateral token price.
@@ -552,7 +561,8 @@ class NostraMainnetState(NostraAlphaState):
             if health_factor >= 1.0:
                 continue
 
-            # Find out how much of the `debt_token` will be liquidated. We assume that the liquidator receives the
+            # Find out how much of the `debt_token` will be liquidated.
+            #  We assume that the liquidator receives the
             # collateral token of interest even though it might not be the most
             # optimal choice for the liquidator.
             collateral_token_addresses = {

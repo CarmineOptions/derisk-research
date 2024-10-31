@@ -28,7 +28,8 @@ class OrderBookProcessor:
         """
         Calculate quantity of `token_a` that can be bought to change the price by the given ratio.
         :param price_change_ratio: Decimal - The price change ratio.
-        :return: Decimal - Quantity that can be traded without moving price outside acceptable bound.
+        :return: Decimal - Quantity that can be traded without 
+        moving price outside acceptable bound.
         """
         # Fetch order book
         connector = DBConnector()

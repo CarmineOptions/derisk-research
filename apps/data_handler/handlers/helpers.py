@@ -48,7 +48,8 @@ class InterestRateState:
         """
         Initialize the InterestRateState object.
         :param current_block: int - The current block number.
-        :param last_block_data: InterestRate | None - The last block data from storage or None if is not present.
+        :param last_block_data: InterestRate | None - 
+        The last block data from storage or None if is not present.
         """
         self.last_block_data = last_block_data
         self.current_block = current_block
@@ -78,8 +79,10 @@ class InterestRateState:
         Update the state of interest rate calculation with the new data.
         :param token_name: str - The name of the token, for example `STRK`.
         :param current_block: int - The current block number.
-        :param cumulative_collateral_interest_rate_increase: Decimal - The change in collateral(supply) interest rate.
-        :param cumulative_debt_interest_rate_increase: Decimal - The change in debt(borrow) interest rate.
+        :param cumulative_collateral_interest_rate_increase: 
+        Decimal - The change in collateral(supply) interest rate.
+        :param cumulative_debt_interest_rate_increase: 
+        Decimal - The change in debt(borrow) interest rate.
         """
         self.cumulative_collateral_interest_rates[token_name
                                                   ] += cumulative_collateral_interest_rate_increase
@@ -93,7 +96,8 @@ class InterestRateState:
         self._fill_timestamps()
 
     def _fill_cumulative_data(self) -> None:
-        """Fill the cumulative collateral and debt data with latest block data or default values. Default value is 1."""
+        """Fill the cumulative collateral and debt data with latest block data or default values. 
+        Default value is 1."""
         if self.last_block_data:
             (
                 self.cumulative_collateral_interest_rates,
@@ -107,7 +111,8 @@ class InterestRateState:
             self.cumulative_debt_interest_rate = (self.cumulative_collateral_interest_rates.copy())
 
     def _fill_timestamps(self) -> None:
-        """Fill the token timestamps with latest block timestamp or default value. Default value is 0"""
+        """Fill the token timestamps with latest block timestamp or default value. 
+        Default value is 0"""
         if self.last_block_data:
             self.previous_token_timestamps = {
                 token_name: self.last_block_data.timestamp
@@ -211,15 +216,18 @@ def get_symbol(address: str, protocol: str | None = None) -> str:
     """
     Get the symbol of the token by its address.
 
-    This function takes an address and an optional protocol as input, and returns the symbol of the token.
+    This function takes an address and an optional protocol as input, 
+    and returns the symbol of the token.
     If the address is not found in the symbol table, it raises a KeyError.
-    If a protocol is provided and the address is not found, it also sends an error message to a Telegram bot.
+    If a protocol is provided and the address is not found, 
+    it also sends an error message to a Telegram bot.
 
     :param address: str - The address of the token.
     :param protocol: str | None - The name of the protocol.
     :return: str - The symbol of the token.
     :raises KeyError: If the address is not found in the symbol table.
-    :note: If the address is not found and a protocol is provided, an error message will be sent to a Telegram bot.
+    :note: If the address is not found and a protocol is provided, 
+    an error message will be sent to a Telegram bot.
 
     """
     # A tuple of that always has this order: `address`, `protocol`.
@@ -292,7 +300,8 @@ def upload_file_to_bucket(source_path: str, target_path: str) -> None:
 
 def save_dataframe(data: pandas.DataFrame, path: str) -> None:
     """
-    Saves a DataFrame to a local file, uploads it to Google Cloud Storage, and deletes the local file.
+    Saves a DataFrame to a local file, uploads it to Google Cloud Storage, and
+      deletes the local file.
     """
     directory = path.rstrip(path.split("/")[-1])
     if not directory == "":

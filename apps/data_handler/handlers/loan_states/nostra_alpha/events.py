@@ -37,9 +37,12 @@ TARGET_HEALTH_FACTOR = decimal.Decimal("1.25")
 
 class NostraAlphaLoanEntity(LoanEntity):
     """
-    A class that describes the Nostra Alpha loan entity. On top of the abstract `LoanEntity`, it implements the
-    `non_interest_bearing_collateral` and `interest_bearing_collateral` attributes in order to help with accounting for
-    the changes in collateral. This is because Nostra Alpha allows the user to decide the amount of collateral that
+    A class that describes the Nostra 
+    Alpha loan entity. On top of the abstract `LoanEntity`, it implements the
+    `non_interest_bearing_collateral` 
+    and `interest_bearing_collateral` attributes in order to help with accounting for
+    the changes in collateral. 
+    This is because Nostra Alpha allows the user to decide the amount of collateral that
     earns interest and the amount that doesn't. We keep all balances in raw amounts.
     """
 
@@ -156,7 +159,8 @@ class NostraAlphaLoanEntity(LoanEntity):
 
 class NostraAlphaState(State):
     """
-    A class that describes the state of all Nostra Alpha loan entities. It implements a method for correct processing
+    A class that describes the state of all
+      Nostra Alpha loan entities. It implements a method for correct processing
     of every relevant event.
     """
 
@@ -179,7 +183,8 @@ class NostraAlphaState(State):
     MINT_KEY = "0x34e55c1cd55f1338241b50d352f0e91c7e4ffad0e4271d64eb347589ebdfd16"
     BURN_KEY = "0x243e1de00e8a6bc1dfa3e950e6ade24c52e4a25de4dee7fb5affe918ad1e744"
 
-    # We ignore transfers where the sender or recipient are '0x0' because these are mints and burns covered by other
+    # We ignore transfers where the 
+    # sender or recipient are '0x0' because these are mints and burns covered by other
     # events.
     ZERO_ADDRESS: str = add_leading_zeros("0x0")
 
@@ -249,7 +254,8 @@ class NostraAlphaState(State):
                 )
                 collateral_factor = collateral_data[2] / 1e18
 
-                # The order of the arguments is: `protocolFee`, ``, `protocolFeeRecipient`, `liquidatorFeeBeta`, ``,
+                # The order of the arguments is: 
+                # `protocolFee`, ``, `protocolFeeRecipient`, `liquidatorFeeBeta`, ``,
                 # `liquidatorFeeMax`, ``.
                 liquidation_settings = await stark_client.func_call(
                     addr=self.CDP_MANAGER_ADDRESS,
@@ -292,7 +298,8 @@ class NostraAlphaState(State):
                 )
             getattr(self.token_parameters, event)[token_address] = token_parameters
 
-        # Create the mapping between the debt token addresses and the respective interest bearing collateral token
+        # Create the mapping between the debt 
+        # token addresses and the respective interest bearing collateral token
         # addresses.
         for debt_token_parameters in self.token_parameters.debt.values():
             interest_bearing_collateral_token_addresses = [
@@ -320,7 +327,8 @@ class NostraAlphaState(State):
         getattr(self, self.EVENTS_METHODS_MAPPING[(event_type, event["key_name"])])(event=event)
 
     def process_interest_rate_model_event(self, event: pd.Series) -> None:
-        """Processes an interest rate model event, updating collateral and debt interest rate indices."""
+        """Processes an interest rate model event, 
+        updating collateral and debt interest rate indices."""
         # The order of the values in the `data` column is: `debtToken`, `lendingRate`, ``, `borrowRate`, ``,
         # `lendIndex`, ``, `borrowIndex`, ``.
         # Example:
@@ -348,12 +356,14 @@ class NostraAlphaState(State):
         self.interest_rate_models.debt[debt_token] = debt_interest_rate_index
 
     def process_non_interest_bearing_collateral_mint_event(self, event: pd.Series) -> None:
-        """Processes non-interest-bearing collateral mint event, adjusting collateral values for the sender and recipient."""
+        """Processes non-interest-bearing collateral mint event, 
+        adjusting collateral values for the sender and recipient."""
         # The order of the values in the `data` column is: `user`, `amount`, ``.
         # Example:
         # https://starkscan.co/event/0x015dccf7bc9a434bcc678cf730fa92641a2f6bcbfdb61cbe7a1ef7d0a614d1ac_3.
         if event["keys"] == [self.TRANSFER_KEY]:
-            # The order of the values in the `data` column is: `sender`, `recipient`, `value`, ``. Alternatively,
+            # The order of the values in the `data` column is: `sender`, 
+            # `recipient`, `value`, ``. Alternatively,
             # `from_`, `to`, `value`, ``.
             # Example:
             # https://starkscan.co/event/0x06ddd34767c8cef97d4508bcbb4e3771b1c93e160e02ca942cadbdfa29ef9ba8_2.
@@ -415,7 +425,8 @@ class NostraAlphaState(State):
             )
 
     def process_collateral_burn_event(self, event: pd.Series) -> None:
-        """Handles collateral withdrawal event by decreasing the collateral value for a specified user."""
+        """Handles collateral withdrawal event by 
+        decreasing the collateral value for a specified user."""
         if event["keys"] == [self.BURN_KEY]:
             # The order of the values in the `data` column is: `user`, `amount`, ``.
             # Example:
@@ -445,7 +456,8 @@ class NostraAlphaState(State):
     def process_debt_transfer_event(self, event: pd.Series) -> None:
         """Process debt transfer event, adjusting loan debt for sender and recipient."""
         if event["keys"] == [self.TRANSFER_KEY]:
-            # The order of the values in the `data` column is: `sender`, `recipient`, `value`, ``. Alternatively,
+            # The order of the values in the `data` column is: 
+            # `sender`, `recipient`, `value`, ``. Alternatively,
             # `from_`, `to`, `value`, ``.
             # Example:
             # https://starkscan.co/event/0x0786a8918c8897db760899ee35b43071bfd723fec76487207882695e4b3014a0_1.
@@ -694,7 +706,8 @@ class NostraAlphaState(State):
             if health_factor >= 1.0:
                 continue
 
-            # Find out how much of the `debt_token` will be liquidated. We assume that the liquidator receives the
+            # Find out how much of the `debt_token` will be liquidated. 
+            # We assume that the liquidator receives the
             # collateral token of interest even though it might not be the most
             # optimal choice for the liquidator.
             collateral_token_addresses = {
