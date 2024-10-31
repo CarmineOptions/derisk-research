@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+""" This module contains tests for the InitializerDBConnector class. """
 import pytest
 from data_handler.db.models import HashtackCollateralDebt, ZkLendCollateralDebt
 from sqlalchemy.exc import SQLAlchemyError

@@ -1,4 +1,6 @@
-"""Module docstring placeholder."""
+"""
+Celery configuration for scheduling periodic tasks.
+"""
 
 # run_loan_states_computation_for_hashtack_v0,; 
 # run_loan_states_computation_for_hashtack_v1,; run_loan_states_computation_for_nostra_alpha,; 
@@ -65,5 +67,15 @@ app.conf.beat_schedule = {
         "schedule": ORDER_BOOK_TIME_INTERVAL,
     },
 }
+
+from data_handler.celery_app.order_books_tasks import ekubo_order_book
+from data_handler.celery_app.tasks import (
+    run_liquidable_debt_computation_for_zklend,
+)   
+    #run_loan_states_computation_for_hashtack_v0,; run_loan_states_computation_for_hashtack_v1,; 
+    #run_loan_states_computation_for_nostra_alpha,; run_loan_states_computation_for_nostra_mainnet,; 
+    #run_loan_states_computation_for_zklend,; run_liquidable_debt_computation_for_nostra_alpha,; 
+    #run_liquidable_debt_computation_for_nostra_mainnet,; run_liquidable_debt_computation_for_hashstack_v0,; 
+    #run_liquidable_debt_computation_for_hashstack_v1,; uniswap_v2_order_book,
 
 app.autodiscover_tasks(["celery_app.tasks", "celery_app.order_books_tasks"])

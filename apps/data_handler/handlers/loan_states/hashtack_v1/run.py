@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+""" This module contains the class that computes the loan states for the HashtackV1 protocol. """
 import logging
 from time import monotonic
 

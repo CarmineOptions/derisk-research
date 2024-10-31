@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+""" Fetch ZkLend specific token settings. """
 import asyncio
 import decimal
 

@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+""" This module contains the script to compute liquidable debt for Hashstack V0 protocol. """
 from data_handler.handlers.liquidable_debt.debt_handlers import (
     HashstackV0DBLiquidableDebtDataHandler,
 )

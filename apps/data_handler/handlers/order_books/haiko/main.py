@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+""" Haiko Order Book class implementation """
 from decimal import Decimal
 from pathlib import Path
 
@@ -13,7 +12,7 @@ from data_handler.handlers.order_books.haiko.logger import get_logger
 
 
 class HaikoOrderBook(OrderBookBase):
-    """class docstring"""
+    """ Haiko Order Book class. """
     DEX = "Haiko"
 
     def __init__(self, token_a, token_b, apply_filtering: bool = False):

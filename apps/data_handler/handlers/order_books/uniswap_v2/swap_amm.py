@@ -96,7 +96,7 @@ class MySwapPool(Pool):
         self.token_amounts: Optional[TokenValues] = None
 
     async def get_data(self) -> None:
-        """class docstring"""
+        """ Collects the total supply of LP tokens and the amounts of both tokens in the pool. """
         self.total_lp_supply = Decimal(
             (
                 await func_call(
@@ -122,16 +122,16 @@ class MySwapPool(Pool):
 
 @dataclass
 class SwapAmmToken(TokenSettings):
-    """class docstring"""
     # TODO: Improve this.
     balance_base: Optional[float] = None
     balance_converted: Optional[float] = None
 
 
 class SwapAmm(Pair):
-    """class docstring"""
+    """ This class represents the Swap AMM, which contains pools and provides balance 
+    and supply operations. """
     async def init(self):
-        """class docstring"""
+        """ Initialize the SwapAmm with predefined pools and fetch balances. """
         # TODO: Add AVNU
         self.pools = {}
         self.add_pool(

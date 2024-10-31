@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+""" Module for NostrAlpha health ratio level handler """
 from data_handler.handlers.liquidable_debt.values import (
     HEALTH_FACTOR_FIELD_NAME,
     TIMESTAMP_FIELD_NAME,

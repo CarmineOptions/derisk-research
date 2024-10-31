@@ -1,4 +1,7 @@
-"""Module docstring placeholder."""
+"""Classes:
+- DBConnector: Manages database connections and CRUD operations.
+- InitializerDBConnector: Handles ZkLendCollateralDebt-specific operations.
+- ZkLendEventDBConnector: Manages ZkLend event-specific operations."""
 
 import logging
 import uuid

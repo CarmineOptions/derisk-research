@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+""" MySwap order book class. """
 import asyncio
 import itertools
 import logging

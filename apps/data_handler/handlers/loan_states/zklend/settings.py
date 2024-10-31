@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+""" Settings for ZkLend. """
 import decimal
 from dataclasses import dataclass
 
@@ -9,7 +8,7 @@ from shared.types import TokenSettings
 
 @dataclass
 class ZkLendSpecificTokenSettings:
-    """class docstring"""
+    """Class for ZkLend specific token settings."""
     # Source: https://zklend.gitbook.io/documentation/using-zklend/technical/asset-parameters.
     collateral_factor: decimal.Decimal
     # These are set to neutral values because zkLend doesn't use debt factors.
@@ -21,7 +20,7 @@ class ZkLendSpecificTokenSettings:
 
 @dataclass
 class TokenSettings(ZkLendSpecificTokenSettings, TokenSettings):
-    """class docstring"""
+    """Class for token settings."""
     pass
 
 

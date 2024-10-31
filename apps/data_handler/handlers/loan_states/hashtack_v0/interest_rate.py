@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+""" Module for calculating interest rates on the Hashstack V0 protocol. """
 import asyncio
 import logging
 from decimal import Decimal

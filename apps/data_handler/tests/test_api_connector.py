@@ -1,5 +1,4 @@
-"""Module docstringg placeholder."""
-
+""" This module contains tests for the DeRiskAPIConnector class. """
 import os
 import unittest
 from unittest.mock import MagicMock, patch
@@ -12,7 +11,7 @@ from data_handler.handler_tools.api_connector import DeRiskAPIConnector
 
 
 class TestDeRiskAPIConnector(unittest.TestCase):
-    """class docstring"""
+    """ Test class for the DeRiskAPIConnector class. """
     DERISK_API_URL = "https://api.derisk.io"
 
     @patch.dict(os.environ, {"DERISK_API_URL": DERISK_API_URL})

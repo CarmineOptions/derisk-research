@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+""" This script is used to calculate the liquidable debt for Nostra Alpha protocol. """
 from data_handler.handlers.liquidable_debt.debt_handlers import (
     NostraAlphaDBLiquidableDebtDataHandler,
 )

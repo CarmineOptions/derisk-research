@@ -1,4 +1,5 @@
-"""Module docstring placeholder."""
+"""Tasks for fetching and storing order book data from Ekubo and Haiko APIs.
+"""
 
 import logging
 

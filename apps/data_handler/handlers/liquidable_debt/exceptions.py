@@ -1,4 +1,4 @@
-"""Module docstring placeholder."""
+""" This module contains the exceptions that can be raised by the liquidable_debt handler."""
 
 class ProtocolExistenceError(Exception):
     """

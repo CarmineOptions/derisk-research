@@ -1,4 +1,5 @@
-"""Module docstring placeholder."""
+""" This module contains the HashtackV0StateComputation 
+class that computes the loan states for the HashstackV0 protocol. """
 
 import logging
 from time import monotonic

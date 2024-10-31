@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+""" This module contains the base class for computing loan states based on data from a DeRisk API. """
 import logging
 from abc import ABC, abstractmethod
 from typing import Dict, Optional

@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+""" This module contains the main class for the Uniswap V2 order book. """
 import asyncio
 from decimal import Decimal
 from typing import Iterable
@@ -10,7 +9,7 @@ from data_handler.handlers.order_books.uniswap_v2.swap_amm import SwapAmm
 
 
 class UniswapV2OrderBook(OrderBookBase):
-    """class docstring"""
+    """ This module contains the main class for the Uniswap V2 order book. """
     DEX = "Starknet"
 
     def __init__(self, token_a: str, token_b: str):

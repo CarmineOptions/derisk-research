@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+""" Base class for collectors. """
 from abc import ABC, abstractmethod
 
 

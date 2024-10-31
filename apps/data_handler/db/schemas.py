@@ -1,4 +1,4 @@
-"""Module docstring placeholder."""
+""" This module contains the data models for the database schema """
 
 import decimal
 from decimal import Decimal
@@ -8,7 +8,7 @@ from pydantic import BaseModel, field_validator
 
 
 class LoanStateBase(BaseModel):
-    """class docstring"""
+    """ Base class for LoanStateResponse """
     block: int
     timestamp: int
     user: Optional[str]
@@ -17,12 +17,12 @@ class LoanStateBase(BaseModel):
     deposit: Optional[Dict]
 
     class Config:
-        """class docstring"""
+        """ Pydantic configuration """
         from_attributes = True
 
 
 class LoanStateResponse(LoanStateBase):
-    """class docstring"""
+    """ Pydantic model for LoanStateResponse """
     pass
 
 

@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+""" This module contains the classes that handle the liquidable debt data. """
 import asyncio
 from decimal import Decimal
 from typing import Iterable, Type

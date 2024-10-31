@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+""" This module contains the logic to compute the loan states for the NOSTRA_ALPHA protocol. """
 import logging
 from time import monotonic
 

@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+""" This module contains the SQLAlchemy models for the zkLend events. """
 from decimal import Decimal
 
 from sqlalchemy import Numeric, String

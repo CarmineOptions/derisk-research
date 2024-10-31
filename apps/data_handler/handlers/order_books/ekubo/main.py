@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+""" This module contains the EkuboOrderBook class. """
 from decimal import Decimal, getcontext
 
 import pandas as pd
@@ -10,7 +9,7 @@ getcontext().prec = 18
 
 
 class EkuboOrderBook(OrderBookBase):
-    """class docstring"""
+    """ Ekubo Order Book class. """
     DEX = "Ekubo"
 
     def __init__(self, token_a: str, token_b: str) -> None:

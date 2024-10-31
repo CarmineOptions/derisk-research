@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+"""  Module for storing constants and values used in the liquidable_debt module. """
 import os
 from enum import Enum
 

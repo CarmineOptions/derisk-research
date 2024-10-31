@@ -1,11 +1,10 @@
-"""Module docstring placeholder."""
-
+""" Constants for order books """
 from dataclasses import dataclass
 
 
 @dataclass
 class TokenConfig:
-    """class docstring"""
+    """tokenconfig class docstring"""
     name: str
     decimals: int
 

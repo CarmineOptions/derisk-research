@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+""" This module contains classes to fetch token prices and LP token prices. """
 import time
 from decimal import Decimal
 
@@ -153,7 +152,7 @@ class LPTokenPools:
 
 
 class Prices:
-    """class docstring"""
+    """ This class fetches token prices from Coingecko API. """
     URL = "https://api.coingecko.com/api/v3/simple/price?ids={token_ids}&vs_currencies={vs_currency}"
 
     def __init__(self):

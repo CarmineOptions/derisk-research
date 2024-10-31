@@ -1,5 +1,5 @@
-"""Module docstring placeholder."""
-
+""" This module contains the OrderBookModel class representing 
+an order book entry in the database. """
 from sqlalchemy import DECIMAL, BigInteger, Column, String
 from sqlalchemy.types import JSON
 

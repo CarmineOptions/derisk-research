@@ -1,12 +1,11 @@
-"""Module docstring placeholder."""
-
+""" This module contains the EkuboAPIConnector class, which is responsible for"""
 import time
 
 from data_handler.handlers.order_books.abstractions import AbstractionAPIConnector
 
 
 class EkuboAPIConnector(AbstractionAPIConnector):
-    """class docstring"""
+    """ A class that interacts with the Ekubo API to fetch data related to the Ekubo protocol. """
     API_URL = "https://mainnet-api.ekubo.org"
 
     @classmethod

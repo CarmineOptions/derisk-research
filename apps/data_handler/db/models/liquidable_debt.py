@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+""" SQLAlchemy models for the liquidable debt and health ratio level tables. """
 from data_handler.handlers.liquidable_debt.values import LendingProtocolNames
 from sqlalchemy import DECIMAL, BigInteger, Column, String
 from sqlalchemy_utils.types.choice import ChoiceType

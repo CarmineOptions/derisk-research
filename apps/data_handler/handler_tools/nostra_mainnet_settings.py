@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+"""Settings for the Nostra mainnet."""
 # Source: https://docs.nostra.finance/lend/deployed-contracts/lend-mainnet#core-contracts.
 NOSTRA_MAINNET_INTEREST_RATE_MODEL_ADDRESS: str = (
     "0x059a943ca214c10234b9a3b61c558ac20c005127d183b86a99a8f3c60a08b4ff"

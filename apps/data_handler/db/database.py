@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+""" Database configuration """
 import os
 
 from dotenv import load_dotenv

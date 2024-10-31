@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+""" This module contains the class that describes the state of all Nostra Mainnet loan entities. """
 import copy
 import logging
 from decimal import Decimal

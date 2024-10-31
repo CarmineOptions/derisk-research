@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+""" This module is used to generate a report with order books data for all token pairs. """
 import json
 import logging
 from datetime import datetime

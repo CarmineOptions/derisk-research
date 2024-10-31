@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+""" This module contains the zkLend loan state computation class. """
 import logging
 from time import monotonic
 

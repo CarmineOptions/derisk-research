@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+""" This module contains the data collectors for the liquidable debt data handler. """
 from typing import Iterable
 
 import dask.dataframe as dd

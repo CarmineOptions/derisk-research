@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+""" This module contains constants for the data handler """
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Set

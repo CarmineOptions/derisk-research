@@ -20,7 +20,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    """fn docstring"""
+    """ Base class for collectors. """
     # Check if the table already exists
     conn = op.get_bind()
     inspector = Inspector.from_engine(conn)
@@ -52,7 +52,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    """fn docstring"""
+    """ Base classes for ORM models. """
     # Drop the index and table if it exists
     conn = op.get_bind()
     inspector = Inspector.from_engine(conn)

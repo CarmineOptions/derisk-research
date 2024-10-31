@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+""" This module contains the ZkLendInitializer class. """
 from decimal import Decimal
 
 import pandas as pd

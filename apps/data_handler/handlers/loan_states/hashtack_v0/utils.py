@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+""" This module contains the HashtackInitializer class that initializes the HashtackV0 loan states. """
 import logging
 from decimal import Decimal
 from typing import Union

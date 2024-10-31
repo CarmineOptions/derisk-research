@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+""" Settings for the Nostra Alpha data handler. """
 # Keys are values of the "key_name" column in the database, values are the respective method names.
 NOSTRA_ALPHA_EVENTS_TO_METHODS: dict[tuple[str, str], str] = {
     ("collateral", "Transfer"): "process_collateral_transfer_event",

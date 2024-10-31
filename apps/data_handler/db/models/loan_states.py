@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+""" SQLAlchemy models for the loan_states table. """
 from decimal import Decimal
 
 from sqlalchemy import Column, Integer, String, UniqueConstraint

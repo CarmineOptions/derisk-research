@@ -1,4 +1,5 @@
-"""Module docstring placeholder."""
+"""Celery tasks for running loan state and liquidable debt computations, 
+and fetching Uniswap V2 order book data."""
 
 import logging
 from time import monotonic

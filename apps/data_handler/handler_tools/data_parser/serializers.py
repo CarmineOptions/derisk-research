@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+""" This module contains the data models and parser class for zkLend data events. """
 from decimal import Decimal
 from pydantic import BaseModel, ValidationInfo, field_validator
 from shared.helpers import add_leading_zeros

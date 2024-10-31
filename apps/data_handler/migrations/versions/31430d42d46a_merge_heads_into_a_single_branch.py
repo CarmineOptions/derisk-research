@@ -19,10 +19,12 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    """fn docstring"""
+    """Function to apply the upgrade migrations."""
     pass
 
 
 def downgrade() -> None:
-    """fn docstring"""
+    """
+    Reverts the database schema changes applied in the upgrade.
+    """
     pass

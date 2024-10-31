@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+""" This script is used to compute the liquidable debt for the zKlend protocol. """
 import logging
 
 from data_handler.handlers.liquidable_debt.debt_handlers import (

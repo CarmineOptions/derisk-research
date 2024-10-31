@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+""" A script to display order book histograms for the Ekubo DEX. """
 import argparse
 from decimal import Decimal
 from typing import List
@@ -145,7 +144,7 @@ class Histogram:
 
 
 def main():
-    """class docstring"""
+    """ Main function to parse command line arguments and display histograms. """
     parser = argparse.ArgumentParser(description="Display order book histograms.")
     parser.add_argument(
         "--type",

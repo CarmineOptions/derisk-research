@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+""" Test the fetch_zklend_specific_token_settings.py """
 import asyncio
 import decimal
 
@@ -12,10 +11,10 @@ from shared.types import TokenSettings
 
 # Mock response for the on chain call (func_call)
 class MockBlockchainCall:
-    """class docstring"""
+    """Mock response for the on chain call (func_call)"""
 
     async def func_call(self, addr, selector, calldata):
-        """fn docstring"""
+        """ Mock response for the on chain call (func_call) """
         return [
             {
                 "name": "enabled",
@@ -101,7 +100,7 @@ class MockBlockchainCall:
 
 
 class ProtocolAddresses:
-    """class docstring"""
+    """ Protocol addresses for the ZkLend protocol. """
 
     def __init__(self):
         self.ZKLEND_MARKET_ADDRESSES = "0xMarketAddress"
@@ -164,7 +163,7 @@ TOKEN_SETTINGS: dict[str, TokenSettings] = {
 
 # Function to call the mock of func_call
 async def get_token_reserve_data(token_setting_address: str):
-    """fn docstring"""
+    """ Get the reserve data for a token setting address """
     reserve_data = await src.blockchain_call.func_call(
         addr=ProtocolAddresses().ZKLEND_MARKET_ADDRESSES,
         selector="get_reserve_data",
@@ -192,7 +191,7 @@ async def fetch_zklend_specific_token_settings():
 
 # Test the functionality
 async def main():
-    """fn docstring"""
+    """ Test the functionality """
     new_settings = await fetch_zklend_specific_token_settings()
     for symbol, settings in new_settings.items():
         print(f"{symbol}: {settings}")

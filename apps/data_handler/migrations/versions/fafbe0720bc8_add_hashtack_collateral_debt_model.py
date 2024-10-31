@@ -20,7 +20,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    """fn docstring"""
+    """Creates the 'hashtack_collateral_debt' table if it does not exist."""
     # Check if the table already exists
     conn = op.get_bind()
     inspector = Inspector.from_engine(conn)
@@ -48,7 +48,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    """fn docstring"""
+    """Drops the 'hashtack_collateral_debt' table."""
     # Drop the index and table if it exists
     conn = op.get_bind()
     inspector = Inspector.from_engine(conn)

@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+""" Logger for Haiko order book """
 import logging
 from datetime import datetime
 from pathlib import Path

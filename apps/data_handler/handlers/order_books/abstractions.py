@@ -1,5 +1,4 @@
-"""Module docstring placeholder."""
-
+""" Abstract base classes for order book data and API connectors. """
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -12,7 +11,7 @@ from .constants import TOKEN_MAPPING, TokenConfig
 
 
 class OrderBookBase(ABC):
-    """class docstring"""
+    """ Base class for order book data """
     DEX: str = None
     MIN_PRICE_RANGE = Decimal("0.0001")
     MAX_PRICE_RANGE = Decimal("100.0")
