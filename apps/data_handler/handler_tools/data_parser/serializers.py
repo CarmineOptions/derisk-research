@@ -1,4 +1,3 @@
-""" This module contains the data models and parser class for zkLend data events. """
 from decimal import Decimal
 from pydantic import BaseModel, ValidationInfo, field_validator
 from shared.helpers import add_leading_zeros
@@ -56,7 +55,9 @@ class LiquidationEventData(BaseModel):
         try:
             return Decimal(int(value, 16))
         except ValueError:
-            raise ValueError(f"{info.field_name} field is not a valid hexadecimal number")
+            raise ValueError(
+                f"{info.field_name} field is not a valid hexadecimal number"
+            )
 
 
 class RepaymentEventData(BaseModel):
@@ -106,7 +107,9 @@ class RepaymentEventData(BaseModel):
         try:
             return Decimal(int(value, 16))
         except ValueError:
-            raise ValueError(f"{info.field_name} field is not a valid hexadecimal number")
+            raise ValueError(
+                f"{info.field_name} field is not a valid hexadecimal number"
+            )
 
 
 class AccumulatorsSyncEventData(BaseModel):
@@ -126,7 +129,8 @@ class AccumulatorsSyncEventData(BaseModel):
     @field_validator("token")
     def validate_address(cls, value: str, info: ValidationInfo) -> str:
         """
-        Validates if the value is a valid address and formats it to have leading zeros.
+        Validates if the value is a valid address and formats it to 
+        have leading zeros.
 
         Raises:
             ValueError: If the provided address is invalid.
@@ -152,7 +156,9 @@ class AccumulatorsSyncEventData(BaseModel):
         try:
             return Decimal(int(value, 16))
         except ValueError:
-            raise ValueError(f"{info.field_name} field is not a valid hexadecimal number")
+            raise ValueError(
+                f"{info.field_name} field is not a valid hexadecimal number"
+            )
 
 
 class DepositEventData(BaseModel):
@@ -198,7 +204,9 @@ class DepositEventData(BaseModel):
         try:
             return Decimal(int(value, 16))
         except ValueError:
-            raise ValueError(f"{info.field_name} field is not a valid hexadecimal number")
+            raise ValueError(
+                f"{info.field_name} field is not a valid hexadecimal number"
+            )
 
 
 class BorrowingEventData(BaseModel):
@@ -220,7 +228,8 @@ class BorrowingEventData(BaseModel):
     @field_validator("user", "token")
     def validate_address(cls, value: str, info: ValidationInfo) -> str:
         """
-        Validates if the value is a valid address and formats it to have leading zeros.
+        Validates if the value is a valid address and formats 
+        it to have leading zeros.
 
         Raises:
             ValueError: If the provided address is invalid.
@@ -246,7 +255,9 @@ class BorrowingEventData(BaseModel):
         try:
             return Decimal(int(value, 16))
         except ValueError:
-            raise ValueError(f"{info.field_name} field is not a valid hexadecimal number")
+            raise ValueError(
+                f"{info.field_name} field is not a valid hexadecimal number"
+            )
 
 
 class WithdrawalEventData(BaseModel):
@@ -266,7 +277,8 @@ class WithdrawalEventData(BaseModel):
     @field_validator("user", "token")
     def validate_addresses(cls, value: str) -> str:
         """
-        Validates that the provided address starts with '0x' and formats it with leading zeros.
+        Validates that the provided address starts with '0x' and 
+        formats it with leading zeros.
 
         Args:
             value (str): The address string to validate.
@@ -301,29 +313,12 @@ class WithdrawalEventData(BaseModel):
 
 
 class CollateralEnabledDisabledEventData(BaseModel):
-    """
-    Parser class to convert zkLend data events to human-readable formats.
-    """
+    """ Data model representing a collateral enabled/disabled event in the system. """
+    user: str
+    token: str
 
-    @classmethod
-    def parse_accumulators_sync_event(cls, event_data: List[Any]) -> AccumulatorsSyncEventData:
-        """
-        Parses the AccumulatorsSync event data using the AccumulatorsSyncEventData model.
-
-        Args:
-            event_data (List[Any]): A list containing the raw event data.
-
-        Returns:
-            AccumulatorsSyncEventData: Parsed event data in a human-readable format.
-        """
-        return AccumulatorsSyncEventData(
-            token=event_data[0],
-            lending_accumulator=event_data[1],
-            debt_accumulator=event_data[2],
-        )
-
-    @classmethod
-    def parse_deposit_event(cls, event_data: List[Any]) -> DepositEventData:
+    @field_validator("user", "token")
+    def validate_valid_addresses(cls, value: str, info: ValidationInfo) -> str:
         """
         Check if the value is an address and format it to having leading zeros.
         Raises:
