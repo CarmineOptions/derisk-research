@@ -20,9 +20,7 @@ class ProtocolAddresses:
     """
 
     ZKLEND_MARKET_ADDRESSES: str = field(
-        default_factory=lambda:
-            "0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05"
-
+        default_factory=lambda: "0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05"
     )
     HASHSTACK_V0_ADDRESSES: Set[str] = field(
         default_factory=lambda: {
