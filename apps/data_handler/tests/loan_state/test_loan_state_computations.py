@@ -75,6 +75,9 @@ def sample_loan_state():
 
 @pytest.fixture(scope="function")
 def valid_loan_entities(sample_loan_state):
+    """
+    Valid loan entities for testing.
+    """
     return {"loan1": sample_loan_state}
 
 
@@ -107,17 +110,21 @@ def test_get_addresses_data_positive(mock_hashstack_computation):
     Test get_addresses_data method with valid parameters.
     """
     addresses = ["0x123", "0x456"]
+    
     mock_hashstack_computation.get_addresses_data = HashstackBaseLoanStateComputation.get_addresses_data.__get__(mock_hashstack_computation)
     
-    mock_hashstack_computation.api_connector.get_data.side_effect = [
-        [{"test": "data"}], 
+    mock_hashstack_computation.get_data = MagicMock(side_effect=[
+        [{"test": "data"}],
         [{"test": "data"}]
-    ]
+    ])
     
     result = mock_hashstack_computation.get_addresses_data(addresses, 1000)
     
     assert len(result) == 2
-    assert mock_hashstack_computation.api_connector.get_data.call_count == 2
+    assert mock_hashstack_computation.get_data.call_count == 2
+    
+    mock_hashstack_computation.get_data.assert_any_call("0x123", 1000)
+    mock_hashstack_computation.get_data.assert_any_call("0x456", 1000)
 
 
 def test_save_data_positive(mock_hashstack_computation, sample_loan_state):
@@ -143,7 +150,6 @@ def test_save_data_empty_df(mock_hashstack_computation):
     """
     Test save_data method with empty DataFrame.
     """
-    # mock_hashstack_computation.db_connector.write_loan_states_to_db.reset_mock()
     df = pd.DataFrame()
     mock_hashstack_computation.save_data(df)
     mock_hashstack_computation.db_connector.write_loan_states_to_db.assert_not_called()
@@ -195,15 +201,38 @@ def test_run_positive(mock_hashstack_computation):
     """
     Test run method with successful data processing.
     """
-    mock_hashstack_computation.api_connector.get_data.return_value =  MagicMock(return_value=[{"test": "data"}])
     mock_hashstack_computation.run = HashstackBaseLoanStateComputation.run.__get__(mock_hashstack_computation)
     
-    mock_hashstack_computation.addresses = ["0x123"]
-    mock_hashstack_computation.get_addresses_data = MagicMock(return_value=[{"test": "data"}])
-
+    mock_hashstack_computation.PROTOCOL_ADDRESSES = ["0x123"]
+    mock_hashstack_computation.last_block = 1000
+    mock_hashstack_computation.PAGINATION_SIZE = 1000
+    
+    data_returns = [
+        [{"test": "data"}], 
+        [],                 
+        [],                 
+        [],                 
+        [],                 
+        [],                 
+    ]
+    
+    mock_hashstack_computation.get_data = MagicMock(side_effect=data_returns)
+    
+    mock_hashstack_computation.process_data = MagicMock(return_value=[{"processed": "data"}])
+    mock_hashstack_computation.save_data = MagicMock()
+    mock_hashstack_computation.save_interest_rate_data = MagicMock()
+    
     mock_hashstack_computation.run()
-    assert mock_hashstack_computation.api_connector.get_data.called
-    mock_hashstack_computation.api_connector.get_data.reset_mock()
+    
+    assert mock_hashstack_computation.get_data.call_count == 6
+    
+    mock_hashstack_computation.get_data.assert_any_call("0x123", 1000)
+    
+    mock_hashstack_computation.process_data.assert_called_once_with([{"test": "data"}])
+    mock_hashstack_computation.save_data.assert_called_once_with([{"processed": "data"}])
+    mock_hashstack_computation.save_interest_rate_data.assert_called_once()
+    
+    assert mock_hashstack_computation.last_block == 7000    
 
 
 @pytest.mark.parametrize("block,expected_calls", [
