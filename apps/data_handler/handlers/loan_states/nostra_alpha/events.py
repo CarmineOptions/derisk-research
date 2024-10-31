@@ -329,7 +329,8 @@ class NostraAlphaState(State):
     def process_interest_rate_model_event(self, event: pd.Series) -> None:
         """Processes an interest rate model event, 
         updating collateral and debt interest rate indices."""
-        # The order of the values in the `data` column is: `debtToken`, `lendingRate`, ``, `borrowRate`, ``,
+        # The order of the values in the `data` column is: 
+        # `debtToken`, `lendingRate`, ``, `borrowRate`, ``,
         # `lendIndex`, ``, `borrowIndex`, ``.
         # Example:
         # https://starkscan.co/event/0x05e95588e281d7cab6f89aa266057c4c9bcadf3ff0bb85d4feea40a4faa94b09_4.

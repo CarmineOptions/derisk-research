@@ -138,7 +138,8 @@ class AbstractionAPIConnector(ABC):
         :type endpoint: str
         :param params: Dictionary of URL parameters to append to the URL.
         :type params: dict, optional
-        :return: A JSON response from the API if the request is successful; otherwise, a dictionary with an "error" key
+        :return: A JSON response from the API if the request is successful; 
+        otherwise, a dictionary with an "error" key
         containing the error message.
         :rtype: dict
         """
@@ -160,7 +161,8 @@ class AbstractionAPIConnector(ABC):
         :type data: dict, optional
         :param json: Dictionary of JSON data to send in the request body.
         :type json: dict, optional
-        :return: A JSON response from the API if the request is successful; otherwise, a dictionary with an "error" key
+        :return: A JSON response from the API if the request is successful; 
+        otherwise, a dictionary with an "error" key
         containing the error message.
         :rtype: dict
         """

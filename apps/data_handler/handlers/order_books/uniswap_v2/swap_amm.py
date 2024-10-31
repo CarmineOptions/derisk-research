@@ -282,7 +282,8 @@ class SwapAmm(Pair):
         pools = self.pools.get(self.tokens_to_id(base_token, quote_token), None)
         if not pools:
             raise ValueError(
-                f"Trying to get pools that are not set: {self.tokens_to_id(base_token, quote_token)}"
+                f"Trying to get pools that are not set: "
+                f"{self.tokens_to_id(base_token, quote_token)}"
             )
         return pools
 

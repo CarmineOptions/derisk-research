@@ -9,6 +9,7 @@ from pydantic import BaseModel, field_validator
 
 class LoanStateBase(BaseModel):
     """ Base class for LoanStateResponse """
+    protocol_id: str
     block: int
     timestamp: int
     user: Optional[str]

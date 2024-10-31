@@ -1,5 +1,6 @@
 """
-Defines classes and methods for handling events and loan entities in Hashstack V0, tracking user loans, debt, 
+Defines classes and methods for handling events 
+and loan entities in Hashstack V0, tracking user loans, debt, 
 and collateral changes through events.
 """
 

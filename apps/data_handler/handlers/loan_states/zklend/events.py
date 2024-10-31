@@ -180,7 +180,8 @@ class ZkLendState(State):
     def process_accumulators_sync_event(self, event: pd.Series) -> None:
         """Processes an accumulators sync event, updating collateral and 
         debt interest rate models based on the latest data."""
-        # The order of the values in the `data` column is: `token`, `lending_accumulator`, `debt_accumulator`.
+        # The order of the values in the `data` column is: `token`, 
+        # `lending_accumulator`, `debt_accumulator`.
         # Example: 
         # https://starkscan.co/event/0x029628b89875a98c1c64ae206e7eb65669cb478a24449f3485f5e98aba6204dc_0.
         # TODO: Integrate the ZEND token once it's allowed to be borrowed or used as collateral.
