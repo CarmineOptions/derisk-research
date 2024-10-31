@@ -5,10 +5,6 @@ on: [push, pull_request]
 jobs:
   lint:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: apps
-
     steps:
     - uses: actions/checkout@v3
 
@@ -22,6 +18,31 @@ jobs:
         python -m pip install --upgrade pip
         pip install pylint
 
+    - name: Debug Information
+      run: |
+        echo "Current directory:"
+        pwd
+        echo "\nDirectory structure:"
+        ls -R
+        echo "\nGit root directory:"
+        git rev-parse --show-toplevel
+        echo "\nSearching for Python files:"
+        find . -name "*.py"
+        echo "\nGit ls-files output:"
+        git ls-files
+        echo "\nSpecific path search:"
+        git ls-files 'data_handler/*.py'
+        git ls-files './data_handler/*.py'
+        git ls-files 'apps/data_handler/*.py'
+        git ls-files './apps/data_handler/*.py'
+
     - name: Run Pylint
       run: |
-        python -m pylint $(git ls-files 'apps/data_handler/*.py') --disable=all --enable=C0114,C0115,C0116,C0301
+        PYTHON_FILES=$(find ./apps/data_handler -name "*.py")
+        if [ -n "$PYTHON_FILES" ]; then
+          echo "Files to lint: $PYTHON_FILES"
+          python -m pylint $PYTHON_FILES --disable=all --enable=C0114,C0115,C0116,C0301
+        else
+          echo "No Python files found in apps/data_handler/"
+          exit 1
+        fi
