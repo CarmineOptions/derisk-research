@@ -30,4 +30,4 @@ jobs:
 
     - name: Run Pylint
       run: |
-        python -m pylint $(git ls-files './apps/data_handler/*.py') --disable=all --enable=C0114,C0115,C0116,C0301 --rcfile=.pylintrc
+        python -m pylint $(git ls-files './apps/data_handler/*.py') --disable=all --enable=C0114,C0115,C0116,C0301 --rcfile=./.pylintrc
