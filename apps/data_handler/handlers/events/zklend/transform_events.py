@@ -60,6 +60,10 @@ class ZklendTransformer:
     PAGINATION_SIZE: int = 1000
 
     def __init__(self):
+        """
+        Initialize the ZklendTransformer instance.
+        Initializes API and database connectors, and retrieves the last processed block number.
+        """
         self.api_connector = DeRiskAPIConnector()
         self.db_connector = ZkLendEventDBConnector()
         self.last_block = self.db_connector.get_last_block(self.PROTOCOL_TYPE)
