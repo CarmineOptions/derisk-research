@@ -1,9 +1,8 @@
 from decimal import Decimal
 
+from data_handler.db.models.event import EventBaseModel
 from sqlalchemy import Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column
-
-from data_handler.db.models.event import EventBaseModel
 
 
 class AccumulatorsSyncEventData(EventBaseModel):
@@ -49,7 +48,7 @@ class RepaymentEventData(EventBaseModel):
     and the amounts in raw and face formats.
     """
 
-    __tablename__ = "repayment_event_data"
+    __tablename__ = "repayment_event"
 
     repayer: Mapped[str] = mapped_column(String, nullable=False)
     beneficiary: Mapped[str] = mapped_column(String, nullable=False)
@@ -66,7 +65,7 @@ class DepositEventData(EventBaseModel):
     token, and the face amount of the deposit.
     """
 
-    __tablename__ = "deposit_event_data"
+    __tablename__ = "deposit_event"
 
     user: Mapped[str] = mapped_column(String, nullable=False)
     token: Mapped[str] = mapped_column(String, nullable=False)
@@ -81,7 +80,7 @@ class BorrowingEventData(EventBaseModel):
     token, and amounts in raw and face formats.
     """
 
-    __tablename__ = "borrowing_event_data"
+    __tablename__ = "borrowing_event"
 
     user: Mapped[str] = mapped_column(String, nullable=False)
     token: Mapped[str] = mapped_column(String, nullable=False)
@@ -97,7 +96,7 @@ class WithdrawalEventData(EventBaseModel):
     token, and the amount withdrawn.
     """
 
-    __tablename__ = "withdrawal_event_data"
+    __tablename__ = "withdrawal_event"
 
     user: Mapped[str] = mapped_column(String, nullable=False)
     amount: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
@@ -112,7 +111,7 @@ class CollateralEnabledDisabledEventData(EventBaseModel):
     the user address and the token involved.
     """
 
-    __tablename__ = "collateral_enabled_disabled_event_data"
+    __tablename__ = "collateral_enabled_disabled_event"
 
     user: Mapped[str] = mapped_column(String, nullable=False)
     token: Mapped[str] = mapped_column(String, nullable=False)
