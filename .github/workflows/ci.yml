@@ -49,7 +49,7 @@ jobs:
         working-directory: ./apps/data_handler
         run: |
           echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
-          poetry run pytest apps/data_handler
+          poetry run pytest
 
       - name: Install dependencies for Shared
         working-directory: ./apps/shared
