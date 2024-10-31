@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "shared"
+version = "0.1.0"
+description = "DeRisk implementation on Starknet"
+authors = ["Mirabel <mirabelchiemezie001@gmail.com>"]
+
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.13"
+starknet-py = "^0.22.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
