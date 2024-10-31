@@ -15,6 +15,7 @@ def mock_db_connector() -> None:
     :return: None.
     """
     mock_connector = MagicMock(spec=DBConnector)
+    mock_connector.get_last_block.return_value = 12345
     yield mock_connector
 
 
