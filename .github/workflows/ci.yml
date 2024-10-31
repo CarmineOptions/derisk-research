@@ -51,14 +51,15 @@ jobs:
           echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
           poetry run pytest
     
-      - name: Install pytest for Shared
+      - name: Install dependencies for Data Handler
         working-directory: ./apps/shared
         run: |
           echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
-          pip install pytest
+          poetry lock --no-update
+          poetry install
     
       - name: Run Tests for Shared
         working-directory: ./apps/shared
         run: |
           echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
-          pytest .
+          poetry run pytest
