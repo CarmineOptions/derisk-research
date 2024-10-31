@@ -122,6 +122,7 @@ class MySwapPool(Pool):
 
 @dataclass
 class SwapAmmToken(TokenSettings):
+    """ This class represents a token in the Swap AMM, with balance and conversion operations. """
     # TODO: Improve this.
     balance_base: Optional[float] = None
     balance_converted: Optional[float] = None
