@@ -407,3 +407,29 @@ class ZkLendDataParser:
             collateral_token=event_data[5],
             collateral_amount=event_data[6],
         )
+
+
+class CollateralEnabledDisabledEventData(BaseModel):
+    """
+    A data model representing essential collateral enabled/disabled event data.
+
+    Attributes:
+        user (str): The user address associated with the collateral enabled/disabled event, represented as a string.
+        token (str): The token address represented as a string.
+    """
+
+    user: str
+    token: str
+
+    @field_validator("user", "token")
+    def validate_valid_addresses(cls, value: str, info: ValidationInfo) -> str:
+        """
+        Check if the value is an address and format it to having leading zeros.
+        Raises:
+            ValueError
+        Returns:
+            str
+        """
+        if not value.startswith("0x"):
+            raise ValueError("Invalid address provided for %s" % info.field_name)
+        return add_leading_zeros(value)
