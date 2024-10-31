@@ -1,12 +1,6 @@
 name: Pylint Check
 
-on:
-  push:
-    paths:
-      - 'apps/data_handler/*.py'
-  pull_request:
-    paths:
-      - 'apps/data_handler/*.py'
+on: [push, pull_request]
 
 jobs:
   lint:
