@@ -27,41 +27,38 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
+    
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-
+    
       - name: Install Poetry
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
           echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
-
+    
       - name: Install dependencies for Data Handler
         working-directory: ./apps/data_handler
         run: |
           echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
           poetry lock --no-update
           poetry install
-
+    
       - name: Run Tests for Data Handler
         working-directory: ./apps/data_handler
         run: |
           echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
-          poetry shell
           poetry run pytest
-
-      - name: Install dependencies for Shared
+    
+      - name: Install pytest for Shared
         working-directory: ./apps/shared
         run: |
           echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
-          poetry lock --no-update
-          poetry install
-
+          pip install pytest
+    
       - name: Run Tests for Shared
         working-directory: ./apps/shared
         run: |
           echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
-          poetry shell
-          poetry run pytest .
+          pytest .
