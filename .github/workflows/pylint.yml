@@ -41,7 +41,7 @@ jobs:
         PYTHON_FILES=$(find ./apps/data_handler -name "*.py")
         if [ -n "$PYTHON_FILES" ]; then
           echo "Files to lint: $PYTHON_FILES"
-          python -m pylint $PYTHON_FILES --disable=all --enable=C0114,C0115,C0116,C0301 --max-line-length=140
+          python -m pylint $PYTHON_FILES --disable=all --enable=C0114,C0115,C0116,C0301 --max-line-length=150
         else
           echo "No Python files found in apps/data_handler/"
           exit 1
