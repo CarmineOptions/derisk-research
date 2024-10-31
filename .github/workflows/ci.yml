@@ -1,4 +1,4 @@
-name: Run Tests
+name: CI Workflow
 
 on:
   push:
@@ -50,6 +50,12 @@ jobs:
         run: |
           echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
           poetry run pytest
+
+      - name: Install pytest for Shared
+        working-directory: ./apps/shared
+        run: |
+          echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
+          pip install pytest
 
       - name: Run Tests for Shared
         working-directory: ./apps/shared
