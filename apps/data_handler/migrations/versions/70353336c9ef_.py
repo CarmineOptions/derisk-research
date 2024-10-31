@@ -19,8 +19,10 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    """fn docstring"""
     pass
 
 
 def downgrade() -> None:
+    """fn docstring"""
     pass
