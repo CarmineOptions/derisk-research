@@ -30,6 +30,9 @@ from shared.state import State
 from data_handler.handlers.loan_states.zklend.settings import (
     ZKLEND_SPECIFIC_TOKEN_SETTINGS,
 )
+from data_handler.handlers.loan_states.zklend.settings import (
+    ZKLEND_SPECIFIC_TOKEN_SETTINGS,
+)
 
 from data_handler.handlers import blockchain_call
 
@@ -298,6 +301,7 @@ class ZkLendState(State):
         self.loan_entities[user].extra_info.timestamp = event["timestamp"]
 
         # Update the user's deposit and collateral values
+        self.loan_entities[user].deposit.increase_value(token=token, value=-raw_amount)
         self.loan_entities[user].deposit.increase_value(token=token, value=-raw_amount)
 
         if self.loan_entities[user].collateral_enabled[token]:

@@ -300,7 +300,7 @@ class WithdrawalEventData(BaseModel):
         return Decimal(value)
 
 
-class ZkLendDataParser:
+class CollateralEnabledDisabledEventData(BaseModel):
     """
     Parser class to convert zkLend data events to human-readable formats.
     """
@@ -325,74 +325,12 @@ class ZkLendDataParser:
     @classmethod
     def parse_deposit_event(cls, event_data: List[Any]) -> DepositEventData:
         """
-        Parses the Deposit event data using the DepositEventData model.
-
-        Args:
-            event_data (List[Any]): A list containing the raw event data.
-
+        Check if the value is an address and format it to having leading zeros.
+        Raises:
+            ValueError
         Returns:
-            DepositEventData: Parsed deposit event data.
+            str
         """
-        return DepositEventData(
-            user=event_data[0],
-            token=event_data[1],
-            face_amount=event_data[2],
-        )
-
-    @classmethod
-    def parse_borrowing_event(cls, event_data: List[Any]) -> BorrowingEventData:
-        """
-        Parses the Borrowing event data using the BorrowingEventData model.
-
-        Args:
-            event_data (List[Any]): A list containing the raw event data.
-
-        Returns:
-            BorrowingEventData: Parsed borrowing event data.
-        """
-        return BorrowingEventData(
-            user=event_data[0],
-            token=event_data[1],
-            raw_amount=event_data[2],
-            face_amount=event_data[3],
-        )
-
-    @classmethod
-    def parse_repayment_event(cls, event_data: List[Any]) -> RepaymentEventData:
-        """
-        Parses the Repayment event data using the RepaymentEventData model.
-
-        Args:
-            event_data (List[Any]): A list containing the raw repayment event data.
-
-        Returns:
-            RepaymentEventData: Parsed repayment event data.
-        """
-        return RepaymentEventData(
-            repayer=event_data[0],
-            beneficiary=event_data[1],
-            token=event_data[2],
-            raw_amount=event_data[3],
-            face_amount=event_data[4],
-        )
-
-    @classmethod
-    def parse_liquidation_event(cls, event_data: List[Any]) -> LiquidationEventData:
-        """
-        Parses the Liquidation event data using the LiquidationEventData model.
-
-        Args:
-            event_data (List[Any]): A list containing the raw liquidation event data.
-
-        Returns:
-            LiquidationEventData: Parsed liquidation event data.
-        """
-        return LiquidationEventData(
-            liquidator=event_data[0],
-            user=event_data[1],
-            debt_token=event_data[2],
-            debt_raw_amount=event_data[3],
-            debt_face_amount=event_data[4],
-            collateral_token=event_data[5],
-            collateral_amount=event_data[6],
-        )
+        if not value.startswith("0x"):
+            raise ValueError("Invalid address provided for %s" % info.field_name)
+        return add_leading_zeros(value)

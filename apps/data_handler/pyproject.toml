@@ -27,6 +27,7 @@ dask = {extras = ["dataframe"], version = "^2024.5.2"}
 starknet-py = "^0.22.0"
 simplejson = "^3.19.2"
 aiogram = "^3.12.0"
+pytest = "8.3.3"
 
 
 [tool.poetry.group.dev.dependencies]

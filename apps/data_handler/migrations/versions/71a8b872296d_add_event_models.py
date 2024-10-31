@@ -6,6 +6,7 @@ Create Date: 2024-10-29 20:02:59.248013
 
 """
 
+
 from typing import Sequence, Union
 
 from alembic import op
@@ -14,6 +15,8 @@ import sqlalchemy_utils
 from shared.constants import ProtocolIDs
 
 # revision identifiers, used by Alembic.
+revision: str = "71a8b872296d"
+down_revision: Union[str, None] = "64a870953fa5"
 revision: str = "71a8b872296d"
 down_revision: Union[str, None] = "64a870953fa5"
 branch_labels: Union[str, Sequence[str], None] = None
