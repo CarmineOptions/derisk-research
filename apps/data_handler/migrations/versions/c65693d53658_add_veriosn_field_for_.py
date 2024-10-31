@@ -19,6 +19,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    """fn docstring"""
     # ### Step 1: Add the new column as nullable ###
     op.add_column("hashtack_collateral_debt", sa.Column("version", sa.Integer(), nullable=True))
 
