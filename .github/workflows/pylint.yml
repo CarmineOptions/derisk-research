@@ -4,10 +4,10 @@ name: Pylint Checc
 on:
   push:
     paths:
-      - 'apps/data_handler/**/*.py'
+      - '.apps/data_handler/**/*.py'
   pull_request:
     paths:
-      - 'apps/data_handler/**/*.py'
+      - '.apps/data_handler/**/*.py'
 
 jobs:
   lint:
