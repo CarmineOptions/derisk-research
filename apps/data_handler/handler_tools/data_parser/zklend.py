@@ -4,7 +4,7 @@ This module contains the logic to parse the zkLend data to human-readable format
 
 from typing import Any, List
 from data_handler.handler_tools.data_parser.serializers import (
-    DataAccumulatorsSyncEvent,
+    AccumulatorsSyncEventData,
     LiquidationEventData,
     WithdrawalEventData,
     BorrowingEventData,
@@ -22,18 +22,18 @@ class ZklendDataParser:
     @classmethod
     def parse_accumulators_sync_event(
         cls, event_data: list[Any]
-    ) -> DataAccumulatorsSyncEvent:
+    ) -> AccumulatorsSyncEventData:
         """
-        Parses the AccumulatorsSync event data into a human-readable format using the DataAccumulatorsSyncEvent serializer.
+        Parses the AccumulatorsSync event data into a human-readable format using the AccumulatorsSyncEventData serializer.
 
         Args:
             event_data (list[Any]): A list containing the raw event data, typically with 3 elements:
                 token, lending accumulator, and debt accumulator.
 
         Returns:
-            DataAccumulatorsSyncEvent: A model with the parsed event data.
+            AccumulatorsSyncEventData: A model with the parsed event data.
         """
-        parsed_event = DataAccumulatorsSyncEvent(
+        return AccumulatorsSyncEventData(
             token=event_data[0],
             lending_accumulator=event_data[1],
             debt_accumulator=event_data[2],
@@ -105,14 +105,13 @@ class ZklendDataParser:
         Returns:
             RepaymentEventData: A model with the parsed event data.
         """
-        parsed_event = RepaymentEventData(
+        return RepaymentEventData(
             repayer=event_data[0],
             beneficiary=event_data[1],
             token=event_data[2],
             raw_amount=event_data[3],
             face_amount=event_data[4],
         )
-        return parsed_event
 
     @classmethod
     def parse_liquidation_event(cls, event_data: list[Any]) -> LiquidationEventData:
@@ -125,7 +124,7 @@ class ZklendDataParser:
         Returns:
             LiquidationEventData: A model with the parsed event data.
         """
-        parsed_event = LiquidationEventData(
+        return LiquidationEventData(
             liquidator=event_data[0],
             user=event_data[1],
             debt_token=event_data[2],
@@ -134,7 +133,6 @@ class ZklendDataParser:
             collateral_token=event_data[5],
             collateral_amount=event_data[6],
         )
-        return parsed_event
 
     @classmethod
     def parse_collateral_enabled_disabled_event(
@@ -150,8 +148,7 @@ class ZklendDataParser:
         Returns:
             CollateralEnabledDisabledEventData: A model with the parsed event data.
         """
-        parsed_event = CollateralEnabledDisabledEventData(
+        return CollateralEnabledDisabledEventData(
             user=event_data["data"][0],
             token=event_data["data"][1],
         )
-        return parsed_event
