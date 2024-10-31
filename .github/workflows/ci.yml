@@ -61,4 +61,4 @@ jobs:
         working-directory: ./apps/shared
         run: |
           echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
-          pytest apps/shared
+          pytest .
