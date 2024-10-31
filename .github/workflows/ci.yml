@@ -23,23 +23,36 @@ jobs:
           --health-interval 10s 
           --health-timeout 5s 
           --health-retries 5
-
+          
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Install Docker Compose
+        run: |
+          sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+
+      - name: Set up Docker for Data Handler
+        run: |
+          docker-compose -f devops/dev/docker-compose.data-handler.yaml up -d --build
+
       - name: Install Poetry
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
+          export PATH="$HOME/.local/bin:$PATH"
 
       - name: Install dependencies
+        working-directory: ./apps/data_handler  # Set to directory containing pyproject.toml
         run: |
           poetry install
-          
+
       - name: Run Tests for Data Handler
+        working-directory: ./apps/data_handler  # Same directory
         run: |
           poetry run make test_data_handler
 
       - name: Run Tests for Shared
+        working-directory: ./apps/data_handler  # Adjust if shared tests are in a different folder
         run: |
           poetry run make test_shared
