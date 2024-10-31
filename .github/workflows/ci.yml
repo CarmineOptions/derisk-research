@@ -36,32 +36,28 @@ jobs:
       - name: Install Poetry
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
-          echo "export PATH=$HOME/.local/bin:\$PATH" >> $GITHUB_ENV
+          echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
 
       - name: Install dependencies for Data Handler
         working-directory: ./apps/data_handler
-        env:
-          PATH: ${{ env.PATH }}:$HOME/.local/bin
         run: |
+          echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
           poetry install
 
       - name: Run Tests for Data Handler
         working-directory: ./apps/data_handler
-        env:
-          PATH: ${{ env.PATH }}:$HOME/.local/bin
         run: |
-          pytest apps/data_handler
+          echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
+          poetry run pytest apps/data_handler
 
       - name: Install dependencies for Shared
         working-directory: ./apps/shared
-        env:
-          PATH: ${{ env.PATH }}:$HOME/.local/bin
         run: |
+          echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
           poetry install
 
       - name: Run Tests for Shared
         working-directory: ./apps/shared
-        env:
-          PATH: ${{ env.PATH }}:$HOME/.local/bin
         run: |
-          pytest apps/shared
+          echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
+          poetry run pytest apps/shared
