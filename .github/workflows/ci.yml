@@ -48,16 +48,16 @@ jobs:
           export PATH="$HOME/.local/bin:$PATH"
 
       - name: Install dependencies
-        working-directory: ./apps/data_handler  # Set to directory containing pyproject.toml
+        working-directory: ./apps/data_handler
         run: |
           poetry install
 
       - name: Run Tests for Data Handler
-        working-directory: ./apps/data_handler  # Same directory
+        working-directory: ./apps/data_handler
         run: |
-          poetry run make test_data_handler
+          poetry run pytest apps/data_handler
 
       - name: Run Tests for Shared
-        working-directory: ./apps/data_handler  # Adjust if shared tests are in a different folder
+        working-directory: ./apps/shared
         run: |
-          poetry run make test_shared
+          poetry run pytest apps/shared
