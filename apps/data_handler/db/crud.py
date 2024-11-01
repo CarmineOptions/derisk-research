@@ -24,8 +24,8 @@ from data_handler.db.models import (
 )
 
 from data_handler.db.models.zklend_events import (
-    AccumulatorsSyncEventData,
-    LiquidationEventData,
+    AccumulatorsSyncEventModel,
+    LiquidationEventModel,
 )
 
 logger = logging.getLogger(__name__)
@@ -559,8 +559,8 @@ class ZkLendEventDBConnector(DBConnector):
     Provides CRUD operations specifically for ZkLend events, such as accumulator sync
     and liquidation events.
     Methods:
-    - create_accumulator_event: Creates an AccumulatorsSyncEventData record.
-    - create_liquidation_event: Creates a LiquidationEventData record.
+    - create_accumulator_event: Creates an AccumulatorsSyncEventModel record.
+    - create_liquidation_event: Creates a LiquidationEventModel record.
     - get_all_events: Retrieves events based on filtering criteria such as protocol_id,
     event_name, or block_number.
     """
@@ -569,7 +569,7 @@ class ZkLendEventDBConnector(DBConnector):
         self, protocol_id: str, event_name: str, block_number: int, event_data: dict
     ) -> None:
         """
-        Creates an AccumulatorsSyncEventData record in the database.
+        Creates an AccumulatorsSyncEventModel record in the database.
         :param protocol_id: The protocol ID for the event.
         :param event_name: The name of the event.
         :param block_number: The block number associated with the event.
@@ -578,7 +578,7 @@ class ZkLendEventDBConnector(DBConnector):
         """
         db = self.Session()
         try:
-            event = AccumulatorsSyncEventData(
+            event = AccumulatorsSyncEventModel(
                 protocol_id=protocol_id,
                 event_name=event_name,
                 block_number=block_number,
@@ -590,7 +590,7 @@ class ZkLendEventDBConnector(DBConnector):
             db.commit()
         except SQLAlchemyError as e:
             db.rollback()
-            logger.error(f"Error creating AccumulatorsSyncEventData: {e}")
+            logger.error(f"Error creating AccumulatorsSyncEventModel: {e}")
             raise e
         finally:
             db.close()
@@ -599,7 +599,7 @@ class ZkLendEventDBConnector(DBConnector):
         self, protocol_id: str, event_name: str, block_number: int, event_data: dict
     ) -> None:
         """
-        Creates a LiquidationEventData record in the database.
+        Creates a LiquidationEventModel record in the database.
         :param protocol_id: The protocol ID for the event.
         :param event_name: The name of the event.
         :param block_number: The block number associated with the event.
@@ -609,7 +609,7 @@ class ZkLendEventDBConnector(DBConnector):
         """
         db = self.Session()
         try:
-            event = LiquidationEventData(
+            event = LiquidationEventModel(
                 protocol_id=protocol_id,
                 event_name=event_name,
                 block_number=block_number,
@@ -625,7 +625,7 @@ class ZkLendEventDBConnector(DBConnector):
             db.commit()
         except SQLAlchemyError as e:
             db.rollback()
-            logger.error(f"Error creating LiquidationEventData: {e}")
+            logger.error(f"Error creating LiquidationEventModel: {e}")
             raise e
         finally:
             db.close()
@@ -661,8 +661,8 @@ class ZkLendEventDBConnector(DBConnector):
                     query = query.filter_by(block_number=block_number)
                 return query
 
-            accumulator_query = apply_filters(db.query(AccumulatorsSyncEventData))
-            liquidation_query = apply_filters(db.query(LiquidationEventData))
+            accumulator_query = apply_filters(db.query(AccumulatorsSyncEventModel))
+            liquidation_query = apply_filters(db.query(LiquidationEventModel))
             combined_query = accumulator_query.union(liquidation_query)
             events = combined_query.all()
             return events

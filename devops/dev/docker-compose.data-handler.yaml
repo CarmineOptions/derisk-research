@@ -21,31 +21,6 @@ services:
     depends_on:
       - db
 
-  celery:
-    build:
-      context: ../../apps
-      dockerfile: data_handler/Dockerfile
-    command: celery -A data_handler.celery_app.celery_conf worker --loglevel=INFO
-    environment:
-      - PYTHONPATH=/app
-    volumes:
-      - ../../apps/:/app
-    depends_on:
-      - redis
-      - db
-    networks:
-      - data_handler_network
-
-  redis:
-    image: redis:latest
-    restart: always
-    ports:
-      - "127.0.0.1:6379:6379"
-    volumes:
-      - redis_data:/data
-    networks:
-      - data_handler_network
-
   db:
     image: postgres:16
     container_name: postgres_dev
@@ -68,4 +43,3 @@ services:
 
 volumes:
   postgres_data:
-  redis_data:
