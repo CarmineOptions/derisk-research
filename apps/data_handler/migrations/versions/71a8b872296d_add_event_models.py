@@ -9,9 +9,11 @@ Create Date: 2024-10-29 20:02:59.248013
 
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
 import sqlalchemy_utils
+from alembic import op
+from sqlalchemy import inspect, text
+
 from shared.constants import ProtocolIDs
 
 # revision identifiers, used by Alembic.
@@ -84,7 +86,22 @@ def upgrade() -> None:
         ["event_name"],
         unique=False,
     )
-    op.drop_index("ix_notification_email", table_name="notification")
+
+    conn = op.get_bind()
+    result = conn.execute(
+        text(
+            "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'notification');"
+        )
+    )
+    table_exists = result.scalar()
+
+    if table_exists:
+        inspector = inspect(conn)
+        existing_indexes = [
+            index["name"] for index in inspector.get_indexes("notification")
+        ]
+        if "ix_notification_email" in existing_indexes:
+            op.drop_index("ix_notification_email", table_name="notification")
     # ### end Alembic commands ###
 
 

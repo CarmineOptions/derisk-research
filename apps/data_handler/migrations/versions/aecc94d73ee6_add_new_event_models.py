@@ -182,6 +182,7 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """ Downgrade the database """
+
     conn = op.get_bind()
 
     if conn.engine.dialect.has_table(conn, "withdrawal_event"):
