@@ -6,7 +6,7 @@ from sqlalchemy import Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 
-class AccumulatorsSyncEventData(EventBaseModel):
+class AccumulatorsSyncEventModel(EventBaseModel):
     """
     Database model for AccumulatorsSync event, inheriting from EventBaseModel.
 
@@ -14,21 +14,21 @@ class AccumulatorsSyncEventData(EventBaseModel):
     accumulators as Decimal.
     """
 
-    __tablename__ = "accumulators_sync_event_data"
+    __tablename__ = "accumulators_sync_event"
 
     token: Mapped[str] = mapped_column(String, nullable=False)
     lending_accumulator: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
     debt_accumulator: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
 
 
-class LiquidationEventData(EventBaseModel):
+class LiquidationEventModel(EventBaseModel):
     """
     Database model for Liquidation event, inheriting from EventBaseModel.
 
     This model stores the details of a liquidation event, including addresses and amounts.
     """
 
-    __tablename__ = "liquidation_event_data"
+    __tablename__ = "liquidation_event"
 
     liquidator: Mapped[str] = mapped_column(String, nullable=False)
     user: Mapped[str] = mapped_column(String, nullable=False)
@@ -39,7 +39,7 @@ class LiquidationEventData(EventBaseModel):
     collateral_amount: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
 
 
-class RepaymentEventData(EventBaseModel):
+class RepaymentEventModel(EventBaseModel):
     """
     Database model for Repayment event, inheriting from EventBaseModel.
 
@@ -56,7 +56,7 @@ class RepaymentEventData(EventBaseModel):
     face_amount: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
 
 
-class DepositEventData(EventBaseModel):
+class DepositEventDataModel(EventBaseModel):
     """
     Database model for Deposit event, inheriting from EventBaseModel.
 
@@ -71,7 +71,7 @@ class DepositEventData(EventBaseModel):
     face_amount: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
 
 
-class BorrowingEventData(EventBaseModel):
+class BorrowingEventDataModel(EventBaseModel):
     """
     Database model for Borrowing event, inheriting from EventBaseModel.
 
@@ -87,7 +87,7 @@ class BorrowingEventData(EventBaseModel):
     face_amount: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
 
 
-class WithdrawalEventData(EventBaseModel):
+class WithdrawalEventModel(EventBaseModel):
     """
     Database model for Withdrawal event, inheriting from EventBaseModel.
 
@@ -102,7 +102,7 @@ class WithdrawalEventData(EventBaseModel):
     token: Mapped[str] = mapped_column(String, nullable=False)
 
 
-class CollateralEnabledDisabledEventData(EventBaseModel):
+class CollateralEnabledDisabledEventModel(EventBaseModel):
     """
     Database model for CollateralEnabled/Disabled event, inheriting from EventBaseModel.
 

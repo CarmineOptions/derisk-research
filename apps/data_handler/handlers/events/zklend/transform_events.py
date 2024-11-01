@@ -2,24 +2,20 @@
 This module contains the ZklendTransformer class, 
 which is used to transform Zklend events.
 """
-
+import logging
 from pydantic import BaseModel
 from data_handler.db.models.base import Base
-from handler_tools.api_connector import DeRiskAPIConnector
-from typing import Dict, Any, Tuple, Type, Callable, Optional
+from data_handler.handler_tools.api_connector import DeRiskAPIConnector
+from typing import Dict, Any, Tuple, Type, Callable
 from shared.constants import ProtocolIDs
-from data_handler.handler_tools.data_parser.serializers import (
-    AccumulatorsSyncEventData as AccumulatorsSyncSerializer,
-    LiquidationEventData as LiquidationSerializer,
-    ZkLendDataParser,
-)
+from data_handler.handler_tools.data_parser.zklend import ZklendDataParser
 from data_handler.db.models.zklend_events import (
-    AccumulatorsSyncEventData as AccumulatorsSyncModel,
-    LiquidationEventData as LiquidationModel,
+    AccumulatorsSyncEventModel,
+    LiquidationEventModel,
 )
 from data_handler.db.crud import ZkLendEventDBConnector
-from handler_tools.constants import ProtocolAddresses
-import logging
+from data_handler.handler_tools.constants import ProtocolAddresses
+
 
 
 
@@ -27,24 +23,24 @@ logger = logging.getLogger(__name__)
 
 EVENT_MAPPING: Dict[str, Tuple[Callable, str, Type[Base]]] = {
     "AccumulatorsSync": (
-        ZkLendDataParser.parse_accumulators_sync_event,
+        ZklendDataParser.parse_accumulators_sync_event,
         "create_accumulator_event",
-        AccumulatorsSyncModel
+        AccumulatorsSyncEventModel
     ),
     "Liquidation": (
-        ZkLendDataParser.parse_liquidation_event,
+        ZklendDataParser.parse_liquidation_event,
         "create_liquidation_event",
-        LiquidationModel
+        LiquidationEventModel
     ),
     "zklend::market::Market::AccumulatorsSync": (
-        ZkLendDataParser.parse_accumulators_sync_event,
+        ZklendDataParser.parse_accumulators_sync_event,
         "create_accumulator_event",
-        AccumulatorsSyncModel
+        AccumulatorsSyncEventModel
     ),
     "zklend::market::Market::Liquidation": (
-        ZkLendDataParser.parse_liquidation_event,
+        ZklendDataParser.parse_liquidation_event,
         "create_liquidation_event",
-        LiquidationModel
+        LiquidationEventModel
     ),
 }
 
