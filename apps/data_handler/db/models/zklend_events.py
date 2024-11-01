@@ -1,3 +1,4 @@
+""" This module contains the SQLAlchemy models for the zkLend events. """
 from decimal import Decimal
 
 from data_handler.db.models.event import EventBaseModel
@@ -16,9 +17,7 @@ class AccumulatorsSyncEventData(EventBaseModel):
     __tablename__ = "accumulators_sync_event_data"
 
     token: Mapped[str] = mapped_column(String, nullable=False)
-    lending_accumulator: Mapped[Decimal] = mapped_column(
-        Numeric(38, 18), nullable=False
-    )
+    lending_accumulator: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
     debt_accumulator: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
 
 

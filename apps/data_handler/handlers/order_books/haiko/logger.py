@@ -1,3 +1,4 @@
+""" Logger for Haiko order book """
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -18,9 +19,7 @@ def get_logger(path: str, echo: bool = False):
     file_handler = logging.FileHandler(log_path)
     file_handler.setLevel(logging.DEBUG)
 
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 

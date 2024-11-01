@@ -1,3 +1,4 @@
+""" Module for making HTTP GET requests to the DeRisk API using the `requests` library. """
 import os
 
 import requests
@@ -21,9 +22,7 @@ class DeRiskAPIConnector:
             raise ValueError("DERISK_API_URL environment variable is not set")
 
     @staticmethod
-    def _validate_data(
-        from_address: str, min_block_number: int, max_block_number: int
-    ) -> None:
+    def _validate_data(from_address: str, min_block_number: int, max_block_number: int) -> None:
         """
         Check the data for the DeRisk API.
         :param from_address: From address.
@@ -38,9 +37,7 @@ class DeRiskAPIConnector:
         if not isinstance(max_block_number, int):
             raise TypeError("max_block_number must be an integer")
 
-    def get_data(
-        self, from_address: str, min_block_number: int, max_block_number: int
-    ) -> dict:
+    def get_data(self, from_address: str, min_block_number: int, max_block_number: int) -> dict:
         """
         Retrieves data from the DeRisk API for a given address and block number range.
 

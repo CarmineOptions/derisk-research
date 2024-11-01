@@ -19,8 +19,10 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    """ Function to apply the upgrade migrations. """
     pass
 
 
 def downgrade() -> None:
+    """ Function to revert the upgrade migrations. """
     pass

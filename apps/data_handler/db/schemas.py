@@ -1,3 +1,5 @@
+""" This module contains the data models for the database schema """
+
 import decimal
 from decimal import Decimal
 from typing import Dict, List, Optional
@@ -6,6 +8,7 @@ from pydantic import BaseModel, field_validator
 
 
 class LoanStateBase(BaseModel):
+    """ Base class for LoanStateResponse """
     protocol_id: str
     block: int
     timestamp: int
@@ -15,10 +18,12 @@ class LoanStateBase(BaseModel):
     deposit: Optional[Dict]
 
     class Config:
+        """ Pydantic configuration """
         from_attributes = True
 
 
 class LoanStateResponse(LoanStateBase):
+    """ Pydantic model for LoanStateResponse """
     pass
 
 

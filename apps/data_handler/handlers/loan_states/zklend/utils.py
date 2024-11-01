@@ -1,3 +1,4 @@
+""" This module contains the ZkLendInitializer class. """
 from decimal import Decimal
 
 import pandas as pd
@@ -66,9 +67,7 @@ class ZkLendInitializer:
         """
         user_loan_state = self.zklend_state.loan_entities[loan_state.user_id]
         user_loan_state.collateral_enabled.values = loan_state.collateral_enabled
-        user_loan_state.collateral.values = self._convert_float_to_decimal(
-            loan_state.collateral
-        )
+        user_loan_state.collateral.values = self._convert_float_to_decimal(loan_state.collateral)
         user_loan_state.debt.values = self._convert_float_to_decimal(loan_state.debt)
 
     @staticmethod

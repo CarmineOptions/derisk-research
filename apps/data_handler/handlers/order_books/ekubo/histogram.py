@@ -1,3 +1,4 @@
+""" A script to display order book histograms for the Ekubo DEX. """
 import argparse
 from decimal import Decimal
 from typing import List
@@ -10,9 +11,7 @@ TOKEN_A = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"  #
 TOKEN_B = "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"  # USDC
 
 
-def fetch_order_book_and_current_price(
-    token_a: str, token_b: str
-) -> tuple[dict, Decimal]:
+def fetch_order_book_and_current_price(token_a: str, token_b: str) -> tuple[dict, Decimal]:
     """
     Fetch the order book and current price for the given token pair.
     :param token_a: Base token contract address
@@ -99,19 +98,13 @@ class Histogram:
 
     def add_asks(self) -> None:
         """Add ask prices and quantities to the histogram."""
-        self.ax.barh(
-            self.ask_prices, self.ask_quantities, color="red", label="Asks", height=15
-        )
+        self.ax.barh(self.ask_prices, self.ask_quantities, color="red", label="Asks", height=15)
 
     def add_bids(self) -> None:
         """Add bid prices and quantities to the histogram."""
-        self.ax.barh(
-            self.bid_prices, self.bid_quantities, color="green", label="Bids", height=15
-        )
+        self.ax.barh(self.bid_prices, self.bid_quantities, color="green", label="Bids", height=15)
 
-    def add_total_box_quantity(
-        self, quantities_name: str, sum_quantities: float
-    ) -> None:
+    def add_total_box_quantity(self, quantities_name: str, sum_quantities: float) -> None:
         """
         Add a text box displaying the total quantity.
 
@@ -151,6 +144,7 @@ class Histogram:
 
 
 def main():
+    """ Main function to parse command line arguments and display histograms. """
     parser = argparse.ArgumentParser(description="Display order book histograms.")
     parser.add_argument(
         "--type",

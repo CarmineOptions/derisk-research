@@ -1,3 +1,4 @@
+""" Fetch ZkLend specific token settings. """
 import asyncio
 import decimal
 
@@ -70,9 +71,7 @@ async def get_token_reserve_data(token_setting_address: str) -> list:
     return reserve_data
 
 
-async def fetch_zklend_specific_token_settings() -> (
-    dict[str, ZkLendSpecificTokenSettings]
-):
+async def fetch_zklend_specific_token_settings() -> (dict[str, ZkLendSpecificTokenSettings]):
     """
     Fetch ZkLend specific token settings.
     :return: Dict of ZkLend specific token settings.

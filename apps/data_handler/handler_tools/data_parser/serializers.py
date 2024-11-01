@@ -1,3 +1,4 @@
+""" This module contains the data models and parser class for zkLend data events. """
 from decimal import Decimal
 from pydantic import BaseModel, ValidationInfo, field_validator
 from shared.helpers import add_leading_zeros
@@ -129,7 +130,8 @@ class AccumulatorsSyncEventData(BaseModel):
     @field_validator("token")
     def validate_address(cls, value: str, info: ValidationInfo) -> str:
         """
-        Validates if the value is a valid address and formats it to have leading zeros.
+        Validates if the value is a valid address and formats it to 
+        have leading zeros.
 
         Raises:
             ValueError: If the provided address is invalid.
@@ -227,7 +229,8 @@ class BorrowingEventData(BaseModel):
     @field_validator("user", "token")
     def validate_address(cls, value: str, info: ValidationInfo) -> str:
         """
-        Validates if the value is a valid address and formats it to have leading zeros.
+        Validates if the value is a valid address and formats 
+        it to have leading zeros.
 
         Raises:
             ValueError: If the provided address is invalid.
@@ -275,7 +278,8 @@ class WithdrawalEventData(BaseModel):
     @field_validator("user", "token")
     def validate_addresses(cls, value: str) -> str:
         """
-        Validates that the provided address starts with '0x' and formats it with leading zeros.
+        Validates that the provided address starts with '0x' and 
+        formats it with leading zeros.
 
         Args:
             value (str): The address string to validate.
@@ -310,14 +314,7 @@ class WithdrawalEventData(BaseModel):
 
 
 class CollateralEnabledDisabledEventData(BaseModel):
-    """
-    A data model representing essential collateral enabled/disabled event data.
-
-    Attributes:
-        user (str): The user address associated with the collateral enabled/disabled event, represented as a string.
-        token (str): The token address represented as a string.
-    """
-
+    """ Data model representing a collateral enabled/disabled event in the system. """
     user: str
     token: str
 

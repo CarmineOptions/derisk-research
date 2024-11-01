@@ -1,3 +1,6 @@
+"""Tasks for fetching and storing order book data from Ekubo and Haiko APIs.
+"""
+
 import logging
 
 from data_handler.celery_app.celery_conf import app
@@ -19,27 +22,20 @@ def ekubo_order_book():
     """
     pool_states = EkuboAPIConnector().get_pools()
     filtered_pool_states = [
-        pool_state
-        for pool_state in pool_states
-        if isinstance(pool_state, dict)
-        and pool_state["token0"] in TOKEN_MAPPING
-        and pool_state["token1"] in TOKEN_MAPPING
+        pool_state for pool_state in pool_states if isinstance(pool_state, dict)
+        and pool_state["token0"] in TOKEN_MAPPING and pool_state["token1"] in TOKEN_MAPPING
     ]
     for pool_state in filtered_pool_states:
         token_a = pool_state["token0"]
         token_b = pool_state["token1"]
-        logging.getLogger().info(
-            f"Fetching data for token pair: {token_a} and {token_b}"
-        )
+        logging.getLogger().info(f"Fetching data for token pair: {token_a} and {token_b}")
         try:
             order_book = EkuboOrderBook(token_a, token_b)
             order_book.fetch_price_and_liquidity()
             serialized_data = order_book.serialize()
             connector.write_to_db(OrderBookModel(**serialized_data.model_dump()))
         except Exception as exc:
-            logger.info(
-                f"With token pair: {token_a} and {token_b} something happened: {exc}"
-            )
+            logger.info(f"With token pair: {token_a} and {token_b} something happened: {exc}")
             continue
 
 

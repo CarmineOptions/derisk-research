@@ -1,9 +1,11 @@
+""" This module contains the EkuboAPIConnector class, which is responsible for"""
 import time
 
 from data_handler.handlers.order_books.abstractions import AbstractionAPIConnector
 
 
 class EkuboAPIConnector(AbstractionAPIConnector):
+    """ A class that interacts with the Ekubo API to fetch data related to the Ekubo protocol. """
     API_URL = "https://mainnet-api.ekubo.org"
 
     @classmethod
@@ -13,8 +15,9 @@ class EkuboAPIConnector(AbstractionAPIConnector):
 
         :param quote_token: The address of the quote token on StarkNet.
         :type quote_token: str
-        :return: A dictionary containing the timestamp and a list of dictionaries for each token with price details.
-                 Each token's dictionary includes its address, price, and trading volume.
+        :return: A dictionary containing the timestamp and a list 
+                of dictionaries for each token with price details.
+                Each token's dictionary includes its address, price, and trading volume.
         :rtype: dict
 
         The response dictionary structure is as follows:
@@ -23,8 +26,10 @@ class EkuboAPIConnector(AbstractionAPIConnector):
             'prices': [
                 {
                     'token': str,   # The address of the token on the blockchain
-                    'price': str,   # The current price of the token expressed in terms of the quote token
-                    'k_volume': str # The trading volume for the token, expressed in the smallest unit counts
+                    'price': str,   # The current price of the token expressed 
+                    in terms of the quote token
+                    'k_volume': str # The trading volume for the 
+                    token, expressed in the smallest unit counts
                 }
             ]
         }
@@ -47,7 +52,8 @@ class EkuboAPIConnector(AbstractionAPIConnector):
     @classmethod
     def get_pool_liquidity(cls, key_hash: str) -> list:
         """
-        Get the liquidity delta for each tick for the given pool key hash. The response includes an array
+        Get the liquidity delta for each tick 
+        for the given pool key hash. The response includes an array
         of objects, each containing details about the tick and the net liquidity delta difference.
 
         :param key_hash: The pool key hash in hexadecimal or decimal format.
@@ -55,7 +61,8 @@ class EkuboAPIConnector(AbstractionAPIConnector):
         :return: An array of objects detailing the current liquidity chart for the pool. Each object
                  in the array includes the following:
                  - 'tick': The tick index as an integer.
-                 - 'net_liquidity_delta_diff': The difference in net liquidity for the tick, represented as a string.
+                 - 'net_liquidity_delta_diff': The difference in net 
+                    liquidity for the tick, represented as a string.
         :rtype: list
 
         Example of returned data:
@@ -81,7 +88,8 @@ class EkuboAPIConnector(AbstractionAPIConnector):
             - 'symbol' (str): The abbreviated symbol of the token, e.g., "WBTC".
             - 'decimals' (int): The number of decimal places the token is divided into, e.g., 8.
             - 'l2_token_address' (str): The address of the token on layer 2, in hexadecimal format.
-            - 'sort_order' (int): An integer specifying the order in which the token should be displayed
+            - 'sort_order' (int): 
+            An integer specifying the order in which the token should be displayed
             relative to others; lower numbers appear first.
             - 'total_supply' (str): The total supply of the token, if known. This can be 'None'
             if the total supply is not set or unlimited.
@@ -106,18 +114,21 @@ class EkuboAPIConnector(AbstractionAPIConnector):
 
     def get_pools(self) -> list:
         """
-        Retrieves a list of detailed information about various pools. Each entry in the list is a dictionary
+        Retrieves a list of detailed information about various pools. Each entry in the 
+        list is a dictionary
         that provides comprehensive details about a pool, including the tokens involved, fees,
         and other relevant metrics.
 
-        :return: A list of dictionaries, each containing detailed information about a pool. The structure of
+        :return: A list of dictionaries, each containing detailed information about a pool. 
+        The structure of
          each dictionary is as follows:
             - 'key_hash': The unique identifier of the pool in hexadecimal format. (str)
             - 'token0': The address of the first token in the pool on the blockchain. (str)
             - 'token1': The address of the second token in the pool on the blockchain. (str)
             - 'fee': The fee associated with the pool transactions, in hexadecimal format. (str)
             - 'tick_spacing': The minimum granularity of price movements in the pool. (int)
-            - 'extension': Additional information or features related to the pool, in hexadecimal format. (str)
+            - 'extension': Additional information or 
+            features related to the pool, in hexadecimal format. (str)
             - 'sqrt_ratio': The square root of the current price ratio between token0 and token1,
              in hexadecimal format. (str)
             - 'tick': The current position of the pool in its price range. (int)
@@ -207,7 +218,8 @@ class EkuboAPIConnector(AbstractionAPIConnector):
         containing the following keys:
 
         - timestamp (int): The timestamp of the data.
-        - tvlByToken (list): A list of dictionaries containing the total value locked (TVL) by token:
+        - tvlByToken (list): A list of dictionaries containing 
+        the total value locked (TVL) by token:
             - token (str): The address of the token.
             - balance (str): The balance of the token in the pool.
         - volumeByToken (list): A list of dictionaries containing the volume by token:
@@ -217,7 +229,8 @@ class EkuboAPIConnector(AbstractionAPIConnector):
         - revenueByToken (list): A list of dictionaries containing the revenue by token:
             - token (str): The address of the token.
             - revenue (str): The revenue generated by the token.
-        - tvlDeltaByTokenByDate (list): A list of dictionaries containing the TVL delta by token by date:
+        - tvlDeltaByTokenByDate (list): A list of dictionaries containing the 
+        TVL delta by token by date:
             - token (str): The address of the token.
             - date (str): The date of the TVL delta.
             - delta (str): The change in TVL for the token.
@@ -226,7 +239,8 @@ class EkuboAPIConnector(AbstractionAPIConnector):
             - date (str): The date of the volume data.
             - volume (str): The trading volume of the token.
             - fees (str): The fees generated by the token.
-        - revenueByTokenByDate (list): A list of dictionaries containing the revenue by token by date:
+        - revenueByTokenByDate (list): A list of dictionaries containing the revenue by 
+        token by date:
             - token (str): The address of the token.
             - date (str): The date of the revenue data.
             - revenue (str): The revenue generated by the token.

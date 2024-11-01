@@ -23,6 +23,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    """ Base class for collectors. """
     # Check if the table already exists
     conn = op.get_bind()
     inspector = Inspector.from_engine(conn)
@@ -57,15 +58,12 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """ Base classes for ORM models. """
     # Drop the indices and table if it exists
     conn = op.get_bind()
     inspector = Inspector.from_engine(conn)
 
     if inspector.has_table("health_ratio_level"):
-        op.drop_index(
-            op.f("ix_health_ratio_level_user_id"), table_name="health_ratio_level"
-        )
-        op.drop_index(
-            op.f("ix_health_ratio_level_timestamp"), table_name="health_ratio_level"
-        )
+        op.drop_index(op.f("ix_health_ratio_level_user_id"), table_name="health_ratio_level")
+        op.drop_index(op.f("ix_health_ratio_level_timestamp"), table_name="health_ratio_level")
         op.drop_table("health_ratio_level")

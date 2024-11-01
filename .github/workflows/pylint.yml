@@ -1,0 +1,48 @@
+name: Pylint Check
+
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pylint
+
+    - name: Debug Information
+      run: |
+        echo "Current directory:"
+        pwd
+        echo "\nDirectory structure:"
+        ls -R
+        echo "\nGit root directory:"
+        git rev-parse --show-toplevel
+        echo "\nSearching for Python files:"
+        find . -name "*.py"
+        echo "\nGit ls-files output:"
+        git ls-files
+        echo "\nSpecific path search:"
+        git ls-files 'data_handler/*.py'
+        git ls-files './data_handler/*.py'
+        git ls-files 'apps/data_handler/*.py'
+        git ls-files './apps/data_handler/*.py'
+
+    - name: Run Pylint
+      run: |
+        PYTHON_FILES=$(find ./apps/data_handler -name "*.py")
+        if [ -n "$PYTHON_FILES" ]; then
+          echo "Files to lint: $PYTHON_FILES"
+          python -m pylint $PYTHON_FILES --disable=all --enable=C0114,C0115,C0116,C0301 --max-line-length=150
+        else
+          echo "No Python files found in apps/data_handler/"
+          exit 1
+        fi

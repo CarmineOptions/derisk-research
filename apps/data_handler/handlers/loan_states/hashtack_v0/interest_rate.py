@@ -1,3 +1,4 @@
+""" Module for calculating interest rates on the Hashstack V0 protocol. """
 import asyncio
 import logging
 from decimal import Decimal
@@ -54,9 +55,7 @@ class HashstackV0InterestRate:
             end_block,
         )
         if isinstance(result, dict):
-            logging.info(
-                f"Error while fetching events: {result.get('error', 'Unknown error')}"
-            )
+            logging.info(f"Error while fetching events: {result.get('error', 'Unknown error')}")
             self.events = []
             self._events_over = True
             return
@@ -97,13 +96,9 @@ class HashstackV0InterestRate:
                 continue
 
             # Set initial timestamp values for the first token event
-            if (
-                not self.last_block_data
-                or interest_rate_state.previous_token_timestamps[token_name] == 0
-            ):
-                interest_rate_state.previous_token_timestamps[token_name] = event[
-                    "timestamp"
-                ]
+            if (not self.last_block_data
+                    or interest_rate_state.previous_token_timestamps[token_name] == 0):
+                interest_rate_state.previous_token_timestamps[token_name] = event["timestamp"]
                 continue
 
             # Get needed variables
@@ -127,17 +122,13 @@ class HashstackV0InterestRate:
             )
 
         # Write last block data
-        self._add_interest_rate_entry(
-            interest_rate_state.build_interest_rate_model(HASHSTACK_ID)
-        )
+        self._add_interest_rate_entry(interest_rate_state.build_interest_rate_model(HASHSTACK_ID))
 
     async def _run_async(self) -> None:
         """Asynchronous function for running the interest rate calculation process and fetching data from on-chain."""
         latest_block = await NET.get_block_number()
         previous_block = (
-            self.last_block_data.block
-            if self.last_block_data
-            else self.DEFAULT_START_BLOCK
+            self.last_block_data.block if self.last_block_data else self.DEFAULT_START_BLOCK
         )
         if previous_block == latest_block:
             return

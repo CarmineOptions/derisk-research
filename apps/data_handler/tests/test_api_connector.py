@@ -1,3 +1,4 @@
+""" This module contains tests for the DeRiskAPIConnector class. """
 import os
 import unittest
 from unittest.mock import MagicMock, patch
@@ -10,6 +11,7 @@ from data_handler.handler_tools.api_connector import DeRiskAPIConnector
 
 
 class TestDeRiskAPIConnector(unittest.TestCase):
+    """ Test class for the DeRiskAPIConnector class. """
     DERISK_API_URL = "https://api.derisk.io"
 
     @patch.dict(os.environ, {"DERISK_API_URL": DERISK_API_URL})
@@ -29,9 +31,7 @@ class TestDeRiskAPIConnector(unittest.TestCase):
     def test_get_data_success(self, mock_get):
         """Test that DeRiskAPIConnector.get_data() returns data on a successful request."""
         json_data = {"status": "success", "data": "some_data"}
-        mock_get.return_value = MagicMock(
-            status_code=200, json=MagicMock(return_value=json_data)
-        )
+        mock_get.return_value = MagicMock(status_code=200, json=MagicMock(return_value=json_data))
 
         connector = DeRiskAPIConnector()
         result = connector.get_data(
@@ -44,7 +44,8 @@ class TestDeRiskAPIConnector(unittest.TestCase):
         mock_get.assert_called_once_with(
             self.DERISK_API_URL,
             params={
-                "from_address": "0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05",
+                "from_address":
+                "0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05",
                 "min_block_number": 630000,
                 "max_block_number": 631000,
             },
