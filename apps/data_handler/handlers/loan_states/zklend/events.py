@@ -23,13 +23,10 @@ import pandas as pd
 from data_handler.db.crud import InitializerDBConnector
 from data_handler.handler_tools.data_parser.zklend import ZklendDataParser
 from data_handler.handlers.helpers import get_async_symbol
-from data_handler.handlers.loan_states.zklend import TokenSettings
+from data_handler.handlers.settings import TokenSettings
 from shared.helpers import add_leading_zeros
 from shared.loan_entity import LoanEntity
 from shared.state import State
-from data_handler.handlers.loan_states.zklend.settings import (
-    ZKLEND_SPECIFIC_TOKEN_SETTINGS,
-)
 from data_handler.handlers.loan_states.zklend.settings import (
     ZKLEND_SPECIFIC_TOKEN_SETTINGS,
 )
