@@ -8,4 +8,12 @@ from .loan_states import (
     ZkLendCollateralDebt,
 )
 from .order_book import OrderBookModel
-from .zklend_events import AccumulatorsSyncEventData, LiquidationEventData
+from .zklend_events import (
+    AccumulatorsSyncEventModel,
+    LiquidationEventModel,
+    WithdrawalEventModel,
+    BorrowingEventModel,
+    RepaymentEventModel,
+    DepositEventModel,
+    CollateralEnabledDisabledEventModel,
+)

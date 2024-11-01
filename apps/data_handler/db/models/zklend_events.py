@@ -56,7 +56,7 @@ class RepaymentEventModel(EventBaseModel):
     face_amount: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
 
 
-class DepositEventDataModel(EventBaseModel):
+class DepositEventModel(EventBaseModel):
     """
     Database model for Deposit event, inheriting from EventBaseModel.
 
@@ -71,7 +71,7 @@ class DepositEventDataModel(EventBaseModel):
     face_amount: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
 
 
-class BorrowingEventDataModel(EventBaseModel):
+class BorrowingEventModel(EventBaseModel):
     """
     Database model for Borrowing event, inheriting from EventBaseModel.
 
