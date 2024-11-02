@@ -295,7 +295,7 @@ class WithdrawalEventData(BaseModel):
         return add_leading_zeros(value)
 
     @field_validator("amount", mode="before")
-    def validate_amount(cls, value: str) -> Decimal:
+    def validate_amount(cls, value: str, info: ValidationInfo) -> Decimal:
         """
         Validates that the provided amount is numeric and converts it to a Decimal.
 
@@ -308,10 +308,13 @@ class WithdrawalEventData(BaseModel):
         Raises:
             ValueError: If the provided amount is not numeric.
         """
-        if not value.isdigit():
-            raise ValueError("Amount field is not numeric")
-        return Decimal(value)
-
+        try:
+            return Decimal(int(value, 16))
+        except ValueError:
+            raise ValueError(
+                f"{info.field_name} field is not a valid hexadecimal number"
+            )
+        
 
 class CollateralEnabledDisabledEventData(BaseModel):
     """ Data model representing a collateral enabled/disabled event in the system. """
