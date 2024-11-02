@@ -100,7 +100,7 @@ class ZklendTransformer:
     """
 
     EVENT_MAPPING: Dict[str, Tuple[Callable, str, Type[Base]]] = EVENT_MAPPING
-    PROTOCOL_ADDRESSES: str = "0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05"
+    PROTOCOL_ADDRESSES: str = ProtocolAddresses.ZKLEND_MARKET_ADDRESSES
     PROTOCOL_TYPE: ProtocolIDs = ProtocolIDs.ZKLEND
     PAGINATION_SIZE: int = 1000
 
