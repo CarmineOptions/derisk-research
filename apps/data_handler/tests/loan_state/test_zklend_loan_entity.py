@@ -122,7 +122,7 @@ class TestZkLendLoanEntity:
         health_factor,
         expected_result
     ):
-        """Test different scenarios for liquidation eligibility."""
+        """Tests different scenarios for liquidation eligibility."""
         zklend_loan_entity.collateral['ETH'] = decimal.Decimal(str(collateral_amount))
         zklend_loan_entity.debt['USDC'] = decimal.Decimal(str(debt_amount))
         
