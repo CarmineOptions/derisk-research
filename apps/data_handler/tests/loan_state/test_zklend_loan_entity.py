@@ -1,3 +1,11 @@
+"""
+Test module for the ZkLendLoanEntity class.
+
+This module contains test cases for verifying the functionality of the ZkLendLoanEntity class,
+including health factor calculations, liquidation scenarios, and collateral management.
+Tests cover normal operations, edge cases, and error conditions using mock objects and fixtures.
+"""
+
 import pytest
 import decimal
 from unittest.mock import MagicMock, patch
@@ -12,8 +20,8 @@ def zklend_loan_entity():
          patch.object(LoanEntity, 'compute_debt_usd') as mock_debt_usd:
         
         # Setup default return values for the mocked methods
-        mock_collateral_usd.return_value = decimal.Decimal('2000')
-        mock_debt_usd.return_value = decimal.Decimal('1000')
+        mock_collateral_usd.return_value = decimal.Decimal('2000')  # 1 ETH at $2000
+        mock_debt_usd.return_value = decimal.Decimal('1000')  # 1000 USDC at $1
         
         entity = ZkLendLoanEntity()
         entity.compute_collateral_usd = mock_collateral_usd
@@ -55,6 +63,30 @@ def mock_interest_rate_models():
     }
 
 class TestZkLendLoanEntity:
+    """
+    Test suite for the ZkLendLoanEntity class.
+
+    This class contains comprehensive tests for the ZkLendLoanEntity implementation, including:
+    - Basic initialization and property verification
+    - Health factor calculations for different scenarios:
+        * No debt cases
+        * With debt cases
+        * Risk-adjusted calculations
+    - Liquidation threshold testing:
+        * Healthy positions
+        * Underwater positions
+    - Collateral management:
+        * Deposit handling
+        * Collateral enabling/disabling
+    - Input validation:
+        * Negative value handling
+        * Invalid input testing
+    - Token configuration testing
+
+    Tests use mock objects to isolate the class from external dependencies and
+    verify its behavior under various conditions.
+    """
+
     def test_initialization(self, zklend_loan_entity):
         """Test proper initialization of ZkLendLoanEntity."""
         assert isinstance(zklend_loan_entity.deposit, Portfolio)
@@ -108,10 +140,10 @@ class TestZkLendLoanEntity:
         assert float(health_factor) == pytest.approx(1.6)
 
     @pytest.mark.parametrize("collateral_amount,debt_amount,health_factor,expected_result", [
-        (0, 1000, decimal.Decimal('0.5'), True),
-        (1, 3000, decimal.Decimal('0.8'), True),  
-        (1, 1000, decimal.Decimal('2.0'), False),  
-        (2, 1000, decimal.Decimal('4.0'), False),  
+        (0, 1000, decimal.Decimal('0.5'), True),    # No collateral
+        (1, 3000, decimal.Decimal('0.8'), True),    # Underwater position
+        (1, 1000, decimal.Decimal('2.0'), False),   # Healthy position
+        (2, 1000, decimal.Decimal('4.0'), False),   # Very healthy position
     ])
     def test_is_liquidatable(
         self,
@@ -122,7 +154,7 @@ class TestZkLendLoanEntity:
         health_factor,
         expected_result
     ):
-        """Tests different scenarios for liquidation eligibility."""
+        """Test different scenarios for liquidation eligibility."""
         zklend_loan_entity.collateral['ETH'] = decimal.Decimal(str(collateral_amount))
         zklend_loan_entity.debt['USDC'] = decimal.Decimal(str(debt_amount))
         
@@ -173,6 +205,3 @@ class TestZkLendLoanEntity:
         """Test token settings configuration."""
         assert hasattr(ZkLendLoanEntity, 'TOKEN_SETTINGS')
         assert isinstance(ZkLendLoanEntity.TOKEN_SETTINGS, dict)
-
-if __name__ == '__main__':
-    pytest.main(['-v'])
