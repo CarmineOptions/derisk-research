@@ -5,19 +5,18 @@ import unittest
 from unittest.mock import MagicMock, patch
 import pandas as pd
 from decimal import Decimal
-from data_handler.handlers.loan_states.zklend.events import (
-    ZkLendState
-    )
+from data_handler.handlers.loan_states.zklend.events import ZkLendState
 
 class TestZkLendState(unittest.TestCase):
-
+    """
+    Test ZkLendState class
+    """
     def setUp(self):
         """Set up the ZkLendState instance and mock dependencies."""
         self.verbose_user = "user_123"
         self.zk_lend_state = ZkLendState(verbose_user=self.verbose_user)
         self.zk_lend_state.db_connector = MagicMock()
         
-        # Mock loan entity and interest rate model structures
         self.zk_lend_state.loan_entities = {
             self.verbose_user: MagicMock(),
             "user_456": MagicMock()
@@ -26,7 +25,7 @@ class TestZkLendState(unittest.TestCase):
         self.zk_lend_state.interest_rate_models.collateral = {"TOKEN": Decimal("1.1")}
         self.zk_lend_state.interest_rate_models.debt = {"TOKEN": Decimal("0.9")}
 
-    @patch("ZklendDataParser.parse_accumulators_sync_event")
+    @patch("data_handler.handlers.loan_states.zklend.events.ZklendDataParser.parse_accumulators_sync_event")
     def test_process_accumulators_sync_event(self, mock_parse):
         """Test that process_accumulators_sync_event updates the correct interest rates."""
         mock_parse.return_value = MagicMock(
@@ -39,7 +38,7 @@ class TestZkLendState(unittest.TestCase):
         self.assertEqual(self.zk_lend_state.interest_rate_models.collateral["TOKEN"], Decimal("1.1"))
         self.assertEqual(self.zk_lend_state.interest_rate_models.debt["TOKEN"], Decimal("0.9"))
 
-    @patch("ZklendDataParser.parse_deposit_event")
+    @patch("data_handler.handlers.loan_states.zklend.events.ZklendDataParser.parse_deposit_event")
     def test_process_deposit_event(self, mock_parse):
         """Test that process_deposit_event correctly updates user deposits and collateral."""
         mock_parse.return_value = MagicMock(user=self.verbose_user, token="TOKEN", face_amount=Decimal("110"))
@@ -56,7 +55,7 @@ class TestZkLendState(unittest.TestCase):
         self.zk_lend_state.loan_entities[self.verbose_user].extra_info.block = 1001
         self.zk_lend_state.loan_entities[self.verbose_user].extra_info.timestamp = 163827
 
-    @patch("ZklendDataParser.parse_collateral_enabled_event")
+    @patch("data_handler.handlers.loan_states.zklend.events.ZklendDataParser.parse_collateral_enabled_event")
     def test_process_collateral_enabled_event(self, mock_parse):
         """Test that process_collateral_enabled_event enables collateral for the correct token."""
         mock_parse.return_value = MagicMock(user=self.verbose_user, token="TOKEN")
@@ -68,7 +67,7 @@ class TestZkLendState(unittest.TestCase):
         self.assertTrue(self.zk_lend_state.loan_entities[self.verbose_user].collateral_enabled["TOKEN"])
         self.zk_lend_state.db_connector.save_collateral_enabled_by_user.assert_called_once()
 
-    @patch("ZklendDataParser.parse_withdrawal_event")
+    @patch("data_handler.handlers.loan_states.zklend.events.ZklendDataParser.parse_withdrawal_event")
     def test_process_withdrawal_event(self, mock_parse):
         """Test that process_withdrawal_event correctly decreases deposit and collateral values."""
         mock_parse.return_value = MagicMock(user=self.verbose_user, token="TOKEN", face_amount=Decimal("55"))
@@ -86,7 +85,7 @@ class TestZkLendState(unittest.TestCase):
             token="TOKEN", value=-raw_amount
         )
 
-    @patch("ZklendDataParser.parse_borrowing_event")
+    @patch("data_handler.handlers.loan_states.zklend.events.ZklendDataParser.parse_borrowing_event")
     def test_process_borrowing_event(self, mock_parse):
         """Test that process_borrowing_event increases the user's debt by the borrowed amount."""
         mock_parse.return_value = MagicMock(user=self.verbose_user, token="TOKEN", raw_amount=Decimal("200"))
@@ -98,7 +97,7 @@ class TestZkLendState(unittest.TestCase):
             token="TOKEN", value=Decimal("200")
         )
 
-    @patch("ZklendDataParser.parse_repayment_event")
+    @patch("data_handler.handlers.loan_states.zklend.events.ZklendDataParser.parse_repayment_event")
     def test_process_repayment_event(self, mock_parse):
         """Test that process_repayment_event decreases the user's debt by the repaid amount."""
         mock_parse.return_value = MagicMock(beneficiary=self.verbose_user, token="TOKEN", raw_amount=Decimal("100"))
@@ -110,7 +109,7 @@ class TestZkLendState(unittest.TestCase):
             token="TOKEN", value=-Decimal("100")
         )
 
-    @patch("ZklendDataParser.parse_liquidation_event")
+    @patch("data_handler.handlers.loan_states.zklend.events.ZklendDataParser.parse_liquidation_event")
     def test_process_liquidation_event(self, mock_parse):
         """Test that process_liquidation_event updates debt and collateral during liquidation."""
         mock_parse.return_value = MagicMock(
@@ -133,3 +132,4 @@ class TestZkLendState(unittest.TestCase):
         self.zk_lend_state.loan_entities[self.verbose_user].collateral.increase_value.assert_any_call(
             token="COLLATERAL_TOKEN", value=-collateral_raw_amount
         )
+
