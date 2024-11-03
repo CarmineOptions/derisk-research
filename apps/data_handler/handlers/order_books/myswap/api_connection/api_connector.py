@@ -1,7 +1,9 @@
+""" This module contains the MySwapAPIConnector class. """
 from data_handler.handlers.order_books.abstractions import AbstractionAPIConnector
 
 
 class MySwapAPIConnector(AbstractionAPIConnector):
+    """ This module contains the MySwapAPIConnector class. """
     API_URL = "https://myswap-cl-charts.s3.amazonaws.com"
 
     @classmethod

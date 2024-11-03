@@ -1,3 +1,4 @@
+""" This module contains the main class for the Uniswap V2 order book. """
 import asyncio
 from decimal import Decimal
 from typing import Iterable
@@ -8,6 +9,7 @@ from data_handler.handlers.order_books.uniswap_v2.swap_amm import SwapAmm
 
 
 class UniswapV2OrderBook(OrderBookBase):
+    """ This module contains the main class for the Uniswap V2 order book. """
     DEX = "Starknet"
 
     def __init__(self, token_a: str, token_b: str):
@@ -29,9 +31,7 @@ class UniswapV2OrderBook(OrderBookBase):
     def _set_current_price(self) -> None:
         """Set the current price of the pair based on asks and bids."""
         if not self.asks or not self.bids:
-            raise ValueError(
-                "Asks and bids are required to calculate the current price."
-            )
+            raise ValueError("Asks and bids are required to calculate the current price.")
         max_bid_price = max(self.bids, key=lambda x: x[0])[0]
         min_ask_price = min(self.asks, key=lambda x: x[0])[0]
         self.current_price = (max_bid_price + min_ask_price) / Decimal("2")
@@ -68,9 +68,7 @@ class UniswapV2OrderBook(OrderBookBase):
         collateral_tokens = ("ETH", "wBTC", "STRK")
         if self.token_a in collateral_tokens:
             return get_collateral_token_range(self.token_a, current_price)
-        return get_range(
-            Decimal(0), current_price * Decimal("1.3"), Decimal(current_price / 100)
-        )
+        return get_range(Decimal(0), current_price * Decimal("1.3"), Decimal(current_price / 100))
 
     def _calculate_order_book(self) -> None:
         token_a_reserves = Decimal(self._pool.tokens[0].balance_converted)
@@ -83,18 +81,14 @@ class UniswapV2OrderBook(OrderBookBase):
         self._set_current_price()
         self.block = 0
 
-    def add_quantities_data(
-        self, prices_range: Iterable[Decimal], current_price: Decimal
-    ) -> None:
+    def add_quantities_data(self, prices_range: Iterable[Decimal], current_price: Decimal) -> None:
         """
         Add bids and asks data to the order book.
         :param prices_range: Iterable[Decimal] - The prices range to get quantities for.
         :param current_price: Decimal - The current pair price.
         """
         if current_price == 0:
-            raise ValueError(
-                "Provide valid prices range and current price for analysis."
-            )
+            raise ValueError("Provide valid prices range and current price for analysis.")
         for price in prices_range:
             supply = self._pool.supply_at_price(price)
             if price < current_price:
@@ -102,18 +96,15 @@ class UniswapV2OrderBook(OrderBookBase):
             else:
                 self.asks.append((price, supply))
 
-    def calculate_liquidity_amount(
-        self, tick: Decimal, liquidity_pair_total: Decimal
-    ) -> Decimal:
+    def calculate_liquidity_amount(self, tick: Decimal, liquidity_pair_total: Decimal) -> Decimal:
         sqrt_ratio = self.get_sqrt_ratio(tick)
         liquidity_delta = liquidity_pair_total / (sqrt_ratio / Decimal(2**128))
         return liquidity_delta / 10**self.token_a_decimal
 
     def tick_to_price(self, tick: Decimal) -> Decimal:
         sqrt_ratio = self.get_sqrt_ratio(tick)
-        price = ((sqrt_ratio / (Decimal(2) ** 128)) ** 2) * 10 ** (
-            self.token_a_decimal - self.token_b_decimal
-        )
+        price = ((sqrt_ratio /
+                  (Decimal(2)**128))**2) * 10**(self.token_a_decimal - self.token_b_decimal)
         return price
 
 

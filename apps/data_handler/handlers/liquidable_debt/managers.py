@@ -1,3 +1,4 @@
+""" This module contains the manager for liquidable debts. """
 import os
 import shutil
 

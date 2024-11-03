@@ -1,3 +1,4 @@
+""" Base classes for ORM models. """
 from uuid import uuid4
 
 from sqlalchemy import UUID, BigInteger, Column, MetaData, String

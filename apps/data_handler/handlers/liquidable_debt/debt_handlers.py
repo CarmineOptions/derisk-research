@@ -1,3 +1,4 @@
+""" This module contains the classes that handle the liquidable debt data. """
 import asyncio
 from decimal import Decimal
 from typing import Iterable, Type
@@ -34,9 +35,7 @@ class BaseDBLiquidableDebtDataHandler:
         self.db_connector = DBConnector()
 
     @staticmethod
-    def get_prices_range(
-        collateral_token_name: str, current_price: Decimal
-    ) -> Iterable[Decimal]:
+    def get_prices_range(collateral_token_name: str, current_price: Decimal) -> Iterable[Decimal]:
         """
         Get prices range based on the current price.
         :param current_price: Decimal - The current pair price.
@@ -48,9 +47,7 @@ class BaseDBLiquidableDebtDataHandler:
         if collateral_token_name in collateral_tokens:
             return get_collateral_token_range(collateral_token_name, current_price)
 
-        return get_range(
-            Decimal(0), current_price * Decimal("1.3"), Decimal(current_price / 100)
-        )
+        return get_range(Decimal(0), current_price * Decimal("1.3"), Decimal(current_price / 100))
 
     def initialize_loan_entities(self, state: State, data: dict = None) -> State:
         """
@@ -65,11 +62,9 @@ class BaseDBLiquidableDebtDataHandler:
             loan_entity.debt = TokenValues(values=instance.debt)
             loan_entity.collateral = TokenValues(values=instance.collateral)
 
-            state.loan_entities.update(
-                {
-                    instance.user: loan_entity,
-                }
-            )
+            state.loan_entities.update({
+                instance.user: loan_entity,
+            })
 
         return state
 
@@ -118,9 +113,7 @@ class ZkLendDBLiquidableDebtDataHandler(BaseDBLiquidableDebtDataHandler):
         state = self.initialize_loan_entities(state=state, data=data)
 
         # Set up collateral and debt interest rate models
-        state.collateral_interest_rate_models = TokenValues(
-            values=interest_rate_models.collateral
-        )
+        state.collateral_interest_rate_models = TokenValues(values=interest_rate_models.collateral)
         state.debt_interest_rate_models = TokenValues(values=interest_rate_models.debt)
 
         current_prices = Prices()
@@ -183,9 +176,7 @@ class NostraAlphaDBLiquidableDebtDataHandler(BaseDBLiquidableDebtDataHandler):
         state = self.initialize_loan_entities(state=state, data=data)
 
         # Set up collateral and debt interest rate models
-        state.collateral_interest_rate_models = TokenValues(
-            values=interest_rate_models.collateral
-        )
+        state.collateral_interest_rate_models = TokenValues(values=interest_rate_models.collateral)
         state.debt_interest_rate_models = TokenValues(values=interest_rate_models.debt)
 
         current_prices = Prices()
@@ -248,9 +239,7 @@ class NostraMainnetDBLiquidableDebtDataHandler(BaseDBLiquidableDebtDataHandler):
         state = self.initialize_loan_entities(state=state, data=data)
 
         # Set up collateral and debt interest rate models
-        state.collateral_interest_rate_models = TokenValues(
-            values=interest_rate_models.collateral
-        )
+        state.collateral_interest_rate_models = TokenValues(values=interest_rate_models.collateral)
         state.debt_interest_rate_models = TokenValues(values=interest_rate_models.debt)
 
         current_prices = Prices()
@@ -310,9 +299,7 @@ class HashstackV0DBLiquidableDebtDataHandler(BaseDBLiquidableDebtDataHandler):
         """
 
         for instance in data:
-            hashstack_loan_state = self.db_connector.get_last_hashstack_loan_state(
-                instance.user
-            )
+            hashstack_loan_state = self.db_connector.get_last_hashstack_loan_state(instance.user)
 
             if debt_category := hashstack_loan_state.debt_category:
                 loan_entity = self.loan_entity_class(
@@ -322,11 +309,9 @@ class HashstackV0DBLiquidableDebtDataHandler(BaseDBLiquidableDebtDataHandler):
                 loan_entity.debt = TokenValues(values=instance.debt)
                 loan_entity.collateral = TokenValues(values=instance.collateral)
 
-                state.loan_entities.update(
-                    {
-                        instance.user: loan_entity,
-                    }
-                )
+                state.loan_entities.update({
+                    instance.user: loan_entity,
+                })
 
     def calculate_liquidable_debt(self, protocol_name: str = None) -> list:
         """
@@ -340,9 +325,7 @@ class HashstackV0DBLiquidableDebtDataHandler(BaseDBLiquidableDebtDataHandler):
         self.initialize_loan_entities(state=state, data=data)
 
         # Set up collateral and debt interest rate models
-        state.collateral_interest_rate_models = TokenValues(
-            values=interest_rate_models.collateral
-        )
+        state.collateral_interest_rate_models = TokenValues(values=interest_rate_models.collateral)
         state.debt_interest_rate_models = TokenValues(values=interest_rate_models.debt)
 
         current_prices = Prices()

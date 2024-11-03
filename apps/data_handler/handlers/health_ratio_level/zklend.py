@@ -1,3 +1,4 @@
+""" Module for handling health ratio level data for zkLend protocol """
 from data_handler.handlers.liquidable_debt.values import (
     HEALTH_FACTOR_FIELD_NAME,
     TIMESTAMP_FIELD_NAME,
@@ -10,6 +11,7 @@ from shared.constants import ProtocolIDs
 
 
 def run():
+    """fn docstring"""
     handler = ZkLendHealthRatioHandler()
 
     data = handler.calculate_health_ratio()

@@ -1,3 +1,4 @@
+""" This module contains tests for the InitializerDBConnector class. """
 import pytest
 from data_handler.db.models import HashtackCollateralDebt, ZkLendCollateralDebt
 from sqlalchemy.exc import SQLAlchemyError
@@ -38,9 +39,7 @@ def sample_hashtack_collateral_debt():
     return hashtack_collateral_debt
 
 
-def test_get_zklend_by_user_ids(
-    mock_initializer_db_connector, sample_zklend_collateral_debt
-):
+def test_get_zklend_by_user_ids(mock_initializer_db_connector, sample_zklend_collateral_debt):
     """
     Test the get_zklend_by_user_ids method.
     :param mock_initializer_db_connector: Mock InitializerDBConnector
@@ -55,9 +54,7 @@ def test_get_zklend_by_user_ids(
     assert result[0].user_id == "test_user"
 
 
-def test_get_hashtack_by_loan_ids(
-    mock_initializer_db_connector, sample_hashtack_collateral_debt
-):
+def test_get_hashtack_by_loan_ids(mock_initializer_db_connector, sample_hashtack_collateral_debt):
     """
     Test the get_hashtack_by_loan_ids method.
     :param mock_initializer_db_connector: Mock InitializerDBConnector

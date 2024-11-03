@@ -1,12 +1,6 @@
 name: CI Workflow
 
-on:
-  push:
-    branches:
-      - ci/setup-github-workflow
-  pull_request:
-    branches:
-      - ci/setup-github-workflow
+on: [push, pull_request]
 
 jobs:
   run_tests:

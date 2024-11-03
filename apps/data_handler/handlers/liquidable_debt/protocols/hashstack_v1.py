@@ -1,3 +1,4 @@
+""" This module contains the script for computing liquidable debt for Hashstack v1 protocol. """
 from data_handler.handlers.liquidable_debt.values import (
     COLLATERAL_FIELD_NAME,
     GS_BUCKET_NAME,
@@ -22,9 +23,7 @@ def run() -> None:
         bucket_name=GS_BUCKET_NAME,
     )
 
-    data = handler.prepare_data(
-        protocol_name=LendingProtocolNames.HASHSTACK_V1.value,
-    )
+    data = handler.prepare_data(protocol_name=LendingProtocolNames.HASHSTACK_V1.value, )
 
     for debt_token, liquidable_debt_info in data.items():
         db_row = LiquidableDebt(

@@ -19,8 +19,12 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    """Function to apply the upgrade migrations."""
     pass
 
 
 def downgrade() -> None:
+    """
+    Reverts the database schema changes applied in the upgrade.
+    """
     pass

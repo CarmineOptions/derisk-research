@@ -1,3 +1,4 @@
+"""  Module for storing constants and values used in the liquidable_debt module. """
 import os
 from enum import Enum
 
@@ -41,6 +42,7 @@ FIELDS_TO_VALIDATE = (
 
 
 class LendingProtocolNames(Enum):
+    """class docstring"""
     HASHSTACK_V0: str = "Hashstack_v0"
     HASHSTACK_V1: str = "Hashstack_v1"
     NOSTRA_ALPHA: str = "Nostra_alpha"

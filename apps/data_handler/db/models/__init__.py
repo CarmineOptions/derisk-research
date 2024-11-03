@@ -1,3 +1,4 @@
+""" This module contains all the models used in the database. """
 from .base import Base
 from .liquidable_debt import HealthRatioLevel, LiquidableDebt
 from .loan_states import (
@@ -7,4 +8,12 @@ from .loan_states import (
     ZkLendCollateralDebt,
 )
 from .order_book import OrderBookModel
-from .zklend_events import AccumulatorsSyncEventData, LiquidationEventData
+from .zklend_events import (
+    AccumulatorsSyncEventModel,
+    LiquidationEventModel,
+    WithdrawalEventModel,
+    BorrowingEventModel,
+    RepaymentEventModel,
+    DepositEventModel,
+    CollateralEnabledDisabledEventModel,
+)

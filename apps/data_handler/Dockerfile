@@ -12,5 +12,6 @@ RUN pip install poetry \
 # Adjust build context for folders out of Docker context
 # Assuming data_handler and shared are located in the root directory, set the context to root
 COPY shared /code/shared
+COPY data_handler /code/data_handler
 
 ENTRYPOINT ["bash", "/code/entrypoint.sh"]

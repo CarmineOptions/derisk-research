@@ -1,3 +1,4 @@
+""" Abstract base classes for order book data and API connectors. """
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -10,6 +11,7 @@ from .constants import TOKEN_MAPPING, TokenConfig
 
 
 class OrderBookBase(ABC):
+    """ Base class for order book data """
     DEX: str = None
     MIN_PRICE_RANGE = Decimal("0.0001")
     MAX_PRICE_RANGE = Decimal("100.0")
@@ -84,7 +86,7 @@ class OrderBookBase(ABC):
         :param tick: tick value
         :return: square root ratio
         """
-        return (Decimal("1.000001").sqrt() ** tick) * (Decimal(2) ** 128)
+        return (Decimal("1.000001").sqrt()**tick) * (Decimal(2)**128)
 
     @abstractmethod
     def tick_to_price(self, tick: Decimal) -> Decimal:
@@ -136,7 +138,8 @@ class AbstractionAPIConnector(ABC):
         :type endpoint: str
         :param params: Dictionary of URL parameters to append to the URL.
         :type params: dict, optional
-        :return: A JSON response from the API if the request is successful; otherwise, a dictionary with an "error" key
+        :return: A JSON response from the API if the request is successful; 
+        otherwise, a dictionary with an "error" key
         containing the error message.
         :rtype: dict
         """
@@ -158,7 +161,8 @@ class AbstractionAPIConnector(ABC):
         :type data: dict, optional
         :param json: Dictionary of JSON data to send in the request body.
         :type json: dict, optional
-        :return: A JSON response from the API if the request is successful; otherwise, a dictionary with an "error" key
+        :return: A JSON response from the API if the request is successful; 
+        otherwise, a dictionary with an "error" key
         containing the error message.
         :rtype: dict
         """

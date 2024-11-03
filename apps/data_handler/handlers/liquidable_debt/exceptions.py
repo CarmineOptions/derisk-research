@@ -1,3 +1,5 @@
+""" This module contains the exceptions that can be raised by the liquidable_debt handler."""
+
 class ProtocolExistenceError(Exception):
     """
     An exception that should be raised when a given protocol doesn't exist.
