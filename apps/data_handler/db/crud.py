@@ -26,6 +26,11 @@ from data_handler.db.models import (
 from data_handler.db.models.zklend_events import (
     AccumulatorsSyncEventModel,
     LiquidationEventModel,
+    RepaymentEventModel,
+    DepositEventModel,
+    CollateralEnabledDisabledEventModel,
+    BorrowingEventModel,
+    WithdrawalEventModel
 )
 
 logger = logging.getLogger(__name__)
@@ -626,6 +631,151 @@ class ZkLendEventDBConnector(DBConnector):
         except SQLAlchemyError as e:
             db.rollback()
             logger.error(f"Error creating LiquidationEventModel: {e}")
+            raise e
+        finally:
+            db.close()
+
+    def create_repayment_event(
+        self, protocol_id: str, event_name: str, block_number: int, event_data: dict
+    ) -> None:
+        """
+        Creates a RepaymentEventModel record in the database.
+        :param protocol_id: The protocol ID for the event.
+        :param event_name: The name of the event.
+        :param block_number: The block number associated with the event.
+        :param event_data: A dictionary containing 'user', 'amount'.
+        """
+        db = self.Session()
+        try:
+            event = RepaymentEventModel(
+                protocol_id=protocol_id,
+                event_name=event_name,
+                block_number=block_number,
+                repayer=event_data.get("repayer"),
+                beneficiary=event_data.get("beneficiary"),
+                token=event_data.get("token"),
+                raw_amount=event_data.get("raw_amount"),
+                face_amount=event_data.get("face_amount"),
+            )
+            db.add(event)
+            db.commit()
+        except SQLAlchemyError as e:
+            db.rollback()
+            logger.error(f"Error creating RepaymentEventModel: {e}")
+            raise e
+        finally:
+            db.close()
+
+    def create_borrowing_event(
+        self, protocol_id: str, event_name: str, block_number: int, event_data: dict
+    ) -> None:
+        """
+        Creates a BorrowingEventModel record in the database.
+        :param protocol_id: The protocol ID for the event.
+        :param event_name: The name of the event.
+        :param block_number: The block number associated with the event.
+        :param event_data: A dictionary containing 'user', 'token', 'raw_amount', 'face_amount'.
+        """
+        db = self.Session()
+        try:
+            event = BorrowingEventModel(
+                protocol_id=protocol_id,
+                event_name=event_name,
+                block_number=block_number,
+                user=event_data.get("user"),
+                token=event_data.get("token"),
+                raw_amount=event_data.get("raw_amount"),
+                face_amount=event_data.get("face_amount"),
+            )
+            db.add(event)
+            db.commit()
+        except SQLAlchemyError as e:
+            db.rollback()
+            logger.error(f"Error creating BorrowingEventModel: {e}")
+            raise e
+        finally:
+            db.close()
+
+    def create_deposit_event(
+        self, protocol_id: str, event_name: str, block_number: int, event_data: dict
+    ) -> None:
+        """
+        Creates a DepositEventModel record in the database.
+        :param protocol_id: The protocol ID for the event.
+        :param event_name: The name of the event.
+        :param block_number: The block number associated with the event.
+        :param event_data: A dictionary containing 'user', 'token', 'face_amount'.
+        """
+        db = self.Session()
+        try:
+            event = DepositEventModel(
+                protocol_id=protocol_id,
+                event_name=event_name,
+                block_number=block_number,
+                user=event_data.get("user"),
+                token=event_data.get("token"),
+                face_amount=event_data.get("face_amount"),
+            )
+            db.add(event)
+            db.commit()
+        except SQLAlchemyError as e:
+            db.rollback()
+            logger.error(f"Error creating DepositEventModel: {e}")
+            raise e
+
+    def create_withdrawal_event(
+        self, protocol_id: str, event_name: str, block_number: int, event_data: dict
+    ) -> None:
+        """
+        Creates a WithdrawalEventModel record in the database.
+        :param protocol_id: The protocol ID for the event.
+        :param event_name: The name of the event.
+        :param block_number: The block number associated with the event.
+        :param event_data: A dictionary containing 'user', 'token', 'face_amount'.
+        """
+        db = self.Session()
+        try:
+            event = WithdrawalEventModel(
+                protocol_id=protocol_id,
+                event_name=event_name,
+                block_number=block_number,
+                user=event_data.get("user"),
+                token=event_data.get("token"),
+                amount=event_data.get("amount"),
+            )
+            db.add(event)
+            db.commit()
+        except SQLAlchemyError as e:
+            db.rollback()
+            logger.error(f"Error creating WithdrawalEventModel: {e}")
+            raise e
+        finally:
+            db.close()
+
+    def create_collateral_enabled_disabled_event(
+        self, protocol_id: str, event_name: str, block_number: int, event_data: dict
+    ) -> None:
+        """
+        Creates a CollateralEnabledDisabledEventModel record in the database.
+        :param protocol_id: The protocol ID for the event.
+        :param event_name: The name of the event.
+        :param block_number: The block number associated with the event.
+        :param event_data: A dictionary containing 'user', 'token'.
+        """
+        db = self.Session()
+        try:
+            event = CollateralEnabledDisabledEventModel(
+                protocol_id=protocol_id,
+                event_name=event_name,
+                block_number=block_number,
+                user=event_data.get("user"),
+                token=event_data.get("token"),
+            )
+            db.add(event)
+            db.commit()
+        except SQLAlchemyError as e:
+            db.rollback()
+            logger.error(f"Error creating CollateralEnabledDisabledEventModel: {e}")
             raise e
         finally:
             db.close()
