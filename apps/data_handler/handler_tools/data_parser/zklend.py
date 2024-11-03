@@ -149,6 +149,6 @@ class ZklendDataParser:
             CollateralEnabledDisabledEventData: A model with the parsed event data.
         """
         return CollateralEnabledDisabledEventData(
-            user=event_data["data"][0],
-            token=event_data["data"][1],
+            user=event_data[0],
+            token=event_data[1],
         )
