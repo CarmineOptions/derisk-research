@@ -37,5 +37,8 @@ jobs:
         git ls-files './apps/data_handler/*.py'
 
     - name: Run Pylint
-      run:
-        pylint $(git ls-files 'data_handler/*.py') --disable=all --enable=C0114,C0115,C0116,C0301
+      run: |
+        files=$(git ls-files 'data_handler/*.py')
+        if [ -n "$files" ]; then
+          pylint $files --disable=all --enable=C0114,C0115,C0116,C0301
+        fi
