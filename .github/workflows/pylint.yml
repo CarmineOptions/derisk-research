@@ -37,12 +37,5 @@ jobs:
         git ls-files './apps/data_handler/*.py'
 
     - name: Run Pylint
-      run: |
-        PYTHON_FILES=$(find ./apps/data_handler -name "*.py")
-        if [ -n "$PYTHON_FILES" ]; then
-          echo "Files to lint: $PYTHON_FILES"
-          python -m pylint $PYTHON_FILES --disable=all --enable=C0114,C0115,C0116,C0301 --max-line-length=150
-        else
-          echo "No Python files found in apps/data_handler/"
-          exit 1
-        fi
+      run:
+        pylint $(git ls-files 'data_handler/*.py') --disable=all --enable=C0114,C0115,C0116,C0301
