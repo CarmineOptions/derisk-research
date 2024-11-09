@@ -26,7 +26,10 @@ pytest = "^8.3.3"
 python-dotenv = "^1.0.1"
 
 jupyter = "^1.1.1"
-notebook = "^7.2.2"
+matplotlib-venn = "^1.1.1"
+sqlalchemy = "^2.0.36"
+seaborn = "^0.13.2"
+scikit-learn = "^1.5.2"
 [tool.poetry.group.dev.dependencies]
 black = "^24.8.0"
 isort = "^5.13.2"
