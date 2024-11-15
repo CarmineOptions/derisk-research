@@ -4,12 +4,14 @@ import pandas as pd
 import sqlalchemy
 from dotenv import load_dotenv
 
+from shared.constants import ZKLEND
+
 load_dotenv()
 
 
 class DataConnector:
     REQUIRED_VARS = ("DB_USER", "DB_PASSWORD", "DB_HOST", "DB_PORT", "DB_NAME")
-    SQL_QUERY = "SELECT * FROM %s WHERE protocol_id = 'zkLend'"
+    SQL_QUERY = f"SELECT * FROM %s WHERE protocol_id = '{ZKLEND}'"
 
     def __init__(self):
         """

@@ -43,6 +43,40 @@ class State(ABC):
         self.last_block_number: int = 0
         self.last_interest_rate_block_number: int = 0
 
+    def set_loan_entities(self, loan_entities: pandas.DataFrame) -> None: # MB we won't need it
+        # When we're processing the data for the first time, we call this method with empty `loan_entities`. In that
+        # case, there's nothing to be set.
+        if loan_entities.empty:
+            return
+
+        # Clear `self.loan entities` in case they were not empty.
+        if len(self.loan_entities) > 0:
+            self.clear_loan_entities()
+
+        # Fill up `self.loan_entities` with `loan_entities`.
+        for _, loan_entity in loan_entities.iterrows():
+            user = loan_entity["user"]
+            for collateral_token, collateral_amount in json.loads(
+                loan_entity["collateral"].decode("utf-8")
+            ).items():
+                if collateral_amount:
+                    self.loan_entities[user].collateral[
+                        collateral_token
+                    ] = decimal.Decimal(str(collateral_amount))
+            for debt_token, debt_amount in json.loads(
+                loan_entity["debt"].decode("utf-8")
+            ).items():
+                if debt_amount:
+                    self.loan_entities[user].debt[debt_token] = decimal.Decimal(
+                        str(debt_amount)
+                    )
+        logging.info(
+            "Set = {} non-zero loan entities out of the former = {} loan entities.".format(
+                len(self.loan_entities),
+                len(loan_entities),
+            )
+        )
+
     def process_event(self, method_name: str, event: pd.Series) -> None:
         # TODO: Save the timestamp of each update?
         if event["block_number"] >= self.last_block_number:

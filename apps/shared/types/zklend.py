@@ -20,3 +20,8 @@ class ZkLendCollateralTokenParameters(BaseTokenParameters):
 @dataclass
 class ZkLendDebtTokenParameters(BaseTokenParameters):
     debt_factor: float
+
+
+@dataclass
+class ZkLendDebtTokenParameters(BaseTokenParameters):
+    debt_factor: float

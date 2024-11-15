@@ -9,6 +9,7 @@ from shared.types.base import (
     TokenParameters,
     TokenSettings,
     TokenValues,
+    LoanEntity
 )
 from shared.types.nostra import (
     NostraAlphaCollateralTokenParameters,

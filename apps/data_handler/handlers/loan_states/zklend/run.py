@@ -6,7 +6,7 @@ import pandas as pd
 from data_handler.handler_tools.constants import ProtocolAddresses
 from data_handler.handlers.loan_states.abstractions import LoanStateComputationBase
 from data_handler.handlers.loan_states.zklend.events import ZkLendState
-from data_handler.handlers.loan_states.zklend.utils import ZkLendInitializer
+from shared.protocol_initializers.zklend import ZkLendInitializer
 
 from shared.constants import ProtocolIDs
 from shared.state import State
