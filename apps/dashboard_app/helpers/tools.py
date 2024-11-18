@@ -6,14 +6,14 @@ from typing import Iterator
 import pandas as pd
 import requests
 from google.cloud.storage import Client
+from shared.blockchain_call import func_call
+from shared.types import TokenParameters
 from starknet_py.cairo.felt import decode_shortstring
 
 from dashboard_app.helpers.settings import (
     PAIRS,
     UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES,
 )
-from shared.blockchain_call import func_call
-from shared.types import TokenParameters
 
 GS_BUCKET_NAME = "derisk-persistent-state/v3"
 
