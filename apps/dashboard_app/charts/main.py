@@ -1,8 +1,8 @@
 import streamlit as st
 
-from dashboard_app.charts.main_chart_figure import get_main_chart_figure
-from dashboard_app.charts.utils import process_liquidity
-from dashboard_app.helpers.settings import (
+from charts.main_chart_figure import get_main_chart_figure
+from charts.utils import process_liquidity
+from helpers.settings import (
     COLLATERAL_TOKENS,
     DEBT_TOKENS,
     STABLECOIN_BUNDLE_NAME,
