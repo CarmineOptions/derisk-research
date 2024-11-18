@@ -1,1 +1,1 @@
-from dashboard_app.charts.main import Dashboard
+from charts.main import Dashboard
