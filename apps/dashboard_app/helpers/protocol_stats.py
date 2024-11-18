@@ -17,7 +17,6 @@ from dashboard_app.helpers.tools import get_addresses, get_underlying_address
 def get_general_stats(
     states: list[State],
     loan_stats: dict[str, pd.DataFrame],
-    save_data: bool = False,
 ) -> pd.DataFrame:
     data = []
     for state in states:
@@ -51,7 +50,6 @@ def get_general_stats(
 def get_supply_stats(
     states: list[State],
     prices: Prices,
-    save_data: bool = False,
 ) -> pd.DataFrame:
     data = []
     for state in states:
@@ -103,7 +101,6 @@ def get_supply_stats(
 
 def get_collateral_stats(
     states: list[State],
-    save_data: bool = False,
 ) -> pd.DataFrame:
     data = []
     for state in states:
@@ -154,7 +151,6 @@ def get_collateral_stats(
 
 def get_debt_stats(
     states: list[State],
-    save_data: bool = False,
 ) -> pd.DataFrame:
     data = []
     for state in states:
@@ -208,7 +204,6 @@ def get_utilization_stats(
     general_stats: pd.DataFrame,
     supply_stats: pd.DataFrame,
     debt_stats: pd.DataFrame,
-    save_data: bool = False,
 ) -> pd.DataFrame:
     data = pd.DataFrame(
         {
