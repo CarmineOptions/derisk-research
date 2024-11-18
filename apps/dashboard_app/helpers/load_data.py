@@ -1,5 +1,4 @@
 import asyncio
-import itertools
 import logging
 import math
 from time import monotonic
@@ -9,6 +8,13 @@ from shared.amms import SwapAmm
 from shared.constants import TOKEN_SETTINGS
 
 from dashboard_app.data_conector import DataConnector
+from dashboard_app.helpers.protocol_stats import (
+    get_general_stats,
+    get_supply_stats,
+    get_collateral_stats,
+    get_debt_stats,
+    get_utilization_stats
+)
 from dashboard_app.helpers.loans_table import get_loans_table_data, get_protocol
 from dashboard_app.helpers.tools import get_prices
 
@@ -29,11 +35,6 @@ def init_zklend_state():
 
     zklend_state.last_block_number = zklend_data["block"].max()
     print(f"Initialized ZkLend state in {monotonic() - start:.2f}s")
-
-
-if __name__ == "__main__":
-    init_zklend_state()
-    # TODO: Implement periodic updates
 
 
 def update_data(zklend_state: ZkLendState):
@@ -110,46 +111,21 @@ def update_data(zklend_state: ZkLendState):
     for state in states:
         protocol = get_protocol(state=state)
         loan_stats[protocol] = get_loans_table_data(
-            state=state, prices=prices, save_data=True
+            state=state, prices=prices
         )
 
-    general_stats = src.protocol_stats.get_general_stats(
-        states=states, loan_stats=loan_stats, save_data=True
+    general_stats = get_general_stats(
+        states=states, loan_stats=loan_stats
     )
-    supply_stats = src.protocol_stats.get_supply_stats(
+    supply_stats = get_supply_stats(
         states=states,
         prices=prices,
-        save_data=True,
     )
-    _ = src.protocol_stats.get_collateral_stats(states=states, save_data=True)
-    debt_stats = src.protocol_stats.get_debt_stats(states=states, save_data=True)
-    _ = src.protocol_stats.get_utilization_stats(
+    collateral_stats = get_collateral_stats(states=states)
+    debt_stats = get_debt_stats(states=states)
+    utilization_stats = get_utilization_stats(
         general_stats=general_stats,
         supply_stats=supply_stats,
         debt_stats=debt_stats,
-        save_data=True,
     )
-
-    max_block_number = zklend_events["block_number"].max()
-    max_timestamp = zklend_events["timestamp"].max()
-    last_update = {
-        "timestamp": str(max_timestamp),
-        "block_number": str(max_block_number),
-    }
-    src.persistent_state.upload_object_as_pickle(
-        last_update, path=src.persistent_state.LAST_UPDATE_FILENAME
-    )
-    zklend_state.save_loan_entities(
-        path=src.persistent_state.PERSISTENT_STATE_LOAN_ENTITIES_FILENAME
-    )
-    zklend_state.clear_loan_entities()
-    src.persistent_state.upload_object_as_pickle(
-        zklend_state, path=src.persistent_state.PERSISTENT_STATE_FILENAME
-    )
-    loan_entities = pandas.read_parquet(
-        f"gs://{src.helpers.GS_BUCKET_NAME}/{src.persistent_state.PERSISTENT_STATE_LOAN_ENTITIES_FILENAME}",
-        engine="fastparquet",
-    )
-    zklend_state.set_loan_entities(loan_entities=loan_entities)
-    logging.info(f"Updated CSV data in {time.time() - t0}s")
-    return zklend_state
+    return zklend_state, general_stats, supply_stats, collateral_stats, debt_stats, utilization_stats
