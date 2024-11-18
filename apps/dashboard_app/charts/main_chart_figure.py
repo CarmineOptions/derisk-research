@@ -4,13 +4,12 @@ import pandas as pd
 import plotly.express
 import plotly.graph_objs
 
-from dashboard_app.helpers.settings import TOKEN_SETTINGS
-from dashboard_app.helpers.tools import (
+from helpers.settings import TOKEN_SETTINGS
+from helpers.tools import (
     get_collateral_token_range,
     get_custom_data,
     get_prices,
     get_underlying_address,
-    save_dataframe,
 )
 from shared.amms import SwapAmm
 from shared.state import State
