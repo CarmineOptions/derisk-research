@@ -1,7 +1,7 @@
 # Contributor Guidelines
 
 1. Task Claiming
-    - Comment: 'I would like to take this task, I love 🍍' including the estimated delivery timeline (start and completion dates) and a brief summary of relevant skills (required for complex tasks). Make sure, that you start with comment which is provided with secret phrase, otherwise your application will be ignored.
+    - Comment: 'I would like to take this task, I love orange' including the estimated delivery timeline (start and completion dates) and a brief summary of relevant skills (required for complex tasks). Make sure, that you start with comment which is provided with secret phrase, otherwise your application will be ignored.
     - Join the contributors' Telegram group for updates and discussions.
 2. Task Assignment
     - Easy tasks: Assigned on a first-come, first-served basis. No further assignment is required.
