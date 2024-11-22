@@ -19,6 +19,7 @@ from data_handler.handler_tools.nostra_alpha_settings import (
 from data_handler.handlers.helpers import blockchain_call, get_addresses, get_symbol
 from data_handler.handlers.settings import TokenSettings
 from data_handler.handlers.state import NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS
+from data_handler.handler_tools.data_parser.nostra import NostraDataParser
 
 from shared.constants import ProtocolIDs
 from shared.helpers import add_leading_zeros
@@ -606,8 +607,8 @@ class NostraAlphaState(State):
             # The order of the values in the `data` column is: `user`, `amount`, ``.
             # Example:
             # https://starkscan.co/event/0x030d23c4769917bc673875e107ebdea31711e2bdc45e658125dbc2e988945f69_4.
-            user = add_leading_zeros(event["data"][0])
-            face_amount = decimal.Decimal(str(int(event["data"][1], base=16)))
+            data = NostraDataParser.parse_debt_mint_event(event["data"])
+            user, face_amount = data.user, data.amount
         else:
             raise ValueError("Event = {} has an unexpected structure.".format(event))
         if user == self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
@@ -637,8 +638,8 @@ class NostraAlphaState(State):
             # The order of the values in the `data` column is: `user`, `amount`, ``.
             # Example:
             # https://starkscan.co/event/0x002e4ee376785f687f32715d8bbed787b6d0fa9775dc9329ca2185155a139ca3_5.
-            user = add_leading_zeros(event["data"][0])
-            face_amount = decimal.Decimal(str(int(event["data"][1], base=16)))
+            data = NostraDataParser.parse_debt_mint_event(event["data"])
+            user, face_amount = data.user, data.amount
         else:
             raise ValueError("Event = {} has an unexpected structure.".format(event))
         if user == self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
