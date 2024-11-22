@@ -19,6 +19,7 @@ from data_handler.handler_tools.nostra_alpha_settings import (
 from data_handler.handlers.helpers import blockchain_call, get_addresses, get_symbol
 from data_handler.handlers.settings import TokenSettings
 from data_handler.handlers.state import NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS
+from data_handler.handler_tools.data_parser.nostra import NostraDataParser
 
 from shared.constants import ProtocolIDs
 from shared.helpers import add_leading_zeros
@@ -602,6 +603,8 @@ class NostraAlphaState(State):
         Processes the `Burn` event.
         :param event: Event data.
         """
+        data = NostraDataParser.parse_debt_mint_event(event["data"])
+        user, amount = data.user, data.amount
         if event["keys"] == [self.MINT_KEY]:
             # The order of the values in the `data` column is: `user`, `amount`, ``.
             # Example:
@@ -633,6 +636,8 @@ class NostraAlphaState(State):
         Processes the `Burn` event.
         :param event: Event data.
         """
+        data = NostraDataParser.parse_debt_mint_event(event["data"])
+        user, amount = data.user, data.amount
         if event["keys"] == [self.BURN_KEY]:
             # The order of the values in the `data` column is: `user`, `amount`, ``.
             # Example:
