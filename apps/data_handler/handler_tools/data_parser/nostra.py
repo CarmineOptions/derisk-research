@@ -53,11 +53,11 @@ class NostraDataParser:
         
         The event data is fetched from on-chain logs and is structured in the following way:
         - event_data[0]: The user address (as a hexadecimal string).
-        - event_data[1]: TODO(baitcode): somehow fill that
+        - event_data[1]: Token amount
 
         Args:
             event_data (list[Any]): A list containing the raw event data, typically with 3 or more elements:
-                user address, amount TODO(baitcode): somehow fill that
+                user address, amount of tokens
         Returns:
             BearingCollateralMintEventData: A Pydantic model with the parsed and validated event data in a human-readable format.
 
@@ -73,11 +73,11 @@ class NostraDataParser:
         
         The event data is fetched from on-chain logs and is structured in the following way:
         - event_data[0]: The user address (as a hexadecimal string).
-        - event_data[1]: TODO(baitcode): somehow fill that
+        - event_data[1]: Token amount
 
         Args:
             event_data (list[Any]): A list containing the raw event data, typically with 3 or more elements:
-                user address, amount TODO(baitcode): somehow fill that
+                user address, amount of tokens
         Returns:
             BearingCollateralMintEventData: A Pydantic model with the parsed and validated event data in a human-readable format.
 
