@@ -1,7 +1,7 @@
 """
 This module contains the logic to parse the nostra data to human-readable format.
 """
-
+from typing import Any
 from data_handler.handler_tools.data_parser.serializers import (
     DebtMintEventData,
     DebtBurnEventData
