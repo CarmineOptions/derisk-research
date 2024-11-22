@@ -603,14 +603,12 @@ class NostraAlphaState(State):
         Processes the `Burn` event.
         :param event: Event data.
         """
-        data = NostraDataParser.parse_debt_mint_event(event["data"])
-        user, amount = data.user, data.amount
         if event["keys"] == [self.MINT_KEY]:
             # The order of the values in the `data` column is: `user`, `amount`, ``.
             # Example:
             # https://starkscan.co/event/0x030d23c4769917bc673875e107ebdea31711e2bdc45e658125dbc2e988945f69_4.
-            user = add_leading_zeros(event["data"][0])
-            face_amount = decimal.Decimal(str(int(event["data"][1], base=16)))
+            data = NostraDataParser.parse_debt_mint_event(event["data"])
+            user, face_amount = data.user, data.amount
         else:
             raise ValueError("Event = {} has an unexpected structure.".format(event))
         if user == self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
@@ -636,14 +634,12 @@ class NostraAlphaState(State):
         Processes the `Burn` event.
         :param event: Event data.
         """
-        data = NostraDataParser.parse_debt_mint_event(event["data"])
-        user, amount = data.user, data.amount
         if event["keys"] == [self.BURN_KEY]:
             # The order of the values in the `data` column is: `user`, `amount`, ``.
             # Example:
             # https://starkscan.co/event/0x002e4ee376785f687f32715d8bbed787b6d0fa9775dc9329ca2185155a139ca3_5.
-            user = add_leading_zeros(event["data"][0])
-            face_amount = decimal.Decimal(str(int(event["data"][1], base=16)))
+            data = NostraDataParser.parse_debt_mint_event(event["data"])
+            user, face_amount = data.user, data.amount
         else:
             raise ValueError("Event = {} has an unexpected structure.".format(event))
         if user == self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
