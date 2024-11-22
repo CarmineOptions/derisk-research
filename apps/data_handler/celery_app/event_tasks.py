@@ -6,10 +6,10 @@ import logging
 from datetime import datetime
 
 from data_handler.celery_app.celery_conf import app
-from data_handler.handlers.events.zklend import ZklendTransformer
+from data_handler.handlers.events.zklend.transform_events import ZklendTransformer
+
 
 logger = logging.getLogger(__name__)
-
 
 @app.task(name="process_zklend_events")
 def process_zklend_events():
@@ -20,28 +20,31 @@ def process_zklend_events():
     """
     start_time = datetime.utcnow()
     logger.info("Starting ZkLend event processing")
-    
     try:
         # Initialize and run transformer
         transformer = ZklendTransformer()
         transformer.run()
-        
         # Log success metrics
         execution_time = (datetime.utcnow() - start_time).total_seconds()
         logger.info(
-            f"Successfully processed ZkLend events in {execution_time:.2f}s. "
-            f"Blocks: {transformer.last_block - transformer.PAGINATION_SIZE} "
-            f"to {transformer.last_block}"
+            "Successfully processed ZkLend events in %.2fs. Blocks: %d to %d",
+            execution_time,
+            transformer.last_block - transformer.PAGINATION_SIZE,
+            transformer.last_block
         )
-        
-    except Exception as exc:
+    except (ValueError, TypeError, RuntimeError) as exc:  # Catching more specific exceptions
         execution_time = (datetime.utcnow() - start_time).total_seconds()
         logger.error(
-            f"Error processing ZkLend events after {execution_time:.2f}s: {exc}",
+            "Error processing ZkLend events after %.2fs: %s",
+            execution_time,
+            exc,
             exc_info=True
         )
-        raise
-
-
-if __name__ == "__main__":
-    process_zklend_events()
+    except Exception as exc:  # Still keeping a general exception catch as a fallback
+        execution_time = (datetime.utcnow() - start_time).total_seconds()
+        logger.error(
+            "Unexpected error processing ZkLend events after %.2fs: %s",
+            execution_time,
+            exc,
+            exc_info=True
+        )
