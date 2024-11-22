@@ -445,3 +445,78 @@ class DebtBurnEventData(BaseModel):
             raise ValueError(
                 f"{info.field_name} field is not a valid hexadecimal number"
             )
+
+class InterestRateModelEventData(BaseModel):
+    """
+    Data model representing an interest rate model event in the Nostra protocol.
+
+    Attributes:
+        debt_token (str): The address of the debt token.
+        lending_rate (str): The lending rate in hexadecimal.
+        borrow_rate (str): The borrow rate in hexadecimal.
+        lending_index (str): The lending index in hexadecimal.
+        borrow_index (str): The borrow index in hexadecimal.
+    """
+    debt_token: str
+    lending_rate: str
+    borrow_rate: str
+    lending_index: str
+    borrow_index: str
+
+    @field_validator("debt_token", "lending_token")
+    def validate_address(cls, value: str, info: ValidationInfo) -> str:
+        """
+        Validates and formats the token address.
+        """
+        if not value.startswith("0x"):
+            raise ValueError(f"Invalid address provided for {info.field_name}")
+        return add_leading_zeros(value)
+
+    @field_validator("lending_rate", "borrow_rate", "lending_index", "borrow_index")
+    def validate_numeric_string(cls, value: str, info: ValidationInfo) -> Decimal:
+        """
+        Converts a hexadecimal string to a Decimal.
+        """
+        try:
+            return Decimal(int(value, 16)) / Decimal("1e18")
+        except ValueError:
+            raise ValueError(
+                f"{info.field_name} field is not a valid hexadecimal number"
+            )
+
+class DebtTransferEventData(BaseModel):
+    """
+    Data model representing a debt transfer event.
+
+    Attributes:
+        sender (str): Address of the sender.
+        recipient (str): Address of the recipient.
+        amount (str): Transfer amount in hexadecimal.
+        token (str): Address of the debt token.
+    """
+    sender: str
+    recipient: str
+    amount: str
+    token: str
+
+    @field_validator("sender", "recipient", "token")
+    def validate_address(cls, value: str, info: ValidationInfo) -> str:
+        """
+        Validates and formats the address.
+        """
+        if not value.startswith("0x"):
+            raise ValueError(f"Invalid address provided for {info.field_name}")
+        return add_leading_zeros(value)
+
+    @field_validator("amount")
+    def validate_numeric_string(cls, value: str, info: ValidationInfo) -> Decimal:
+        """
+        Converts a hexadecimal string to a Decimal.
+        """
+        try:
+            return Decimal(int(value, 16))
+        except ValueError:
+            raise ValueError(
+                f"{info.field_name} field is not a valid hexadecimal number"
+            )
+
