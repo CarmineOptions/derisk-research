@@ -483,7 +483,6 @@ class InterestRateModelEventData(BaseModel):
 
 
 class BearingCollateralMintEventData(BaseModel):
-    
     user: str
     amount: Decimal
 
@@ -551,11 +550,57 @@ class DebtTransferEventData(BaseModel):
         if not value.startswith("0x"):
             raise ValueError(f"Invalid address provided for {info.field_name}")
         return add_leading_zeros(value)
-    
+
     @field_validator("amount")
     def validate_numeric_string(cls, value: str, info: ValidationInfo) -> Decimal:
         """
         Validates that the provided amount is numeric and converts it to a Decimal.
+        """
+        try:
+            return Decimal(int(value, 16))
+        except ValueError:
+            raise ValueError(
+                f"{info.field_name} field is not a valid hexadecimal number"
+            )
+            
+
+class BearingCollateralBurnEventData(BaseModel):
+    user: str
+    amount: Decimal
+
+    @field_validator("user")
+    def validate_address(cls, value: str, info: ValidationInfo) -> str:
+        """
+        Validates that the provided address starts with '0x' and 
+        formats it with leading zeros.
+
+        Args:
+            value (str): The address string to validate.
+
+        Returns:
+            str: The validated and formatted address.
+
+        Raises:
+            ValueError: If the provided address does not start with '0x'.
+
+        """
+        if not value.startswith("0x"):
+            raise ValueError(f"Invalid address provided for {info.field_name}")
+        return add_leading_zeros(value)
+
+    @field_validator("amount")
+    def validate_numeric_string(cls, value: str, info: ValidationInfo) -> Decimal:
+        """
+        Validates that the provided amount is numeric and converts it to a Decimal.
+
+        Args:
+            value (str): The amount string to validate.
+
+        Returns:
+            Decimal: The validated and converted amount as a Decimal.
+
+        Raises:
+            ValueError: If the provided amount is not numeric.
         """
         try:
             return Decimal(int(value, 16))
