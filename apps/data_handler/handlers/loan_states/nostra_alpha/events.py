@@ -340,22 +340,25 @@ class NostraAlphaState(State):
             # `lendIndex`, ``, `borrowIndex`, ``.
             # Example:
             # https://starkscan.co/event/0x05e95588e281d7cab6f89aa266057c4c9bcadf3ff0bb85d4feea40a4faa94b09_4.
-            debt_token = add_leading_zeros(event["data"][0])
-            collateral_interest_rate_index = decimal.Decimal(str(int(event["data"][5], base=16))
-                                                             ) / decimal.Decimal("1e18")
-            debt_interest_rate_index = decimal.Decimal(str(int(event["data"][7], base=16))
-                                                       ) / decimal.Decimal("1e18")
+
+            # Parse the event using the new serializer
+            parsed_event_data = NostraDataParser.parse_interest_rate_model_event(event["data"])
+
+            debt_token = add_leading_zeros(parsed_event_data.debt_token)
+            collateral_interest_rate_index = parsed_event_data.lending_index
+            debt_interest_rate_index = parsed_event_data.borrow_index
+            
+            collateral_token = self.debt_token_addresses_to_interest_bearing_collateral_token_addresses.get(
+                debt_token, None
+            )
+            
+            # Update interest rate models
+            if collateral_token:
+                self.interest_rate_models.collateral[collateral_token] = collateral_interest_rate_index
+            self.interest_rate_models.debt[debt_token] = debt_interest_rate_index
+            
         else:
             raise ValueError("Event = {} has an unexpected structure.".format(event))
-        collateral_token = self.debt_token_addresses_to_interest_bearing_collateral_token_addresses.get(
-            debt_token, None
-        )
-        # The indices are saved under the respective collateral or debt token address.
-        if collateral_token:
-            self.interest_rate_models.collateral[collateral_token] = (
-                collateral_interest_rate_index
-            )
-        self.interest_rate_models.debt[debt_token] = debt_interest_rate_index
 
     def process_non_interest_bearing_collateral_mint_event(self, event: pd.Series) -> None:
         """Processes non-interest-bearing collateral mint event, 
@@ -463,32 +466,39 @@ class NostraAlphaState(State):
             # `from_`, `to`, `value`, ``.
             # Example:
             # https://starkscan.co/event/0x0786a8918c8897db760899ee35b43071bfd723fec76487207882695e4b3014a0_1.
-            sender = add_leading_zeros(event["data"][0])
-            recipient = add_leading_zeros(event["data"][1])
-            raw_amount = decimal.Decimal(str(int(event["data"][2], base=16)))
+            parsed_event_data = NostraDataParser.parse_debt_transfer_event(
+                event_data=event["data"], 
+                from_address=event["from_address"]
+            )
+            sender = add_leading_zeros(parsed_event_data.sender)
+            recipient = add_leading_zeros(parsed_event_data.recipient)
+            raw_amount = parsed_event_data.amount
+            token = parsed_event_data.token
+                    # Skip transfers involving zero address
+            if self.ZERO_ADDRESS in {sender, recipient}:
+                return
+    
+            # Update loan entities' debt
+            if sender != self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
+                self.loan_entities[sender].debt.increase_value(token=token, value=-raw_amount)
+    
+            if recipient != self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
+                self.loan_entities[recipient].debt.increase_value(token=token, value=raw_amount)
+    
+            # Optional verbose logging
+            if self.verbose_user in {sender, recipient}:
+                logging.info(
+                    "In block number = {}, debt of raw amount = {} of token = {} was transferred from user = {} to user = {}."
+                    .format(
+                        event["block_number"],
+                        raw_amount,
+                        token,
+                        sender,
+                        recipient,
+                    )
+                )
         else:
             raise ValueError("Event = {} has an unexpected structure.".format(event))
-        if self.ZERO_ADDRESS in {sender, recipient}:
-            return
-
-        token = add_leading_zeros(event["from_address"])
-        if sender != self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
-            self.loan_entities[sender].debt.increase_value(token=token, value=-raw_amount)
-
-        if recipient != self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
-            self.loan_entities[recipient].debt.increase_value(token=token, value=raw_amount)
-
-        if self.verbose_user in {sender, recipient}:
-            logging.info(
-                "In block number = {}, debt of raw amount = {} of token = {} was transferred from user = {} to user = {}."
-                .format(
-                    event["block_number"],
-                    raw_amount,
-                    token,
-                    sender,
-                    recipient,
-                )
-            )
 
     def process_non_interest_bearing_collateral_burn_event(self, event: pd.Series) -> None:
         """
