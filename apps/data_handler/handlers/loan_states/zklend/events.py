@@ -473,8 +473,8 @@ class ZkLendState(State):
         """Collects and sets token parameters for collateral and debt 
         tokens under zkLend, including collateral factors, liquidation bonuses, and debt factors."""
         # Get the sets of unique collateral and debt tokens.
-        collateral_tokens = {y for x in self.loan_entities.values() for y in x.collateral.keys()}
-        debt_tokens = {y for x in self.loan_entities.values() for y in x.debt.keys()}
+        collateral_tokens = {y for x in self.loan_entities.values() for y in x.collateral.values.keys()}
+        debt_tokens = {y for x in self.loan_entities.values() for y in x.debt.values.keys()}
         logging.info(f"Collecting token parameters for collateral tokens: {collateral_tokens}")
         logging.info(f"Collecting token parameters for debt tokens: {debt_tokens}")
         # Get parameters for each collateral and debt token. Under zkLend,
