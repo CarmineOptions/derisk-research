@@ -535,14 +535,14 @@ class NostraAlphaState(State):
         # Example:
         # https://starkscan.co/event/0x07d222d9a70edbe717001ab4305a7a8cfb05116a35da24a9406209dbb07b6d0b_5.
         data = NostraDataParser.parse_interest_bearing_collateral_mint_event(event["data"])
-        user, amount = data.user, data.amount
+        user, face_amount = data.user, data.amount
          
         if user == self.IGNORE_USER:
             return
         
         token = self.ADDRESSES_TO_TOKENS[event["from_address"]]
 
-        raw_amount = amount / self.collateral_interest_rate_models.values[token]
+        raw_amount = face_amount / self.collateral_interest_rate_models.values[token]
         # add additional info block and timestamp
         self.loan_entities[user].extra_info.block = event["block_number"]
         self.loan_entities[user].extra_info.timestamp = event["timestamp"]
@@ -574,13 +574,13 @@ class NostraAlphaState(State):
         # https://starkscan.co/event/0x0106494005bbab6f01e7779760891eb9ae20e01b905afdb16111f7cf3a28a53e_1.
          
         data = NostraDataParser.parse_interest_bearing_collateral_mint_event(event["data"])
-        user, amount = data.user, data.amount
+        user, face_amount = data.user, data.amount
         
         if user == self.IGNORE_USER:
             return
         
         token = self.ADDRESSES_TO_TOKENS[event["from_address"]]
-        raw_amount = amount / self.collateral_interest_rate_models.values[token]
+        raw_amount = face_amount / self.collateral_interest_rate_models.values[token]
         # add additional info block and timestamp
         self.loan_entities[user].extra_info.block = event["block_number"]
         self.loan_entities[user].extra_info.timestamp = event["timestamp"]
