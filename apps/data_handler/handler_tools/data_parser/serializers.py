@@ -452,18 +452,14 @@ class InterestRateModelEventData(BaseModel):
 
     Attributes:
         debt_token (str): The address of the debt token.
-        lending_rate (str): The lending rate in hexadecimal.
-        borrow_rate (str): The borrow rate in hexadecimal.
-        lending_index (str): The lending index in hexadecimal.
-        borrow_index (str): The borrow index in hexadecimal.
+        lending_index (Decimal): The lending index in hexadecimal.
+        borrow_index (Decimal): The borrow index in hexadecimal.
     """
     debt_token: str
-    lending_rate: str
-    borrow_rate: str
-    lending_index: str
-    borrow_index: str
+    lending_index: Decimal
+    borrow_index: Decimal
 
-    @field_validator("debt_token", "lending_token")
+    @field_validator("debt_token")
     def validate_address(cls, value: str, info: ValidationInfo) -> str:
         """
         Validates and formats the token address.
@@ -472,10 +468,11 @@ class InterestRateModelEventData(BaseModel):
             raise ValueError(f"Invalid address provided for {info.field_name}")
         return add_leading_zeros(value)
 
-    @field_validator("lending_rate", "borrow_rate", "lending_index", "borrow_index")
+    @field_validator("lending_index", "borrow_index")
     def validate_numeric_string(cls, value: str, info: ValidationInfo) -> Decimal:
         """
         Converts a hexadecimal string to a Decimal.
+        Validates that the provided value is numeric, and converts it to a proper Decimal number.
         """
         try:
             return Decimal(int(value, 16)) / Decimal("1e18")
@@ -496,10 +493,9 @@ class DebtTransferEventData(BaseModel):
     """
     sender: str
     recipient: str
-    amount: str
-    token: str
+    amount: Decimal
 
-    @field_validator("sender", "recipient", "token")
+    @field_validator("sender", "recipient")
     def validate_address(cls, value: str, info: ValidationInfo) -> str:
         """
         Validates and formats the address.
@@ -511,7 +507,7 @@ class DebtTransferEventData(BaseModel):
     @field_validator("amount")
     def validate_numeric_string(cls, value: str, info: ValidationInfo) -> Decimal:
         """
-        Converts a hexadecimal string to a Decimal.
+        Validates that the provided amount is numeric and converts it to a Decimal.
         """
         try:
             return Decimal(int(value, 16))
