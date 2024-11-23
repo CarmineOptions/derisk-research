@@ -13,7 +13,6 @@ from .utils import (
     transform_loans_data,
     transform_main_chart_data,
 )
-from dashboard_app.helpers.load_data import set_data
 
 
 class Dashboard:
