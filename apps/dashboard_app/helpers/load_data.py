@@ -1,131 +1,233 @@
 import asyncio
 import logging
 import math
+from collections import defaultdict
 from time import monotonic
 
 from data_handler.handlers.loan_states.zklend.events import ZkLendState
-from shared.amms import SwapAmm
 from shared.constants import TOKEN_SETTINGS
 
 from dashboard_app.data_conector import DataConnector
+from dashboard_app.helpers.loans_table import get_loans_table_data, get_protocol
 from dashboard_app.helpers.protocol_stats import (
-    get_general_stats,
-    get_supply_stats,
     get_collateral_stats,
     get_debt_stats,
-    get_utilization_stats
+    get_general_stats,
+    get_supply_stats,
+    get_utilization_stats,
 )
-from dashboard_app.helpers.loans_table import get_loans_table_data, get_protocol
 from dashboard_app.helpers.tools import get_prices
 
-loger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 data_connector = DataConnector()
 
 
-def init_zklend_state():
-    zklend_state = ZkLendState()
-    start = monotonic()
-    zklend_data = data_connector.fetch_data(data_connector.ZKLEND_SQL_QUERY)
-    zklend_data_dict = zklend_data.to_dict(orient="records")
-    for loan_state in zklend_data_dict:
-        user_loan_state = zklend_state.loan_entities[loan_state["user"]]
-        user_loan_state.collateral_enabled.values = loan_state["collateral_enabled"]
-        user_loan_state.collateral.values = loan_state["collateral"]
-        user_loan_state.debt.values = loan_state["debt"]
+class DashboardDataHandler:
+    """
+    Class responsible to handle the data for the dashboard.
+    """
 
-    zklend_state.last_block_number = zklend_data["block"].max()
-    print(f"Initialized ZkLend state in {monotonic() - start:.2f}s")
+    def __init__(self):
+        """
+        Initialize the data handler.
+        """
+        self.underlying_addresses_to_decimals = defaultdict(dict)
+        self.zklend_state = self._init_zklend_state()
+        self.prices = None
+        # TODO add also nostra states
+        self.states = [
+            self.zklend_state,
+            # nostra_alpha_state,
+            # nostra_mainnet_state,
+        ]
 
+    @staticmethod
+    def _init_zklend_state() -> ZkLendState:
+        """
+        Initialize ZkLend state.
+        Fetch data from the database and initialize the state.
+        :return: Initialized ZkLend state.
+        """
+        logger.info("Initializing ZkLend state.")
+        zklend_state = ZkLendState()
+        start = monotonic()
+        zklend_data = data_connector.fetch_data(data_connector.ZKLEND_SQL_QUERY)
+        zklend_interest_rate_data = data_connector.fetch_data(
+            data_connector.ZKLEND_INTEREST_RATE_SQL_QUERY
+        )
 
-def update_data(zklend_state: ZkLendState):
-    # TODO: parallelize per protocol
-    # TODO: stream the data, don't wait until we get all events
-    # nostra_alpha_events = src.nostra_alpha.nostra_alpha_get_events()
-    # nostra_mainnet_events = src.nostra_mainnet.nostra_mainnet_get_events()
+        zklend_data_dict = zklend_data.to_dict(orient="records")
+        for loan_state in zklend_data_dict:
+            user_loan_state = zklend_state.loan_entities[loan_state["user"]]
+            user_loan_state.collateral_enabled.values = loan_state["collateral_enabled"]
+            user_loan_state.collateral.values = loan_state["collateral"]
+            user_loan_state.debt.values = loan_state["debt"]
 
-    # Iterate over ordered events to obtain the final state of each user.
+        zklend_state.last_block_number = zklend_data["block"].max()
+        zklend_state.interest_rate_models.collateral = zklend_interest_rate_data[
+            "collateral"
+        ].iloc[0]
+        zklend_state.interest_rate_models.debt = zklend_interest_rate_data["debt"].iloc[
+            0
+        ]
+        logger.info(f"Initialized ZkLend state in {monotonic() - start:.2f}s")
 
-    # nostra_alpha_state = src.nostra_alpha.NostraAlphaState()
-    # for _, nostra_alpha_event in nostra_alpha_events.iterrows():
-    #     nostra_alpha_state.process_event(event=nostra_alpha_event)
-    #
-    # nostra_mainnet_state = src.nostra_mainnet.NostraMainnetState()
-    # for _, nostra_mainnet_event in nostra_mainnet_events.iterrows():
-    #     nostra_mainnet_state.process_event(event=nostra_mainnet_event)
-    # logging.info(f"updated state in {time.time() - t1}s")
+        return zklend_state
 
-    # TODO: move this to state inits above?
-    # # Collect token parameters.
-    asyncio.run(zklend_state.collect_token_parameters())
-    # TODO move it to separated function
-    # Get prices of the underlying tokens.
-    states = [
-        zklend_state,
-        # nostra_alpha_state,
-        # nostra_mainnet_state,
-    ]
-    underlying_addresses_to_decimals = {}
-    for state in states:
-        underlying_addresses_to_decimals.update(
+    def _set_prices(self) -> None:
+        """
+        Set the prices of the underlying tokens.
+        """
+        logger.info("Setting prices.")
+        self.prices = get_prices(token_decimals=self.underlying_addresses_to_decimals)
+        logger.info("Prices set.")
+
+    def _collect_token_parameters(self):
+        """
+        Collect token parameters.
+        :return:
+        """
+        logger.info("Collecting token parameters.")
+        asyncio.run(self.zklend_state.collect_token_parameters())
+        logger.info("Token parameters collected.")
+
+    def _set_underlying_addresses_to_decimals(self):
+        """
+        Set the underlying addresses to decimals.
+        """
+        logger.info("Setting underlying addresses to decimals.")
+        for state in self.states:
+            self.underlying_addresses_to_decimals.update(
+                {
+                    x.underlying_address: x.decimals
+                    for x in state.token_parameters.collateral.values()
+                }
+            )
+            self.underlying_addresses_to_decimals.update(
+                {
+                    x.underlying_address: x.decimals
+                    for x in state.token_parameters.debt.values()
+                }
+            )
+        self.underlying_addresses_to_decimals.update(
             {
-                x.underlying_address: x.decimals
-                for x in state.token_parameters.collateral.values()
+                x.address: int(math.log10(x.decimal_factor))
+                for x in TOKEN_SETTINGS.values()
             }
         )
-        underlying_addresses_to_decimals.update(
-            {
-                x.underlying_address: x.decimals
-                for x in state.token_parameters.debt.values()
-            }
+        logger.info("Underlying addresses to decimals set.")
+
+    def _get_collateral_stats(self) -> dict:
+        """
+        Get the collateral stats.
+        :return: dict
+        """
+        logger.info("Getting collateral stats.")
+        collateral_stats = get_collateral_stats(states=self.states)
+        logger.info("Collateral stats collected.")
+        return collateral_stats
+
+    def _get_supply_stats(self) -> dict:
+        """
+        Get the supply stats.
+        :return: dict
+        """
+        logger.info("Getting supply stats.")
+        supply_stats = get_supply_stats(
+            states=self.states,
+            prices=self.prices,
         )
-    underlying_addresses_to_decimals.update(
-        {x.address: int(math.log10(x.decimal_factor)) for x in TOKEN_SETTINGS.values()}
-    )
-    prices = get_prices(token_decimals=underlying_addresses_to_decimals)
-    # TODO: move it to separated function END
-    swap_amms = SwapAmm()
-    asyncio.run(swap_amms.init())
+        logger.info("Supply stats collected.")
+        return supply_stats
 
-    # for pair, state in itertools.product(PAIRS, states):
-    #     protocol = src.protocol_parameters.get_protocol(state=state)
-    #     logging.info(
-    #         f"Preparing main chart data for protocol = {protocol} and pair = {pair}."
-    #     )
-    #     # TODO: Decipher `pair` in a smarter way.
-    #     collateral_token_underlying_symbol, debt_token_underlying_symbol = pair.split(
-    #         "-"
-    #     )
-    #     _ = src.main_chart.get_main_chart_data(
-    #         state=state,
-    #         prices=prices,
-    #         swap_amms=swap_amms,
-    #         collateral_token_underlying_symbol=collateral_token_underlying_symbol,
-    #         debt_token_underlying_symbol=debt_token_underlying_symbol,
-    #         save_data=True,
-    #     )
-    #     logging.info(
-    #         f"Main chart data for protocol = {protocol} and pair = {pair} prepared in {time.time() - t3}s"
-    #     )
+    def _get_general_stats(self, loan_stats) -> dict:
+        """
+        Get the general stats.
+        :return: dict
+        """
+        logger.info("Getting general stats.")
+        general_stats = get_general_stats(states=self.states, loan_stats=loan_stats)
+        logger.info("General stats collected.")
+        return general_stats
 
-    loan_stats = {}
-    for state in states:
-        protocol = get_protocol(state=state)
-        loan_stats[protocol] = get_loans_table_data(
-            state=state, prices=prices
+    @staticmethod
+    def _get_utilization_stats(
+        general_stats: dict, supply_stats: dict, debt_stats: dict
+    ) -> dict:
+        """
+        Get the utilization stats.
+        :param general_stats: general_stats dict
+        :param supply_stats: supply_stats dict
+        :param debt_stats: debt_stats dict
+        :return: dict
+        """
+        logger.info("Getting utilization stats.")
+        utilization_stats = get_utilization_stats(
+            general_stats=general_stats,
+            supply_stats=supply_stats,
+            debt_stats=debt_stats,
         )
+        logger.info("Utilization stats collected.")
+        return utilization_stats
 
-    general_stats = get_general_stats(
-        states=states, loan_stats=loan_stats
-    )
-    supply_stats = get_supply_stats(
-        states=states,
-        prices=prices,
-    )
-    collateral_stats = get_collateral_stats(states=states)
-    debt_stats = get_debt_stats(states=states)
-    utilization_stats = get_utilization_stats(
-        general_stats=general_stats,
-        supply_stats=supply_stats,
-        debt_stats=debt_stats,
-    )
-    return zklend_state, general_stats, supply_stats, collateral_stats, debt_stats, utilization_stats
+    def _get_debt_stats(self) -> dict:
+        """
+        Get the debt stats.
+        :return: dict
+        """
+        logger.info("Getting debt stats.")
+        debt_stats = get_debt_stats(states=self.states)
+        logger.info("Debt stats collected.")
+        return debt_stats
+
+    def _get_loan_stats(self) -> dict:
+        """
+        Get the loan stats.
+        :return: dict
+        """
+        logger.info("Getting loan stats.")
+        loan_stats = {}
+        for state in self.states:
+            protocol = get_protocol(state=state)
+            loan_stats[protocol] = get_loans_table_data(state=state, prices=self.prices)
+        logger.info("Loan stats collected.")
+        return loan_stats
+
+    def load_data(self) -> dict:
+        """
+        Get the dashboard data.
+        :return: dict - The dashboard data.
+        """
+        logger.info("Getting dashboard data.")
+        # Get token parameters.
+        self._collect_token_parameters()
+        # Set the underlying addresses to decimals.
+        self._set_underlying_addresses_to_decimals()
+        # Set the prices.
+        self._set_prices()
+
+        # Get the loan stats.
+        loan_stats = self._get_loan_stats()
+
+        # Get the general stats.
+        general_stats = self._get_general_stats(loan_stats=loan_stats)
+        # Get the supply stats.
+        supply_stats = self._get_supply_stats()
+        # Get the collateral stats.
+        collateral_stats = self._get_collateral_stats()
+        # Get the debt stats.
+        debt_stats = self._get_debt_stats()
+        # Get the utilization stats.
+        utilization_stats = self._get_utilization_stats(
+            general_stats=general_stats,
+            supply_stats=supply_stats,
+            debt_stats=debt_stats,
+        )
+        return (
+            self.zklend_state,
+            general_stats,
+            supply_stats,
+            collateral_stats,
+            debt_stats,
+            utilization_stats,
+        )
