@@ -4,8 +4,8 @@ import pandas as pd
 import plotly.express
 import plotly.graph_objs
 
-from helpers.settings import TOKEN_SETTINGS
-from helpers.tools import (
+from dashboard_app.helpers.settings import TOKEN_SETTINGS
+from dashboard_app.helpers.tools import (
     get_collateral_token_range,
     get_custom_data,
     get_prices,

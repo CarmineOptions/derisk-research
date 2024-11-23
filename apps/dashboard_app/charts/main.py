@@ -1,8 +1,8 @@
 import streamlit as st
 
-from charts.main_chart_figure import get_main_chart_figure
-from charts.utils import process_liquidity
-from helpers.settings import (
+from dashboard_app.charts.main_chart_figure import get_main_chart_figure
+from dashboard_app.charts.utils import process_liquidity
+from dashboard_app.helpers.settings import (
     COLLATERAL_TOKENS,
     DEBT_TOKENS,
     STABLECOIN_BUNDLE_NAME,
@@ -13,6 +13,7 @@ from .utils import (
     transform_loans_data,
     transform_main_chart_data,
 )
+from dashboard_app.helpers.load_data import set_data
 
 
 class Dashboard:
@@ -22,7 +23,11 @@ class Dashboard:
         # "Nostra Mainnet",
     ]
 
-    def __init__(self):
+    def __init__(self, zklend_state):
+        """
+        Initialize the dashboard.
+        :param zklend_state: ZkLendState
+        """
         # Set the page configuration
         st.set_page_config(
             layout="wide",
