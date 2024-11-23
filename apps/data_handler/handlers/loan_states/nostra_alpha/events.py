@@ -340,16 +340,16 @@ class NostraAlphaState(State):
             # `lendIndex`, ``, `borrowIndex`, ``.
             # Example:
             # https://starkscan.co/event/0x05e95588e281d7cab6f89aa266057c4c9bcadf3ff0bb85d4feea40a4faa94b09_4.
-            debt_token = add_leading_zeros(event["data"][0])
-            collateral_interest_rate_index = decimal.Decimal(str(int(event["data"][5], base=16))
-                                                             ) / decimal.Decimal("1e18")
-            debt_interest_rate_index = decimal.Decimal(str(int(event["data"][7], base=16))
-                                                       ) / decimal.Decimal("1e18")
+            # Parse the event using the new serializer
+            data = NostraDataParser.parse_interest_rate_model_event(event["data"])
+            debt_token = parsed_event_data.debt_token
+            collateral_interest_rate_index = parsed_event_data.lending_index
+            debt_interest_rate_index = parsed_event_data.borrow_index
         else:
             raise ValueError("Event = {} has an unexpected structure.".format(event))
+            
         collateral_token = self.debt_token_addresses_to_interest_bearing_collateral_token_addresses.get(
-            debt_token, None
-        )
+            debt_token, None)  
         # The indices are saved under the respective collateral or debt token address.
         if collateral_token:
             self.interest_rate_models.collateral[collateral_token] = (
@@ -463,9 +463,10 @@ class NostraAlphaState(State):
             # `from_`, `to`, `value`, ``.
             # Example:
             # https://starkscan.co/event/0x0786a8918c8897db760899ee35b43071bfd723fec76487207882695e4b3014a0_1.
-            sender = add_leading_zeros(event["data"][0])
-            recipient = add_leading_zeros(event["data"][1])
-            raw_amount = decimal.Decimal(str(int(event["data"][2], base=16)))
+            event_data = NostraDataParser.parse_debt_transfer_event(event["data"])
+            sender = event_data.sender 
+            recipient = event_data.recipient
+            raw_amount = event_data.amount
         else:
             raise ValueError("Event = {} has an unexpected structure.".format(event))
         if self.ZERO_ADDRESS in {sender, recipient}:
