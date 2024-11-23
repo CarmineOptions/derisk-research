@@ -20,6 +20,11 @@ class NostraDataParser:
         """
         Parses the interest rate model event data into a human-readable format.
 
+        The event data is fetched from on-chain logs and is structured in the following way:
+        - event_data[0]: The debt token address (as a hexadecimal string).
+        - event_data[5]: The lending interest rate index (as a hexadecimal in 18 decimal places). 
+        - event_data[7]: The borrow interest rate index (as a hexadecimal in 18 decimal places).
+
         Args:
             event_data (List[Any]): A list containing the raw event data.
                 Expected order: [debt_token, lending_rate, _, borrow_rate, _, 
@@ -30,8 +35,6 @@ class NostraDataParser:
         """
         return InterestRateModelEventData(
             debt_token=event_data[0],
-            lending_rate=event_data[1],
-            borrow_rate=event_data[3],
             lending_index=event_data[5],
             borrow_index=event_data[7]
         )
@@ -52,7 +55,8 @@ class NostraDataParser:
         cls, event_data: List[Any], from_address: str
     ) -> DebtTransferEventData:
         """
-        Parses the debt transfer event data into a human-readable format.
+        Parses the debt transfer event data into a human-readable format using the
+        DebtBurnEventData serializer.
 
         Args:
             event_data (List[Any]): A list containing the raw event data.
