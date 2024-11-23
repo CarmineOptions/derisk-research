@@ -1,5 +1,6 @@
 import asyncio
 from collections import defaultdict
+from decimal import Decimal
 
 import pandas as pd
 from data_handler.handlers import blockchain_call
@@ -18,6 +19,12 @@ def get_general_stats(
     states: list[State],
     loan_stats: dict[str, pd.DataFrame],
 ) -> pd.DataFrame:
+    """
+    Get general stats for the dashboard.
+    :param states: States zklend, nostra_alpha, nostra_mainnet
+    :param loan_stats: Loan stats data
+    :return: DataFrame with general stats
+    """
     data = []
     for state in states:
         protocol = get_protocol(state=state)
@@ -51,6 +58,12 @@ def get_supply_stats(
     states: list[State],
     prices: Prices,
 ) -> pd.DataFrame:
+    """
+    Get supply stats for the dashboard.
+    :param states: States zklend, nostra_alpha, nostra_mainnet
+    :param prices: Prices dict
+    :return: DataFrame with supply stats
+    """
     data = []
     for state in states:
         protocol = get_protocol(state=state)
@@ -77,26 +90,30 @@ def get_supply_stats(
                 )[0]
             supply = supply / TOKEN_SETTINGS[token].decimal_factor
             token_supplies[token] = round(supply, 4)
+
+        default_value = Decimal(0.0)
         data.append(
             {
                 "Protocol": protocol,
-                "ETH supply": token_supplies["ETH"],
-                "WBTC supply": token_supplies["WBTC"],
-                "USDC supply": token_supplies["USDC"],
-                "DAI supply": token_supplies["DAI"],
-                "USDT supply": token_supplies["USDT"],
-                "wstETH supply": token_supplies["wstETH"],
-                "LORDS supply": token_supplies["LORDS"],
-                "STRK supply": token_supplies["STRK"],
+                "ETH supply": token_supplies.get("ETH", default_value),
+                "wBTC supply": token_supplies.get("wBTC", default_value),
+                "USDC supply": token_supplies.get("USDC", default_value),
+                # FIXME Uncomment when wBTC is added correct address
+                # "DAI supply": token_supplies.get("DAI", default_value),
+                "USDT supply": token_supplies.get("USDT", default_value),
+                "wstETH supply": token_supplies.get("wstETH", default_value),
+                "LORDS supply": token_supplies.get("LORDS", default_value),
+                "STRK supply": token_supplies.get("STRK", default_value),
             }
         )
-    data = pd.DataFrame(data)
-    data["Total supply (USD)"] = sum(
-        data[column] * prices[TOKEN_SETTINGS[column.replace(" supply", "")].address]
-        for column in data.columns
+    df = pd.DataFrame(data)
+    df["Total supply (USD)"] = sum(
+        df[column]
+        * Decimal(prices[TOKEN_SETTINGS[column.replace(" supply", "")].address])
+        for column in df.columns
         if "supply" in column
     ).apply(lambda x: round(x, 4))
-    return data
+    return df
 
 
 def get_collateral_stats(
@@ -123,21 +140,24 @@ def get_collateral_stats(
             else:
                 raise ValueError
             for token_address in token_addresses:
-                collateral = (
-                    sum(
-                        float(loan_entity.collateral[token_address])
-                        for loan_entity in state.loan_entities.values()
+                try:
+                    collateral = (
+                        sum(
+                            float(loan_entity.collateral.values.get(token_address, 0.0))
+                            for loan_entity in state.loan_entities.values()
+                        )
+                        / TOKEN_SETTINGS[token].decimal_factor
+                        * float(state.interest_rate_models.collateral[token_address])
                     )
-                    / TOKEN_SETTINGS[token].decimal_factor
-                    * float(state.interest_rate_models.collateral[token_address])
-                )
-                token_collaterals[token] += round(collateral, 4)
-
+                    token_collaterals[token] += round(collateral, 4)
+                except TypeError:
+                    # FIXME Remove when all tokens are added
+                    token_collaterals[token] = Decimal(0.0)
         data.append(
             {
                 "Protocol": protocol,
                 "ETH collateral": token_collaterals["ETH"],
-                "WBTC collateral": token_collaterals["WBTC"],
+                "wBTC collateral": token_collaterals["wBTC"],
                 "USDC collateral": token_collaterals["USDC"],
                 "DAI collateral": token_collaterals["DAI"],
                 "USDT collateral": token_collaterals["USDT"],
@@ -173,15 +193,19 @@ def get_debt_stats(
             else:
                 raise ValueError
             for token_address in token_addresses:
-                debt = (
-                    sum(
-                        float(loan_entity.debt[token_address])
-                        for loan_entity in state.loan_entities.values()
+                try:
+                    debt = (
+                        sum(
+                            float(loan_entity.debt[token_address])
+                            for loan_entity in state.loan_entities.values()
+                        )
+                        / TOKEN_SETTINGS[token].decimal_factor
+                        * float(state.interest_rate_models.debt[token_address])
                     )
-                    / TOKEN_SETTINGS[token].decimal_factor
-                    * float(state.interest_rate_models.debt[token_address])
-                )
-                token_debts[token] = round(debt, 4)
+                    token_debts[token] = round(debt, 4)
+                except TypeError:
+                    # FIXME Remove when all tokens are added
+                    token_debts[token] = Decimal(0.0)
 
         data.append(
             {
@@ -213,7 +237,7 @@ def get_utilization_stats(
             "ETH utilization": debt_stats["ETH debt"]
             / (supply_stats["ETH supply"] + debt_stats["ETH debt"]),
             "WBTC utilization": debt_stats["WBTC debt"]
-            / (supply_stats["WBTC supply"] + debt_stats["WBTC debt"]),
+            / (supply_stats.get("WBTC supply") + debt_stats.get("WBTC debt")),
             "USDC utilization": debt_stats["USDC debt"]
             / (supply_stats["USDC supply"] + debt_stats["USDC debt"]),
             "DAI utilization": debt_stats["DAI debt"]
