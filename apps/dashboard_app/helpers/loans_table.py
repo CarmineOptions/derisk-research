@@ -22,8 +22,13 @@ def get_protocol(state: State) -> str:
 def get_loans_table_data(
     state: State,
     prices: Prices,
-    save_data: bool = False,
 ) -> pd.DataFrame:
+    """
+    Get the loans table data.
+    :param state: ZkLendState | NostraAlphaState | NostraMainnetState
+    :param prices: Prices
+    :return: DataFrame
+    """
     data = []
     for loan_entity_id, loan_entity in state.loan_entities.items():
         collateral_usd = loan_entity.compute_collateral_usd(
