@@ -534,11 +534,14 @@ class NostraAlphaState(State):
         # The order of the values in the `data` column is: `user`, `amount`, ``.
         # Example:
         # https://starkscan.co/event/0x07d222d9a70edbe717001ab4305a7a8cfb05116a35da24a9406209dbb07b6d0b_5.
-        user = event["data"][0]
+        data = NostraDataParser.parse_interest_bearing_collateral_mint_event(event["data"])
+        user, face_amount = data.user, data.amount
+         
         if user == self.IGNORE_USER:
             return
+        
         token = self.ADDRESSES_TO_TOKENS[event["from_address"]]
-        face_amount = decimal.Decimal(str(int(event["data"][1], base=16)))
+
         raw_amount = face_amount / self.collateral_interest_rate_models.values[token]
         # add additional info block and timestamp
         self.loan_entities[user].extra_info.block = event["block_number"]
@@ -569,11 +572,14 @@ class NostraAlphaState(State):
         # The order of the values in the `data` column is: `user`, `amount`, ``.
         # Example:
         # https://starkscan.co/event/0x0106494005bbab6f01e7779760891eb9ae20e01b905afdb16111f7cf3a28a53e_1.
-        user = event["data"][0]
+         
+        data = NostraDataParser.parse_interest_bearing_collateral_mint_event(event["data"])
+        user, face_amount = data.user, data.amount
+        
         if user == self.IGNORE_USER:
             return
+        
         token = self.ADDRESSES_TO_TOKENS[event["from_address"]]
-        face_amount = decimal.Decimal(str(int(event["data"][1], base=16)))
         raw_amount = face_amount / self.collateral_interest_rate_models.values[token]
         # add additional info block and timestamp
         self.loan_entities[user].extra_info.block = event["block_number"]
