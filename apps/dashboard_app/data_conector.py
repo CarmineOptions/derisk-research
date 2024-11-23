@@ -25,6 +25,16 @@ class DataConnector:
         WHERE
             ls.protocol_id = 'zkLend';
     """
+    ZKLEND_INTEREST_RATE_SQL_QUERY = """
+        WITH max_block AS (
+            SELECT MAX(block) AS max_block
+            FROM interest_rate
+            WHERE protocol_id = 'zkLend'
+        )
+        SELECT collateral, debt, block 
+        FROM interest_rate
+        WHERE protocol_id = 'zkLend' AND block = (SELECT max_block FROM max_block);
+    """
 
     def __init__(self):
         """
