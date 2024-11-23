@@ -12,7 +12,6 @@ Functions:
     - collect_token_parameters: Fetches token parameters.
     - process_*_event: Updates loan states based on events.
 """
-import asyncio
 import copy
 import decimal
 import logging
@@ -30,6 +29,8 @@ from shared.state import State
 from data_handler.handlers.loan_states.zklend.settings import (
     ZKLEND_SPECIFIC_TOKEN_SETTINGS,
 )
+
+logger = logging.getLogger(__name__)
 
 from data_handler.handlers import blockchain_call
 
@@ -474,8 +475,9 @@ class ZkLendState(State):
         # Get the sets of unique collateral and debt tokens.
         collateral_tokens = {y for x in self.loan_entities.values() for y in x.collateral.keys()}
         debt_tokens = {y for x in self.loan_entities.values() for y in x.debt.keys()}
-
-        # Get parameters for each collateral and debt token. Under zkLend, 
+        logging.info(f"Collecting token parameters for collateral tokens: {collateral_tokens}")
+        logging.info(f"Collecting token parameters for debt tokens: {debt_tokens}")
+        # Get parameters for each collateral and debt token. Under zkLend,
         # the collateral token in the events data is
         # the underlying token directly.
         for underlying_collateral_token_address in collateral_tokens:
