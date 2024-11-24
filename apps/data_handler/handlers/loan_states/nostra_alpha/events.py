@@ -372,9 +372,10 @@ class NostraAlphaState(State):
             sender = add_leading_zeros(event["data"][0])
             recipient = add_leading_zeros(event["data"][1])
             raw_amount = decimal.Decimal(str(int(event["data"][2], base=16)))
+            parsed_event = NostraDataParser.parse_non_interest_bearing_collateral_mint_event(event["data"])
         else:
             raise ValueError("Event = {} has an unexpected structure.".format(event))
-        if self.ZERO_ADDRESS in {sender, recipient}:
+        if self.ZERO_ADDRESS in {sender, recipient} | self.ZERO_ADDRESS in {parsed_event.sender, parsed_event.recipient}:
             return
 
         token = add_leading_zeros(event["from_address"])
@@ -395,6 +396,26 @@ class NostraAlphaState(State):
                     token,
                     sender,
                     recipient,
+                )
+            )
+
+        if parsed_event.sender != self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
+            self.loan_entities[parsed_event.sender].collateral.increase_value(token=token, value=-parsed_event.raw_amount)
+            self.loan_entities[parsed_event.sender].extra_info.block = event["block_number"]
+            self.loan_entities[parsed_event.sender].extra_info.timestamp = event["timestamp"]
+        if parsed_event.recipient != self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
+            self.loan_entities[parsed_event.recipient].collateral.increase_value(token=token, value=parsed_event.raw_amount)
+            self.loan_entities[parsed_event.recipient].extra_info.block = event["block_number"]
+            self.loan_entities[parsed_event.recipient].extra_info.timestamp = event["timestamp"]
+        if self.verbose_user in {parsed_event.sender, parsed_event.recipient}:
+            logging.info(
+                "In block number = {}, collateral of raw amount = {} of token = {} was transferred from user = {} to user = {}."
+                .format(
+                    event["block_number"],
+                    parsed_event.raw_amount,
+                    token,
+                    parsed_event.sender,
+                    parsed_event.recipient,
                 )
             )
 
@@ -500,16 +521,23 @@ class NostraAlphaState(State):
         # Example:
         # https://starkscan.co/event/0x00744177ee88dd3d96dda1784e2dff50f0c989b7fd48755bc42972af2e951dd6_1.
         user = event["data"][0]
-        if user == self.IGNORE_USER:
+        parsed_event = NostraDataParser.parse_non_interest_bearing_collateral_burn_event(event["data"])
+        if user == self.IGNORE_USER | parsed_event == self.IGNORE_USER:
             return
         token = self.ADDRESSES_TO_TOKENS[event["from_address"]]
+        raw_amount = parsed_event.face_amount / self.collateral_interest_rate_models.values[token]
         face_amount = decimal.Decimal(str(int(event["data"][1], base=16)))
         raw_amount = face_amount / self.collateral_interest_rate_models.values[token]
         # add additional info block and timestamp
         self.loan_entities[user].extra_info.block = event["block_number"]
         self.loan_entities[user].extra_info.timestamp = event["timestamp"]
+        self.loan_entities[parsed_event.user].extra_info.block = event["block_number"]
+        self.loan_entities[parsed_event.user].extra_info.timestamp = event["timestamp"]
 
         self.loan_entities[user].non_interest_bearing_collateral.increase_value(
+            token=token, value=-raw_amount
+        )
+        self.loan_entities[parsed_event.user].non_interest_bearing_collateral.increase_value(
             token=token, value=-raw_amount
         )
         self.loan_entities[user].collateral.values = {
@@ -519,7 +547,14 @@ class NostraAlphaState(State):
             )
             for token in NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS
         }
-        if user == self.verbose_user:
+        self.loan_entities[parsed_event.user].collateral.values = {
+            token: (
+                self.loan_entities[parsed_event.user].non_interest_bearing_collateral.values[token] +
+                self.loan_entities[parsed_event.user].interest_bearing_collateral.values[token]
+            )
+            for token in NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS
+        }
+        if user == self.verbose_user | parsed_event.user == self.verbose_user:
             logging.info(
                 "In block number = {}, non-interest-bearing collateral of raw amount = {} of token = {} was withdrawn."
                 .format(

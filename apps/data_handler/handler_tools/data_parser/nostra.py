@@ -8,7 +8,9 @@ from data_handler.handler_tools.data_parser.serializers import (
     InterestRateModelEventData,
     DebtTransferEventData,
     BearingCollateralMintEventData,
-    BearingCollateralBurnEventData
+    BearingCollateralBurnEventData,
+    NonInterestBearingCollateralMintEventData,
+    NonInterestBearingCollateralBurnEventData
 )
 
 
@@ -41,8 +43,53 @@ class NostraDataParser:
             borrow_index=event_data[7]
         )
 
-    def parse_non_interest_bearing_collateral_mint_event(self):
-        pass
+     @classmethod
+    def parse_non_interest_bearing_collateral_mint_event(
+        cls, event_data: list[Any]
+    ) -> NonInterestBearingCollateralMintEventData:
+        """
+        Parses the non-interest bearing collateral mint event data into a human-readable format.
+
+        The event data is structured as follows:
+        - event_data[0]: sender address
+        - event_data[1]: recipient address 
+        - event_data[2]: raw amount
+
+        Args:
+            event_data (list[Any]): A list containing the raw event data with 3 elements:
+                sender, recipient, and raw amount.
+
+        Returns:
+            NonInterestBearingCollateralMintEventData: A model with the parsed event data.
+        """
+        return NonInterestBearingCollateralMintEventData(
+            sender=event_data[0],
+            recipient=event_data[1],
+            raw_amount=event_data[2]
+        )
+
+    @classmethod
+    def parse_non_interest_bearing_collateral_burn_event(
+        cls, event_data: list[Any]
+    ) -> NonInterestBearingCollateralBurnEventData:
+        """
+        Parses the non-interest bearing collateral burn event data into a human-readable format.
+
+        The event data is structured as follows:
+        - event_data[0]: user address
+        - event_data[1]: face amount
+
+        Args:
+            event_data (list[Any]): A list containing the raw event data with 2 elements:
+                user and face amount.
+
+        Returns:
+            NonInterestBearingCollateralBurnEventData: A model with the parsed event data.
+        """
+        return NonInterestBearingCollateralBurnEventData(
+            user=event_data[0],
+            face_amount=event_data[1]
+    )
 
     def parse_non_interest_bearing_collateral_burn_event(self):
         pass
