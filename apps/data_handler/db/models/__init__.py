@@ -1,4 +1,5 @@
 """ This module contains all the models used in the database. """
+
 from .base import Base
 from .liquidable_debt import HealthRatioLevel, LiquidableDebt
 from .loan_states import (

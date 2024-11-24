@@ -1,6 +1,7 @@
 """
 This module contains the logic to parse the nostra data to human-readable format.
 """
+
 from typing import Any, List
 from data_handler.handler_tools.data_parser.serializers import (
     DebtMintEventData,
@@ -8,7 +9,7 @@ from data_handler.handler_tools.data_parser.serializers import (
     InterestRateModelEventData,
     DebtTransferEventData,
     BearingCollateralMintEventData,
-    BearingCollateralBurnEventData
+    BearingCollateralBurnEventData,
 )
 
 
@@ -16,6 +17,7 @@ class NostraDataParser:
     """
     Parses the nostra data to human-readable format.
     """
+
     @classmethod
     def parse_interest_rate_model_event(
         cls, event_data: List[Any]
@@ -25,12 +27,12 @@ class NostraDataParser:
 
         The event data is fetched from on-chain logs and is structured in the following way:
         - event_data[0]: The debt token address (as a hexadecimal string).
-        - event_data[5]: The lending interest rate index (as a hexadecimal in 18 decimal places). 
+        - event_data[5]: The lending interest rate index (as a hexadecimal in 18 decimal places).
         - event_data[7]: The borrow interest rate index (as a hexadecimal in 18 decimal places).
 
         Args:
             event_data (List[Any]): A list containing the raw event data.
-                Expected order: [debt_token, lending_rate, _, borrow_rate, _, 
+                Expected order: [debt_token, lending_rate, _, borrow_rate, _,
                                  lending_index, _, borrow_index, _]
 
         Returns:
@@ -39,7 +41,7 @@ class NostraDataParser:
         return InterestRateModelEventData(
             debt_token=event_data[0],
             lending_index=event_data[5],
-            borrow_index=event_data[7]
+            borrow_index=event_data[7],
         )
 
     def parse_non_interest_bearing_collateral_mint_event(self):
@@ -48,10 +50,12 @@ class NostraDataParser:
     def parse_non_interest_bearing_collateral_burn_event(self):
         pass
 
-    def parse_interest_bearing_collateral_mint_event(self, event_data: list[Any]) -> BearingCollateralMintEventData:
+    def parse_interest_bearing_collateral_mint_event(
+        self, event_data: list[Any]
+    ) -> BearingCollateralMintEventData:
         """
         Parses the BearingCollateralMint event data into a human-readable format using the BearingCollateralMintEventData serializer.
-        
+
         The event data is fetched from on-chain logs and is structured in the following way:
         - event_data[0]: The user address (as a hexadecimal string).
         - event_data[1]: Token amount
@@ -68,10 +72,12 @@ class NostraDataParser:
             amount=event_data[1],
         )
 
-    def parse_interest_bearing_collateral_burn_event(self, event_data: list[Any]) -> BearingCollateralBurnEventData:
+    def parse_interest_bearing_collateral_burn_event(
+        self, event_data: list[Any]
+    ) -> BearingCollateralBurnEventData:
         """
         Parses the BearingCollateralMint event data into a human-readable format using the BearingCollateralMintEventData serializer.
-        
+
         The event data is fetched from on-chain logs and is structured in the following way:
         - event_data[0]: The user address (as a hexadecimal string).
         - event_data[1]: Token amount
@@ -107,7 +113,7 @@ class NostraDataParser:
             sender=event_data[0],
             recipient=event_data[1],
             amount=event_data[2],
-            token=from_address
+            token=from_address,
         )
 
     @classmethod
@@ -123,10 +129,7 @@ class NostraDataParser:
         Returns:
             DebtMintEventData: A Pydantic model with the parsed and validated event data in a human-readable format.
         """
-        return DebtMintEventData(
-            user=event_data[0],
-            token=event_data[1]
-        )
+        return DebtMintEventData(user=event_data[0], token=event_data[1])
 
     @classmethod
     def parse_debt_burn_event(cls, event_data: list[Any]) -> DebtBurnEventData:

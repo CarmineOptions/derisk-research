@@ -2,6 +2,7 @@ from decimal import Decimal
 from pydantic import BaseModel, ValidationInfo, field_validator
 from shared.helpers import add_leading_zeros
 
+
 class AccumulatorsSyncEventData(BaseModel):
     """
     Data model representing an accumulators sync event in the system.
@@ -31,6 +32,7 @@ class AccumulatorsSyncEventData(BaseModel):
         Returns:
             str: Formatted address with leading zeros.
         """
+
 
 class LiquidationEventData(BaseModel):
     """
@@ -70,6 +72,7 @@ class LiquidationEventData(BaseModel):
             str: Formatted address with leading zeros.
         """
 
+
 class WithdrawalEventData(BaseModel):
     """
     Data model representing a withdrawal event in the system.
@@ -99,6 +102,7 @@ class WithdrawalEventData(BaseModel):
         Returns:
             str: Formatted address with leading zeros.
         """
+
 
 class BorrowingEventData(BaseModel):
     """
@@ -135,6 +139,7 @@ class BorrowingEventData(BaseModel):
             raise ValueError(f"Invalid address provided for {info.field_name}")
         return add_leading_zeros(value)
 
+
 class RepaymentEventData(BaseModel):
     """
     Data model representing a repayment event in the system.
@@ -153,6 +158,7 @@ class RepaymentEventData(BaseModel):
     raw_amount: str
     face_amount: str
 
+
 class DepositEventData(BaseModel):
     """
     Data model representing a deposit event in the system.
@@ -166,6 +172,7 @@ class DepositEventData(BaseModel):
     user: str
     token: str
     face_amount: str
+
 
 class CollateralEnabledDisabledEventData(BaseModel):
     """

@@ -1,4 +1,5 @@
 """Test module for ZkLendState."""
+
 import decimal
 from unittest.mock import MagicMock, patch
 
@@ -56,7 +57,7 @@ def zklend_state(mock_db_connector):
         state.interest_rate_models.collateral = {
             "0x123": decimal.Decimal("1.1"),
             "0x456": decimal.Decimal("1.05"),
-            "0x789": decimal.Decimal("1.2"),  
+            "0x789": decimal.Decimal("1.2"),
         }
         state.interest_rate_models.debt = {
             "0x123": decimal.Decimal("1.2"),
@@ -69,7 +70,11 @@ def zklend_state(mock_db_connector):
 @pytest.fixture
 def sample_event():
     return pd.Series(
-        {"block_number": 12345, "timestamp": 1234567890, "data": ["0x123", "0x456", int(1e18)]}
+        {
+            "block_number": 12345,
+            "timestamp": 1234567890,
+            "data": ["0x123", "0x456", int(1e18)],
+        }
     )
 
 
@@ -164,7 +169,9 @@ class TestZkLendState:
             assert loan_entity.extra_info.block == 12345
             assert loan_entity.extra_info.timestamp == 1234567890
 
-    def test_process_liquidation_event(self, zklend_state, sample_event, mock_portfolio):
+    def test_process_liquidation_event(
+        self, zklend_state, sample_event, mock_portfolio
+    ):
         """Test liquidation event processing"""
         mock_parsed_data = MagicMock()
         mock_parsed_data.user = "0x123"

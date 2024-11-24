@@ -1,4 +1,5 @@
 """ Alembic environment configuration file. """
+
 from logging.config import fileConfig
 
 from alembic import context

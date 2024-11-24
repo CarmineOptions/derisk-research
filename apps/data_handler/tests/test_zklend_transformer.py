@@ -25,21 +25,25 @@ def transformer():
     """
     Fixture to create a ZklendTransformer instance with mocked dependencies.
     """
-    with patch('data_handler.handlers.events.zklend.transform_events.DeRiskAPIConnector') as mock_api, \
-         patch('data_handler.handlers.events.zklend.transform_events.ZkLendEventDBConnector') as mock_db:
-        
+    with patch(
+        "data_handler.handlers.events.zklend.transform_events.DeRiskAPIConnector"
+    ) as mock_api, patch(
+        "data_handler.handlers.events.zklend.transform_events.ZkLendEventDBConnector"
+    ) as mock_db:
+
         # Configure mock DB
         mock_db_instance = mock_db.return_value
         mock_db_instance.get_last_block.return_value = 0
-        
+
         # Configure mock API
         mock_api_instance = mock_api.return_value
-        
+
         transformer = ZklendTransformer()
         transformer.api_connector = mock_api_instance
         transformer.db_connector = mock_db_instance
-        
+
         return transformer
+
 
 @pytest.fixture(scope="function")
 def sample_borrowing_event_data() -> Dict[str, Any]:
@@ -58,10 +62,10 @@ def sample_borrowing_event_data() -> Dict[str, Any]:
             "0x1a0027d1bf86904d1051fe0ca94c39b659135f19504d663d66771a7424ca2eb",
             "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
             "0x8ec920c39e9",
-            "0x9184e72a000"
+            "0x9184e72a000",
         ],
         "timestamp": 1712276824,
-        "key_name": "zklend::market::Market::Borrowing"
+        "key_name": "zklend::market::Market::Borrowing",
     }
 
 
@@ -83,10 +87,10 @@ def sample_repayment_event_data() -> Dict[str, Any]:
             "0x7f121e44b3f446cdcaa28b230546956208d51e96894acc3b482947356bc10ed",
             "0x3fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac",
             "0xd60",
-            "0xdaf"
+            "0xdaf",
         ],
         "timestamp": 1712275350,
-        "key_name": "zklend::market::Market::Repayment"
+        "key_name": "zklend::market::Market::Repayment",
     }
 
 
@@ -106,10 +110,10 @@ def sample_deposit_event_data() -> Dict[str, Any]:
         "data": [
             "0x1cfa080d4bbddc206637afad05e5e1abb04da69630f40b2fd9dc578e618ec78",
             "0x585c32b625999e6e5e78645ff8df7a9001cf5cf3eb6b80ccdd16cb64bd3a34",
-            "0x14839256fce60ba2c"
+            "0x14839256fce60ba2c",
         ],
         "timestamp": 1712276824,
-        "key_name": "zklend::market::Market::Deposit"
+        "key_name": "zklend::market::Market::Deposit",
     }
 
 
@@ -129,12 +133,11 @@ def sample_withdrawal_event_data() -> Dict[str, Any]:
         "data": [
             "0x49920f8f551060f726e3c8c2fe26e2b39376027450b7672634824bd60c64022",
             "0x585c32b625999e6e5e78645ff8df7a9001cf5cf3eb6b80ccdd16cb64bd3a34",
-            "0x176b344f2a78c0000"
+            "0x176b344f2a78c0000",
         ],
         "timestamp": 1712277188,
-        "key_name": "zklend::market::Market::Withdrawal"
+        "key_name": "zklend::market::Market::Withdrawal",
     }
-
 
 
 @pytest.fixture(scope="function")
@@ -152,10 +155,10 @@ def sample_collateral_enabled_event_data() -> Dict[str, Any]:
         "keys": ["0x2324062bde6ebb76ffd17d55fee62fee62a4877588eb02524b19c091983b365"],
         "data": [
             "0x54f9574d3029b81e0d64e3267a7b682ab920b57948644de4581f5ceb30351ea",
-            "0xda114221cb83fa859dbdb4c44beeaa0bb37c7537ad5ae66fe5e0efd20e6eb3"
+            "0xda114221cb83fa859dbdb4c44beeaa0bb37c7537ad5ae66fe5e0efd20e6eb3",
         ],
         "timestamp": 1712277561,
-        "key_name": "zklend::market::Market::CollateralEnabled"
+        "key_name": "zklend::market::Market::CollateralEnabled",
     }
 
 
@@ -174,10 +177,10 @@ def sample_collateral_disabled_event_data() -> Dict[str, Any]:
         "keys": ["0xf999d0d33513a8215756ae6a9223180a439c134372b158bc84b9dd02f63856"],
         "data": [
             "0x237be5917e0f4ceba3067af8f11137cc7262b9444fce220183e7fdffe4c1a40",
-            "0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d"
+            "0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d",
         ],
         "timestamp": 1712284226,
-        "key_name": "zklend::market::Market::CollateralDisabled"
+        "key_name": "zklend::market::Market::CollateralDisabled",
     }
 
 
@@ -194,9 +197,13 @@ def sample_accumulators_sync_event_data() -> Dict[str, Any]:
         "event_index": 0,
         "from_address": "0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05",
         "keys": ["0x30c296ae369716818de77cb5b71ce9cda7cc2c0e8456f474e0abb1ae8d017da"],
-        "data": ["0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8", "0x3583127bd9f4ef81d8d7b6e", "0x364c261a781ab91b6c39aca"],
+        "data": [
+            "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8",
+            "0x3583127bd9f4ef81d8d7b6e",
+            "0x364c261a781ab91b6c39aca",
+        ],
         "timestamp": 1712284614,
-        "key_name": "zklend::market::Market::AccumulatorsSync"
+        "key_name": "zklend::market::Market::AccumulatorsSync",
     }
 
 
@@ -208,30 +215,28 @@ def test_save_borrowing_event(transformer, sample_borrowing_event_data):
     transformer.api_connector.get_data.return_value = [sample_borrowing_event_data]
 
     expected_parsed_data = BorrowingEventData(
-        user=sample_borrowing_event_data['data'][0],
-        token=sample_borrowing_event_data['data'][1],
-        raw_amount=sample_borrowing_event_data['data'][2],
-        face_amount=sample_borrowing_event_data['data'][3]
+        user=sample_borrowing_event_data["data"][0],
+        token=sample_borrowing_event_data["data"][1],
+        raw_amount=sample_borrowing_event_data["data"][2],
+        face_amount=sample_borrowing_event_data["data"][3],
     )
 
     # Call the method
     transformer.fetch_and_transform_events(
-        from_address=transformer.PROTOCOL_ADDRESSES,
-        min_block=0,
-        max_block=1000
+        from_address=transformer.PROTOCOL_ADDRESSES, min_block=0, max_block=1000
     )
 
     # Verify DB connector was called with correct data
     transformer.db_connector.create_borrowing_event.assert_called_once_with(
         protocol_id=ProtocolIDs.ZKLEND,
-        event_name=sample_borrowing_event_data['key_name'],
-        block_number=sample_borrowing_event_data['block_number'],
+        event_name=sample_borrowing_event_data["key_name"],
+        block_number=sample_borrowing_event_data["block_number"],
         event_data={
-            'user': expected_parsed_data.user,
-            'token': expected_parsed_data.token,
-            'raw_amount': expected_parsed_data.raw_amount,
-            'face_amount': expected_parsed_data.face_amount
-        }
+            "user": expected_parsed_data.user,
+            "token": expected_parsed_data.token,
+            "raw_amount": expected_parsed_data.raw_amount,
+            "face_amount": expected_parsed_data.face_amount,
+        },
     )
 
 
@@ -242,30 +247,28 @@ def test_save_repayment_event(transformer, sample_repayment_event_data):
     transformer.api_connector.get_data.return_value = [sample_repayment_event_data]
 
     expected_parsed_data = RepaymentEventData(
-        repayer=sample_repayment_event_data['data'][0],
-        beneficiary=sample_repayment_event_data['data'][1],
-        token=sample_repayment_event_data['data'][2],
-        raw_amount=sample_repayment_event_data['data'][3],
-        face_amount=sample_repayment_event_data['data'][4]
+        repayer=sample_repayment_event_data["data"][0],
+        beneficiary=sample_repayment_event_data["data"][1],
+        token=sample_repayment_event_data["data"][2],
+        raw_amount=sample_repayment_event_data["data"][3],
+        face_amount=sample_repayment_event_data["data"][4],
     )
 
     transformer.fetch_and_transform_events(
-        from_address=transformer.PROTOCOL_ADDRESSES,
-        min_block=0,
-        max_block=1000
+        from_address=transformer.PROTOCOL_ADDRESSES, min_block=0, max_block=1000
     )
 
     transformer.db_connector.create_repayment_event.assert_called_once_with(
         protocol_id=ProtocolIDs.ZKLEND,
-        event_name=sample_repayment_event_data['key_name'],
-        block_number=sample_repayment_event_data['block_number'],
+        event_name=sample_repayment_event_data["key_name"],
+        block_number=sample_repayment_event_data["block_number"],
         event_data={
-            'repayer': expected_parsed_data.repayer,
-            'beneficiary': expected_parsed_data.beneficiary,
-            'token': expected_parsed_data.token,
-            'raw_amount': expected_parsed_data.raw_amount,
-            'face_amount': expected_parsed_data.face_amount
-        }
+            "repayer": expected_parsed_data.repayer,
+            "beneficiary": expected_parsed_data.beneficiary,
+            "token": expected_parsed_data.token,
+            "raw_amount": expected_parsed_data.raw_amount,
+            "face_amount": expected_parsed_data.face_amount,
+        },
     )
 
 
@@ -274,17 +277,15 @@ def test_unsupported_event_type(transformer):
     Test handling of unsupported event types.
     """
     unsupported_event = {
-        'key_name': 'UnsupportedEvent',
-        'data': [],
-        'block_number': 1000
+        "key_name": "UnsupportedEvent",
+        "data": [],
+        "block_number": 1000,
     }
     transformer.api_connector.get_data.return_value = [unsupported_event]
 
     # Should not raise an exception
     transformer.fetch_and_transform_events(
-        from_address=transformer.PROTOCOL_ADDRESSES,
-        min_block=0,
-        max_block=1000
+        from_address=transformer.PROTOCOL_ADDRESSES, min_block=0, max_block=1000
     )
 
     # Verify no DB calls were made
@@ -301,13 +302,11 @@ def test_api_error_handling(transformer):
     """
     Test handling of API errors.
     """
-    transformer.api_connector.get_data.return_value = {'error': 'API Error'}
+    transformer.api_connector.get_data.return_value = {"error": "API Error"}
 
-    with pytest.raises(ValueError, match='Error fetching events: API Error'):
+    with pytest.raises(ValueError, match="Error fetching events: API Error"):
         transformer.fetch_and_transform_events(
-            from_address=transformer.PROTOCOL_ADDRESSES,
-            min_block=0,
-            max_block=1000
+            from_address=transformer.PROTOCOL_ADDRESSES, min_block=0, max_block=1000
         )
 
 
@@ -318,26 +317,24 @@ def test_save_deposit_event(transformer, sample_deposit_event_data):
     transformer.api_connector.get_data.return_value = [sample_deposit_event_data]
 
     expected_parsed_data = DepositEventData(
-        user=sample_deposit_event_data['data'][0],
-        token=sample_deposit_event_data['data'][1],
-        face_amount=sample_deposit_event_data['data'][2]
+        user=sample_deposit_event_data["data"][0],
+        token=sample_deposit_event_data["data"][1],
+        face_amount=sample_deposit_event_data["data"][2],
     )
 
     transformer.fetch_and_transform_events(
-        from_address=transformer.PROTOCOL_ADDRESSES,
-        min_block=0,
-        max_block=1000
+        from_address=transformer.PROTOCOL_ADDRESSES, min_block=0, max_block=1000
     )
 
     transformer.db_connector.create_deposit_event.assert_called_once_with(
         protocol_id=ProtocolIDs.ZKLEND,
-        event_name=sample_deposit_event_data['key_name'],
-        block_number=sample_deposit_event_data['block_number'],
+        event_name=sample_deposit_event_data["key_name"],
+        block_number=sample_deposit_event_data["block_number"],
         event_data={
-            'user': expected_parsed_data.user,
-            'token': expected_parsed_data.token,
-            'face_amount': expected_parsed_data.face_amount
-        }
+            "user": expected_parsed_data.user,
+            "token": expected_parsed_data.token,
+            "face_amount": expected_parsed_data.face_amount,
+        },
     )
 
 
@@ -348,109 +345,112 @@ def test_save_withdrawal_event(transformer, sample_withdrawal_event_data):
     transformer.api_connector.get_data.return_value = [sample_withdrawal_event_data]
 
     expected_parsed_data = WithdrawalEventData(
-        user=sample_withdrawal_event_data['data'][0],
-        token=sample_withdrawal_event_data['data'][2],
-        amount=sample_withdrawal_event_data['data'][1]
+        user=sample_withdrawal_event_data["data"][0],
+        token=sample_withdrawal_event_data["data"][2],
+        amount=sample_withdrawal_event_data["data"][1],
     )
 
     transformer.fetch_and_transform_events(
-        from_address=transformer.PROTOCOL_ADDRESSES,
-        min_block=0,
-        max_block=1000
+        from_address=transformer.PROTOCOL_ADDRESSES, min_block=0, max_block=1000
     )
 
     transformer.db_connector.create_withdrawal_event.assert_called_once_with(
         protocol_id=ProtocolIDs.ZKLEND,
-        event_name=sample_withdrawal_event_data['key_name'],
-        block_number=sample_withdrawal_event_data['block_number'],
+        event_name=sample_withdrawal_event_data["key_name"],
+        block_number=sample_withdrawal_event_data["block_number"],
         event_data={
-            'user': expected_parsed_data.user,
-            'token': expected_parsed_data.token,
-            'amount': expected_parsed_data.amount
-        }
+            "user": expected_parsed_data.user,
+            "token": expected_parsed_data.token,
+            "amount": expected_parsed_data.amount,
+        },
     )
 
 
-def test_save_collateral_enabled_event(transformer, sample_collateral_enabled_event_data):
+def test_save_collateral_enabled_event(
+    transformer, sample_collateral_enabled_event_data
+):
     """
     Test saving a collateral enabled event.
     """
-    transformer.api_connector.get_data.return_value = [sample_collateral_enabled_event_data]
+    transformer.api_connector.get_data.return_value = [
+        sample_collateral_enabled_event_data
+    ]
 
     expected_parsed_data = CollateralEnabledDisabledEventData(
-        user=sample_collateral_enabled_event_data['data'][0],
-        token=sample_collateral_enabled_event_data['data'][1]
+        user=sample_collateral_enabled_event_data["data"][0],
+        token=sample_collateral_enabled_event_data["data"][1],
     )
 
     transformer.fetch_and_transform_events(
-        from_address=transformer.PROTOCOL_ADDRESSES,
-        min_block=0,
-        max_block=1000
+        from_address=transformer.PROTOCOL_ADDRESSES, min_block=0, max_block=1000
     )
 
     transformer.db_connector.create_collateral_enabled_disabled_event.assert_called_once_with(
         protocol_id=ProtocolIDs.ZKLEND,
-        event_name=sample_collateral_enabled_event_data['key_name'],
-        block_number=sample_collateral_enabled_event_data['block_number'],
+        event_name=sample_collateral_enabled_event_data["key_name"],
+        block_number=sample_collateral_enabled_event_data["block_number"],
         event_data={
-            'user': expected_parsed_data.user,
-            'token': expected_parsed_data.token
-        }
+            "user": expected_parsed_data.user,
+            "token": expected_parsed_data.token,
+        },
     )
 
 
-def test_save_collateral_disabled_event(transformer, sample_collateral_disabled_event_data):
+def test_save_collateral_disabled_event(
+    transformer, sample_collateral_disabled_event_data
+):
     """
     Test saving a collateral disabled event.
     """
-    transformer.api_connector.get_data.return_value = [sample_collateral_disabled_event_data]
+    transformer.api_connector.get_data.return_value = [
+        sample_collateral_disabled_event_data
+    ]
 
     expected_parsed_data = CollateralEnabledDisabledEventData(
-        user=sample_collateral_disabled_event_data['data'][0],
-        token=sample_collateral_disabled_event_data['data'][1]
+        user=sample_collateral_disabled_event_data["data"][0],
+        token=sample_collateral_disabled_event_data["data"][1],
     )
 
     transformer.fetch_and_transform_events(
-        from_address=transformer.PROTOCOL_ADDRESSES,
-        min_block=0,
-        max_block=1000
+        from_address=transformer.PROTOCOL_ADDRESSES, min_block=0, max_block=1000
     )
 
     transformer.db_connector.create_collateral_enabled_disabled_event.assert_called_once_with(
         protocol_id=ProtocolIDs.ZKLEND,
-        event_name=sample_collateral_disabled_event_data['key_name'],
-        block_number=sample_collateral_disabled_event_data['block_number'],
+        event_name=sample_collateral_disabled_event_data["key_name"],
+        block_number=sample_collateral_disabled_event_data["block_number"],
         event_data={
-            'user': expected_parsed_data.user,
-            'token': expected_parsed_data.token
-        }
+            "user": expected_parsed_data.user,
+            "token": expected_parsed_data.token,
+        },
     )
+
 
 def test_save_accumulators_sync_event(transformer, sample_accumulators_sync_event_data):
     """
     Test saving an accumulators sync event.
     """
-    transformer.api_connector.get_data.return_value = [sample_accumulators_sync_event_data]
+    transformer.api_connector.get_data.return_value = [
+        sample_accumulators_sync_event_data
+    ]
 
     expected_parsed_data = AccumulatorsSyncEventData(
-        token=sample_accumulators_sync_event_data['data'][0],
-        lending_accumulator=sample_accumulators_sync_event_data['data'][1],
-        debt_accumulator=sample_accumulators_sync_event_data['data'][2]
+        token=sample_accumulators_sync_event_data["data"][0],
+        lending_accumulator=sample_accumulators_sync_event_data["data"][1],
+        debt_accumulator=sample_accumulators_sync_event_data["data"][2],
     )
 
     transformer.fetch_and_transform_events(
-        from_address=transformer.PROTOCOL_ADDRESSES,
-        min_block=0,
-        max_block=1000
+        from_address=transformer.PROTOCOL_ADDRESSES, min_block=0, max_block=1000
     )
 
     transformer.db_connector.create_accumulator_event.assert_called_once_with(
         protocol_id=ProtocolIDs.ZKLEND,
-        event_name=sample_accumulators_sync_event_data['key_name'],
-        block_number=sample_accumulators_sync_event_data['block_number'],
+        event_name=sample_accumulators_sync_event_data["key_name"],
+        block_number=sample_accumulators_sync_event_data["block_number"],
         event_data={
-            'token': expected_parsed_data.token,
-            'lending_accumulator': expected_parsed_data.lending_accumulator,
-            'debt_accumulator': expected_parsed_data.debt_accumulator
-        }
+            "token": expected_parsed_data.token,
+            "lending_accumulator": expected_parsed_data.lending_accumulator,
+            "debt_accumulator": expected_parsed_data.debt_accumulator,
+        },
     )

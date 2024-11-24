@@ -43,7 +43,9 @@ class HashtackV0StateComputation(HashstackBaseLoanStateComputation):
         # init HashtackInitializer
         hashtack_initializer = HashtackInitializer(hashtack_v0_state)
         loan_ids = hashtack_initializer.get_loan_ids(df)
-        hashtack_initializer.set_last_loan_states_per_loan_ids(list(set(loan_ids)), version=0)
+        hashtack_initializer.set_last_loan_states_per_loan_ids(
+            list(set(loan_ids)), version=0
+        )
 
         # Filter out events that are not in the mapping
         df_filtered = df[df["key_name"].isin(events_mapping.keys())]
@@ -55,7 +57,9 @@ class HashtackV0StateComputation(HashstackBaseLoanStateComputation):
         result_df = self.get_result_df(hashtack_v0_state.loan_entities)
         return result_df
 
-    def process_event(self, instance_state: "State", method_name: str, event: pd.Series) -> None:
+    def process_event(
+        self, instance_state: "State", method_name: str, event: pd.Series
+    ) -> None:
         """
         Processes an event based on the method name and the event data.
 
@@ -77,7 +81,9 @@ class HashtackV0StateComputation(HashstackBaseLoanStateComputation):
                 if method:
                     method(event)
                 else:
-                    logger.debug(f"No method named {method_name} found for processing event.")
+                    logger.debug(
+                        f"No method named {method_name} found for processing event."
+                    )
             else:
                 logger.debug(f"No InterestRate found for block number {block_number}")
         except Exception as e:

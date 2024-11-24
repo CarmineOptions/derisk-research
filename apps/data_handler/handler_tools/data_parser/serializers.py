@@ -1,4 +1,5 @@
 """ This module contains the data models and parser class for zkLend data events. """
+
 from decimal import Decimal
 from pydantic import BaseModel, ValidationInfo, field_validator
 from shared.helpers import add_leading_zeros
@@ -129,7 +130,7 @@ class AccumulatorsSyncEventData(BaseModel):
     @field_validator("token")
     def validate_address(cls, value: str, info: ValidationInfo) -> str:
         """
-        Validates if the value is a valid address and formats it to 
+        Validates if the value is a valid address and formats it to
         have leading zeros.
 
         Raises:
@@ -228,7 +229,7 @@ class BorrowingEventData(BaseModel):
     @field_validator("user", "token")
     def validate_address(cls, value: str, info: ValidationInfo) -> str:
         """
-        Validates if the value is a valid address and formats 
+        Validates if the value is a valid address and formats
         it to have leading zeros.
 
         Raises:
@@ -277,7 +278,7 @@ class WithdrawalEventData(BaseModel):
     @field_validator("user", "token")
     def validate_addresses(cls, value: str) -> str:
         """
-        Validates that the provided address starts with '0x' and 
+        Validates that the provided address starts with '0x' and
         formats it with leading zeros.
 
         Args:
@@ -313,10 +314,11 @@ class WithdrawalEventData(BaseModel):
             raise ValueError(
                 f"{info.field_name} field is not a valid hexadecimal number"
             )
-        
+
 
 class CollateralEnabledDisabledEventData(BaseModel):
-    """ Data model representing a collateral enabled/disabled event in the system. """
+    """Data model representing a collateral enabled/disabled event in the system."""
+
     user: str
     token: str
 
@@ -352,7 +354,7 @@ class DebtMintEventData(BaseModel):
     @field_validator("user")
     def validate_address(cls, value: str, info: ValidationInfo) -> str:
         """
-        Validates that the provided address starts with '0x' and 
+        Validates that the provided address starts with '0x' and
         formats it with leading zeros.
 
         Args:
@@ -408,7 +410,7 @@ class DebtBurnEventData(BaseModel):
     @field_validator("user")
     def validate_address(cls, value: str, info: ValidationInfo) -> str:
         """
-        Validates that the provided address starts with '0x' and 
+        Validates that the provided address starts with '0x' and
         formats it with leading zeros.
 
         Args:
@@ -445,6 +447,7 @@ class DebtBurnEventData(BaseModel):
                 f"{info.field_name} field is not a valid hexadecimal number"
             )
 
+
 class InterestRateModelEventData(BaseModel):
     """
     Data model representing an interest rate model event in the Nostra protocol.
@@ -454,6 +457,7 @@ class InterestRateModelEventData(BaseModel):
         lending_index (Decimal): The lending index in hexadecimal.
         borrow_index (Decimal): The borrow index in hexadecimal.
     """
+
     debt_token: str
     lending_index: Decimal
     borrow_index: Decimal
@@ -488,7 +492,7 @@ class BearingCollateralMintEventData(BaseModel):
     @field_validator("user")
     def validate_address(cls, value: str, info: ValidationInfo) -> str:
         """
-        Validates that the provided address starts with '0x' and 
+        Validates that the provided address starts with '0x' and
         formats it with leading zeros.
 
         Args:
@@ -537,6 +541,7 @@ class DebtTransferEventData(BaseModel):
         amount (str): Transfer amount in hexadecimal.
         token (str): Address of the debt token.
     """
+
     sender: str
     recipient: str
     amount: Decimal
@@ -561,7 +566,7 @@ class DebtTransferEventData(BaseModel):
             raise ValueError(
                 f"{info.field_name} field is not a valid hexadecimal number"
             )
-            
+
 
 class BearingCollateralBurnEventData(BaseModel):
     user: str
@@ -570,7 +575,7 @@ class BearingCollateralBurnEventData(BaseModel):
     @field_validator("user")
     def validate_address(cls, value: str, info: ValidationInfo) -> str:
         """
-        Validates that the provided address starts with '0x' and 
+        Validates that the provided address starts with '0x' and
         formats it with leading zeros.
 
         Args:

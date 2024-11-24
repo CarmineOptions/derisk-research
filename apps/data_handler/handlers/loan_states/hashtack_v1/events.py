@@ -1,6 +1,7 @@
 """
 Event handling and state management for Hashstack V1, including token settings, portfolios, and loan entity updates.
 """
+
 import copy
 import dataclasses
 import decimal
@@ -45,13 +46,10 @@ ADDRESSES_TO_TOKENS: dict[str, str] = {
     "0x00f0f5b3eed258344152e1f17baf84a2e1b621cd754b625bec169e8595aea767": "JediSwap: DAI/USDT Pool",
     "0x04d0390b777b424e43839cd1e744799f3de6c176c7e32c1812a41dbd9c19db6a": "JediSwap: ETH/USDC Pool",
     "0x045e7131d776dddc137e30bdd490b431c7144677e97bf9369f629ed8d3fb7dd6": "JediSwap: ETH/USDT Pool",
-    "0x05801bdad32f343035fb242e98d1e9371ae85bc1543962fedea16c59b35bd19b":
-    "JediSwap: USDC/USDT Pool",
+    "0x05801bdad32f343035fb242e98d1e9371ae85bc1543962fedea16c59b35bd19b": "JediSwap: USDC/USDT Pool",
     "0x0260e98362e0949fefff8b4de85367c035e44f734c9f8069b6ce2075ae86b45c": "JediSwap: WBTC/ETH Pool",
-    "0x005a8054e5ca0b277b295a830e53bd71a6a6943b42d0dbb22329437522bc80c8":
-    "JediSwap: WBTC/USDC Pool",
-    "0x044d13ad98a46fd2322ef2637e5e4c292ce8822f47b7cb9a1d581176a801c1a0":
-    "JediSwap: WBTC/USDT Pool",
+    "0x005a8054e5ca0b277b295a830e53bd71a6a6943b42d0dbb22329437522bc80c8": "JediSwap: WBTC/USDC Pool",
+    "0x044d13ad98a46fd2322ef2637e5e4c292ce8822f47b7cb9a1d581176a801c1a0": "JediSwap: WBTC/USDT Pool",
     # MySwap pools.
     "0x07c662b10f409d7a0a69c8da79b397fd91187ca5f6230ed30effef2dceddc5b3": "mySwap: DAI/ETH Pool",
     "0x0611e8f4f3badf1737b9e8f0ca77dd2f6b46a1d33ce4eed951c6b18ac497d505": "mySwap: DAI/USDC Pool",
@@ -74,6 +72,7 @@ class HashstackV1SpecificTokenSettings:
     """
     Token settings specific to Hashstack V1, with neutral collateral and debt factors.
     """
+
     # These are set to neutral values because Hashstack V1 doesn't use collateral factors.
     collateral_factor: decimal.Decimal
     # These are set to neutral values because Hashstack V1 doesn't use debt factors.
@@ -85,226 +84,190 @@ class CustomTokenSettings(HashstackV1SpecificTokenSettings, TokenSettings):
     """
     Custom token settings for Hashstack V1, extending specific and general token settings.
     """
+
     pass
 
 
 HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS: dict[str, TokenSettings] = {
-    "JediSwap: DAI/ETH Pool":
-    TokenSettings(
+    "JediSwap: DAI/ETH Pool": TokenSettings(
         symbol="JediSwap: DAI/ETH Pool",
         decimal_factor=decimal.Decimal("1e18"),
         address="0x07e2a13b40fc1119ec55e0bcf9428eedaa581ab3c924561ad4e955f95da63138",
     ),
-    "JediSwap: DAI/USDC Pool":
-    TokenSettings(
+    "JediSwap: DAI/USDC Pool": TokenSettings(
         symbol="JediSwap: DAI/USDC Pool",
         decimal_factor=decimal.Decimal("1e18"),
         address="0x00cfd39f5244f7b617418c018204a8a9f9a7f72e71f0ef38f968eeb2a9ca302b",
     ),
-    "JediSwap: DAI/USDT Pool":
-    TokenSettings(
+    "JediSwap: DAI/USDT Pool": TokenSettings(
         symbol="JediSwap: DAI/USDT Pool",
         decimal_factor=decimal.Decimal("1e18"),
         address="0x00f0f5b3eed258344152e1f17baf84a2e1b621cd754b625bec169e8595aea767",
     ),
-    "JediSwap: ETH/USDC Pool":
-    TokenSettings(
+    "JediSwap: ETH/USDC Pool": TokenSettings(
         symbol="JediSwap: ETH/USDC Pool",
         decimal_factor=decimal.Decimal("1e18"),
         address="0x04d0390b777b424e43839cd1e744799f3de6c176c7e32c1812a41dbd9c19db6a",
     ),
-    "JediSwap: ETH/USDT Pool":
-    TokenSettings(
+    "JediSwap: ETH/USDT Pool": TokenSettings(
         symbol="JediSwap: ETH/USDT Pool",
         decimal_factor=decimal.Decimal("1e18"),
         address="0x045e7131d776dddc137e30bdd490b431c7144677e97bf9369f629ed8d3fb7dd6",
     ),
-    "JediSwap: USDC/USDT Pool":
-    TokenSettings(
+    "JediSwap: USDC/USDT Pool": TokenSettings(
         symbol="JediSwap: USDC/USDT Pool",
         decimal_factor=decimal.Decimal("1e18"),
         address="0x05801bdad32f343035fb242e98d1e9371ae85bc1543962fedea16c59b35bd19b",
     ),
-    "JediSwap: WBTC/ETH Pool":
-    TokenSettings(
+    "JediSwap: WBTC/ETH Pool": TokenSettings(
         symbol="JediSwap: WBTC/ETH Pool",
         decimal_factor=decimal.Decimal("1e18"),
         address="0x0260e98362e0949fefff8b4de85367c035e44f734c9f8069b6ce2075ae86b45c",
     ),
-    "JediSwap: WBTC/USDC Pool":
-    TokenSettings(
+    "JediSwap: WBTC/USDC Pool": TokenSettings(
         symbol="JediSwap: WBTC/USDC Pool",
         decimal_factor=decimal.Decimal("1e18"),
         address="0x005a8054e5ca0b277b295a830e53bd71a6a6943b42d0dbb22329437522bc80c8",
     ),
-    "JediSwap: WBTC/USDT Pool":
-    TokenSettings(
+    "JediSwap: WBTC/USDT Pool": TokenSettings(
         symbol="JediSwap: WBTC/USDT Pool",
         decimal_factor=decimal.Decimal("1e18"),
         address="0x044d13ad98a46fd2322ef2637e5e4c292ce8822f47b7cb9a1d581176a801c1a0",
     ),
-    "mySwap: DAI/ETH Pool":
-    TokenSettings(
+    "mySwap: DAI/ETH Pool": TokenSettings(
         symbol="mySwap: DAI/ETH Pool",
         decimal_factor=decimal.Decimal("1e18"),
         address="0x07c662b10f409d7a0a69c8da79b397fd91187ca5f6230ed30effef2dceddc5b3",
     ),
-    "mySwap: DAI/USDC Pool":
-    TokenSettings(
+    "mySwap: DAI/USDC Pool": TokenSettings(
         symbol="mySwap: DAI/USDC Pool",
         decimal_factor=decimal.Decimal("1e12"),
         address="0x0611e8f4f3badf1737b9e8f0ca77dd2f6b46a1d33ce4eed951c6b18ac497d505",
     ),
-    "mySwap: ETH/USDC Pool":
-    TokenSettings(
+    "mySwap: ETH/USDC Pool": TokenSettings(
         symbol="mySwap: ETH/USDC Pool",
         decimal_factor=decimal.Decimal("1e12"),
         address="0x022b05f9396d2c48183f6deaf138a57522bcc8b35b67dee919f76403d1783136",
     ),
-    "mySwap: ETH/USDT Pool":
-    TokenSettings(
+    "mySwap: ETH/USDT Pool": TokenSettings(
         symbol="mySwap: ETH/USDT Pool",
         decimal_factor=decimal.Decimal("1e12"),
         address="0x041f9a1e9a4d924273f5a5c0c138d52d66d2e6a8bee17412c6b0f48fe059ae04",
     ),
-    "mySwap: USDC/USDT Pool":
-    TokenSettings(
+    "mySwap: USDC/USDT Pool": TokenSettings(
         symbol="mySwap: USDC/USDT Pool",
         decimal_factor=decimal.Decimal("1e6"),
         address="0x01ea237607b7d9d2e9997aa373795929807552503683e35d8739f4dc46652de1",
     ),
-    "mySwap: WBTC/USDC Pool":
-    TokenSettings(
+    "mySwap: WBTC/USDC Pool": TokenSettings(
         symbol="mySwap: WBTC/USDC Pool",
         decimal_factor=decimal.Decimal("1e7"),
         address="0x025b392609604c75d62dde3d6ae98e124a31b49123b8366d7ce0066ccb94f696",
     ),
 }
 HASHSTACK_V1_SPECIFIC_TOKEN_SETTINGS: dict[str, TokenSettings] = {
-    "ETH":
-    HashstackV1SpecificTokenSettings(
+    "ETH": HashstackV1SpecificTokenSettings(
         collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")
     ),
-    "wBTC":
-    HashstackV1SpecificTokenSettings(
+    "wBTC": HashstackV1SpecificTokenSettings(
         collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")
     ),
-    "USDC":
-    HashstackV1SpecificTokenSettings(
+    "USDC": HashstackV1SpecificTokenSettings(
         collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")
     ),
-    "DAI":
-    HashstackV1SpecificTokenSettings(
+    "DAI": HashstackV1SpecificTokenSettings(
         collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")
     ),
-    "USDT":
-    HashstackV1SpecificTokenSettings(
+    "USDT": HashstackV1SpecificTokenSettings(
         collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")
     ),
     # TODO: Add wstETH.
-    "wstETH":
-    HashstackV1SpecificTokenSettings(
+    "wstETH": HashstackV1SpecificTokenSettings(
         collateral_factor=decimal.Decimal("1"),
         debt_factor=decimal.Decimal("1"),
     ),
     # TODO: Add LORDS.
-    "LORDS":
-    HashstackV1SpecificTokenSettings(
+    "LORDS": HashstackV1SpecificTokenSettings(
         collateral_factor=decimal.Decimal("1"),
         debt_factor=decimal.Decimal("1"),
     ),
     # TODO: Add STRK.
-    "STRK":
-    HashstackV1SpecificTokenSettings(
+    "STRK": HashstackV1SpecificTokenSettings(
         collateral_factor=decimal.Decimal("1"),
         debt_factor=decimal.Decimal("1"),
     ),
-    "JediSwap: DAI/ETH Pool":
-    HashstackV1SpecificTokenSettings(
+    "JediSwap: DAI/ETH Pool": HashstackV1SpecificTokenSettings(
         collateral_factor=decimal.Decimal("1"),
         debt_factor=decimal.Decimal("1"),
     ),
-    "JediSwap: DAI/USDC Pool":
-    HashstackV1SpecificTokenSettings(
+    "JediSwap: DAI/USDC Pool": HashstackV1SpecificTokenSettings(
         collateral_factor=decimal.Decimal("1"),
         debt_factor=decimal.Decimal("1"),
     ),
-    "JediSwap: DAI/USDT Pool":
-    HashstackV1SpecificTokenSettings(
+    "JediSwap: DAI/USDT Pool": HashstackV1SpecificTokenSettings(
         collateral_factor=decimal.Decimal("1"),
         debt_factor=decimal.Decimal("1"),
     ),
-    "JediSwap: ETH/USDC Pool":
-    HashstackV1SpecificTokenSettings(
+    "JediSwap: ETH/USDC Pool": HashstackV1SpecificTokenSettings(
         collateral_factor=decimal.Decimal("1"),
         debt_factor=decimal.Decimal("1"),
     ),
-    "JediSwap: ETH/USDT Pool":
-    HashstackV1SpecificTokenSettings(
+    "JediSwap: ETH/USDT Pool": HashstackV1SpecificTokenSettings(
         collateral_factor=decimal.Decimal("1"),
         debt_factor=decimal.Decimal("1"),
     ),
-    "JediSwap: USDC/USDT Pool":
-    HashstackV1SpecificTokenSettings(
+    "JediSwap: USDC/USDT Pool": HashstackV1SpecificTokenSettings(
         collateral_factor=decimal.Decimal("1"),
         debt_factor=decimal.Decimal("1"),
     ),
-    "JediSwap: WBTC/ETH Pool":
-    HashstackV1SpecificTokenSettings(
+    "JediSwap: WBTC/ETH Pool": HashstackV1SpecificTokenSettings(
         collateral_factor=decimal.Decimal("1"),
         debt_factor=decimal.Decimal("1"),
     ),
-    "JediSwap: WBTC/USDC Pool":
-    HashstackV1SpecificTokenSettings(
+    "JediSwap: WBTC/USDC Pool": HashstackV1SpecificTokenSettings(
         collateral_factor=decimal.Decimal("1"),
         debt_factor=decimal.Decimal("1"),
     ),
-    "JediSwap: WBTC/USDT Pool":
-    HashstackV1SpecificTokenSettings(
+    "JediSwap: WBTC/USDT Pool": HashstackV1SpecificTokenSettings(
         collateral_factor=decimal.Decimal("1"),
         debt_factor=decimal.Decimal("1"),
     ),
-    "mySwap: DAI/ETH Pool":
-    HashstackV1SpecificTokenSettings(
+    "mySwap: DAI/ETH Pool": HashstackV1SpecificTokenSettings(
         collateral_factor=decimal.Decimal("1"),
         debt_factor=decimal.Decimal("1"),
     ),
-    "mySwap: DAI/USDC Pool":
-    HashstackV1SpecificTokenSettings(
+    "mySwap: DAI/USDC Pool": HashstackV1SpecificTokenSettings(
         collateral_factor=decimal.Decimal("1"),
         debt_factor=decimal.Decimal("1"),
     ),
-    "mySwap: ETH/USDC Pool":
-    HashstackV1SpecificTokenSettings(
+    "mySwap: ETH/USDC Pool": HashstackV1SpecificTokenSettings(
         collateral_factor=decimal.Decimal("1"),
         debt_factor=decimal.Decimal("1"),
     ),
-    "mySwap: ETH/USDT Pool":
-    HashstackV1SpecificTokenSettings(
+    "mySwap: ETH/USDT Pool": HashstackV1SpecificTokenSettings(
         collateral_factor=decimal.Decimal("1"),
         debt_factor=decimal.Decimal("1"),
     ),
-    "mySwap: USDC/USDT Pool":
-    HashstackV1SpecificTokenSettings(
+    "mySwap: USDC/USDT Pool": HashstackV1SpecificTokenSettings(
         collateral_factor=decimal.Decimal("1"),
         debt_factor=decimal.Decimal("1"),
     ),
-    "mySwap: WBTC/USDC Pool":
-    HashstackV1SpecificTokenSettings(
+    "mySwap: WBTC/USDC Pool": HashstackV1SpecificTokenSettings(
         collateral_factor=decimal.Decimal("1"),
         debt_factor=decimal.Decimal("1"),
     ),
 }
 TOKEN_SETTINGS: dict[str, CustomTokenSettings] = {
-    token:
-    CustomTokenSettings(
+    token: CustomTokenSettings(
         symbol=token_settings.symbol,
         decimal_factor=token_settings.decimal_factor,
         address=token_settings.address,
         collateral_factor=HASHSTACK_V1_SPECIFIC_TOKEN_SETTINGS[token].collateral_factor,
         debt_factor=HASHSTACK_V1_SPECIFIC_TOKEN_SETTINGS[token].debt_factor,
     )
-    for token, token_settings in (TOKEN_SETTINGS | HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS).items()
+    for token, token_settings in (
+        TOKEN_SETTINGS | HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS
+    ).items()
 }
 
 # Keys are values of the "key_name" column in the database, values are the respective method names.
@@ -321,8 +284,10 @@ EVENTS_METHODS_MAPPING: dict[str, str] = {
 MAX_ROUNDING_ERRORS: TokenValues = MAX_ROUNDING_ERRORS
 # TODO: The additional tokens are not allowed in `TokenValues`, fix this.
 MAX_ROUNDING_ERRORS.values.update(
-    {token: decimal.Decimal("0.5e13")
-     for token in HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS}
+    {
+        token: decimal.Decimal("0.5e13")
+        for token in HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS
+    }
 )
 
 
@@ -334,8 +299,10 @@ class HashstackV1Portfolio(Portfolio):
     def __init__(self) -> None:
         super().__init__()
         self.values.update(
-            {token: decimal.Decimal("0")
-             for token in HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS}
+            {
+                token: decimal.Decimal("0")
+                for token in HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS
+            }
         )
 
 
@@ -348,8 +315,10 @@ class HashstackV1InterestRateModels(TokenValues):
     def __init__(self) -> None:
         super().__init__(init_value=decimal.Decimal("1"))
         self.values.update(
-            {token: decimal.Decimal("1")
-             for token in HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS}
+            {
+                token: decimal.Decimal("1")
+                for token in HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS
+            }
         )
 
 
@@ -524,28 +493,38 @@ class HashstackV1State(State):
         debt_token = self.ADDRESSES_TO_TOKENS[add_leading_zeros(event["data"][2])]
         debt_face_amount = decimal.Decimal(str(int(event["data"][3], base=16)))
         borrowed_collateral_token = get_symbol(add_leading_zeros(event["data"][5]))
-        borrowed_collateral_face_amount = decimal.Decimal(str(int(event["data"][6], base=16)))
-        original_collateral_token = self.ADDRESSES_TO_TOKENS[add_leading_zeros(event["data"][13])]
-        original_collateral_face_amount = decimal.Decimal(str(int(event["data"][14], base=16)))
+        borrowed_collateral_face_amount = decimal.Decimal(
+            str(int(event["data"][6], base=16))
+        )
+        original_collateral_token = self.ADDRESSES_TO_TOKENS[
+            add_leading_zeros(event["data"][13])
+        ]
+        original_collateral_face_amount = decimal.Decimal(
+            str(int(event["data"][14], base=16))
+        )
 
         self.loan_entities[loan_id] = HashstackV1LoanEntity(user=user)
         # TODO: Make it possible to initialize `HashstackV1Portfolio`` with some
         # token amount directly.
         original_collateral = HashstackV1Portfolio()
-        original_collateral.values[original_collateral_token] = (original_collateral_face_amount)
+        original_collateral.values[original_collateral_token] = (
+            original_collateral_face_amount
+        )
         self.loan_entities[loan_id].original_collateral = original_collateral
         # add additional info block and timestamp
         self.loan_entities[loan_id].extra_info.block = event["block_number"]
         self.loan_entities[loan_id].extra_info.timestamp = event["timestamp"]
 
         borrowed_collateral = HashstackV1Portfolio()
-        borrowed_collateral.values[borrowed_collateral_token] = (borrowed_collateral_face_amount)
+        borrowed_collateral.values[borrowed_collateral_token] = (
+            borrowed_collateral_face_amount
+        )
         self.loan_entities[loan_id].borrowed_collateral = borrowed_collateral
         # TODO: Make it easier to sum 2 `HashstackV1Portfolio` instances.
         self.loan_entities[loan_id].collateral.values = {
             token: (
-                self.loan_entities[loan_id].original_collateral.values[token] +
-                self.loan_entities[loan_id].borrowed_collateral.values[token]
+                self.loan_entities[loan_id].original_collateral.values[token]
+                + self.loan_entities[loan_id].borrowed_collateral.values[token]
             )
             for token in TOKEN_SETTINGS
         }
@@ -568,8 +547,7 @@ class HashstackV1State(State):
         if self.loan_entities[loan_id].user == self.verbose_user:
             logging.info(
                 "In block number = {}, face amount = {} of token = {} was borrowed against original collateral face "
-                "amount = {} of token = {} and borrowed collateral face amount = {} of token = {}.".
-                format(
+                "amount = {} of token = {} and borrowed collateral face amount = {} of token = {}.".format(
                     event["block_number"],
                     debt_face_amount,
                     debt_token,
@@ -591,16 +569,22 @@ class HashstackV1State(State):
         # https://starkscan.co/event/0x027b7e40273848af37e092eaec38311ac1d2e6c3fc2724020736e9f322b6fcf7_0.
         loan_id = int(event["data"][0], base=16)
 
-        original_collateral_token = self.ADDRESSES_TO_TOKENS[add_leading_zeros(event["data"][1])]
-        original_collateral_face_amount = decimal.Decimal(str(int(event["data"][2], base=16)))
+        original_collateral_token = self.ADDRESSES_TO_TOKENS[
+            add_leading_zeros(event["data"][1])
+        ]
+        original_collateral_face_amount = decimal.Decimal(
+            str(int(event["data"][2], base=16))
+        )
 
         original_collateral = HashstackV1Portfolio()
-        original_collateral.values[original_collateral_token] = (original_collateral_face_amount)
+        original_collateral.values[original_collateral_token] = (
+            original_collateral_face_amount
+        )
         self.loan_entities[loan_id].original_collateral = original_collateral
         self.loan_entities[loan_id].collateral.values = {
             token: (
-                self.loan_entities[loan_id].original_collateral.values[token] +
-                self.loan_entities[loan_id].borrowed_collateral.values[token]
+                self.loan_entities[loan_id].original_collateral.values[token]
+                + self.loan_entities[loan_id].borrowed_collateral.values[token]
             )
             for token in TOKEN_SETTINGS
         }
@@ -636,10 +620,12 @@ class HashstackV1State(State):
 
         new_debt_token = self.ADDRESSES_TO_TOKENS[add_leading_zeros(event["data"][14])]
         new_debt_face_amount = decimal.Decimal(str(int(event["data"][15], base=16)))
-        new_borrowed_collateral_token = self.ADDRESSES_TO_TOKENS[add_leading_zeros(
-            event["data"][17]
-        )]
-        new_borrowed_collateral_face_amount = decimal.Decimal(str(int(event["data"][18], base=16)))
+        new_borrowed_collateral_token = self.ADDRESSES_TO_TOKENS[
+            add_leading_zeros(event["data"][17])
+        ]
+        new_borrowed_collateral_face_amount = decimal.Decimal(
+            str(int(event["data"][18], base=16))
+        )
 
         new_borrowed_collateral = HashstackV1Portfolio()
         new_borrowed_collateral.values[new_borrowed_collateral_token] = (
@@ -648,8 +634,8 @@ class HashstackV1State(State):
         self.loan_entities[new_loan_id].borrowed_collateral = new_borrowed_collateral
         self.loan_entities[new_loan_id].collateral.values = {
             token: (
-                self.loan_entities[new_loan_id].original_collateral.values[token] +
-                self.loan_entities[new_loan_id].borrowed_collateral.values[token]
+                self.loan_entities[new_loan_id].original_collateral.values[token]
+                + self.loan_entities[new_loan_id].borrowed_collateral.values[token]
             )
             for token in TOKEN_SETTINGS
         }
@@ -726,14 +712,18 @@ class HashstackV1State(State):
 
         new_debt_token = self.ADDRESSES_TO_TOKENS[add_leading_zeros(event["data"][14])]
         new_debt_face_amount = decimal.Decimal(str(int(event["data"][15], base=16)))
-        new_borrowed_collateral_token = self.ADDRESSES_TO_TOKENS[add_leading_zeros(
-            event["data"][17]
-        )]
-        new_borrowed_collateral_face_amount = decimal.Decimal(str(int(event["data"][18], base=16)))
-        new_original_collateral_token = self.ADDRESSES_TO_TOKENS[add_leading_zeros(
-            event["data"][25]
-        )]
-        new_original_collateral_face_amount = decimal.Decimal(str(int(event["data"][26], base=16)))
+        new_borrowed_collateral_token = self.ADDRESSES_TO_TOKENS[
+            add_leading_zeros(event["data"][17])
+        ]
+        new_borrowed_collateral_face_amount = decimal.Decimal(
+            str(int(event["data"][18], base=16))
+        )
+        new_original_collateral_token = self.ADDRESSES_TO_TOKENS[
+            add_leading_zeros(event["data"][25])
+        ]
+        new_original_collateral_face_amount = decimal.Decimal(
+            str(int(event["data"][26], base=16))
+        )
         # Based on the documentation, it seems that it's only possible to repay the whole amount.
         assert new_debt_face_amount == decimal.Decimal("0")
         assert new_borrowed_collateral_face_amount == decimal.Decimal("0")
@@ -755,8 +745,8 @@ class HashstackV1State(State):
 
         self.loan_entities[new_loan_id].collateral.values = {
             token: (
-                self.loan_entities[new_loan_id].original_collateral.values[token] +
-                self.loan_entities[new_loan_id].borrowed_collateral.values[token]
+                self.loan_entities[new_loan_id].original_collateral.values[token]
+                + self.loan_entities[new_loan_id].borrowed_collateral.values[token]
             )
             for token in TOKEN_SETTINGS
         }
@@ -819,7 +809,9 @@ class HashstackV1State(State):
                 continue
 
             # Find out how much of the `debt_token` will be liquidated.
-            max_liquidated_amount += loan_entity.compute_debt_to_be_liquidated(debt_usd=debt_usd)
+            max_liquidated_amount += loan_entity.compute_debt_to_be_liquidated(
+                debt_usd=debt_usd
+            )
         return max_liquidated_amount
 
     def compute_number_of_active_users(self) -> int:
@@ -839,6 +831,7 @@ class HashstackV1State(State):
         """
         unique_active_borrowers = {
             loan_entity.user
-            for loan_entity in self.loan_entities.values() if loan_entity.has_debt()
+            for loan_entity in self.loan_entities.values()
+            if loan_entity.has_debt()
         }
         return len(unique_active_borrowers)

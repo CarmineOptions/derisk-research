@@ -30,7 +30,7 @@ from data_handler.db.models.zklend_events import (
     DepositEventModel,
     CollateralEnabledDisabledEventModel,
     BorrowingEventModel,
-    WithdrawalEventModel
+    WithdrawalEventModel,
 )
 
 logger = logging.getLogger(__name__)
@@ -77,7 +77,9 @@ class DBConnector:
         finally:
             db.close()
 
-    def get_object(self, model: Type[ModelType] = None, obj_id: uuid = None) -> ModelType | None:
+    def get_object(
+        self, model: Type[ModelType] = None, obj_id: uuid = None
+    ) -> ModelType | None:
         """
         Retrieves an object by its ID from the database.
         :param: model: type[Base] = None
@@ -122,9 +124,11 @@ class DBConnector:
         """
         session = self.Session()
         return (
-            session.query(LoanState.user,
-                          func.max(LoanState.block).label("latest_block")).group_by(LoanState.user
-                                                                                    ).subquery()
+            session.query(
+                LoanState.user, func.max(LoanState.block).label("latest_block")
+            )
+            .group_by(LoanState.user)
+            .subquery()
         )
 
     def get_latest_block_loans(self) -> Query:
@@ -136,13 +140,15 @@ class DBConnector:
         subquery = self._get_subquery()
 
         result = (
-            session.query(LoanState).join(
+            session.query(LoanState)
+            .join(
                 subquery,
                 and_(
                     LoanState.user == subquery.c.user,
                     LoanState.block == subquery.c.latest_block,
                 ),
-            ).all()
+            )
+            .all()
         )
 
         return result
@@ -189,10 +195,10 @@ class DBConnector:
         db = self.Session()
         try:
             return (
-                db.query(HashtackCollateralDebt).filter(HashtackCollateralDebt.user_id == user_id
-                                                        ).order_by(
-                                                            HashtackCollateralDebt.loan_id.desc()
-                                                        ).first()
+                db.query(HashtackCollateralDebt)
+                .filter(HashtackCollateralDebt.user_id == user_id)
+                .order_by(HashtackCollateralDebt.loan_id.desc())
+                .first()
             )
         finally:
             db.close()
@@ -207,8 +213,9 @@ class DBConnector:
         db = self.Session()
         try:
             max_block = (
-                db.query(func.max(LoanState.block)).filter(LoanState.protocol_id == protocol_id
-                                                           ).scalar()
+                db.query(func.max(LoanState.block))
+                .filter(LoanState.protocol_id == protocol_id)
+                .scalar()
             )
             return max_block or 0
         finally:
@@ -248,7 +255,8 @@ class DBConnector:
                 "timestamp": obj.timestamp,
                 "block": obj.block,
                 "deposit": obj.deposit,
-            } for obj in objects
+            }
+            for obj in objects
         ]
         try:
             # Use PostgreSQL's insert with on_conflict_do_update for upserting records
@@ -264,7 +272,9 @@ class DBConnector:
             # Execute the upsert statement
             db.execute(stmt)
 
-            logger.info(f"Updating or adding {len(objects)} loan states to the database.")
+            logger.info(
+                f"Updating or adding {len(objects)} loan states to the database."
+            )
 
             # Commit the changes
             db.commit()
@@ -277,7 +287,9 @@ class DBConnector:
             db.close()
             logging.info("Loan states have been written to the database.")
 
-    def get_latest_order_book(self, dex: str, token_a: str, token_b: str) -> OrderBookModel | None:
+    def get_latest_order_book(
+        self, dex: str, token_a: str, token_b: str
+    ) -> OrderBookModel | None:
         """
         Retrieves the latest order book for a given pair of tokens and DEX.
         :param dex: str - The DEX name.
@@ -293,17 +305,21 @@ class DBConnector:
                 OrderBookModel.token_b == token_b,
             )
             max_timestamp = (
-                select(func.max(OrderBookModel.timestamp)
-                       ).where(order_book_condition).scalar_subquery()
+                select(func.max(OrderBookModel.timestamp))
+                .where(order_book_condition)
+                .scalar_subquery()
             )
             return db.execute(
-                select(OrderBookModel
-                       ).where(OrderBookModel.timestamp == max_timestamp, order_book_condition)
+                select(OrderBookModel).where(
+                    OrderBookModel.timestamp == max_timestamp, order_book_condition
+                )
             ).scalar()
         finally:
             db.close()
 
-    def get_unique_users_last_block_objects(self, protocol_id: ProtocolIDs) -> LoanState:
+    def get_unique_users_last_block_objects(
+        self, protocol_id: ProtocolIDs
+    ) -> LoanState:
         """
         Retrieves the latest loan states for unique users.
         """
@@ -311,11 +327,10 @@ class DBConnector:
         try:
             # Create a subquery to get the max block for each user
             subquery = (
-                db.query(LoanState.user,
-                         func.max(
-                             LoanState.block
-                         ).label("max_block")).filter(LoanState.protocol_id == protocol_id
-                                                      ).group_by(LoanState.user).subquery()
+                db.query(LoanState.user, func.max(LoanState.block).label("max_block"))
+                .filter(LoanState.protocol_id == protocol_id)
+                .group_by(LoanState.user)
+                .subquery()
             )
 
             # Alias the subquery for clarity
@@ -323,13 +338,16 @@ class DBConnector:
 
             # Join the main LoanState table with the subquery
             return (
-                db.query(LoanState).join(
+                db.query(LoanState)
+                .join(
                     alias_subquery,
                     and_(
                         LoanState.user == alias_subquery.c.user,
                         LoanState.block == alias_subquery.c.max_block,
                     ),
-                ).filter(LoanState.protocol_id == protocol_id).all()
+                )
+                .filter(LoanState.protocol_id == protocol_id)
+                .all()
             )
         finally:
             db.close()
@@ -345,15 +363,19 @@ class DBConnector:
         db = self.Session()
         try:
             return (
-                db.query(InterestRate).filter(InterestRate.protocol_id == protocol_id
-                                              ).order_by(InterestRate.block.desc()).first()
+                db.query(InterestRate)
+                .filter(InterestRate.protocol_id == protocol_id)
+                .order_by(InterestRate.block.desc())
+                .first()
             )
         finally:
             db.close()
 
-    def get_interest_rate_by_block(self, block_number: int, protocol_id: str) -> InterestRate:
+    def get_interest_rate_by_block(
+        self, block_number: int, protocol_id: str
+    ) -> InterestRate:
         """
-        Fetch the closest InterestRate instance by block number that is less than or equal 
+        Fetch the closest InterestRate instance by block number that is less than or equal
         to the given block number.
 
         :param protocol_id: The protocol ID to search for.
@@ -363,9 +385,11 @@ class DBConnector:
         db = self.Session()
         try:
             return (
-                db.query(InterestRate).filter(InterestRate.protocol_id == protocol_id
-                                              ).filter(InterestRate.block <= block_number
-                                                       ).order_by(desc(InterestRate.block)).first()
+                db.query(InterestRate)
+                .filter(InterestRate.protocol_id == protocol_id)
+                .filter(InterestRate.block <= block_number)
+                .order_by(desc(InterestRate.block))
+                .first()
             )
         finally:
             db.close()
@@ -415,15 +439,16 @@ class InitializerDBConnector:
         session = self.Session()
         try:
             return (
-                session.query(ZkLendCollateralDebt).filter(
-                    ZkLendCollateralDebt.user_id.in_(user_ids)
-                ).all()
+                session.query(ZkLendCollateralDebt)
+                .filter(ZkLendCollateralDebt.user_id.in_(user_ids))
+                .all()
             )
         finally:
             session.close()
 
-    def get_hashtack_by_loan_ids(self, loan_ids: List[str],
-                                 version: int) -> List[HashtackCollateralDebt]:
+    def get_hashtack_by_loan_ids(
+        self, loan_ids: List[str], version: int
+    ) -> List[HashtackCollateralDebt]:
         """
         Retrieve HashtackCollateralDebt records by loan_ids.
         :param loan_ids: A list of user IDs to filter by.
@@ -433,9 +458,10 @@ class InitializerDBConnector:
         session = self.Session()
         try:
             return (
-                session.query(HashtackCollateralDebt).filter(
-                    HashtackCollateralDebt.loan_id.in_(loan_ids)
-                ).filter(HashtackCollateralDebt.version == version).all()
+                session.query(HashtackCollateralDebt)
+                .filter(HashtackCollateralDebt.loan_id.in_(loan_ids))
+                .filter(HashtackCollateralDebt.version == version)
+                .all()
             )
         finally:
             session.close()
@@ -472,7 +498,9 @@ class InitializerDBConnector:
         collateral = self._convert_decimal_to_float(collateral)
         debt = self._convert_decimal_to_float(debt)
         try:
-            record = (session.query(ZkLendCollateralDebt).filter_by(user_id=user_id).first())
+            record = (
+                session.query(ZkLendCollateralDebt).filter_by(user_id=user_id).first()
+            )
             if record:
                 # Update existing record
                 if collateral is not None:
@@ -525,7 +553,9 @@ class InitializerDBConnector:
         borrowed_collateral = self._convert_decimal_to_float(borrowed_collateral)
 
         try:
-            record = (session.query(HashtackCollateralDebt).filter_by(loan_id=loan_id).first())
+            record = (
+                session.query(HashtackCollateralDebt).filter_by(loan_id=loan_id).first()
+            )
             logger.info(f"Going to save loan_id {loan_id}")
             # if debt category is the same, update the record
             if record and record.debt_category == debt_category:

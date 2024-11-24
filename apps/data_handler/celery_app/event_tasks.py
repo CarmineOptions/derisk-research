@@ -11,6 +11,7 @@ from data_handler.handlers.events.zklend.transform_events import ZklendTransform
 
 logger = logging.getLogger(__name__)
 
+
 @app.task(name="process_zklend_events")
 def process_zklend_events():
     """
@@ -30,15 +31,19 @@ def process_zklend_events():
             "Successfully processed ZkLend events in %.2fs. Blocks: %d to %d",
             execution_time,
             transformer.last_block - transformer.PAGINATION_SIZE,
-            transformer.last_block
+            transformer.last_block,
         )
-    except (ValueError, TypeError, RuntimeError) as exc:  # Catching more specific exceptions
+    except (
+        ValueError,
+        TypeError,
+        RuntimeError,
+    ) as exc:  # Catching more specific exceptions
         execution_time = (datetime.utcnow() - start_time).total_seconds()
         logger.error(
             "Error processing ZkLend events after %.2fs: %s",
             execution_time,
             exc,
-            exc_info=True
+            exc_info=True,
         )
     except Exception as exc:  # Still keeping a general exception catch as a fallback
         execution_time = (datetime.utcnow() - start_time).total_seconds()
@@ -46,5 +51,5 @@ def process_zklend_events():
             "Unexpected error processing ZkLend events after %.2fs: %s",
             execution_time,
             exc,
-            exc_info=True
+            exc_info=True,
         )

@@ -1,6 +1,7 @@
 """
 Provides utility functions for making blockchain calls on StarkNet.
 """
+
 import time
 
 import starknet_py.cairo.felt
@@ -33,7 +34,9 @@ async def balance_of(token_addr, holder_addr):
     """
     Retrieves the token balance of a specified holder.
     """
-    res = await func_call(int(token_addr, base=16), "balanceOf", [int(holder_addr, base=16)])
+    res = await func_call(
+        int(token_addr, base=16), "balanceOf", [int(holder_addr, base=16)]
+    )
     return res[0]
 
 

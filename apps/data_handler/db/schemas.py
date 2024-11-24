@@ -8,7 +8,8 @@ from pydantic import BaseModel, field_validator
 
 
 class LoanStateBase(BaseModel):
-    """ Base class for LoanStateResponse """
+    """Base class for LoanStateResponse"""
+
     protocol_id: str
     block: int
     timestamp: int
@@ -18,12 +19,14 @@ class LoanStateBase(BaseModel):
     deposit: Optional[Dict]
 
     class Config:
-        """ Pydantic configuration """
+        """Pydantic configuration"""
+
         from_attributes = True
 
 
 class LoanStateResponse(LoanStateBase):
-    """ Pydantic model for LoanStateResponse """
+    """Pydantic model for LoanStateResponse"""
+
     pass
 
 

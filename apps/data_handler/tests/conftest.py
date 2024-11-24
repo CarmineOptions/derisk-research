@@ -8,7 +8,7 @@ import pytest
 from data_handler.db.crud import (
     DBConnector,
     InitializerDBConnector,
-    ZkLendEventDBConnector
+    ZkLendEventDBConnector,
 )
 from data_handler.handler_tools.api_connector import DeRiskAPIConnector
 from data_handler.handler_tools.data_parser.zklend import ZklendDataParser

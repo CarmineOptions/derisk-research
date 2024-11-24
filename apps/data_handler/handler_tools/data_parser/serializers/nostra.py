@@ -2,6 +2,7 @@ from decimal import Decimal
 from pydantic import BaseModel, ValidationInfo, field_validator
 from shared.helpers import add_leading_zeros
 
+
 class DebtMintEventData(BaseModel):
     """
     Data model representing a debt mint event in the system.
@@ -33,6 +34,7 @@ class DebtMintEventData(BaseModel):
             raise ValueError(f"Invalid address provided for {info.field_name}")
         return add_leading_zeros(value)
 
+
 class DebtBurnEventData(BaseModel):
     """
     Data model representing a debt burn event in the system.
@@ -63,6 +65,7 @@ class DebtBurnEventData(BaseModel):
         if not value.startswith("0x"):
             raise ValueError(f"Invalid address provided for {info.field_name}")
         return add_leading_zeros(value)
+
 
 class InterestRateModelEventData(BaseModel):
     """
@@ -97,6 +100,7 @@ class InterestRateModelEventData(BaseModel):
             raise ValueError(f"Invalid address provided for {info.field_name}")
         return add_leading_zeros(value)
 
+
 class DebtTransferEventData(BaseModel):
     """
     Data model representing a debt transfer event in the system.
@@ -130,6 +134,7 @@ class DebtTransferEventData(BaseModel):
             raise ValueError(f"Invalid address provided for {info.field_name}")
         return add_leading_zeros(value)
 
+
 class BearingCollateralMintEventData(BaseModel):
     """
     Data model representing a bearing collateral mint event in the system.
@@ -160,6 +165,7 @@ class BearingCollateralMintEventData(BaseModel):
         if not value.startswith("0x"):
             raise ValueError(f"Invalid address provided for {info.field_name}")
         return add_leading_zeros(value)
+
 
 class BearingCollateralBurnEventData(BaseModel):
     """

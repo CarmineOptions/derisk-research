@@ -1,4 +1,5 @@
 """ MySwap order book class. """
+
 import asyncio
 import itertools
 import logging
@@ -17,7 +18,9 @@ from data_handler.handlers.order_books.myswap.api_connection.api_connector impor
 from data_handler.db.crud import DBConnector
 from data_handler.db.models import OrderBookModel
 
-MYSWAP_CL_MM_ADDRESS = ("0x01114c7103e12c2b2ecbd3a2472ba9c48ddcbf702b1c242dd570057e26212111")
+MYSWAP_CL_MM_ADDRESS = (
+    "0x01114c7103e12c2b2ecbd3a2472ba9c48ddcbf702b1c242dd570057e26212111"
+)
 
 # The maximum tick value available in liqmap.json.gz from MySwap Data Service
 MAX_MYSWAP_TICK = Decimal("1774532")
@@ -28,7 +31,9 @@ class MySwapOrderBook(OrderBookBase):
 
     DEX = "MySwap"
 
-    def __init__(self, base_token: str, quote_token: str, apply_filtering: bool = False):
+    def __init__(
+        self, base_token: str, quote_token: str, apply_filtering: bool = False
+    ):
         """
         Initialize the MySwap order book.
         :param base_token: str - The base token address in hexadecimal.
@@ -39,10 +44,12 @@ class MySwapOrderBook(OrderBookBase):
         self.connector = MySwapAPIConnector()
         self.apply_filtering = apply_filtering
         self.logger = get_logger("MySwap", os.getcwd() + "/logs")
-        self._decimals_diff = Decimal(10**(self.token_a_decimal - self.token_b_decimal))
+        self._decimals_diff = Decimal(
+            10 ** (self.token_a_decimal - self.token_b_decimal)
+        )
 
     def _get_clean_addresses(self) -> tuple[str, str]:
-        """Remove leading zeroes from token addresses. 
+        """Remove leading zeroes from token addresses.
         Raise Value Error if address can't be converted to int."""
         try:
             return hex(int(self.token_a, base=16)), hex(int(self.token_b, base=16))
@@ -72,8 +79,8 @@ class MySwapOrderBook(OrderBookBase):
         base_token, quote_token = self._get_clean_addresses()
         return list(
             filter(
-                lambda pool: pool["token0"]["address"] == base_token and pool["token1"]["address"]
-                == quote_token,
+                lambda pool: pool["token0"]["address"] == base_token
+                and pool["token1"]["address"] == quote_token,
                 all_pools["pools"],
             )
         )
@@ -84,7 +91,9 @@ class MySwapOrderBook(OrderBookBase):
         return: tuple[Decimal, Decimal] - The minimum and maximum ticks.
         """
         price_range_from, price_range_to = self.calculate_price_range()
-        return self._price_to_tick(price_range_from), self._price_to_tick(price_range_to)
+        return self._price_to_tick(price_range_from), self._price_to_tick(
+            price_range_to
+        )
 
     def _price_to_tick(self, price: Decimal) -> Decimal:
         """
@@ -96,8 +105,8 @@ class MySwapOrderBook(OrderBookBase):
         Formula was derived from provided in tick_to_price.
         """
         signed_tick = round(
-            Decimal(math.log(price / (Decimal(2**128) * self._decimals_diff))) /
-            Decimal(math.log(Decimal("1.0001")))
+            Decimal(math.log(price / (Decimal(2**128) * self._decimals_diff)))
+            / Decimal(math.log(Decimal("1.0001")))
         )
         return Decimal(signed_tick) + MAX_MYSWAP_TICK
 
@@ -160,7 +169,9 @@ class MySwapOrderBook(OrderBookBase):
             y = self._get_token_amount(
                 current_liq=Decimal(int(pool_asks.iloc[index - 1]["liq"])),
                 current_sqrt=current_price.sqrt(),
-                next_sqrt=Decimal(self.tick_to_price(pool_asks.iloc[index]["tick"].item())).sqrt(),
+                next_sqrt=Decimal(
+                    self.tick_to_price(pool_asks.iloc[index]["tick"].item())
+                ).sqrt(),
                 is_ask=False,
             )
             local_asks.append((current_price, y))
@@ -191,7 +202,9 @@ class MySwapOrderBook(OrderBookBase):
             y = self._get_token_amount(
                 current_liq=Decimal(int(pool_bids.iloc[index]["liq"])),
                 current_sqrt=current_price.sqrt(),
-                next_sqrt=Decimal(self.tick_to_price(pool_bids.iloc[index]["tick"].item())).sqrt(),
+                next_sqrt=Decimal(
+                    self.tick_to_price(pool_bids.iloc[index]["tick"].item())
+                ).sqrt(),
                 is_ask=False,
             )
             local_bids.append((current_price, y))
@@ -223,11 +236,15 @@ class MySwapOrderBook(OrderBookBase):
         """
         Convert tick value to price.
         :param tick: Decimal - Tick value
-        Formula derived from base Uniswap V3 formula - 1.0001 ** tick. 
+        Formula derived from base Uniswap V3 formula - 1.0001 ** tick.
         Ticks in MySwap are unsigned values,
         so we convert them to signed by subtracting max tick.
         """
-        return (Decimal("1.0001")**(tick - MAX_MYSWAP_TICK) * Decimal(2**128) * self._decimals_diff)
+        return (
+            Decimal("1.0001") ** (tick - MAX_MYSWAP_TICK)
+            * Decimal(2**128)
+            * self._decimals_diff
+        )
 
     def calculate_liquidity_amount(self, tick, liquidity_pair_total) -> Decimal:
         sqrt_ratio = self.get_sqrt_ratio(tick)
@@ -250,7 +267,9 @@ if __name__ == "__main__":
             order_book = MySwapOrderBook(base_token, quote_token, apply_filtering=True)
             order_book.fetch_price_and_liquidity()
             if order_book.asks or order_book.bids:
-                logging.info(f"Pair processed successfully: {base_token} - {quote_token}")
+                logging.info(
+                    f"Pair processed successfully: {base_token} - {quote_token}"
+                )
                 serialized_data = order_book.serialize()
                 connector.write_to_db(OrderBookModel(**serialized_data.model_dump()))
         except Exception as e:

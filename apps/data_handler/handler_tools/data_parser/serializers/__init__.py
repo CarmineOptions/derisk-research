@@ -4,7 +4,7 @@ from .nostra import (
     InterestRateModelEventData,
     DebtTransferEventData,
     BearingCollateralMintEventData,
-    BearingCollateralBurnEventData
+    BearingCollateralBurnEventData,
 )
 
 from .zklend import (
@@ -14,24 +14,23 @@ from .zklend import (
     DepositEventData,
     LiquidationEventData,
     WithdrawalEventData,
-    CollateralEnabledDisabledEventData
+    CollateralEnabledDisabledEventData,
 )
 
 __all__ = [
     # Nostra serializers
-    'DebtMintEventData',
-    'DebtBurnEventData',
-    'InterestRateModelEventData',
-    'DebtTransferEventData',
-    'BearingCollateralMintEventData',
-    'BearingCollateralBurnEventData',
-    
+    "DebtMintEventData",
+    "DebtBurnEventData",
+    "InterestRateModelEventData",
+    "DebtTransferEventData",
+    "BearingCollateralMintEventData",
+    "BearingCollateralBurnEventData",
     # zkLend serializers
-    'AccumulatorsSyncEventData',
-    'BorrowingEventData',
-    'RepaymentEventData',
-    'DepositEventData',
-    'LiquidationEventData',
-    'WithdrawalEventData',
-    'CollateralEnabledDisabledEventData'
+    "AccumulatorsSyncEventData",
+    "BorrowingEventData",
+    "RepaymentEventData",
+    "DepositEventData",
+    "LiquidationEventData",
+    "WithdrawalEventData",
+    "CollateralEnabledDisabledEventData",
 ]
