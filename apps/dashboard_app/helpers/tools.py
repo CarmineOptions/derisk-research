@@ -6,14 +6,15 @@ from typing import Iterator
 import pandas as pd
 import requests
 from google.cloud.storage import Client
+from shared.blockchain_call import func_call
+from shared.constants import TOKEN_SETTINGS
+from shared.types import TokenParameters
 from starknet_py.cairo.felt import decode_shortstring
 
 from dashboard_app.helpers.settings import (
     PAIRS,
     UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES,
 )
-from shared.blockchain_call import func_call
-from shared.types import TokenParameters
 
 GS_BUCKET_NAME = "derisk-persistent-state/v3"
 
@@ -106,32 +107,51 @@ async def get_symbol(token_address: str) -> str:
 
 
 def get_prices(token_decimals: dict[str, int]) -> dict[str, float]:
+    """
+    Get the prices of the tokens.
+    :param token_decimals: Token decimals.
+    :return: Dict with token addresses as keys and token prices as values.
+    """
     URL = "https://starknet.impulse.avnu.fi/v1/tokens/short"
     response = requests.get(URL)
 
-    if response.ok:
-        # Fetch information about tokens.
-        tokens_info = response.json()
-
-        prices = {}
-        for token, decimals in token_decimals.items():
-            token_info = list(
-                filter(
-                    lambda x: (add_leading_zeros(x["address"]) == token), tokens_info
-                )
-            )
-
-            # Remove duplicates.
-            token_info = [dict(y) for y in {tuple(x.items()) for x in token_info}]
-
-            # Perform sanity checks.
-            assert len(token_info) == 1
-            assert decimals == token_info[0]["decimals"]
-
-            prices[token] = token_info[0]["currentPrice"]
-        return prices
-    else:
+    if not response.ok:
         response.raise_for_status()
+
+    tokens_info = response.json()
+
+    # Define the addresses for which you do not want to apply add_leading_zeros
+    skip_leading_zeros_addresses = {
+        TOKEN_SETTINGS["STRK"].address,
+    }
+
+    # Create a map of token addresses to token information, applying add_leading_zeros conditionally
+    token_info_map = {
+        (
+            token["address"]
+            if token["address"] in skip_leading_zeros_addresses
+            else add_leading_zeros(token["address"])
+        ): token
+        for token in tokens_info
+    }
+
+    prices = {}
+    for token, decimals in token_decimals.items():
+        token_info = token_info_map.get(token)
+
+        if not token_info:
+            logging.error(f"Token {token} not found in response.")
+            continue
+
+        if decimals != token_info.get("decimals"):
+            logging.error(
+                f"Decimal mismatch for token {token}: expected {decimals}, got {token_info.get('decimals')}"
+            )
+            continue
+
+        prices[token] = token_info.get("currentPrice")
+
+    return prices
 
 
 def upload_file_to_bucket(source_path: str, target_path: str):

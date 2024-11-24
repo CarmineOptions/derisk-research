@@ -71,7 +71,7 @@ def update_data(zklend_state: src.zklend.ZkLendState):
     # asyncio.run(hashstack_v0_state.collect_token_parameters())
     # asyncio.run(hashstack_v1_state.collect_token_parameters())
     logging.info(f"collected token parameters in {time.time() - t2}s")
-
+    # TODO move it to separated function
     # Get prices of the underlying tokens.
     t_prices = time.time()
     states = [
@@ -103,7 +103,7 @@ def update_data(zklend_state: src.zklend.ZkLendState):
     )
     prices = src.helpers.get_prices(token_decimals=underlying_addresses_to_decimals)
     logging.info(f"prices in {time.time() - t_prices}s")
-
+    # TODO: move it to separated function END
     t_swap = time.time()
     swap_amms = src.swap_amm.SwapAmm()
     asyncio.run(swap_amms.init())

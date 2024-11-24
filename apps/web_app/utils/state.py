@@ -1,12 +1,9 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from collections import defaultdict
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Any
 
-import pandas as pd
-
-from .helpers import Portfolio, TokenValues
+from shared.types import Portfolio, TokenValues
 from .settings import TOKEN_SETTINGS as BASE_TOKEN_SETTINGS
 from .settings import TokenSettings as BaseTokenSettings
 
