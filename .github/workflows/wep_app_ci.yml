@@ -43,7 +43,7 @@ jobs:
         working-directory: ./apps/web_app
         run: |
           echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
-          cp .env.test .env
+          cp .env.example .env
           poetry run pytest
      
       - name: Install dependencies for Shared
