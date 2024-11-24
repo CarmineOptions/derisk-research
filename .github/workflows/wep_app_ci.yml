@@ -1,6 +1,12 @@
 name: Web App CI Workflow
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
 
 jobs:
   run_tests:
@@ -30,31 +36,20 @@ jobs:
       - name: Install Poetry
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
-          echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
     
       - name: Install dependencies for Web App
         working-directory: ./apps/web_app
-        run: |
-          echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
-          poetry lock --no-update
-          poetry install
+        run: poetry install
     
       - name: Run Tests for Web App
         working-directory: ./apps/web_app
         run: |
-          echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
-          cp .env.example .env
-          poetry run pytest
-     
-      - name: Install dependencies for Shared
-        working-directory: ./apps/shared
-        run: |
-          echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
-          poetry lock --no-update
-          poetry install
+          cp .env.test .env
+          poetry run pytest --junitxml=results.xml
     
-      - name: Run Tests for Shared
-        working-directory: ./apps/shared
-        run: |
-          echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
-          poetry run pytest
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: ./apps/web_app/results.xml
