@@ -90,3 +90,26 @@ Go to bash
 ```bash
 docker-compose exec backend bash
 ```
+
+## How to run migration command:
+1. Go to root folder `derisk-research`
+2. Run up db in docker:
+```
+docker-compose -f devops/dev/docker-compose.db.yaml up -d --remove-orphans
+```
+3. Go to `data_hander` folder:
+```
+cd apps/data_handler
+```
+4. Install all dependencies:
+```
+poetry install
+```
+5. Go back to apps folder:
+```
+cd ..
+```
+5. Run migration command:
+```
+alembic -c data_handler/alembic.ini revision --autogenerate -m "your migration message here"
+```
