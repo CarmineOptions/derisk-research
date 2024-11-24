@@ -65,6 +65,7 @@ class ZkLendInitializer:
 
         :param loan_state: The loan state data.
         """
+        # FIXME fetch only result enabled/disabled for the user
         user_loan_state = self.zklend_state.loan_entities[loan_state.user_id]
         user_loan_state.collateral_enabled.values = loan_state.collateral_enabled
         user_loan_state.collateral.values = self._convert_float_to_decimal(loan_state.collateral)

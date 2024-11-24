@@ -9,7 +9,32 @@ load_dotenv()
 
 class DataConnector:
     REQUIRED_VARS = ("DB_USER", "DB_PASSWORD", "DB_HOST", "DB_PORT", "DB_NAME")
-    SQL_QUERY = "SELECT * FROM %s WHERE protocol_id = 'zkLend'"
+    ZKLEND_SQL_QUERY = """
+        SELECT
+            ls.block,
+            ls.user,
+            ls.collateral,
+            ls.debt,
+            zcd.collateral_enabled
+        FROM
+            loan_state AS ls
+        JOIN
+            zklend_collateral_debt AS zcd
+        ON
+            ls.user = zcd.user_id
+        WHERE
+            ls.protocol_id = 'zkLend';
+    """
+    ZKLEND_INTEREST_RATE_SQL_QUERY = """
+        WITH max_block AS (
+            SELECT MAX(block) AS max_block
+            FROM interest_rate
+            WHERE protocol_id = 'zkLend'
+        )
+        SELECT collateral, debt, block 
+        FROM interest_rate
+        WHERE protocol_id = 'zkLend' AND block = (SELECT max_block FROM max_block);
+    """
 
     def __init__(self):
         """
@@ -23,15 +48,13 @@ class DataConnector:
         )
         self.engine = sqlalchemy.create_engine(self.db_url)
 
-    def fetch_data(self, table_name: str, protocol_id: str) -> pd.DataFrame:
+    def fetch_data(self, query: str) -> pd.DataFrame:
         """
         Fetch data from the database using a SQL query.
 
-        :param table_name: Name of the table to fetch data from.
-        :param protocol_id: ID of the protocol to fetch data for.
+        :param query: SQL query to execute.
         :return: DataFrame containing the query results
         """
-        query = self.SQL_QUERY % (table_name,)
         with self.engine.connect() as connection:
             df = pd.read_sql(query, connection)
         return df

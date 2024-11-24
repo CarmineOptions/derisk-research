@@ -27,11 +27,12 @@ TOKEN_SETTINGS: dict[str, TokenSettings] = {
         decimal_factor=Decimal("1e6"),
         address="0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8",
     ),
-    "DAI": TokenSettings(
-        symbol="DAI",
-        decimal_factor=Decimal("1e18"),
-        address="0x00da114221cb83fa859dbdb4c44beeaa0bb37c7537ad5ae66fe5e0efd20e6eb3",
-    ),
+    # FIXME Uncomment when DAI is added correct address
+    # "DAI": TokenSettings(
+    #     symbol="DAI",
+    #     decimal_factor=Decimal("1e18"),
+    #     address="0x00da114221cb83fa859dbdb4c44beeaa0bb37c7537ad5ae66fe5e0efd20e6eb3",
+    # ),
     "USDT": TokenSettings(
         symbol="USDT",
         decimal_factor=Decimal("1e6"),
