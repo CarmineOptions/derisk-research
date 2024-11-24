@@ -375,7 +375,7 @@ class NostraAlphaState(State):
             parsed_event = NostraDataParser.parse_non_interest_bearing_collateral_mint_event(event["data"])
         else:
             raise ValueError("Event = {} has an unexpected structure.".format(event))
-        if self.ZERO_ADDRESS in {sender, recipient} | self.ZERO_ADDRESS in {parsed_event.sender, parsed_event.recipient}:
+        if self.ZERO_ADDRESS in {sender, recipient}:
             return
 
         token = add_leading_zeros(event["from_address"])
@@ -399,25 +399,6 @@ class NostraAlphaState(State):
                 )
             )
 
-        if parsed_event.sender != self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
-            self.loan_entities[parsed_event.sender].collateral.increase_value(token=token, value=-parsed_event.raw_amount)
-            self.loan_entities[parsed_event.sender].extra_info.block = event["block_number"]
-            self.loan_entities[parsed_event.sender].extra_info.timestamp = event["timestamp"]
-        if parsed_event.recipient != self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
-            self.loan_entities[parsed_event.recipient].collateral.increase_value(token=token, value=parsed_event.raw_amount)
-            self.loan_entities[parsed_event.recipient].extra_info.block = event["block_number"]
-            self.loan_entities[parsed_event.recipient].extra_info.timestamp = event["timestamp"]
-        if self.verbose_user in {parsed_event.sender, parsed_event.recipient}:
-            logging.info(
-                "In block number = {}, collateral of raw amount = {} of token = {} was transferred from user = {} to user = {}."
-                .format(
-                    event["block_number"],
-                    parsed_event.raw_amount,
-                    token,
-                    parsed_event.sender,
-                    parsed_event.recipient,
-                )
-            )
 
     def process_collateral_mint_event(self, event: pd.Series) -> None:
         """Process collateral addition event for a loan."""
