@@ -68,6 +68,10 @@ app.conf.beat_schedule = {
         "task": "ekubo_order_book",
         "schedule": ORDER_BOOK_TIME_INTERVAL,
     },
+    f"process_zklend_events_{CRONTAB_TIME}_mins": { 
+        "task": "process_zklend_events", 
+        "schedule": crontab(minute=f"*/{CRONTAB_TIME}"), 
+    },
 }
 
 from data_handler.celery_app.order_books_tasks import ekubo_order_book
