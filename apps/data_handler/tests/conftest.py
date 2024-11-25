@@ -32,6 +32,8 @@ def mock_initializer_db_connector() -> None:
     :return: None
     """
     mock_initializer_connector = MagicMock(spec=InitializerDBConnector)
+    mock_initializer_connector.engine = MagicMock()
+    mock_initializer_connector.connection = MagicMock()
     yield mock_initializer_connector
 
 
