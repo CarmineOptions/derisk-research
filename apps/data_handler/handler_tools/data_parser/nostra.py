@@ -1,7 +1,7 @@
 """
 This module contains the logic to parse the nostra data to human-readable format.
 """
-from typing import Any
+from typing import Any, List
 from data_handler.handler_tools.data_parser.serializers import (
     DebtMintEventData,
     DebtBurnEventData,
@@ -18,6 +18,7 @@ class NostraDataParser:
     """
     Parses the nostra data to human-readable format.
     """
+    @classmethod
     def parse_interest_rate_model_event(
         cls, event_data: List[Any]
     ) -> InterestRateModelEventData:
@@ -156,7 +157,8 @@ class NostraDataParser:
             token=from_address
         )
 
-    def parse_debt_mint_event(self, event_data: list[Any]) -> DebtMintEventData:
+    @classmethod
+    def parse_debt_mint_event(cls, event_data: list[Any]) -> DebtMintEventData:
         """
         Parses the debt mint event data into a human-readable format using the
         DebtMintEventData serializer.
@@ -173,7 +175,8 @@ class NostraDataParser:
             token=event_data[1]
         )
 
-    def parse_debt_burn_event(self, event_data: list[Any]) -> DebtBurnEventData:
+    @classmethod
+    def parse_debt_burn_event(cls, event_data: list[Any]) -> DebtBurnEventData:
         """
         Parses the debt burn event data into a human-readable format using the
         DebtBurnEventData serializer.
@@ -187,5 +190,5 @@ class NostraDataParser:
         """
         return DebtBurnEventData(
             user=event_data[0],
-            amount=event_data[1]
+            amount=event_data[1],
         )

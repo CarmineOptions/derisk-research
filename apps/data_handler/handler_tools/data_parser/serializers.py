@@ -2,7 +2,6 @@
 from decimal import Decimal
 from pydantic import BaseModel, ValidationInfo, field_validator
 from shared.helpers import add_leading_zeros
-from typing import List, Any
 
 
 class LiquidationEventData(BaseModel):

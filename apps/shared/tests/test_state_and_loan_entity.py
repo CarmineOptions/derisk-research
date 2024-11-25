@@ -88,6 +88,13 @@ class MockLoanEntity(LoanEntity):
         """Compute mock debt to be liquidated."""
         return Decimal("100")
 
+    def has_debt(self) -> bool:
+        """
+        Check if the loan entity has any debt.
+        :return: bool
+        """
+        return any(self.debt.values())
+
 
 class MockState(State):
     """

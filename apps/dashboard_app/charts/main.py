@@ -22,7 +22,11 @@ class Dashboard:
         # "Nostra Mainnet",
     ]
 
-    def __init__(self):
+    def __init__(self, zklend_state):
+        """
+        Initialize the dashboard.
+        :param zklend_state: ZkLendState
+        """
         # Set the page configuration
         st.set_page_config(
             layout="wide",

@@ -33,7 +33,7 @@ services:
     volumes:
       - ../../apps/web_app:/app
     env_file:
-      - ../../apps/web_app/.env
+      - ../../apps/web_app/.env.dev
     expose:
       - "8000"
     depends_on:
