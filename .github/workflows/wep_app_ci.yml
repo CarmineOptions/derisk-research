@@ -17,7 +17,7 @@ jobs:
         env:
           POSTGRES_HOST_AUTH_METHOD: trust
         ports:
-          - 5434:5432
+          - 5433:5432
         options: >-
           --health-cmd "pg_isready -U postgres" 
           --health-interval 10s 
@@ -38,11 +38,15 @@ jobs:
           curl -sSL https://install.python-poetry.org | python3 -
           echo "$HOME/.local/bin" >> $GITHUB_PATH
     
-      - name: Install dependencies for Web App
+      - name: Install dependencies for Web_App
         working-directory: ./apps/web_app
-        run: poetry install
+        run: |
+          echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
+          poetry lock --no-update
+          poetry install
+
     
-      - name: Run Tests for Web App
+      - name: Run Tests for Web_App
         working-directory: ./apps/web_app
         run: |
           cp .env.test .env
