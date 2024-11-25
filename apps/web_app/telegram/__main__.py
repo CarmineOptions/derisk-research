@@ -1,3 +1,4 @@
+import os
 import asyncio
 
 from aiogram.types import BotCommand, BotCommandScopeDefault
@@ -24,5 +25,6 @@ async def bot_start_polling():
 
 
 if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(bot_start_polling())
+    if os.getenv("ENV") == "DEV":
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(bot_start_polling())
