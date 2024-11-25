@@ -5,6 +5,8 @@ from .nostra import (
     DebtTransferEventData,
     BearingCollateralMintEventData,
     BearingCollateralBurnEventData,
+    NonInterestBearingCollateralMintEventData,
+    NonInterestBearingCollateralBurnEventData
 )
 
 from .zklend import (
@@ -25,6 +27,8 @@ __all__ = [
     "DebtTransferEventData",
     "BearingCollateralMintEventData",
     "BearingCollateralBurnEventData",
+    "NonInterestBearingCollateralMintEventData",
+    "NonInterestBearingCollateralBurnEventData",
     # zkLend serializers
     "AccumulatorsSyncEventData",
     "BorrowingEventData",

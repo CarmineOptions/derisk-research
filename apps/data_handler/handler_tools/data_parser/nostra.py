@@ -18,9 +18,29 @@ class NostraDataParser:
     """
     Parses the nostra data to human-readable format.
     """
-    def parse_interest_rate_model_event(self):
-        pass
-
+    @classmethod
+    def parse_interest_rate_model_event(
+        cls, event_data: List[Any]
+    ) -> InterestRateModelEventData:
+        """
+        Parses the interest rate model event data into a human-readable format.
+        The event data is fetched from on-chain logs and is structured in the following way:
+        - event_data[0]: The debt token address (as a hexadecimal string).
+        - event_data[5]: The lending interest rate index (as a hexadecimal in 18 decimal places). 
+        - event_data[7]: The borrow interest rate index (as a hexadecimal in 18 decimal places).
+        Args:
+            event_data (List[Any]): A list containing the raw event data.
+                Expected order: [debt_token, lending_rate, _, borrow_rate, _, 
+                                 lending_index, _, borrow_index, _]
+        Returns:
+            InterestRateModelEventData: A model with the parsed event data.
+        """
+        return InterestRateModelEventData(
+            debt_token=event_data[0],
+            lending_index=event_data[5],
+            borrow_index=event_data[7]
+        )
+    
     @classmethod
     def parse_non_interest_bearing_collateral_mint_event(
         cls, event_data: list[Any]
