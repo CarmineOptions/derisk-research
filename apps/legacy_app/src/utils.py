@@ -6,7 +6,7 @@ import requests
 
 
 class EkuboLiquidity:
-    URL = "http://178.32.172.153/orderbook/"
+    URL = "http://51.195.57.201/orderbook/"
     DEX = "Ekubo"
     LOWER_BOUND_VALUE = 0.95
     UPPER_BOUND_VALUE = 1.05
