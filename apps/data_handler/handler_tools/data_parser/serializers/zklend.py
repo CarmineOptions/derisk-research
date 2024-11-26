@@ -181,9 +181,7 @@ class CollateralEnabledDisabledEventData(BaseModel):
     Attributes:
         user: The user address for whom collateral is being enabled/disabled.
         token: The token address being enabled/disabled as collateral.
-        enabled: Boolean indicating if collateral is being enabled (True) or disabled (False).
     """
 
     user: str
     token: str
-    enabled: bool
