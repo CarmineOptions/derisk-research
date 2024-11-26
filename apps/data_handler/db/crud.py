@@ -1,6 +1,7 @@
 """Classes:
 - DBConnector: Manages database connections and CRUD operations.
 - InitializerDBConnector: Handles ZkLendCollateralDebt-specific operations.
+- NostraEventDBConnector: Manages Nostra event-specific operations.
 - ZkLendEventDBConnector: Manages ZkLend event-specific operations."""
 
 import logging
@@ -8,12 +9,6 @@ import uuid
 from typing import List, Optional, Type, TypeVar
 
 from data_handler.db.database import SQLALCHEMY_DATABASE_URL
-from shared.constants import ProtocolIDs
-from sqlalchemy import Subquery, and_, create_engine, desc, func, select
-from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Query, Session, aliased, scoped_session, sessionmaker
-
 from data_handler.db.models import (
     Base,
     HashtackCollateralDebt,
@@ -22,16 +17,26 @@ from data_handler.db.models import (
     OrderBookModel,
     ZkLendCollateralDebt,
 )
-
+from data_handler.db.models.nostra_events import (
+    BearingCollateralBurnEventModel,
+    DebtBurnEventModel,
+    DebtMintEventModel,
+    DebtTransferEventModel,
+)
 from data_handler.db.models.zklend_events import (
     AccumulatorsSyncEventModel,
+    BorrowingEventModel,
+    CollateralEnabledDisabledEventModel,
+    DepositEventModel,
     LiquidationEventModel,
     RepaymentEventModel,
-    DepositEventModel,
-    CollateralEnabledDisabledEventModel,
-    BorrowingEventModel,
-    WithdrawalEventModel
+    WithdrawalEventModel,
 )
+from shared.constants import ProtocolIDs
+from sqlalchemy import Subquery, and_, create_engine, desc, func, select
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Query, Session, aliased, scoped_session, sessionmaker
 
 logger = logging.getLogger(__name__)
 ModelType = TypeVar("ModelType", bound=Base)
@@ -77,7 +82,9 @@ class DBConnector:
         finally:
             db.close()
 
-    def get_object(self, model: Type[ModelType] = None, obj_id: uuid = None) -> ModelType | None:
+    def get_object(
+        self, model: Type[ModelType] = None, obj_id: uuid = None
+    ) -> ModelType | None:
         """
         Retrieves an object by its ID from the database.
         :param: model: type[Base] = None
@@ -122,9 +129,11 @@ class DBConnector:
         """
         session = self.Session()
         return (
-            session.query(LoanState.user,
-                          func.max(LoanState.block).label("latest_block")).group_by(LoanState.user
-                                                                                    ).subquery()
+            session.query(
+                LoanState.user, func.max(LoanState.block).label("latest_block")
+            )
+            .group_by(LoanState.user)
+            .subquery()
         )
 
     def get_latest_block_loans(self) -> Query:
@@ -136,13 +145,15 @@ class DBConnector:
         subquery = self._get_subquery()
 
         result = (
-            session.query(LoanState).join(
+            session.query(LoanState)
+            .join(
                 subquery,
                 and_(
                     LoanState.user == subquery.c.user,
                     LoanState.block == subquery.c.latest_block,
                 ),
-            ).all()
+            )
+            .all()
         )
 
         return result
@@ -189,10 +200,10 @@ class DBConnector:
         db = self.Session()
         try:
             return (
-                db.query(HashtackCollateralDebt).filter(HashtackCollateralDebt.user_id == user_id
-                                                        ).order_by(
-                                                            HashtackCollateralDebt.loan_id.desc()
-                                                        ).first()
+                db.query(HashtackCollateralDebt)
+                .filter(HashtackCollateralDebt.user_id == user_id)
+                .order_by(HashtackCollateralDebt.loan_id.desc())
+                .first()
             )
         finally:
             db.close()
@@ -207,8 +218,9 @@ class DBConnector:
         db = self.Session()
         try:
             max_block = (
-                db.query(func.max(LoanState.block)).filter(LoanState.protocol_id == protocol_id
-                                                           ).scalar()
+                db.query(func.max(LoanState.block))
+                .filter(LoanState.protocol_id == protocol_id)
+                .scalar()
             )
             return max_block or 0
         finally:
@@ -248,7 +260,8 @@ class DBConnector:
                 "timestamp": obj.timestamp,
                 "block": obj.block,
                 "deposit": obj.deposit,
-            } for obj in objects
+            }
+            for obj in objects
         ]
         try:
             # Use PostgreSQL's insert with on_conflict_do_update for upserting records
@@ -264,7 +277,9 @@ class DBConnector:
             # Execute the upsert statement
             db.execute(stmt)
 
-            logger.info(f"Updating or adding {len(objects)} loan states to the database.")
+            logger.info(
+                f"Updating or adding {len(objects)} loan states to the database."
+            )
 
             # Commit the changes
             db.commit()
@@ -277,7 +292,9 @@ class DBConnector:
             db.close()
             logging.info("Loan states have been written to the database.")
 
-    def get_latest_order_book(self, dex: str, token_a: str, token_b: str) -> OrderBookModel | None:
+    def get_latest_order_book(
+        self, dex: str, token_a: str, token_b: str
+    ) -> OrderBookModel | None:
         """
         Retrieves the latest order book for a given pair of tokens and DEX.
         :param dex: str - The DEX name.
@@ -293,17 +310,21 @@ class DBConnector:
                 OrderBookModel.token_b == token_b,
             )
             max_timestamp = (
-                select(func.max(OrderBookModel.timestamp)
-                       ).where(order_book_condition).scalar_subquery()
+                select(func.max(OrderBookModel.timestamp))
+                .where(order_book_condition)
+                .scalar_subquery()
             )
             return db.execute(
-                select(OrderBookModel
-                       ).where(OrderBookModel.timestamp == max_timestamp, order_book_condition)
+                select(OrderBookModel).where(
+                    OrderBookModel.timestamp == max_timestamp, order_book_condition
+                )
             ).scalar()
         finally:
             db.close()
 
-    def get_unique_users_last_block_objects(self, protocol_id: ProtocolIDs) -> LoanState:
+    def get_unique_users_last_block_objects(
+        self, protocol_id: ProtocolIDs
+    ) -> LoanState:
         """
         Retrieves the latest loan states for unique users.
         """
@@ -311,11 +332,10 @@ class DBConnector:
         try:
             # Create a subquery to get the max block for each user
             subquery = (
-                db.query(LoanState.user,
-                         func.max(
-                             LoanState.block
-                         ).label("max_block")).filter(LoanState.protocol_id == protocol_id
-                                                      ).group_by(LoanState.user).subquery()
+                db.query(LoanState.user, func.max(LoanState.block).label("max_block"))
+                .filter(LoanState.protocol_id == protocol_id)
+                .group_by(LoanState.user)
+                .subquery()
             )
 
             # Alias the subquery for clarity
@@ -323,13 +343,16 @@ class DBConnector:
 
             # Join the main LoanState table with the subquery
             return (
-                db.query(LoanState).join(
+                db.query(LoanState)
+                .join(
                     alias_subquery,
                     and_(
                         LoanState.user == alias_subquery.c.user,
                         LoanState.block == alias_subquery.c.max_block,
                     ),
-                ).filter(LoanState.protocol_id == protocol_id).all()
+                )
+                .filter(LoanState.protocol_id == protocol_id)
+                .all()
             )
         finally:
             db.close()
@@ -345,15 +368,19 @@ class DBConnector:
         db = self.Session()
         try:
             return (
-                db.query(InterestRate).filter(InterestRate.protocol_id == protocol_id
-                                              ).order_by(InterestRate.block.desc()).first()
+                db.query(InterestRate)
+                .filter(InterestRate.protocol_id == protocol_id)
+                .order_by(InterestRate.block.desc())
+                .first()
             )
         finally:
             db.close()
 
-    def get_interest_rate_by_block(self, block_number: int, protocol_id: str) -> InterestRate:
+    def get_interest_rate_by_block(
+        self, block_number: int, protocol_id: str
+    ) -> InterestRate:
         """
-        Fetch the closest InterestRate instance by block number that is less than or equal 
+        Fetch the closest InterestRate instance by block number that is less than or equal
         to the given block number.
 
         :param protocol_id: The protocol ID to search for.
@@ -363,9 +390,11 @@ class DBConnector:
         db = self.Session()
         try:
             return (
-                db.query(InterestRate).filter(InterestRate.protocol_id == protocol_id
-                                              ).filter(InterestRate.block <= block_number
-                                                       ).order_by(desc(InterestRate.block)).first()
+                db.query(InterestRate)
+                .filter(InterestRate.protocol_id == protocol_id)
+                .filter(InterestRate.block <= block_number)
+                .order_by(desc(InterestRate.block))
+                .first()
             )
         finally:
             db.close()
@@ -415,15 +444,16 @@ class InitializerDBConnector:
         session = self.Session()
         try:
             return (
-                session.query(ZkLendCollateralDebt).filter(
-                    ZkLendCollateralDebt.user_id.in_(user_ids)
-                ).all()
+                session.query(ZkLendCollateralDebt)
+                .filter(ZkLendCollateralDebt.user_id.in_(user_ids))
+                .all()
             )
         finally:
             session.close()
 
-    def get_hashtack_by_loan_ids(self, loan_ids: List[str],
-                                 version: int) -> List[HashtackCollateralDebt]:
+    def get_hashtack_by_loan_ids(
+        self, loan_ids: List[str], version: int
+    ) -> List[HashtackCollateralDebt]:
         """
         Retrieve HashtackCollateralDebt records by loan_ids.
         :param loan_ids: A list of user IDs to filter by.
@@ -433,9 +463,10 @@ class InitializerDBConnector:
         session = self.Session()
         try:
             return (
-                session.query(HashtackCollateralDebt).filter(
-                    HashtackCollateralDebt.loan_id.in_(loan_ids)
-                ).filter(HashtackCollateralDebt.version == version).all()
+                session.query(HashtackCollateralDebt)
+                .filter(HashtackCollateralDebt.loan_id.in_(loan_ids))
+                .filter(HashtackCollateralDebt.version == version)
+                .all()
             )
         finally:
             session.close()
@@ -472,7 +503,9 @@ class InitializerDBConnector:
         collateral = self._convert_decimal_to_float(collateral)
         debt = self._convert_decimal_to_float(debt)
         try:
-            record = (session.query(ZkLendCollateralDebt).filter_by(user_id=user_id).first())
+            record = (
+                session.query(ZkLendCollateralDebt).filter_by(user_id=user_id).first()
+            )
             if record:
                 # Update existing record
                 if collateral is not None:
@@ -525,7 +558,9 @@ class InitializerDBConnector:
         borrowed_collateral = self._convert_decimal_to_float(borrowed_collateral)
 
         try:
-            record = (session.query(HashtackCollateralDebt).filter_by(loan_id=loan_id).first())
+            record = (
+                session.query(HashtackCollateralDebt).filter_by(loan_id=loan_id).first()
+            )
             logger.info(f"Going to save loan_id {loan_id}")
             # if debt category is the same, update the record
             if record and record.debt_category == debt_category:
@@ -819,6 +854,164 @@ class ZkLendEventDBConnector(DBConnector):
 
         except SQLAlchemyError as e:
             logger.error(f"Error retrieving events: {e}")
+            raise e
+
+        finally:
+            db.close()
+
+
+class NostraEventDBConnector(DBConnector):
+    """
+    Provides CRUD operations specifically for Nostra events, such as DebtMint, DebtBurn, DebtTransfer,
+    BearingCollateralMint, BearingCollateralBurn, and InterestRateModelUpdate events.
+    """
+
+    def create_debt_mint_event(
+        self, protocol_id: str, event_name: str, block_number: int, event_data: dict
+    ) -> None:
+        """
+        Creates a DebtMintEventModel record in the database.
+        """
+        db = self.Session()
+        try:
+            event = DebtMintEventModel(
+                protocol_id=protocol_id,
+                event_name=event_name,
+                block_number=block_number,
+                user=event_data.get("user"),
+                amount=event_data.get("amount"),
+            )
+            db.add(event)
+            db.commit()
+            logger.info(f"DebtMint event saved: {event}")
+        except SQLAlchemyError as e:
+            db.rollback()
+            logger.error(f"Error creating DebtMintEventModel: {e}")
+            raise e
+        finally:
+            db.close()
+
+    def create_debt_burn_event(
+        self, protocol_id: str, event_name: str, block_number: int, event_data: dict
+    ) -> None:
+        """
+        Creates a DebtBurnEventModel record in the database.
+        """
+        db = self.Session()
+        try:
+            event = DebtBurnEventModel(
+                protocol_id=protocol_id,
+                event_name=event_name,
+                block_number=block_number,
+                user=event_data.get("user"),
+                amount=event_data.get("amount"),
+            )
+            db.add(event)
+            db.commit()
+            logger.info(f"DebtBurn event saved: {event}")
+        except SQLAlchemyError as e:
+            db.rollback()
+            logger.error(f"Error creating DebtBurnEventModel: {e}")
+            raise e
+        finally:
+            db.close()
+
+    def create_debt_transfer_event(
+        self, protocol_id: str, event_name: str, block_number: int, event_data: dict
+    ) -> None:
+        """
+        Creates a DebtTransferEventModel record in the database.
+        """
+        db = self.Session()
+        try:
+            event = DebtTransferEventModel(
+                protocol_id=protocol_id,
+                event_name=event_name,
+                block_number=block_number,
+                sender=event_data.get("sender"),
+                recipient=event_data.get("recipient"),
+                amount=event_data.get("amount"),
+            )
+            db.add(event)
+            db.commit()
+            logger.info(f"DebtTransfer event saved: {event}")
+        except SQLAlchemyError as e:
+            db.rollback()
+            logger.error(f"Error creating DebtTransferEventModel: {e}")
+            raise e
+        finally:
+            db.close()
+
+    def create_bearing_collateral_burn_event(
+        self, protocol_id: str, event_name: str, block_number: int, event_data: dict
+    ) -> None:
+        """
+        Creates a BearingCollateralBurnEventModel record in the database.
+        """
+        db = self.Session()
+        try:
+            event = BearingCollateralBurnEventModel(
+                protocol_id=protocol_id,
+                event_name=event_name,
+                block_number=block_number,
+                user=event_data.get("user"),
+                amount=event_data.get("amount"),
+            )
+            db.add(event)
+            db.commit()
+            logger.info(f"BearingCollateralBurn event saved: {event}")
+        except SQLAlchemyError as e:
+            db.rollback()
+            logger.error(f"Error creating BearingCollateralBurnEventModel: {e}")
+            raise e
+        finally:
+            db.close()
+
+    def get_all_events(
+        self,
+        protocol_id: Optional[str] = None,
+        event_name: Optional[str] = None,
+        block_number: Optional[int] = None,
+    ) -> List:
+        """
+        Retrieves all types of Nostra events based on filtering criteria.
+        """
+        db = self.Session()
+        try:
+
+            def apply_filters(query, model):
+                if protocol_id is not None:
+                    query = query.filter(model.protocol_id == protocol_id)
+                if event_name is not None:
+                    query = query.filter(model.event_name == event_name)
+                if block_number is not None:
+                    query = query.filter(model.block_number == block_number)
+                return query
+
+            debt_mint_query = apply_filters(
+                db.query(DebtMintEventModel), DebtMintEventModel
+            )
+            debt_burn_query = apply_filters(
+                db.query(DebtBurnEventModel), DebtBurnEventModel
+            )
+            debt_transfer_query = apply_filters(
+                db.query(DebtTransferEventModel), DebtTransferEventModel
+            )
+            bearing_collateral_burn_query = apply_filters(
+                db.query(BearingCollateralBurnEventModel),
+                BearingCollateralBurnEventModel,
+            )
+
+            combined_query = debt_mint_query.union_all(
+                debt_burn_query,
+                debt_transfer_query,
+                bearing_collateral_burn_query,
+            )
+            events = combined_query.all()
+            return events
+
+        except SQLAlchemyError as e:
+            logger.error(f"Error retrieving Nostra events: {e}")
             raise e
 
         finally:
