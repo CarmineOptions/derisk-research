@@ -9,6 +9,8 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
+import sqlalchemy_utils
+from shared.constants import ProtocolIDs
 
 
 # revision identifiers, used by Alembic.
@@ -25,7 +27,7 @@ def upgrade() -> None:
     sa.Column('amount', sa.Numeric(precision=38, scale=18), nullable=False),
     sa.Column('event_name', sa.String(), nullable=False),
     sa.Column('block_number', sa.Integer(), nullable=False),
-    sa.Column('protocol_id', sqlalchemy_utils.types.choice.ChoiceType(), nullable=False),
+    sa.Column('protocol_id', sqlalchemy_utils.types.choice.ChoiceType(ProtocolIDs, impl=sa.String()), nullable=False),
     sa.Column('id', sa.UUID(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
@@ -36,7 +38,7 @@ def upgrade() -> None:
     sa.Column('amount', sa.Numeric(precision=38, scale=18), nullable=False),
     sa.Column('event_name', sa.String(), nullable=False),
     sa.Column('block_number', sa.Integer(), nullable=False),
-    sa.Column('protocol_id', sqlalchemy_utils.types.choice.ChoiceType(), nullable=False),
+    sa.Column('protocol_id', sqlalchemy_utils.types.choice.ChoiceType(ProtocolIDs, impl=sa.String()), nullable=False),
     sa.Column('id', sa.UUID(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
@@ -47,7 +49,7 @@ def upgrade() -> None:
     sa.Column('amount', sa.Numeric(precision=38, scale=18), nullable=False),
     sa.Column('event_name', sa.String(), nullable=False),
     sa.Column('block_number', sa.Integer(), nullable=False),
-    sa.Column('protocol_id', sqlalchemy_utils.types.choice.ChoiceType(), nullable=False),
+    sa.Column('protocol_id', sqlalchemy_utils.types.choice.ChoiceType(ProtocolIDs, impl=sa.String()), nullable=False),
     sa.Column('id', sa.UUID(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
@@ -59,7 +61,7 @@ def upgrade() -> None:
     sa.Column('amount', sa.Numeric(precision=38, scale=18), nullable=False),
     sa.Column('event_name', sa.String(), nullable=False),
     sa.Column('block_number', sa.Integer(), nullable=False),
-    sa.Column('protocol_id', sqlalchemy_utils.types.choice.ChoiceType(), nullable=False),
+    sa.Column('protocol_id', sqlalchemy_utils.types.choice.ChoiceType(ProtocolIDs, impl=sa.String()), nullable=False),
     sa.Column('id', sa.UUID(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
