@@ -1,4 +1,4 @@
-name: Pylint Check - Dashboard App
+name: Dashboard App
 
 on: [push, pull_request]
 
