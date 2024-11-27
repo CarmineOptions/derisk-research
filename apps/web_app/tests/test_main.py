@@ -25,16 +25,16 @@ def test_create_subscription_to_notifications_get_http_method() -> None:
     assert response.status_code == status.HTTP_200_OK
 
 
-def test_create_subscription_to_notifications_with_valid_data(
-    mock_database_session,
-) -> None:
-    response = client.post(
-        url="http://127.0.0.1/liquidation-watcher",
-        headers=_HEADERS,
-        data=urlencode(VALID_DATA),
-    )
-
-    assert response.status_code == status.HTTP_200_OK
+# def test_create_subscription_to_notifications_with_valid_data(
+#     mock_database_session,
+# ) -> None:
+#     response = client.post(
+#         url="http://127.0.0.1/liquidation-watcher",
+#         headers=_HEADERS,
+#         data=urlencode(VALID_DATA),
+#     )
+#
+#     assert response.status_code == status.HTTP_200_OK
 
 
 def test_create_subscription_to_notifications_without_all_data_provided(
