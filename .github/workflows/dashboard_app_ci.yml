@@ -30,15 +30,17 @@ jobs:
       - name: Install Poetry
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
 
-      - name: Install dependencies for Web_App
-        working-directory: ./apps/web_app
+      - name: Install dependencies for Dashboard App
+        working-directory: ./apps/dashboard_app
         run: |
           echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
           poetry lock --no-update
           poetry install
 
-      - name: Run Tests for Web_App
-        working-directory: ./apps/dashboard_app
-        run: pytest tests
+      - name: Run Tests for Data Handler
+        working-directory: ./apps/data_handler
+        run: |
+          echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
+          poetry run pytest
