@@ -1,12 +1,6 @@
 name: Web App CI Workflow
 
-on:
-  push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - master
+on: [push]
 
 jobs:
   run_tests:
@@ -32,12 +26,12 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-    
+
       - name: Install Poetry
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
           echo "$HOME/.local/bin" >> $GITHUB_PATH
-    
+
       - name: Install dependencies for Web_App
         working-directory: ./apps/web_app
         run: |
@@ -45,13 +39,27 @@ jobs:
           poetry lock --no-update
           poetry install
 
-    
-      - name: Run Tests for Web_App
+      - name: Prepare Environment File
         working-directory: ./apps/web_app
         run: |
-          cp .env.test .env
-          poetry run pytest --junitxml=results.xml
-    
+          cp .env.dev .env
+          sed -i 's/DB_HOST=db/DB_HOST=127.0.0.1/' .env
+          sed -i 's/DB_PORT=5432/DB_PORT=5433/' .env
+
+      - name: Wait for Database to be Ready
+        run: |
+          for i in {1..30}; do
+            pg_isready -h 127.0.0.1 -p 5433 -U postgres && break || sleep 2;
+          done
+
+      - name: Create Test Database
+        run: |
+          PGPASSWORD=postgres psql -h 127.0.0.1 -p 5433 -U postgres -c "CREATE DATABASE web_app;"
+
+      - name: Run Tests for Web_App
+        working-directory: ./apps/web_app
+        run: poetry run pytest --junitxml=results.xml
+
       - name: Upload Test Results
         uses: actions/upload-artifact@v3
         with:
