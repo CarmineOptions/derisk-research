@@ -44,6 +44,13 @@ jobs:
         run: |
           cp .env.dev .env
           sed -i 's/DB_HOST=db/DB_HOST=127.0.0.1/' .env
+          sed -i 's/DB_PORT=5432/DB_PORT=5433/' .env
+
+      - name: Wait for Database to be Ready
+        run: |
+          for i in {1..30}; do
+            pg_isready -h 127.0.0.1 -p 5433 -U postgres && break || sleep 2;
+          done
 
       - name: Run Tests for Web_App
         working-directory: ./apps/web_app
