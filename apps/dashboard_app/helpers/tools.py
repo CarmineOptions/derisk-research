@@ -16,8 +16,6 @@ from dashboard_app.helpers.settings import (
     UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES,
 )
 
-GS_BUCKET_NAME = "derisk-persistent-state/v3"
-
 
 def float_range(start: float, stop: float, step: float) -> Iterator[float]:
     """
@@ -54,38 +52,6 @@ def get_collateral_token_range(
 
     # Generate values using the calculated readable step
     return list(float_range(start=readable_step, stop=stop_price, step=readable_step))
-
-
-def load_data(protocol: str) -> tuple[dict[str, pd.DataFrame], pd.DataFrame]:
-    directory = f"{protocol.lower().replace(' ', '_')}_data"
-    main_chart_data = {}
-    for pair in PAIRS:
-        collateral_token_underlying_symbol, debt_token_underlying_symbol = pair.split(
-            "-"
-        )
-        collateral_token_underlying_address = (
-            UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[
-                collateral_token_underlying_symbol
-            ]
-        )
-        debt_token_underlying_address = UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[
-            debt_token_underlying_symbol
-        ]
-        underlying_addresses_pair = (
-            f"{collateral_token_underlying_address}-{debt_token_underlying_address}"
-        )
-        try:
-            main_chart_data[pair] = pd.read_parquet(
-                f"gs://{GS_BUCKET_NAME}/{directory}/{underlying_addresses_pair}.parquet",
-                engine="fastparquet",
-            )
-        except FileNotFoundError:
-            main_chart_data[pair] = pd.DataFrame()
-    loans_data = pd.read_parquet(
-        f"gs://{GS_BUCKET_NAME}/{directory}/loans.parquet",
-        engine="fastparquet",
-    )
-    return main_chart_data, loans_data
 
 
 async def get_symbol(token_address: str) -> str:
@@ -152,33 +118,6 @@ def get_prices(token_decimals: dict[str, int]) -> dict[str, float]:
         prices[token] = token_info.get("currentPrice")
 
     return prices
-
-
-def upload_file_to_bucket(source_path: str, target_path: str):
-    bucket_name, folder = GS_BUCKET_NAME.split("/")
-    target_path = f"{folder}/{target_path}"
-
-    # Initialize the Google Cloud Storage client with the credentials.
-    storage_client = Client.from_service_account_json(os.getenv("CREDENTIALS_PATH", ""))
-
-    # Get the target bucket.
-    bucket = storage_client.bucket(bucket_name)
-
-    # Upload the file to the bucket.
-    blob = bucket.blob(target_path)
-    blob.upload_from_filename(source_path)
-    logging.debug(
-        f"File = {source_path} uploaded to = gs://{bucket_name}/{target_path}."
-    )
-
-
-def save_dataframe(data: pd.DataFrame, path: str) -> None:
-    directory = path.rstrip(path.split("/")[-1])
-    if not directory == "":
-        os.makedirs(directory, exist_ok=True)
-    data.to_parquet(path, index=False, engine="fastparquet", compression="gzip")
-    upload_file_to_bucket(source_path=path, target_path=path)
-    os.remove(path)
 
 
 def add_leading_zeros(hash: str) -> str:
