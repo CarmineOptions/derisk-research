@@ -48,3 +48,31 @@ class TestBaseDBLiquidableDebtDataHandler:
                 result = self.handler.get_prices_range("LTC", Decimal("100"))
                 print(result)
                 assert result == get_range(Decimal("0"), Decimal("130"), Decimal("1"))
+
+    def test_fetch_data(self):
+        """
+        Test fetch_data retrieves the correct loan data and interest rate models from the DB.
+        """
+        with patch("data_handler.db.crud.DBConnector") as MockDBConnector:
+            protocol_name = "ProtocolA"
+
+            # Mock DB return values
+            mock_loans = [{"loan_id": 1, "amount": 100}]
+            mock_interest_rates = [{"protocol_id": protocol_name, "rate": 5}]
+
+            # Configure mocked methods
+            mock_db_connector = MockDBConnector.return_value
+            mock_db_connector.get_loans.return_value = mock_loans
+            mock_db_connector.get_last_interest_rate_record_by_protocol_id.return_value = mock_interest_rates
+            self.handler.db_connector = mock_db_connector
+
+            # Call the method
+            loan_data, interest_rate_models = self.handler.fetch_data(self=self.handler, protocol_name=protocol_name)
+
+            # Assertions for returned data
+            assert loan_data == mock_loans, "Loan data mismatch"
+            assert interest_rate_models == mock_interest_rates, "Interest rate models mismatch"
+
+            # Ensure DBConnector methods were called with correct arguments
+            mock_db_connector.get_loans.assert_called_once_with(model=LoanState, protocol=protocol_name)
+            mock_db_connector.get_last_interest_rate_record_by_protocol_id.assert_called_once_with(protocol_id=protocol_name)
