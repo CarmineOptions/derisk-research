@@ -52,6 +52,10 @@ jobs:
             pg_isready -h 127.0.0.1 -p 5433 -U postgres && break || sleep 2;
           done
 
+      - name: Create Test Database
+        run: |
+          PGPASSWORD=postgres psql -h 127.0.0.1 -p 5433 -U postgres -c "CREATE DATABASE web_app;"
+
       - name: Run Tests for Web_App
         working-directory: ./apps/web_app
         run: poetry run pytest --junitxml=results.xml
@@ -61,4 +65,3 @@ jobs:
         with:
           name: test-results
           path: ./apps/web_app/results.xml
-
