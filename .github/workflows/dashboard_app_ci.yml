@@ -13,9 +13,9 @@ jobs:
         ports:
           - 5433:5432
         options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 10s
-          --health-timeout 5s
+          --health-cmd "pg_isready -U postgres" 
+          --health-interval 10s 
+          --health-timeout 5s 
           --health-retries 5
 
     steps:
@@ -30,7 +30,7 @@ jobs:
       - name: Install Poetry
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
-          echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Install dependencies for Dashboard App
         working-directory: ./apps/dashboard_app
@@ -40,7 +40,7 @@ jobs:
           poetry install
 
       - name: Prepare Environment File
-        working-directory: ./apps/web_app
+        working-directory: ./apps/dashboard_app
         run: |
           cp .env.dev .env
           sed -i 's/DB_HOST=db/DB_HOST=127.0.0.1/' .env
@@ -56,8 +56,6 @@ jobs:
         run: |
           PGPASSWORD=postgres psql -h 127.0.0.1 -p 5433 -U postgres -c "CREATE DATABASE dashboard_app;"
 
-      - name: Run Tests for Dashboard App
+      - name: Run Tests for Dashboard_App
         working-directory: ./apps/dashboard_app
-        run: |
-          echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
-          poetry run pytest
+        run: poetry run pytest
