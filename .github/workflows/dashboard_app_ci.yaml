@@ -57,7 +57,7 @@ jobs:
 
       - name: Create Test Database
         run: |
-          PGPASSWORD=postgres psql -h 127.0.0.1 -p 5432 -U postgres -c "CREATE DATABASE dashboard_app;"
+          PGPASSWORD=postgres psql -h 127.0.0.1 -p 5432 -U postgres -c "CREATE DATABASE data_handler;"
 
       - name: Run Tests for Dashboard_App
         working-directory: ./apps/dashboard_app

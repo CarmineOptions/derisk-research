@@ -5,7 +5,7 @@ from dashboard_app.helpers.load_data import DashboardDataHandler
 @pytest.fixture
 def mock_data_connector():
     """Fixture to mock the DataConnector."""
-    with patch("dashboard_app.helpers.load_data.data_connector") as MockConnector:
+    with patch("dashboard_app.helpers.load_data.DataConnector") as MockConnector:
         connector = MockConnector
         # Mocking fetch_data calls with dummy data
         connector.fetch_data.side_effect = [
