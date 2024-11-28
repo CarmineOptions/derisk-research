@@ -43,6 +43,13 @@ class State(ABC):
         self.last_block_number: int = 0
         self.last_interest_rate_block_number: int = 0
 
+    @property
+    def get_protocol_name(self) -> str:
+        """Returns the protocol name for the state"""
+        if not self.PROTOCOL_NAME:
+            raise NotImplementedError("PROTOCOL_NAME must be set in the implementing class")
+        return self.PROTOCOL_NAME
+
     def process_event(self, method_name: str, event: pd.Series) -> None:
         # TODO: Save the timestamp of each update?
         if event["block_number"] >= self.last_block_number:

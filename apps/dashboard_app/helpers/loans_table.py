@@ -26,6 +26,9 @@ def get_protocol(state: State) -> str:
         return "Nostra Mainnet"
     raise ValueError
 
+    return state.get_protocol_name
+
+
 
 def get_loans_table_data(
     state: State,

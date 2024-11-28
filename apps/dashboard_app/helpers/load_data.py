@@ -23,7 +23,6 @@ from dashboard_app.helpers.protocol_stats import (
 from dashboard_app.helpers.tools import get_prices
 
 logger = logging.getLogger(__name__)
-data_connector = DataConnector()
 
 
 class DashboardDataHandler:
@@ -35,6 +34,7 @@ class DashboardDataHandler:
         """
         Initialize the data handler.
         """
+        self.data_connector = DataConnector()
         self.underlying_addresses_to_decimals = defaultdict(dict)
         self.zklend_state = self._init_zklend_state()
         self.prices = None
@@ -45,8 +45,7 @@ class DashboardDataHandler:
             # nostra_mainnet_state,
         ]
 
-    @staticmethod
-    def _init_zklend_state() -> ZkLendState:
+    def _init_zklend_state(self) -> ZkLendState:
         """
         Initialize ZkLend state.
         Fetch data from the database and initialize the state.
@@ -55,9 +54,9 @@ class DashboardDataHandler:
         logger.info("Initializing ZkLend state.")
         zklend_state = ZkLendState()
         start = monotonic()
-        zklend_data = data_connector.fetch_data(data_connector.ZKLEND_SQL_QUERY)
-        zklend_interest_rate_data = data_connector.fetch_data(
-            data_connector.ZKLEND_INTEREST_RATE_SQL_QUERY
+        zklend_data = self.data_connector.fetch_data(self.data_connector.ZKLEND_SQL_QUERY)
+        zklend_interest_rate_data = self.data_connector.fetch_data(
+            self.data_connector.ZKLEND_INTEREST_RATE_SQL_QUERY
         )
 
         zklend_data_dict = zklend_data.to_dict(orient="records")
