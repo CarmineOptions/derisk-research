@@ -18,6 +18,7 @@ psycopg2-binary = "^2.9.9"
 matplotlib = { version = "3.8.0", optional = true }
 tqdm = { version = "4.65.0", optional = true }
 yfinance = { version = "0.2.38", optional = true }
+sqlalchemy = "^2.0.30"
 dill = "^0.3.8"
 gcsfs = "^2024.6.1"
 pre-commit = "^3.8.0"
