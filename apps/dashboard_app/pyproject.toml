@@ -25,6 +25,7 @@ pydantic = "^2.9.2"
 pytest = "^8.3.3"
 python-dotenv = "^1.0.1"
 aiogram = "^3.15.0"
+sqlalchemy = "^2.0.36"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.8.0"
