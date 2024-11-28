@@ -1,5 +1,6 @@
 # DeRisk Data Handler
 
+## Overview
 This project was created to make data public for Derisk Alert app.
 This app is not intended for you to use in production. It's just a research project.
 
@@ -23,7 +24,7 @@ git clone https://github.com/CarmineOptions/derisk-research.git
 cd data_handler 
 ```
 
-### 3. Set up `.env` file
+### 3. Configure Environment Variables
 
 Create `.env` file or just rename `.env.example` --> `.env`
 
@@ -57,26 +58,29 @@ docker-compose up -d --build
 docker-compose down
 ```
 
-## Data migrations
+## Data migrations with Alembic
 In this project is using `alembic` for data migrations.
-For generating new migration use this command:
-In folder `apps` run these commands:
+
+### Generating Migrations
+Navigate to the `apps` folder and generate a new migration using the following command:
 ```bash
+cd apps
 alembic -c data_handler/alembic.ini revision --autogenerate -m "your message"
 ```
-
+### Applying Migrations
 After generating new migration, you need to apply it:
 
 ```bash
 alembic -c data_handler/alembic.ini upgrade head
 ```
-
+### Rolling Back Migrations
 For downgrading migration:
 
 ```bash
 alembic -c data_handler/alembic.ini downgrade -1
 ```
 
+### Migration Utility Commands
 Useful commands:
 Purge all celery tasks:
 ```bash
@@ -91,13 +95,15 @@ Go to bash
 docker-compose exec backend bash
 ```
 
-## How to run migration command:
+## Running Migration Command:
 1. Go to root folder `derisk-research`
+
+### Prepare the Environment
 2. Run up db in docker:
 ```
 docker-compose -f devops/dev/docker-compose.db.yaml up -d --remove-orphans
 ```
-3. Go to `data_hander` folder:
+3. Navigate to the `data_hander` directory:
 ```
 cd apps/data_handler
 ```
