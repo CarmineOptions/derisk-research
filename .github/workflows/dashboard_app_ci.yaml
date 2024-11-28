@@ -11,7 +11,7 @@ jobs:
         env:
           POSTGRES_HOST_AUTH_METHOD: trust
         ports:
-          - 5433:5432
+          - 5432:5432
         options: >-
           --health-cmd "pg_isready -U postgres" 
           --health-interval 10s 
@@ -43,17 +43,21 @@ jobs:
         run: |
           cp .env.dev .env
           sed -i 's/DB_HOST=db/DB_HOST=127.0.0.1/' .env
-          sed -i 's/DB_PORT=5432/DB_PORT=5433/' .env  # Update DB_PORT to match the exposed port
+          sed -i 's/DB_PORT=5432/DB_PORT=5432/' .env  # Update DB_PORT to match the exposed port
 
       - name: Wait for Database to be Ready
         run: |
           for i in {1..30}; do
-            pg_isready -h 127.0.0.1 -p 5433 -U postgres && break || sleep 2;
+            pg_isready -h 127.0.0.1 -p 5432 -U postgres && break || sleep 2;
           done
+
+      - name: Verify PostgreSQL Port is Open
+        run: |
+          nc -zv 127.0.0.1 5432
 
       - name: Create Test Database
         run: |
-          PGPASSWORD=postgres psql -h 127.0.0.1 -p 5433 -U postgres -c "CREATE DATABASE dashboard_app;"
+          PGPASSWORD=postgres psql -h 127.0.0.1 -p 5432 -U postgres -c "CREATE DATABASE dashboard_app;"
 
       - name: Run Tests for Dashboard_App
         working-directory: ./apps/dashboard_app
