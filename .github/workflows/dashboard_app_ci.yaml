@@ -29,21 +29,27 @@ jobs:
       - name: Install Poetry
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
-          echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
       - name: Install dependencies for Dashboard App
         working-directory: ./apps/dashboard_app
         run: |
           echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
           poetry lock --no-update
           poetry install
-      - name: Install dependencies for Shared
-        working-directory: ./apps/shared
-        run: |
-          echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
-          poetry lock --no-update
-          poetry install
-      - name: Run Tests for Dashboard App
+      - name: Prepare Environment File
         working-directory: ./apps/dashboard_app
         run: |
-          echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
-          poetry run pytest
+          cp .env.dev .env
+          sed -i 's/DB_HOST=db/DB_HOST=127.0.0.1/' .env
+          sed -i 's/DB_PORT=5432/DB_PORT=5432/' .env
+      - name: Wait for Database to be Ready
+        run: |
+          for i in {1..30}; do
+            pg_isready -h 127.0.0.1 -p 5433 -U postgres && break || sleep 2;
+          done
+      - name: Create Test Database
+        run: |
+          PGPASSWORD=postgres psql -h 127.0.0.1 -p 5433 -U postgres -c "CREATE DATABASE dashboard_app;"
+      - name: Run Tests for Dashboard_App
+        working-directory: ./apps/dashboard_app
+        run: poetry run pytest
