@@ -39,6 +39,11 @@ jobs:
           poetry lock --no-update
           poetry install
 
+      - name: Install Shared as Dependency
+        run: |
+          poetry install --with dev
+          poetry add ./apps/shared
+
       - name: Install dependencies for Shared
         working-directory: ./apps/shared
         run: |
