@@ -5,6 +5,7 @@ from .helpers import Portfolio, TokenValues
 from .settings import TOKEN_SETTINGS as BASE_TOKEN_SETTINGS
 from .settings import TokenSettings as BaseTokenSettings
 from .state import InterestRateModels, LoanEntity, State
+from shared.constants import ProtocolIDs
 
 # IT GIVES `ModuleNotFoundError` THAT'S WHY I COMMENTED OUT IT
 # from data_handler.handlers.loan_states.zklend.fetch_zklend_specific_token_settings import ZKLEND_SPECIFIC_TOKEN_SETTINGS
@@ -124,6 +125,7 @@ class ZkLendState(State):
     relevant event.
     """
 
+    PROTOCOL_NAME: str = ProtocolIDs.ZKLEND.value
     EVENTS_METHODS_MAPPING: dict[str, str] = EVENTS_METHODS_MAPPING
 
     def __init__(

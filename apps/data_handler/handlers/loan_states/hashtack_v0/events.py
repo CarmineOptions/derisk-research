@@ -14,7 +14,7 @@ import pandas
 from data_handler.handlers.helpers import get_symbol
 
 from data_handler.db.crud import InitializerDBConnector
-from shared.constants import TOKEN_SETTINGS
+from shared.constants import ProtocolIDs, TOKEN_SETTINGS
 from shared.loan_entity import LoanEntity
 from shared.state import State
 from shared.types import InterestRateModels, Portfolio, TokenValues, TokenSettings
@@ -184,6 +184,7 @@ class HashstackV0State(State):
     debt, thus we always rewrite the balances whenever they are updated.
     """
 
+    PROTOCOL_NAME: str = ProtocolIDs.HASHSTACK_V0.value
     EVENTS_METHODS_MAPPING: dict[str, str] = EVENTS_METHODS_MAPPING
 
     def __init__(
