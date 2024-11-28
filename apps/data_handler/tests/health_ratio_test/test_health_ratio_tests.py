@@ -16,6 +16,8 @@ from shared.constants import ProtocolIDs
 class MockState(State):
     """Mock State class for testing"""
 
+    PROTOCOL_NAME: str = ProtocolIDs.ZKLEND.value
+
     def __init__(self):
         self.loan_entities = {}
         self.collateral_interest_rate_models = None

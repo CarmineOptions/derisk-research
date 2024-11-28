@@ -1,3 +1,4 @@
+
 import pandas as pd
 from data_handler.handlers.loan_states.nostra_alpha.events import NostraAlphaState
 from data_handler.handlers.loan_states.nostra_mainnet.events import NostraMainnetState
@@ -7,16 +8,7 @@ from shared.types import Prices
 
 
 def get_protocol(state: State) -> str:
-    # TODO: Improve the inference.
-    if isinstance(state, ZkLendState):
-        return "zkLend"
-    if isinstance(state, NostraAlphaState) and not isinstance(
-        state, NostraMainnetState
-    ):
-        return "Nostra Alpha"
-    if isinstance(state, NostraMainnetState):
-        return "Nostra Mainnet"
-    raise ValueError
+    return state.get_protocol_name
 
 
 def get_loans_table_data(

@@ -113,6 +113,7 @@ class NostraMainnetState(NostraAlphaState):
     relevant event are implemented in `.nostra_alpha.NostraAlphaState`.
     """
 
+    PROTOCOL_NAME: str = ProtocolIDs.NOSTRA_MAINNET.value
     TOKEN_ADDRESSES: list[str] = NOSTRA_MAINNET_TOKEN_ADDRESSES
     INTEREST_RATE_MODEL_ADDRESS: str = NOSTRA_MAINNET_INTEREST_RATE_MODEL_ADDRESS
     CDP_MANAGER_ADDRESS: str = NOSTRA_MAINNET_CDP_MANAGER_ADDRESS

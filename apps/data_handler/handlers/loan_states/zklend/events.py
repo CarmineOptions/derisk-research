@@ -44,6 +44,7 @@ from shared.types import (
     ZkLendCollateralTokenParameters,
     ZkLendDebtTokenParameters,
 )
+from shared.constants import ProtocolIDs
 
 ZKLEND_MARKET: str = ("0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05")
 EVENTS_METHODS_MAPPING: dict[str, str] = {
@@ -166,6 +167,7 @@ class ZkLendState(State):
     relevant event.
     """
 
+    PROTOCOL_NAME: str = ProtocolIDs.ZKLEND.value
     EVENTS_METHODS_MAPPING: dict[str, str] = EVENTS_METHODS_MAPPING
 
     def __init__(

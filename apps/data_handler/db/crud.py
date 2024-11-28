@@ -19,9 +19,13 @@ from data_handler.db.models import (
 )
 from data_handler.db.models.nostra_events import (
     BearingCollateralBurnEventModel,
+    BearingCollateralMintEventModel,
     DebtBurnEventModel,
     DebtMintEventModel,
     DebtTransferEventModel,
+    InterestRateModelEventModel,
+    NonInterestBearingCollateralBurnEventModel,
+    NonInterestBearingCollateralMintEventModel,
 )
 from data_handler.db.models.zklend_events import (
     AccumulatorsSyncEventModel,
@@ -862,19 +866,20 @@ class ZkLendEventDBConnector(DBConnector):
 
 class NostraEventDBConnector(DBConnector):
     """
-    Provides CRUD operations specifically for Nostra events, such as DebtMint, DebtBurn, DebtTransfer,
-    BearingCollateralMint, BearingCollateralBurn, and InterestRateModelUpdate events.
+    Provides CRUD operations specifically for Nostra events, such as
+    BearingCollateralBurn, BearingCollateralMint, DebtMint, DebtBurn, DebtTransfer,
+    InterestRateModelUpdate, NonInterestBearingCollateralMint and NonInterestBearingCollateralMint events.
     """
 
-    def create_debt_mint_event(
+    def create_bearing_collateral_burn_event(
         self, protocol_id: str, event_name: str, block_number: int, event_data: dict
     ) -> None:
         """
-        Creates a DebtMintEventModel record in the database.
+        Creates a BearingCollateralBurnEventModel record in the database.
         """
         db = self.Session()
         try:
-            event = DebtMintEventModel(
+            event = BearingCollateralBurnEventModel(
                 protocol_id=protocol_id,
                 event_name=event_name,
                 block_number=block_number,
@@ -883,10 +888,35 @@ class NostraEventDBConnector(DBConnector):
             )
             db.add(event)
             db.commit()
-            logger.info(f"DebtMint event saved: {event}")
+            logger.info(f"BearingCollateralBurn event saved: {event}")
         except SQLAlchemyError as e:
             db.rollback()
-            logger.error(f"Error creating DebtMintEventModel: {e}")
+            logger.error(f"Error creating BearingCollateralBurnEventModel: {e}")
+            raise e
+        finally:
+            db.close()
+
+    def create_bearing_collateral_mint_event(
+        self, protocol_id: str, event_name: str, block_number: int, event_data: dict
+    ) -> None:
+        """
+        Creates a BearingCollateralMintEventModel record in the database.
+        """
+        db = self.Session()
+        try:
+            event = BearingCollateralMintEventModel(
+                protocol_id=protocol_id,
+                event_name=event_name,
+                block_number=block_number,
+                user=event_data.get("user"),
+                amount=event_data.get("amount"),
+            )
+            db.add(event)
+            db.commit()
+            logger.info(f"BearingCollateralMint event saved: {event}")
+        except SQLAlchemyError as e:
+            db.rollback()
+            logger.error(f"Error creating BearingCollateralMintEventModel: {e}")
             raise e
         finally:
             db.close()
@@ -912,6 +942,31 @@ class NostraEventDBConnector(DBConnector):
         except SQLAlchemyError as e:
             db.rollback()
             logger.error(f"Error creating DebtBurnEventModel: {e}")
+            raise e
+        finally:
+            db.close()
+
+    def create_debt_mint_event(
+        self, protocol_id: str, event_name: str, block_number: int, event_data: dict
+    ) -> None:
+        """
+        Creates a DebtMintEventModel record in the database.
+        """
+        db = self.Session()
+        try:
+            event = DebtMintEventModel(
+                protocol_id=protocol_id,
+                event_name=event_name,
+                block_number=block_number,
+                user=event_data.get("user"),
+                amount=event_data.get("amount"),
+            )
+            db.add(event)
+            db.commit()
+            logger.info(f"DebtMint event saved: {event}")
+        except SQLAlchemyError as e:
+            db.rollback()
+            logger.error(f"Error creating DebtMintEventModel: {e}")
             raise e
         finally:
             db.close()
@@ -942,15 +997,41 @@ class NostraEventDBConnector(DBConnector):
         finally:
             db.close()
 
-    def create_bearing_collateral_burn_event(
+    def create_interest_rate_model_event(
         self, protocol_id: str, event_name: str, block_number: int, event_data: dict
     ) -> None:
         """
-        Creates a BearingCollateralBurnEventModel record in the database.
+        Creates a InterestRateModelEventModel record in the database.
         """
         db = self.Session()
         try:
-            event = BearingCollateralBurnEventModel(
+            event = InterestRateModelEventModel(
+                protocol_id=protocol_id,
+                event_name=event_name,
+                block_number=block_number,
+                debt_token=event_data.get("debt_token"),
+                lending_index=event_data.get("lending_index"),
+                borrow_index=event_data.get("borrow_index"),
+            )
+            db.add(event)
+            db.commit()
+            logger.info(f"InterestRateModel event saved: {event}")
+        except SQLAlchemyError as e:
+            db.rollback()
+            logger.error(f"Error creating InterestRateModelEventModel: {e}")
+            raise e
+        finally:
+            db.close()
+
+    def create_non_interest_bearing_collateral_burn_event(
+        self, protocol_id: str, event_name: str, block_number: int, event_data: dict
+    ) -> None:
+        """
+        Creates a NonInterestBearingCollateralBurnEventModel record in the database.
+        """
+        db = self.Session()
+        try:
+            event = NonInterestBearingCollateralBurnEventModel(
                 protocol_id=protocol_id,
                 event_name=event_name,
                 block_number=block_number,
@@ -959,10 +1040,40 @@ class NostraEventDBConnector(DBConnector):
             )
             db.add(event)
             db.commit()
-            logger.info(f"BearingCollateralBurn event saved: {event}")
+            logger.info(f"NonInterestBearingCollateralBurn event saved: {event}")
         except SQLAlchemyError as e:
             db.rollback()
-            logger.error(f"Error creating BearingCollateralBurnEventModel: {e}")
+            logger.error(
+                f"Error creating NonInterestBearingCollateralBurnEventModel: {e}"
+            )
+            raise e
+        finally:
+            db.close()
+
+    def create_non_interest_bearing_collateral_mint_event(
+        self, protocol_id: str, event_name: str, block_number: int, event_data: dict
+    ) -> None:
+        """
+        Creates a NonInterestBearingCollateralMintEventModel record in the database.
+        """
+        db = self.Session()
+        try:
+            event = NonInterestBearingCollateralMintEventModel(
+                protocol_id=protocol_id,
+                event_name=event_name,
+                block_number=block_number,
+                sender=event_data.get("sender"),
+                recipient=event_data.get("recipient"),
+                amount=event_data.get("amount"),
+            )
+            db.add(event)
+            db.commit()
+            logger.info(f"NonInterestBearingCollateralMint event saved: {event}")
+        except SQLAlchemyError as e:
+            db.rollback()
+            logger.error(
+                f"Error creating NonInterestBearingCollateralMintEventModel: {e}"
+            )
             raise e
         finally:
             db.close()
@@ -988,24 +1099,43 @@ class NostraEventDBConnector(DBConnector):
                     query = query.filter(model.block_number == block_number)
                 return query
 
-            debt_mint_query = apply_filters(
-                db.query(DebtMintEventModel), DebtMintEventModel
-            )
-            debt_burn_query = apply_filters(
-                db.query(DebtBurnEventModel), DebtBurnEventModel
-            )
-            debt_transfer_query = apply_filters(
-                db.query(DebtTransferEventModel), DebtTransferEventModel
-            )
             bearing_collateral_burn_query = apply_filters(
                 db.query(BearingCollateralBurnEventModel),
                 BearingCollateralBurnEventModel,
             )
+            bearing_collateral_mint_query = apply_filters(
+                db.query(BearingCollateralMintEventModel),
+                BearingCollateralMintEventModel,
+            )
+            debt_burn_query = apply_filters(
+                db.query(DebtBurnEventModel), DebtBurnEventModel
+            )
+            debt_mint_query = apply_filters(
+                db.query(DebtMintEventModel), DebtMintEventModel
+            )
+            debt_transfer_query = apply_filters(
+                db.query(DebtTransferEventModel), DebtTransferEventModel
+            )
+            interest_rate_model_query = apply_filters(
+                db.query(InterestRateModelEventModel), InterestRateModelEventModel
+            )
+            non_interest_bearing_collateral_burn_query = apply_filters(
+                db.query(NonInterestBearingCollateralBurnEventModel),
+                NonInterestBearingCollateralBurnEventModel,
+            )
+            non_interest_bearing_collateral_mint_query = apply_filters(
+                db.query(NonInterestBearingCollateralMintEventModel),
+                NonInterestBearingCollateralMintEventModel,
+            )
 
-            combined_query = debt_mint_query.union_all(
-                debt_burn_query,
-                debt_transfer_query,
+            combined_query = interest_rate_model_query.union_all(
                 bearing_collateral_burn_query,
+                bearing_collateral_mint_query,
+                debt_burn_query,
+                debt_mint_query,
+                debt_transfer_query,
+                non_interest_bearing_collateral_burn_query,
+                non_interest_bearing_collateral_mint_query,
             )
             events = combined_query.all()
             return events
