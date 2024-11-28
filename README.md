@@ -12,7 +12,7 @@ There are several components in this repository, each with its own purpose and f
 
 ### Prerequisites
 - Docker installed on your machine (v19.03+ recommended).
-- Docker Compose installed (v1.27+ recommended).
+- Docker Compose installed (v2.0+ recommended).
 
 ### Data Handler
 
@@ -85,6 +85,16 @@ docker-compose -f devops/dev/docker-compose.notification-app.yaml up --build
 docker-compose -f devops/dev/docker-compose.notification-app.yaml down
 ```
 
+## Dashboard App
+
+Interactive dashboard application for visualizing and analyzing DeRisk data.
+
+### Key Features
+- Interactive data visualization
+- Protocol statistics monitoring
+- Loan portfolio analysis
+- Real-time data updates
+For detailed documentation, see the [Dashboard App](./apps/dashboard_app/README.md)
 
 ## Shared package (Common code shared between the components)
 1. How to run test cases for shared package, run next command in root folder:
