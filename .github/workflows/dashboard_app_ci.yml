@@ -39,18 +39,12 @@ jobs:
           poetry lock --no-update
           poetry install
 
-      - name: Install Shared as Dependency
-        run: |
-          poetry install --with dev
-          poetry add ./apps/shared
-
       - name: Install dependencies for Shared
         working-directory: ./apps/shared
         run: |
           echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
           poetry lock --no-update
           poetry install
-          poetry run pip install aiogram
 
       - name: Run Tests for Dashboard App
         working-directory: ./apps/dashboard_app
