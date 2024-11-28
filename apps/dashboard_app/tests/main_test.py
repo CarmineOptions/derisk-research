@@ -1,7 +1,6 @@
 import pytest
 from unittest.mock import patch, MagicMock
 from dashboard_app.charts import Dashboard
-from dashboard_app.helpers.settings import COLLATERAL_TOKENS, DEBT_TOKENS, STABLECOIN_BUNDLE_NAME
 
 @pytest.fixture
 def mock_streamlit():

@@ -50,4 +50,4 @@ jobs:
         working-directory: ./apps/dashboard_app
         run: |
           echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
-          poetry run pytest
+          pytest tests
