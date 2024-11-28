@@ -1,3 +1,7 @@
+"""
+This moudel process and transform liquidity, loan, and chart data for protocols.
+"""
+
 import logging
 import math
 from collections import defaultdict
@@ -77,19 +81,21 @@ def parse_token_amounts(raw_token_amounts: str) -> dict[str, float]:
 
 def create_stablecoin_bundle(data: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
     """
-    Creates a stablecoin bundle by merging relevant DataFrames for collateral tokens and debt tokens.
+    Creates a stablecoin bundle by merging relevant DataFrames for collateral tokens and debt
+    tokens.
 
-    For each collateral token specified in `src.settings.COLLATERAL_TOKENS`, this function finds the
-    relevant stablecoin pairs from the provided `data` dictionary and merges the corresponding DataFrames
-    based on the 'collateral_token_price' column. It combines the debt and liquidity data for multiple
-    stablecoin pairs and adds the result back to the `data` dictionary under a new key.
+    For each collateral token specified in `src.settings.COLLATERAL_TOKENS`, this function finds 
+    the relevant stablecoin pairs from the provided `data` dictionary and merges the corresponding
+    Dataframes based on the 'collateral_token_price' column. It combines the debt and liquidity 
+    data for multiple stablecoin pairs and adds the result back to the `data` dictionary under a 
+    new key.
 
     Parameters:
-    data (dict[str, pandas.DataFrame]): A dictionary where the keys are token pairs and the values are
-                                        corresponding DataFrames containing price and supply data.
+    data (dict[str, pandas.DataFrame]): A dictionary where the keys are token pairs and the values
+     are corresponding DataFrames containing price and supply data.
 
-    Returns:
-    dict[str, pandas.DataFrame]: The updated dictionary with the newly created stablecoin bundle added.
+    Returns: dict[str, pandas.DataFrame]: 
+    The updated dictionary with the newly created stablecoin bundle added.
     """
 
     # Iterate over all collateral tokens defined in the settings
@@ -109,7 +115,7 @@ def create_stablecoin_bundle(data: dict[str, pd.DataFrame]) -> dict[str, pd.Data
 
             if df.empty:
                 # Log a warning if the DataFrame is empty and skip to the next pair
-                logging.warning(f"Empty DataFrame for pair: {pair}")
+                logging.warning("Empty DataFrame for pair: %s", pair)
                 continue
 
             if combined_df is None:
@@ -232,10 +238,11 @@ def transform_main_chart_data(
     for protocol in protocols:
         protocol_main_chart_data = protocol_main_chart_data_mapping[protocol]
         if protocol_main_chart_data is None or protocol_main_chart_data.empty:
-            logging.warning(f"No data for pair {current_pair} from {protocol}")
+            logging.warning("No data for pair %s from %s", current_pair, protocol)
             collateral_token, debt_token = current_pair.split("-")
             st.subheader(
-                f":warning: No liquidable debt for the {collateral_token} collateral token and the {debt_token} debt token exists on the {protocol} protocol."
+                f":warning: No liquidable debt for the {collateral_token} collateral token and "
+                f"the {debt_token} debt token exists on the {protocol} protocol."
             )
             continue
 

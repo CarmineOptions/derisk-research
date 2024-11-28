@@ -1,3 +1,7 @@
+"""
+A module that fetches data of token prices, liquidity etc.
+"""
+
 import logging
 import math
 import os
@@ -35,17 +39,22 @@ def get_collateral_token_range(
     collateral_token_underlying_address: str,
     collateral_token_price: float,
 ) -> list[float]:
-    TARGET_NUMBER_OF_VALUES = 50
+    """
+    Generates a range of prices for a collateral token and 
+    Returns:  A list of float values representing the range of prices for the collateral token.
+    """
+    target_number_of_values = 50
     start_price = 0.0
     stop_price = collateral_token_price * 1.2
     # Calculate rough step size to get about 50 (target) values
-    raw_step_size = (stop_price - start_price) / TARGET_NUMBER_OF_VALUES
+    raw_step_size = (stop_price - start_price) / target_number_of_values
     # Round the step size to the closest readable value (1, 2, or 5 times powers of 10)
     magnitude = 10 ** math.floor(math.log10(raw_step_size))  # Base scale
     step_factors = [1, 2, 2.5, 5, 10]
     difference = [
         abs(50 - stop_price / (k * magnitude)) for k in step_factors
-    ]  # Stores the difference between the target value and number of values generated from each step factor.
+    ]  # Stores the difference between the target value and
+       #number of values generated from each step factor.
     readable_step = (
         step_factors[difference.index(min(difference))] * magnitude
     )  # Gets readable step from step factor with values closest to the target value.
@@ -55,6 +64,9 @@ def get_collateral_token_range(
 
 
 async def get_symbol(token_address: str) -> str:
+    """
+    Takes the address of a token and returns the symbol of that token
+    """
     # DAI V2's symbol is `DAI` but we don't want to mix it with DAI = DAI V1.
     if (
         token_address
@@ -78,8 +90,8 @@ def get_prices(token_decimals: dict[str, int]) -> dict[str, float]:
     :param token_decimals: Token decimals.
     :return: Dict with token addresses as keys and token prices as values.
     """
-    URL = "https://starknet.impulse.avnu.fi/v1/tokens/short"
-    response = requests.get(URL)
+    url = "https://starknet.impulse.avnu.fi/v1/tokens/short"
+    response = requests.get(url, timeout=10)
 
     if not response.ok:
         response.raise_for_status()
@@ -106,13 +118,13 @@ def get_prices(token_decimals: dict[str, int]) -> dict[str, float]:
         token_info = token_info_map.get(token)
 
         if not token_info:
-            logging.error(f"Token {token} not found in response.")
+            logging.error("Token %s not found in response.", token)
             continue
 
         if decimals != token_info.get("decimals"):
             logging.error(
-                f"Decimal mismatch for token {token}: expected {decimals}, got {token_info.get('decimals')}"
-            )
+                "Decimal mismatch for token %s: expected %d, got %d"
+                 ,token, decimals, token_info.get('decimals'))
             continue
 
         prices[token] = token_info.get("currentPrice")
@@ -120,12 +132,12 @@ def get_prices(token_decimals: dict[str, int]) -> dict[str, float]:
     return prices
 
 
-def add_leading_zeros(hash: str) -> str:
+def add_leading_zeros(address: str) -> str:
     """
     Converts e.g. `0x436d8d078de345c11493bd91512eae60cd2713e05bcaa0bb9f0cba90358c6e` to
     `0x00436d8d078de345c11493bd91512eae60cd2713e05bcaa0bb9f0cba90358c6e`.
     """
-    return "0x" + hash[2:].zfill(64)
+    return "0x" + address[2:].zfill(64)
 
 
 def get_addresses(
@@ -133,6 +145,10 @@ def get_addresses(
     underlying_address: str | None = None,
     underlying_symbol: str | None = None,
 ) -> list[str]:
+    """
+    get the token address based on underlying address or symbol and
+    Returns it.
+    """
     # Up to 2 addresses can match the given `underlying_address` or `underlying_symbol`.
     if underlying_address:
         addresses = [
@@ -148,10 +164,8 @@ def get_addresses(
         ]
     else:
         raise ValueError(
-            "Both `underlying_address` =  {} or `underlying_symbol` = {} are not specified.".format(
-                underlying_address,
-                underlying_symbol,
-            )
+            f"Both `underlying_address` =  {underlying_symbol} "
+            f"or `underlying_symbol` = {underlying_symbol} are not specified."
         )
     assert len(addresses) <= 2
     return addresses
@@ -161,6 +175,9 @@ def get_underlying_address(
     token_parameters: TokenParameters,
     underlying_symbol: str,
 ) -> str:
+    """
+    Retrieves the underlying address for a given underlying symbol.
+    """
     # One underlying address at maximum can match the given `underlying_symbol`.
     underlying_addresses = {
         x.underlying_address

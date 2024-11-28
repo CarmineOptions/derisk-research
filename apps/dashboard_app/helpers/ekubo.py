@@ -1,3 +1,8 @@
+"""
+A module that interacts with an API to fetch the latest
+liquidity data and applies it to a dataframe.
+"""
+
 import logging
 import time
 
@@ -6,6 +11,10 @@ import requests
 
 
 class EkuboLiquidity:
+    """
+     Fetches data from a liquidity API and send it to the dataframe which updates the
+     liquidity of a token pair. 
+    """
     URL = "http://178.32.172.153/orderbook/"
     DEX = "Ekubo"
     LOWER_BOUND_VALUE = 0.95
@@ -61,7 +70,7 @@ class EkuboLiquidity:
                 data=liquidity,
                 price=price,
                 price_diff=price_diff,
-                bids=True if bids_or_asks["type"] == "bids" else False,
+                bids = bids_or_asks["type"] == "bids",
             ),
         )
         self.data["debt_token_supply"] += self.data["Ekubo_debt_token_supply"]
@@ -81,14 +90,13 @@ class EkuboLiquidity:
         :return: dict[str, str | list[float]]
         """
 
-        params = self.params_for_bids
+        params = self.params_for_bids if bids else self.params_for_asks
         if not bids:
-            params = self.params_for_asks
             logging.warning(
                 "Using collateral token as base token and debt token as quote token."
             )
 
-        response = requests.get(self.URL, params=params)
+        response = requests.get(self.URL, params=params, timeout=10)
 
         if response.ok:
             liquidity = response.json()
@@ -99,13 +107,12 @@ class EkuboLiquidity:
                 data["prices"], data["quantities"] = zip(*liquidity[data["type"]])
             except ValueError:
                 time.sleep(300 if bids else 5)
-                self.fetch_liquidity(bids=True)
-            else:
-                return data
-        else:
-            time.sleep(300 if bids else 5)
-            self.fetch_liquidity(
-                bids=False if bids else True,
+                return self.fetch_liquidity(bids=True)
+            return data
+
+        time.sleep(300 if bids else 5)
+        return self.fetch_liquidity(
+            bids= not bids,
             )
 
     def _get_available_liquidity(
