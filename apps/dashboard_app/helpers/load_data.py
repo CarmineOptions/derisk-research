@@ -19,7 +19,6 @@ from dashboard_app.helpers.protocol_stats import (
 from dashboard_app.helpers.tools import get_prices
 
 logger = logging.getLogger(__name__)
-data_connector = DataConnector()
 
 
 class DashboardDataHandler:
