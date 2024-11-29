@@ -96,9 +96,9 @@ docker-compose exec backend bash
 ```
 
 ## How to run migration command:
-1. Go to `derisk-research/apps` directory
-2. Then run bash script:
+1. Set up `.env.dev` into `derisk-research/apps/data_handler`
+2. Go back to `derisk-research/apps` directory
+3. Then run bash script to migrate:
 ```bash
 bash data_handler/migrate.sh
 ```
-3. During running script please complete all necessary steps, such as input `DB username`, `DB password` and `migration message`.
