@@ -1,0 +1,47 @@
+name: DashBoard App CI Workflow
+
+on: [push]
+
+jobs:
+  run_tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: data_handler
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres" 
+          --health-interval 10s 
+          --health-timeout 5s 
+          --health-retries 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+      - name: Install dependencies for Dashboard App
+        working-directory: ./apps/dashboard_app
+        run: |
+          echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
+          poetry lock --no-update
+          poetry install
+      - name: Prepare Environment File
+        working-directory: ./apps/dashboard_app
+        run: |
+          cp .env.dev .env
+      - name: Run Tests for Dashboard_App
+        working-directory: ./apps/dashboard_app
+        run: poetry run pytest

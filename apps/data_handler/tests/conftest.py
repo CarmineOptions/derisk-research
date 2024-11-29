@@ -77,28 +77,25 @@ def mock_nostra_event_db_connector():
     """
     mock_nostra_event_db_connector = MagicMock(spec=NostraEventDBConnector)
     mock_nostra_event_db_connector.get_last_block.return_value = 0
-    mock_nostra_event_db_connector.create_debt_mint_event = MagicMock()
-    mock_nostra_event_db_connector.create_debt_burn_event = MagicMock()
-    mock_nostra_event_db_connector.create_debt_transfer_event = MagicMock()
     mock_nostra_event_db_connector.create_bearing_collateral_burn_event = MagicMock()
+    mock_nostra_event_db_connector.create_bearing_collateral_mint_event = MagicMock()
+    mock_nostra_event_db_connector.create_debt_burn_event = MagicMock()
+    mock_nostra_event_db_connector.create_debt_mint_event = MagicMock()
+    mock_nostra_event_db_connector.create_debt_transfer_event = MagicMock()
+    mock_nostra_event_db_connector.create_interest_rate_model_event = MagicMock()
+    mock_nostra_event_db_connector.create_non_interest_bearing_collateral_burn_event = (
+        MagicMock()
+    )
+    mock_nostra_event_db_connector.create_non_interest_bearing_collateral_mint_event = (
+        MagicMock()
+    )
     yield mock_nostra_event_db_connector
-
-
-@pytest.fixture(scope="function")
-def mock_nostra_data_parser():
-    """
-    Mock for NostraDataParser
-    :return: None
-    """
-    mock_nostra_data_parser = MagicMock(spec=NostraDataParser)
-    yield mock_nostra_data_parser
 
 
 @pytest.fixture(scope="function")
 def transformer(
     mock_api_connector,
     mock_nostra_event_db_connector,
-    mock_nostra_data_parser,
 ):
     """
     Creates an instance of NostraTransformer with mocked dependencies.
@@ -113,5 +110,5 @@ def transformer(
         transformer = NostraTransformer()
         transformer.api_connector = mock_api_connector
         transformer.db_connector = mock_nostra_event_db_connector
-        transformer.data_parser = mock_nostra_data_parser
+        transformer.data_parser = NostraDataParser()
         return transformer
