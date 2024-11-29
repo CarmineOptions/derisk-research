@@ -12,12 +12,13 @@ echo "Installing Poetry globally..."
 curl -sSL https://install.python-poetry.org | python3 -
 
 echo "Installing all dependencies for \"data_handler\" with Poetry..."
-cd data_handler
-poetry install
-cd ..
+poetry -C data_handler install
+
+echo "Activating environment..."
+poetry -C data_handler shell
 
 echo "Applying latest existing migrations..."
-alembic -c data_handler/alembic.ini upgrade head
+poetry -C data_handler run alembic -c data_handler/alembic.ini upgrade head
 
 echo "Generating new migration..."
-alembic -c data_handler/alembic.ini revision --autogenerate -m "Migration"
+poetry -C data_handler run alembic -c data_handler/alembic.ini revision --autogenerate -m "Migration"
