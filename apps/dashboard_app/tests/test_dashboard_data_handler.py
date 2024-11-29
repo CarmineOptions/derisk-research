@@ -6,14 +6,38 @@ from dashboard_app.helpers.load_data import DashboardDataHandler
 def mock_data_connector():
     """Fixture to mock the DataConnector."""
     with patch("dashboard_app.helpers.load_data.DataConnector") as MockConnector:
-        connector = MockConnector.return_value
-        connector.fetch_data.return_value = MagicMock()
+        connector = MockConnector
+        # Mocking fetch_data calls with dummy data
+        connector.fetch_data.side_effect = [
+            MagicMock(to_dict=lambda orient: [
+                {
+                    "user": "user1",
+                    "collateral_enabled": [True, False],
+                    "collateral": [100, 200],
+                    "debt": [50, 150],
+                    "block": 5
+                },
+                {
+                    "user": "user2",
+                    "collateral_enabled": [True],
+                    "collateral": [300],
+                    "debt": [100],
+                    "block": 6
+                }
+            ]),
+            MagicMock(
+                collateral=1.5,
+                debt=2.0
+            ),
+        ]
         yield connector
 
 @pytest.fixture
 def handler(mock_data_connector):
     """Fixture to initialize DashboardDataHandler."""
-    return DashboardDataHandler()
+    with patch("dashboard_app.helpers.load_data.DataConnector", return_value=mock_data_connector):
+        handler = DashboardDataHandler()
+        yield handler
 
 # Positive Scenario: Test Initialization
 def test_init_dashboard_data_handler(handler):
@@ -42,8 +66,9 @@ def test_load_data_success(mock_get_prices, handler):
 
 # Negative Scenario: Missing or Invalid Data
 def test_load_data_missing_data(handler):
-    handler._get_loan_stats = MagicMock(side_effect=Exception("Data fetch error"))
-    with pytest.raises(Exception, match="Data fetch error"):
+    """Test for handling missing data in load_data method."""
+    handler._get_loan_stats = MagicMock(side_effect=AttributeError("'list' object has no attribute 'keys'"))
+    with pytest.raises(AttributeError, match="'list' object has no attribute 'keys'"):
         handler.load_data()
 
 # Negative Scenario: Invalid Prices
