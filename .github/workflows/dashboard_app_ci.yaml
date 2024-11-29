@@ -52,7 +52,7 @@ jobs:
           sed -i 's/DB_NAME=.*/DB_NAME=dashboard_app/' .env
       - name: Add DATABASE_URL to Environment
         working-directory: ./apps/data_handler
-        run: cp .env .env.dev
+        run: cp .env.dev .env
 
       - name: Set DATABASE_URL for Tests
         run: echo "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/dashboard_app" >> $GITHUB_ENV
