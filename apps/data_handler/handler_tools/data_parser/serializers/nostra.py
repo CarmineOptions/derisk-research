@@ -1,4 +1,5 @@
 from decimal import Decimal
+
 from pydantic import BaseModel, ValidationInfo, field_validator
 from shared.helpers import add_leading_zeros
 
@@ -34,6 +35,25 @@ class DebtMintEventData(BaseModel):
             raise ValueError(f"Invalid address provided for {info.field_name}")
         return add_leading_zeros(value)
 
+    @field_validator("amount", mode="before")
+    def validate_numeric_string(cls, value: str, info: ValidationInfo) -> Decimal:
+        """
+        Validates that the provided amount is a valid hexadecimal string and converts it to a Decimal.
+        Args:
+            value (str): The amount string to validate.
+            info (ValidationInfo): Validation context information.
+        Raises:
+            ValueError: If the provided amount is not a valid hexadecimal number.
+        Returns:
+            Decimal: The validated and converted amount as a Decimal.
+        """
+        try:
+            return Decimal(int(value, 16))
+        except ValueError:
+            raise ValueError(
+                f"{info.field_name} field is not a valid hexadecimal number"
+            )
+
 
 class DebtBurnEventData(BaseModel):
     """
@@ -65,6 +85,25 @@ class DebtBurnEventData(BaseModel):
         if not value.startswith("0x"):
             raise ValueError(f"Invalid address provided for {info.field_name}")
         return add_leading_zeros(value)
+
+    @field_validator("amount", mode="before")
+    def validate_numeric_string(cls, value: str, info: ValidationInfo) -> Decimal:
+        """
+        Validates that the provided amount is a valid hexadecimal string and converts it to a Decimal.
+        Args:
+            value (str): The amount string to validate.
+            info (ValidationInfo): Validation context information.
+        Raises:
+            ValueError: If the provided amount is not a valid hexadecimal number.
+        Returns:
+            Decimal: The validated and converted amount as a Decimal.
+        """
+        try:
+            return Decimal(int(value, 16))
+        except ValueError:
+            raise ValueError(
+                f"{info.field_name} field is not a valid hexadecimal number"
+            )
 
 
 class InterestRateModelEventData(BaseModel):
@@ -100,6 +139,25 @@ class InterestRateModelEventData(BaseModel):
             raise ValueError(f"Invalid address provided for {info.field_name}")
         return add_leading_zeros(value)
 
+    @field_validator("lending_index", "borrow_index", mode="before")
+    def validate_numeric_string(cls, value: str, info: ValidationInfo) -> Decimal:
+        """
+        Validates that the provided amount is a valid hexadecimal string and converts it to a Decimal.
+        Args:
+            value (str): The amount string to validate.
+            info (ValidationInfo): Validation context information.
+        Raises:
+            ValueError: If the provided amount is not a valid hexadecimal number.
+        Returns:
+            Decimal: The validated and converted amount as a Decimal.
+        """
+        try:
+            return Decimal(int(value, 16))
+        except (ValueError, TypeError):
+            raise ValueError(
+                f"{info.field_name} field is not a valid hexadecimal number"
+            )
+
 
 class DebtTransferEventData(BaseModel):
     """
@@ -134,6 +192,25 @@ class DebtTransferEventData(BaseModel):
             raise ValueError(f"Invalid address provided for {info.field_name}")
         return add_leading_zeros(value)
 
+    @field_validator("amount", mode="before")
+    def validate_numeric_string(cls, value: str, info: ValidationInfo) -> Decimal:
+        """
+        Validates that the provided amount is a valid hexadecimal string and converts it to a Decimal.
+        Args:
+            value (str): The amount string to validate.
+            info (ValidationInfo): Validation context information.
+        Raises:
+            ValueError: If the provided amount is not a valid hexadecimal number.
+        Returns:
+            Decimal: The validated and converted amount as a Decimal.
+        """
+        try:
+            return Decimal(int(value, 16))
+        except ValueError:
+            raise ValueError(
+                f"{info.field_name} field is not a valid hexadecimal number"
+            )
+
 
 class BearingCollateralMintEventData(BaseModel):
     """
@@ -166,6 +243,25 @@ class BearingCollateralMintEventData(BaseModel):
             raise ValueError(f"Invalid address provided for {info.field_name}")
         return add_leading_zeros(value)
 
+    @field_validator("amount", mode="before")
+    def validate_numeric_string(cls, value: str, info: ValidationInfo) -> Decimal:
+        """
+        Validates that the provided amount is a valid hexadecimal string and converts it to a Decimal.
+        Args:
+            value (str): The amount string to validate.
+            info (ValidationInfo): Validation context information.
+        Raises:
+            ValueError: If the provided amount is not a valid hexadecimal number.
+        Returns:
+            Decimal: The validated and converted amount as a Decimal.
+        """
+        try:
+            return Decimal(int(value, 16))
+        except ValueError:
+            raise ValueError(
+                f"{info.field_name} field is not a valid hexadecimal number"
+            )
+
 
 class BearingCollateralBurnEventData(BaseModel):
     """
@@ -197,25 +293,45 @@ class BearingCollateralBurnEventData(BaseModel):
         if not value.startswith("0x"):
             raise ValueError(f"Invalid address provided for {info.field_name}")
         return add_leading_zeros(value)
-    
-    
+
+    @field_validator("amount", mode="before")
+    def validate_numeric_string(cls, value: str, info: ValidationInfo) -> Decimal:
+        """
+        Validates that the provided amount is a valid hexadecimal string and converts it to a Decimal.
+        Args:
+            value (str): The amount string to validate.
+            info (ValidationInfo): Validation context information.
+        Raises:
+            ValueError: If the provided amount is not a valid hexadecimal number.
+        Returns:
+            Decimal: The validated and converted amount as a Decimal.
+        """
+        try:
+            return Decimal(int(value, 16))
+        except ValueError:
+            raise ValueError(
+                f"{info.field_name} field is not a valid hexadecimal number"
+            )
+
+
 class NonInterestBearingCollateralMintEventData(BaseModel):
     """
     Serializer for non-interest bearing collateral mint event data.
-    
+
     Attributes:
         sender (str): The address of the sender
         recipient (str): The address of the recipient
         raw_amount (Decimal): The raw amount being transferred
     """
+
     sender: str
     recipient: str
     raw_amount: Decimal
-    
+
     @field_validator("sender", "recipient")
     def validate_address(cls, value: str, info: ValidationInfo) -> str:
         """
-        Validates that the provided address starts with '0x' and 
+        Validates that the provided address starts with '0x' and
         formats it with leading zeros.
         Args:
             value (str): The address string to validate.
@@ -227,8 +343,8 @@ class NonInterestBearingCollateralMintEventData(BaseModel):
         if not value.startswith("0x"):
             raise ValueError(f"Invalid address provided for {info.field_name}")
         return add_leading_zeros(value)
-    
-    @field_validator("raw_amount")
+
+    @field_validator("raw_amount", mode="before")
     def validate_numeric_string(cls, value: str, info: ValidationInfo) -> Decimal:
         """
         Validates that the provided amount is numeric and converts it to a Decimal.
@@ -245,23 +361,24 @@ class NonInterestBearingCollateralMintEventData(BaseModel):
             raise ValueError(
                 f"{info.field_name} field is not a valid hexadecimal number"
             )
-        
+
 
 class NonInterestBearingCollateralBurnEventData(BaseModel):
     """
     Serializer for non-interest bearing collateral burn event data.
-    
+
     Attributes:
         user (str): The address of the user
         face_amount (Decimal): The face amount being burned
     """
+
     user: str
     face_amount: Decimal
 
     @field_validator("user")
     def validate_address(cls, value: str, info: ValidationInfo) -> str:
         """
-        Validates that the provided address starts with '0x' and 
+        Validates that the provided address starts with '0x' and
         formats it with leading zeros.
         Args:
             value (str): The address string to validate.
@@ -273,8 +390,8 @@ class NonInterestBearingCollateralBurnEventData(BaseModel):
         if not value.startswith("0x"):
             raise ValueError(f"Invalid address provided for {info.field_name}")
         return add_leading_zeros(value)
-    
-    @field_validator("face_amount")
+
+    @field_validator("face_amount", mode="before")
     def validate_numeric_string(cls, value: str, info: ValidationInfo) -> Decimal:
         """
         Validates that the provided amount is numeric and converts it to a Decimal.

@@ -29,19 +29,18 @@ class NostraDataParser:
         Parses the interest rate model event data into a human-readable format.
         The event data is fetched from on-chain logs and is structured in the following way:
         - event_data[0]: The debt token address (as a hexadecimal string).
-        - event_data[5]: The lending interest rate index (as a hexadecimal in 18 decimal places).
-        - event_data[7]: The borrow interest rate index (as a hexadecimal in 18 decimal places).
+        - event_data[1]: The lending interest rate index (as a hexadecimal in 18 decimal places).
+        - event_data[2]: The borrow interest rate index (as a hexadecimal in 18 decimal places).
         Args:
             event_data (List[Any]): A list containing the raw event data.
-                Expected order: [debt_token, lending_rate, _, borrow_rate, _,
-                                 lending_index, _, borrow_index, _]
+                Expected order: [debt_token, lending_index, _, borrow_index, _]
         Returns:
             InterestRateModelEventData: A model with the parsed event data.
         """
         return InterestRateModelEventData(
             debt_token=event_data[0],
-            lending_index=event_data[5],
-            borrow_index=event_data[7],
+            lending_index=event_data[1],
+            borrow_index=event_data[2],
         )
 
     @classmethod
@@ -64,7 +63,9 @@ class NostraDataParser:
             NonInterestBearingCollateralMintEventData: A model with the parsed event data.
         """
         return NonInterestBearingCollateralMintEventData(
-            sender=event_data[0], recipient=event_data[1], raw_amount=event_data[2]
+            sender=event_data[0],
+            recipient=event_data[1],
+            raw_amount=event_data[2],
         )
 
     @classmethod
@@ -86,7 +87,8 @@ class NostraDataParser:
             NonInterestBearingCollateralBurnEventData: A model with the parsed event data.
         """
         return NonInterestBearingCollateralBurnEventData(
-            user=event_data[0], face_amount=event_data[1]
+            user=event_data[0],
+            face_amount=event_data[1],
         )
 
     def parse_interest_bearing_collateral_mint_event(
@@ -130,7 +132,7 @@ class NostraDataParser:
         """
         return BearingCollateralBurnEventData(
             user=event_data[0],
-            amount=Decimal(int(event_data[1], 16)),
+            amount=event_data[1],
         )
 
     def parse_debt_transfer_event(self, event_data: List[Any]) -> DebtTransferEventData:
@@ -148,7 +150,7 @@ class NostraDataParser:
         return DebtTransferEventData(
             sender=event_data[0],
             recipient=event_data[1],
-            amount=Decimal(int(event_data[2], 16)),
+            amount=event_data[2],
         )
 
     @classmethod
@@ -166,7 +168,7 @@ class NostraDataParser:
         """
         return DebtMintEventData(
             user=event_data[0],
-            amount=Decimal(int(event_data[1], 16)),
+            amount=event_data[1],
         )
 
     @classmethod
@@ -184,5 +186,5 @@ class NostraDataParser:
         """
         return DebtBurnEventData(
             user=event_data[0],
-            amount=Decimal(int(event_data[1], 16)),
+            amount=event_data[1],
         )
