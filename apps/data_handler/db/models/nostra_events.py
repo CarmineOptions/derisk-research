@@ -1,7 +1,34 @@
 from decimal import Decimal
+
 from data_handler.db.models.event import EventBaseModel
 from sqlalchemy import Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column
+
+
+class BearingCollateralBurnEventModel(EventBaseModel):
+    """
+    Database model for BearingCollateralBurn event, inheriting from EventBaseModel.
+
+    This model stores the user address and the amount burned.
+    """
+
+    __tablename__ = "bearing_collateral_burn_event"
+
+    user: Mapped[str] = mapped_column(String, nullable=False)
+    amount: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
+
+
+class BearingCollateralMintEventModel(EventBaseModel):
+    """
+    Database model for BearingCollateral mint event, inheriting from EventBaseModel.
+
+    This model stores the user address and the amount minted.
+    """
+
+    __tablename__ = "bearing_collateral_mint_event"
+
+    user: Mapped[str] = mapped_column(String, nullable=False)
+    amount: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
 
 
 class DebtMintEventModel(EventBaseModel):
@@ -25,19 +52,6 @@ class DebtBurnEventModel(EventBaseModel):
     """
 
     __tablename__ = "debt_burn_event"
-
-    user: Mapped[str] = mapped_column(String, nullable=False)
-    amount: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
-
-
-class BearingCollateralBurnEventModel(EventBaseModel):
-    """
-    Database model for BearingCollateralBurn event, inheriting from EventBaseModel.
-
-    This model stores the user address and the amount burned.
-    """
-
-    __tablename__ = "bearing_collateral_burn_event"
 
     user: Mapped[str] = mapped_column(String, nullable=False)
     amount: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
@@ -74,14 +88,24 @@ class InterestRateModelEventModel(EventBaseModel):
     borrow_index: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
 
 
-class BearingCollateralMintEventModel(EventBaseModel):
+class NonInterestBearingCollateralMintEventModel(EventBaseModel):
     """
-    Database model for BearingCollateral mint event, inheriting from EventBaseModel.
-
-    This model stores the user address and the amount minted.
+    Database model for NonInterestBearingCollateralMint event.
     """
 
-    __tablename__ = "bearing_collateral_mint_event"
+    __tablename__ = "non_interest_bearing_collateral_mint_event"
+
+    sender: Mapped[str] = mapped_column(String, nullable=False)
+    recipient: Mapped[str] = mapped_column(String, nullable=False)
+    amount: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
+
+
+class NonInterestBearingCollateralBurnEventModel(EventBaseModel):
+    """
+    Database model for NonInterestBearingCollateralBurn event.
+    """
+
+    __tablename__ = "non_interest_bearing_collateral_burn_event"
 
     user: Mapped[str] = mapped_column(String, nullable=False)
     amount: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)

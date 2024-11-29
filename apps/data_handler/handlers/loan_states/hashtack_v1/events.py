@@ -12,7 +12,7 @@ from data_handler.handlers.helpers import MAX_ROUNDING_ERRORS, get_symbol
 from data_handler.handlers.settings import TokenSettings
 
 from data_handler.db.crud import InitializerDBConnector
-from shared.constants import TOKEN_SETTINGS
+from shared.constants import TOKEN_SETTINGS, ProtocolIDs
 from shared.helpers import add_leading_zeros
 from shared.loan_entity import LoanEntity
 from shared.state import State
@@ -431,6 +431,7 @@ class HashstackV1State(State):
     debt, thus we always rewrite the balances whenever they are updated.
     """
 
+    PROTOCOL_NAME: str = ProtocolIDs.HASHSTACK_V1.value
     ADDRESSES_TO_TOKENS: dict[str, str] = ADDRESSES_TO_TOKENS
     EVENTS_METHODS_MAPPING: dict[str, str] = EVENTS_METHODS_MAPPING
 
