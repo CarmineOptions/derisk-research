@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [ "$(basename $(dirname $(pwd)))/$(basename $(pwd))" != "derisk-research/apps" ]; then
+    echo "Current path to run this script should be in the \"~/derisk-research/apps\" directory"
+    exit 1
+fi
+
 echo "Loading \".env.dev\" file..."
 source data_handler/.env.dev
 
