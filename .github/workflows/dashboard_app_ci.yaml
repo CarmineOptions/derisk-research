@@ -51,6 +51,9 @@ jobs:
           sed -i 's/DB_PASSWORD=.*/DB_PASSWORD=postgres/' .env
           sed -i 's/DB_NAME=.*/DB_NAME=dashboard_app/' .env
 
+      - name: Set DATABASE_URL for Tests
+        run: echo "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/dashboard_app" >> $GITHUB_ENV
+
       - name: Wait for Database to be Ready
         run: |
           for i in {1..30}; do
@@ -61,6 +64,13 @@ jobs:
         run: |
           nc -zv 127.0.0.1 5432
 
+      - name: Create Test Database If Not Exists
+        run: |
+          PGPASSWORD=postgres psql -h 127.0.0.1 -p 5432 -U postgres -tc "SELECT 1 FROM pg_database WHERE datname = 'dashboard_app'" | grep -q 1 || \
+          PGPASSWORD=postgres psql -h 127.0.0.1 -p 5432 -U postgres -c "CREATE DATABASE dashboard_app;"
+
       - name: Run Tests for Dashboard_App
         working-directory: ./apps/dashboard_app
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/dashboard_app
         run: poetry run pytest
