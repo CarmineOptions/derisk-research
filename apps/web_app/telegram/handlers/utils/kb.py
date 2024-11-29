@@ -71,6 +71,11 @@ def menu():
             ],
             [
                 InlineKeyboardButton(
+                    text="Create subscription", callback_data="create_subscription"
+                )
+            ],
+            [
+                InlineKeyboardButton(
                     text="Unsubscribe all", callback_data="all_unsubscribe"
                 )
             ],
