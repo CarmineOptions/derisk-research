@@ -90,13 +90,14 @@ class EkuboLiquidity:
         :return: dict[str, str | list[float]]
         """
 
-        params = self.params_for_bids if bids else self.params_for_asks
+        params = self.params_for_bids
         if not bids:
+            params = self.params_for_asks
             logging.warning(
                 "Using collateral token as base token and debt token as quote token."
             )
 
-        response = requests.get(self.URL, params=params, timeout=10)
+        response = requests.get(self.URL, params=params)
 
         if response.ok:
             liquidity = response.json()
@@ -107,12 +108,13 @@ class EkuboLiquidity:
                 data["prices"], data["quantities"] = zip(*liquidity[data["type"]])
             except ValueError:
                 time.sleep(300 if bids else 5)
-                return self.fetch_liquidity(bids=True)
-            return data
-
-        time.sleep(300 if bids else 5)
-        return self.fetch_liquidity(
-            bids= not bids,
+                self.fetch_liquidity(bids=True)
+            else:
+                return data
+        else:
+            time.sleep(300 if bids else 5)
+            self.fetch_liquidity(
+                bids=False if bids else True,
             )
 
     def _get_available_liquidity(

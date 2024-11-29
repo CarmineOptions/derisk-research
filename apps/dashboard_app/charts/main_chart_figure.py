@@ -121,7 +121,7 @@ def get_main_chart_figure(
     customdata = get_custom_data(data)
 
     # Add bars for each protocol and the total liquidable debt
-    for col in color_map_protocol.items():
+    for col in color_map_protocol.keys():
         try:
             figure.add_trace(
                 plotly.graph_objs.Bar(
