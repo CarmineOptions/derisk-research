@@ -25,6 +25,6 @@ async def bot_start_polling():
 
 
 if __name__ == "__main__":
-    if os.getenv("ENV") == "DEV":
+    if bot is not None:
         loop = asyncio.get_event_loop()
         loop.run_until_complete(bot_start_polling())

@@ -108,3 +108,8 @@ class TelegramCrud:
             if limit == 1:
                 return await db.scalar(stmp)
             return await db.scalars(stmp).all()
+
+    async def write_to_db(self, obj: ModelType) -> None:
+        async with self.Session() as db:
+            db.add(obj)
+            await db.commit()
