@@ -61,10 +61,6 @@ jobs:
         run: |
           nc -zv 127.0.0.1 5432
 
-      - name: Create Test Database
-        run: |
-          PGPASSWORD=postgres psql -h 127.0.0.1 -p 5432 -U postgres -c "CREATE DATABASE dashboard_app;"
-
       - name: Run Tests for Dashboard_App
         working-directory: ./apps/dashboard_app
         run: poetry run pytest
