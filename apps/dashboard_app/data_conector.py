@@ -46,6 +46,7 @@ class DataConnector:
             f"{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}"
             f"@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
         )
+        print(f"Database connection established: {self.db_url}")
         self.engine = sqlalchemy.create_engine(self.db_url)
 
     def fetch_data(self, query: str) -> pd.DataFrame:
