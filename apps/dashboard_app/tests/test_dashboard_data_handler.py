@@ -35,7 +35,9 @@ def mock_data_connector():
 @pytest.fixture
 def handler(mock_data_connector):
     """Fixture to initialize DashboardDataHandler."""
-    return DashboardDataHandler()
+    with patch("dashboard_app.helpers.load_data.DataConnector", return_value=mock_data_connector):
+        handler = DashboardDataHandler()
+        yield handler
 
 # Positive Scenario: Test Initialization
 def test_init_dashboard_data_handler(handler):
