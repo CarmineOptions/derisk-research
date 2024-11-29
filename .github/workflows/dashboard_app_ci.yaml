@@ -45,15 +45,16 @@ jobs:
         working-directory: ./apps/dashboard_app
         run: |
           cp .env.dev .env
-          sed -i 's/DB_HOST=.*/DB_HOST=db/' .env
+          sed -i 's/DB_HOST=.*/DB_HOST=127.0.0.1/' .env
           sed -i 's/DB_PORT=.*/DB_PORT=5432/' .env
           sed -i 's/DB_USER=.*/DB_USER=postgres/' .env
           sed -i 's/DB_PASSWORD=.*/DB_PASSWORD=password/' .env
           sed -i 's/DB_NAME=.*/DB_NAME=data_handler/' .env
 
       - name: Add DATABASE_URL to Environment
-        working-directory: ./apps/data_handler
-        run: cp .env.dev .env
+        working-directory: ./apps/dashboard_app
+        run: |
+          echo "DATABASE_URL=postgresql://postgres:password@127.0.0.1:5432/data_handler" >> $GITHUB_ENV
 
       - name: Wait for Database to be Ready
         run: |
@@ -68,3 +69,4 @@ jobs:
       - name: Run Tests for Dashboard_App
         working-directory: ./apps/dashboard_app
         run: poetry run pytest
+
