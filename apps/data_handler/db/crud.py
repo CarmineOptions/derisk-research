@@ -430,6 +430,7 @@ class InitializerDBConnector:
         Initialize the database connection and session factory.
         :param db_url: Database connection URL.
         """
+        print(f"Database connection established: {db_url}")
         self.engine = create_engine(db_url)
         Base.metadata.create_all(self.engine)
         self.session_factory = sessionmaker(bind=self.engine)
