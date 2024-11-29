@@ -123,6 +123,17 @@ def test_get_general_stats(mock_state, mock_loan_stats):
     assert result["Total debt (USD)"].iloc[0] == 1000
 
 
+def test_get_general_stats_empty_state():
+    result = get_general_stats([], {})
+    assert isinstance(result, pd.DataFrame)
+    assert len(result) == 0
+
+
+def test_get_general_stats_invalid_loan_stats(mock_state):
+    with pytest.raises(KeyError):
+        get_general_stats([mock_state], {"InvalidProtocol": pd.DataFrame()})
+
+
 @patch("dashboard_app.helpers.protocol_stats.get_protocol")
 @patch("dashboard_app.helpers.protocol_stats.get_supply_function_call_parameters")
 @patch("dashboard_app.helpers.protocol_stats.asyncio.run")
@@ -150,6 +161,25 @@ def test_get_supply_stats(
 
 
 @patch("dashboard_app.helpers.protocol_stats.get_protocol")
+@patch("dashboard_app.helpers.protocol_stats.get_supply_function_call_parameters")
+@patch("dashboard_app.helpers.protocol_stats.asyncio.run")
+def test_get_supply_stats_blockchain_error(
+    mock_run, 
+    mock_get_params, 
+    mock_get_protocol,
+    mock_state,
+    mock_prices,
+    token_addresses
+):
+    mock_get_protocol.return_value = "zkLend"
+    mock_get_params.return_value = ([token_addresses["ETH"]], "felt_total_supply")
+    mock_run.side_effect = Exception("Blockchain call failed")
+    
+    with pytest.raises(Exception):
+        get_supply_stats([mock_state], mock_prices)
+
+
+@patch("dashboard_app.helpers.protocol_stats.get_protocol")
 def test_get_collateral_stats(mock_get_protocol, mock_state, token_addresses):
     mock_get_protocol.return_value = "zkLend"
     
@@ -158,6 +188,13 @@ def test_get_collateral_stats(mock_get_protocol, mock_state, token_addresses):
     assert isinstance(result, pd.DataFrame)
     assert "Protocol" in result.columns
     assert "ETH collateral" in result.columns
+
+
+def test_get_collateral_stats_invalid_protocol(mock_state):
+    with patch("dashboard_app.helpers.protocol_stats.get_protocol") as mock_get_protocol:
+        mock_get_protocol.return_value = "InvalidProtocol"
+        with pytest.raises(ValueError):
+            get_collateral_stats([mock_state])
 
 
 @patch("dashboard_app.helpers.protocol_stats.get_protocol")
@@ -169,6 +206,13 @@ def test_get_debt_stats(mock_get_protocol, mock_state, token_addresses):
     assert isinstance(result, pd.DataFrame)
     assert "Protocol" in result.columns
     assert "ETH debt" in result.columns
+
+
+def test_get_debt_stats_invalid_protocol(mock_state):
+    with patch("dashboard_app.helpers.protocol_stats.get_protocol") as mock_get_protocol:
+        mock_get_protocol.return_value = "InvalidProtocol"
+        with pytest.raises(ValueError):
+            get_debt_stats([mock_state])
 
 
 def test_get_utilization_stats():
@@ -192,7 +236,6 @@ def test_get_utilization_stats():
     
     result = get_utilization_stats(general_stats, supply_stats, debt_stats)
     
-    # Round results for comparison
     utilization_columns = [col for col in result.columns if col != "Protocol"]
     result[utilization_columns] = result[utilization_columns].applymap(lambda x: round(x, 4))
     
@@ -200,3 +243,28 @@ def test_get_utilization_stats():
     assert "Protocol" in result.columns
     assert "Total utilization" in result.columns
     assert "ETH utilization" in result.columns
+
+
+def test_get_utilization_stats_division_by_zero():
+    general_stats = pd.DataFrame({
+        "Protocol": ["zkLend"],
+        "Total debt (USD)": [1000],
+    })
+    
+    supply_stats = pd.DataFrame({
+        "Protocol": ["zkLend"],
+        "Total supply (USD)": [0], 
+        **{f"{token} supply": [0] for token in ["ETH", "WBTC", "USDC", "DAI", "USDT", "wstETH", "LORDS", "STRK"]}
+    })
+    
+    debt_stats = pd.DataFrame({
+        "Protocol": ["zkLend"],
+        **{f"{token} debt": [0] for token in ["ETH", "WBTC", "USDC", "DAI", "USDT", "wstETH", "LORDS", "STRK"]}
+    })
+    
+    result = get_utilization_stats(general_stats, supply_stats, debt_stats)
+    
+    # Check if division by zero results in NaN or infinity
+    assert result["Total utilization"].iloc[0] == 1  # When supply is 0, utilization should be 100%
+    assert pd.isna(result["ETH utilization"].iloc[0])  # When both supply and debt are 0, result should be NaN
+    
