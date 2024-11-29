@@ -10,8 +10,8 @@ jobs:
         image: postgres:16
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: dashboard_app
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: data_handler
         ports:
           - 5432:5432
         options: >-
@@ -45,26 +45,6 @@ jobs:
         working-directory: ./apps/dashboard_app
         run: |
           cp .env.dev .env
-          sed -i 's/DB_HOST=.*/DB_HOST=127.0.0.1/' .env
-          sed -i 's/DB_PORT=.*/DB_PORT=5432/' .env
-          sed -i 's/DB_USER=.*/DB_USER=postgres/' .env
-          sed -i 's/DB_PASSWORD=.*/DB_PASSWORD=password/' .env
-          sed -i 's/DB_NAME=.*/DB_NAME=data_handler/' .env
-
-      - name: Add DATABASE_URL to Environment
-        working-directory: ./apps/dashboard_app
-        run: |
-          echo "DATABASE_URL=postgresql://postgres:password@127.0.0.1:5432/data_handler" >> $GITHUB_ENV
-
-      - name: Wait for Database to be Ready
-        run: |
-          for i in {1..30}; do
-            pg_isready -h 127.0.0.1 -p 5432 -U postgres && break || sleep 2;
-          done
-
-      - name: Verify PostgreSQL Port is Open
-        run: |
-          nc -zv 127.0.0.1 5432
 
       - name: Run Tests for Dashboard_App
         working-directory: ./apps/dashboard_app
