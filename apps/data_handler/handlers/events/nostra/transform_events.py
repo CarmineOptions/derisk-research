@@ -11,35 +11,30 @@ from data_handler.db.crud import NostraEventDBConnector
 from data_handler.db.models.base import Base
 from data_handler.db.models.nostra_events import (
     BearingCollateralBurnEventModel,
+    BearingCollateralMintEventModel,
     DebtBurnEventModel,
     DebtMintEventModel,
     DebtTransferEventModel,
+    InterestRateModelEventModel,
+    NonInterestBearingCollateralBurnEventModel,
+    NonInterestBearingCollateralMintEventModel,
 )
 from data_handler.handler_tools.api_connector import DeRiskAPIConnector
 from data_handler.handler_tools.constants import ProtocolAddresses
 from data_handler.handler_tools.data_parser.nostra import NostraDataParser
 from data_handler.handler_tools.data_parser.serializers import (
     BearingCollateralBurnEventData,
+    BearingCollateralMintEventData,
     DebtBurnEventData,
     DebtMintEventData,
     DebtTransferEventData,
+    InterestRateModelEventData,
+    NonInterestBearingCollateralBurnEventData,
+    NonInterestBearingCollateralMintEventData,
 )
 from shared.constants import ProtocolIDs
 
 logger = logging.getLogger(__name__)
-
-EVENT_MAPPING: Dict[str, Tuple[Callable, str]] = {
-    "DebtMint": (NostraDataParser.parse_debt_mint_event, "save_debt_mint_event"),
-    "DebtBurn": (NostraDataParser.parse_debt_burn_event, "save_debt_burn_event"),
-    "DebtTransfer": (
-        NostraDataParser.parse_debt_transfer_event,
-        "save_debt_transfer_event",
-    ),
-    "BearingCollateralBurn": (
-        NostraDataParser.parse_interest_bearing_collateral_burn_event,
-        "save_bearing_collateral_burn_event",
-    ),
-}
 
 
 class NostraTransformer:
@@ -61,22 +56,38 @@ class NostraTransformer:
         self.last_block = self.db_connector.get_last_block(self.PROTOCOL_TYPE)
         self.data_parser = NostraDataParser()
 
-        self.EVENT_MAPPING: Dict[str, Tuple[Callable, str], Type[Base]] = {
-            "DebtMint": (
-                self.data_parser.parse_debt_mint_event,
-                "save_debt_mint_event",
+        self.EVENT_MAPPING: Dict[str, Tuple[Callable, str]] = {
+            "BearingCollateralBurn": (
+                self.data_parser.parse_interest_bearing_collateral_burn_event,
+                "save_bearing_collateral_burn_event",
+            ),
+            "BearingCollateralMint": (
+                self.data_parser.parse_interest_bearing_collateral_mint_event,
+                "save_bearing_collateral_mint_event",
             ),
             "DebtBurn": (
                 self.data_parser.parse_debt_burn_event,
                 "save_debt_burn_event",
             ),
+            "DebtMint": (
+                self.data_parser.parse_debt_mint_event,
+                "save_debt_mint_event",
+            ),
             "DebtTransfer": (
                 self.data_parser.parse_debt_transfer_event,
                 "save_debt_transfer_event",
             ),
-            "BearingCollateralBurn": (
-                self.data_parser.parse_interest_bearing_collateral_burn_event,
-                "save_bearing_collateral_burn_event",
+            "InterestRateModel": (
+                self.data_parser.parse_interest_rate_model_event,
+                "save_interest_rate_model_event",
+            ),
+            "NonInterestBearingCollateralBurn": (
+                self.data_parser.parse_non_interest_bearing_collateral_burn_event,
+                "save_non_interest_bearing_collateral_burn_event",
+            ),
+            "NonInterestBearingCollateralMint": (
+                self.data_parser.parse_non_interest_bearing_collateral_mint_event,
+                "save_non_interest_bearing_collateral_mint_event",
             ),
         }
 
@@ -110,6 +121,50 @@ class NostraTransformer:
                 )
             else:
                 logger.info(f"Event type {event_type} not supported, yet...")
+
+    def save_bearing_collateral_burn_event(
+        self,
+        event_name: str,
+        block_number: int,
+        event_data: BearingCollateralBurnEventData,
+    ) -> None:
+        """
+        Save a BearingCollateralBurn event to the database.
+        """
+        self.db_connector.create_bearing_collateral_burn_event(
+            protocol_id=self.PROTOCOL_TYPE.value,
+            event_name=event_name,
+            block_number=block_number,
+            event_data={
+                "user": event_data.user,
+                "amount": Decimal(event_data.amount),
+            },
+        )
+        logger.info(
+            f"Saved BearingCollateralBurn event: User={event_data.user}, Amount={event_data.amount}"
+        )
+
+    def save_bearing_collateral_mint_event(
+        self,
+        event_name: str,
+        block_number: int,
+        event_data: BearingCollateralMintEventData,
+    ) -> None:
+        """
+        Save a BearingCollateralMint event to the database.
+        """
+        self.db_connector.create_bearing_collateral_mint_event(
+            protocol_id=self.PROTOCOL_TYPE.value,
+            event_name=event_name,
+            block_number=block_number,
+            event_data={
+                "user": event_data.user,
+                "amount": Decimal(event_data.amount),
+            },
+        )
+        logger.info(
+            f"Saved BearingCollateralMint event: User={event_data.user}, Amount={event_data.amount}"
+        )
 
     def save_debt_mint_event(
         self, event_name: str, block_number: int, event_data: DebtMintEventData
@@ -169,26 +224,72 @@ class NostraTransformer:
             f"Saved DebtTransfer event: Sender={event_data.sender}, Recipient={event_data.recipient}, Amount={event_data.amount}"
         )
 
-    def save_bearing_collateral_burn_event(
+    def save_interest_rate_model_event(
         self,
         event_name: str,
         block_number: int,
-        event_data: BearingCollateralBurnEventData,
+        event_data: InterestRateModelEventData,
     ) -> None:
         """
-        Save a BearingCollateralBurn event to the database.
+        Save an InterestRateModel event to the database.
         """
-        self.db_connector.create_bearing_collateral_burn_event(
+        self.db_connector.create_interest_rate_model_event(
+            protocol_id=self.PROTOCOL_TYPE.value,
+            event_name=event_name,
+            block_number=block_number,
+            event_data={
+                "debt_token": event_data.debt_token,
+                "lending_index": Decimal(event_data.lending_index),
+                "borrow_index": Decimal(event_data.borrow_index),
+            },
+        )
+        logger.info(
+            f"Saved InterestRateModel event: DebtToken={event_data.debt_token}, LendingIndex={event_data.lending_index}, BorrowIndex={event_data.borrow_index}"
+        )
+
+    def save_non_interest_bearing_collateral_burn_event(
+        self,
+        event_name: str,
+        block_number: int,
+        event_data: NonInterestBearingCollateralBurnEventData,
+    ) -> None:
+        """
+        Save a NonInterestBearingCollateralBurn event to the database.
+        """
+        self.db_connector.create_non_interest_bearing_collateral_burn_event(
             protocol_id=self.PROTOCOL_TYPE.value,
             event_name=event_name,
             block_number=block_number,
             event_data={
                 "user": event_data.user,
-                "amount": Decimal(event_data.amount),
+                "amount": Decimal(event_data.face_amount),
             },
         )
         logger.info(
-            f"Saved BearingCollateralBurn event: User={event_data.user}, Amount={event_data.amount}"
+            f"Saved NonInterestBearingCollateralBurn event: User={event_data.user}, Amount={event_data.face_amount}"
+        )
+
+    def save_non_interest_bearing_collateral_mint_event(
+        self,
+        event_name: str,
+        block_number: int,
+        event_data: NonInterestBearingCollateralMintEventData,
+    ) -> None:
+        """
+        Save a NonInterestBearingCollateralMint event to the database.
+        """
+        self.db_connector.create_non_interest_bearing_collateral_mint_event(
+            protocol_id=self.PROTOCOL_TYPE.value,
+            event_name=event_name,
+            block_number=block_number,
+            event_data={
+                "sender": event_data.sender,
+                "recipient": event_data.recipient,
+                "amount": Decimal(event_data.raw_amount),
+            },
+        )
+        logger.info(
+            f"Saved NonInterestBearingCollateralMint event: Sender={event_data.sender}, Recipient={event_data.recipient}, Amount={event_data.raw_amount}"
         )
 
     def run(self) -> None:

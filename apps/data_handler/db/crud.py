@@ -19,9 +19,13 @@ from data_handler.db.models import (
 )
 from data_handler.db.models.nostra_events import (
     BearingCollateralBurnEventModel,
+    BearingCollateralMintEventModel,
     DebtBurnEventModel,
     DebtMintEventModel,
     DebtTransferEventModel,
+    InterestRateModelEventModel,
+    NonInterestBearingCollateralBurnEventModel,
+    NonInterestBearingCollateralMintEventModel,
 )
 from data_handler.db.models.zklend_events import (
     AccumulatorsSyncEventModel,
@@ -415,6 +419,47 @@ class DBConnector:
         finally:
             db.close()
 
+    def get_all_events_from_models(
+        self,
+        models: List[Type[ModelType]],
+        protocol_id: Optional[str] = None,
+        event_name: Optional[str] = None,
+        block_number: Optional[int] = None,
+    ) -> List[Base]:
+        """
+        Retrieves events from multiple models based on filtering criteria.
+
+        :param models: List of SQLAlchemy models to query.
+        :param protocol_id: Optional protocol ID to filter by.
+        :param event_name: Optional event name to filter by.
+        :param block_number: Optional block number to filter by.
+        :return: A combined list of events from all specified models.
+        """
+        events = []
+        db = self.Session()
+        try:
+            for model in models:
+                model_filters = []
+                if protocol_id:
+                    model_filters.append(model.protocol_id == protocol_id)
+                if event_name:
+                    model_filters.append(model.event_name == event_name)
+                if block_number:
+                    model_filters.append(model.block_number == block_number)
+
+                query = db.query(model)
+                if model_filters:
+                    query = query.filter(*model_filters)
+
+                fetched_events = query.all()
+                events.extend(fetched_events)
+            return events
+        except SQLAlchemyError as e:
+            logger.error(f"Error retrieving events from models {models}: {e}")
+            raise e
+        finally:
+            db.close()
+
 
 class InitializerDBConnector:
     """
@@ -616,24 +661,20 @@ class ZkLendEventDBConnector(DBConnector):
         :param event_data: A dictionary containing 'token', 'lending_accumulator', and
         'debt_accumulator'.
         """
-        db = self.Session()
+        event = AccumulatorsSyncEventModel(
+            protocol_id=protocol_id,
+            event_name=event_name,
+            block_number=block_number,
+            token=event_data.get("token"),
+            lending_accumulator=event_data.get("lending_accumulator"),
+            debt_accumulator=event_data.get("debt_accumulator"),
+        )
         try:
-            event = AccumulatorsSyncEventModel(
-                protocol_id=protocol_id,
-                event_name=event_name,
-                block_number=block_number,
-                token=event_data.get("token"),
-                lending_accumulator=event_data.get("lending_accumulator"),
-                debt_accumulator=event_data.get("debt_accumulator"),
-            )
-            db.add(event)
-            db.commit()
+            self.write_to_db(event)
+            logger.info(f"AccumulatorsSyncEvent saved: {event}")
         except SQLAlchemyError as e:
-            db.rollback()
             logger.error(f"Error creating AccumulatorsSyncEventModel: {e}")
             raise e
-        finally:
-            db.close()
 
     def create_liquidation_event(
         self, protocol_id: str, event_name: str, block_number: int, event_data: dict
@@ -647,28 +688,24 @@ class ZkLendEventDBConnector(DBConnector):
         'debt_raw_amount', 'debt_face_amount',
         'collateral_token', and 'collateral_amount'.
         """
-        db = self.Session()
+        event = LiquidationEventModel(
+            protocol_id=protocol_id,
+            event_name=event_name,
+            block_number=block_number,
+            liquidator=event_data.get("liquidator"),
+            user=event_data.get("user"),
+            debt_token=event_data.get("debt_token"),
+            debt_raw_amount=event_data.get("debt_raw_amount"),
+            debt_face_amount=event_data.get("debt_face_amount"),
+            collateral_token=event_data.get("collateral_token"),
+            collateral_amount=event_data.get("collateral_amount"),
+        )
         try:
-            event = LiquidationEventModel(
-                protocol_id=protocol_id,
-                event_name=event_name,
-                block_number=block_number,
-                liquidator=event_data.get("liquidator"),
-                user=event_data.get("user"),
-                debt_token=event_data.get("debt_token"),
-                debt_raw_amount=event_data.get("debt_raw_amount"),
-                debt_face_amount=event_data.get("debt_face_amount"),
-                collateral_token=event_data.get("collateral_token"),
-                collateral_amount=event_data.get("collateral_amount"),
-            )
-            db.add(event)
-            db.commit()
+            self.write_to_db(event)
+            logger.info(f"LiquidationEvent saved: {event}")
         except SQLAlchemyError as e:
-            db.rollback()
             logger.error(f"Error creating LiquidationEventModel: {e}")
             raise e
-        finally:
-            db.close()
 
     def create_repayment_event(
         self, protocol_id: str, event_name: str, block_number: int, event_data: dict
@@ -680,26 +717,22 @@ class ZkLendEventDBConnector(DBConnector):
         :param block_number: The block number associated with the event.
         :param event_data: A dictionary containing 'user', 'amount'.
         """
-        db = self.Session()
+        event = RepaymentEventModel(
+            protocol_id=protocol_id,
+            event_name=event_name,
+            block_number=block_number,
+            repayer=event_data.get("repayer"),
+            beneficiary=event_data.get("beneficiary"),
+            token=event_data.get("token"),
+            raw_amount=event_data.get("raw_amount"),
+            face_amount=event_data.get("face_amount"),
+        )
         try:
-            event = RepaymentEventModel(
-                protocol_id=protocol_id,
-                event_name=event_name,
-                block_number=block_number,
-                repayer=event_data.get("repayer"),
-                beneficiary=event_data.get("beneficiary"),
-                token=event_data.get("token"),
-                raw_amount=event_data.get("raw_amount"),
-                face_amount=event_data.get("face_amount"),
-            )
-            db.add(event)
-            db.commit()
+            self.write_to_db(event)
+            logger.info(f"RepaymentEvent saved: {event}")
         except SQLAlchemyError as e:
-            db.rollback()
             logger.error(f"Error creating RepaymentEventModel: {e}")
             raise e
-        finally:
-            db.close()
 
     def create_borrowing_event(
         self, protocol_id: str, event_name: str, block_number: int, event_data: dict
@@ -711,25 +744,21 @@ class ZkLendEventDBConnector(DBConnector):
         :param block_number: The block number associated with the event.
         :param event_data: A dictionary containing 'user', 'token', 'raw_amount', 'face_amount'.
         """
-        db = self.Session()
+        event = BorrowingEventModel(
+            protocol_id=protocol_id,
+            event_name=event_name,
+            block_number=block_number,
+            user=event_data.get("user"),
+            token=event_data.get("token"),
+            raw_amount=event_data.get("raw_amount"),
+            face_amount=event_data.get("face_amount"),
+        )
         try:
-            event = BorrowingEventModel(
-                protocol_id=protocol_id,
-                event_name=event_name,
-                block_number=block_number,
-                user=event_data.get("user"),
-                token=event_data.get("token"),
-                raw_amount=event_data.get("raw_amount"),
-                face_amount=event_data.get("face_amount"),
-            )
-            db.add(event)
-            db.commit()
+            self.write_to_db(event)
+            logger.info(f"BorrowingEvent saved: {event}")
         except SQLAlchemyError as e:
-            db.rollback()
             logger.error(f"Error creating BorrowingEventModel: {e}")
             raise e
-        finally:
-            db.close()
 
     def create_deposit_event(
         self, protocol_id: str, event_name: str, block_number: int, event_data: dict
@@ -741,20 +770,18 @@ class ZkLendEventDBConnector(DBConnector):
         :param block_number: The block number associated with the event.
         :param event_data: A dictionary containing 'user', 'token', 'face_amount'.
         """
-        db = self.Session()
+        event = DepositEventModel(
+            protocol_id=protocol_id,
+            event_name=event_name,
+            block_number=block_number,
+            user=event_data.get("user"),
+            token=event_data.get("token"),
+            face_amount=event_data.get("face_amount"),
+        )
         try:
-            event = DepositEventModel(
-                protocol_id=protocol_id,
-                event_name=event_name,
-                block_number=block_number,
-                user=event_data.get("user"),
-                token=event_data.get("token"),
-                face_amount=event_data.get("face_amount"),
-            )
-            db.add(event)
-            db.commit()
+            self.write_to_db(event)
+            logger.info(f"DepositEvent saved: {event}")
         except SQLAlchemyError as e:
-            db.rollback()
             logger.error(f"Error creating DepositEventModel: {e}")
             raise e
 
@@ -768,24 +795,20 @@ class ZkLendEventDBConnector(DBConnector):
         :param block_number: The block number associated with the event.
         :param event_data: A dictionary containing 'user', 'token', 'face_amount'.
         """
-        db = self.Session()
+        event = WithdrawalEventModel(
+            protocol_id=protocol_id,
+            event_name=event_name,
+            block_number=block_number,
+            user=event_data.get("user"),
+            token=event_data.get("token"),
+            amount=event_data.get("amount"),
+        )
         try:
-            event = WithdrawalEventModel(
-                protocol_id=protocol_id,
-                event_name=event_name,
-                block_number=block_number,
-                user=event_data.get("user"),
-                token=event_data.get("token"),
-                amount=event_data.get("amount"),
-            )
-            db.add(event)
-            db.commit()
+            self.write_to_db(event)
+            logger.info(f"WithdrawalEvent saved: {event}")
         except SQLAlchemyError as e:
-            db.rollback()
             logger.error(f"Error creating WithdrawalEventModel: {e}")
             raise e
-        finally:
-            db.close()
 
     def create_collateral_enabled_disabled_event(
         self, protocol_id: str, event_name: str, block_number: int, event_data: dict
@@ -797,23 +820,19 @@ class ZkLendEventDBConnector(DBConnector):
         :param block_number: The block number associated with the event.
         :param event_data: A dictionary containing 'user', 'token'.
         """
-        db = self.Session()
+        event = CollateralEnabledDisabledEventModel(
+            protocol_id=protocol_id,
+            event_name=event_name,
+            block_number=block_number,
+            user=event_data.get("user"),
+            token=event_data.get("token"),
+        )
         try:
-            event = CollateralEnabledDisabledEventModel(
-                protocol_id=protocol_id,
-                event_name=event_name,
-                block_number=block_number,
-                user=event_data.get("user"),
-                token=event_data.get("token"),
-            )
-            db.add(event)
-            db.commit()
+            self.write_to_db(event)
+            logger.info(f"CollateralEnabledDisabledEvent saved: {event}")
         except SQLAlchemyError as e:
-            db.rollback()
             logger.error(f"Error creating CollateralEnabledDisabledEventModel: {e}")
             raise e
-        finally:
-            db.close()
 
     def get_all_events(
         self,
@@ -829,118 +848,35 @@ class ZkLendEventDBConnector(DBConnector):
         :param block_number: Optional block number to filter by.
         :return: A list of events matching the criteria.
         """
-        db = self.Session()
+        event_models = [
+            AccumulatorsSyncEventModel,
+            LiquidationEventModel,
+            RepaymentEventModel,
+            BorrowingEventModel,
+            DepositEventModel,
+            WithdrawalEventModel,
+            CollateralEnabledDisabledEventModel,
+        ]
+
         try:
-
-            def apply_filters(query):
-                """
-                Inner function to apply filters based on the provided parameters.
-                :param query: The SQLAlchemy query object.
-                :return: The query with filters applied.
-                """
-                if protocol_id is not None:
-                    query = query.filter_by(protocol_id=protocol_id)
-                if event_name is not None:
-                    query = query.filter_by(event_name=event_name)
-                if block_number is not None:
-                    query = query.filter_by(block_number=block_number)
-                return query
-
-            accumulator_query = apply_filters(db.query(AccumulatorsSyncEventModel))
-            liquidation_query = apply_filters(db.query(LiquidationEventModel))
-            combined_query = accumulator_query.union(liquidation_query)
-            events = combined_query.all()
+            events = self.get_all_events_from_models(
+                models=event_models,
+                protocol_id=protocol_id,
+                event_name=event_name,
+                block_number=block_number,
+            )
             return events
-
         except SQLAlchemyError as e:
-            logger.error(f"Error retrieving events: {e}")
+            logger.error(f"Error retrieving ZkLend events: {e}")
             raise e
-
-        finally:
-            db.close()
 
 
 class NostraEventDBConnector(DBConnector):
     """
-    Provides CRUD operations specifically for Nostra events, such as DebtMint, DebtBurn, DebtTransfer,
-    BearingCollateralMint, BearingCollateralBurn, and InterestRateModelUpdate events.
+    Provides CRUD operations specifically for Nostra events, such as
+    BearingCollateralBurn, BearingCollateralMint, DebtMint, DebtBurn, DebtTransfer,
+    InterestRateModelUpdate, NonInterestBearingCollateralMint and NonInterestBearingCollateralMint events.
     """
-
-    def create_debt_mint_event(
-        self, protocol_id: str, event_name: str, block_number: int, event_data: dict
-    ) -> None:
-        """
-        Creates a DebtMintEventModel record in the database.
-        """
-        db = self.Session()
-        try:
-            event = DebtMintEventModel(
-                protocol_id=protocol_id,
-                event_name=event_name,
-                block_number=block_number,
-                user=event_data.get("user"),
-                amount=event_data.get("amount"),
-            )
-            db.add(event)
-            db.commit()
-            logger.info(f"DebtMint event saved: {event}")
-        except SQLAlchemyError as e:
-            db.rollback()
-            logger.error(f"Error creating DebtMintEventModel: {e}")
-            raise e
-        finally:
-            db.close()
-
-    def create_debt_burn_event(
-        self, protocol_id: str, event_name: str, block_number: int, event_data: dict
-    ) -> None:
-        """
-        Creates a DebtBurnEventModel record in the database.
-        """
-        db = self.Session()
-        try:
-            event = DebtBurnEventModel(
-                protocol_id=protocol_id,
-                event_name=event_name,
-                block_number=block_number,
-                user=event_data.get("user"),
-                amount=event_data.get("amount"),
-            )
-            db.add(event)
-            db.commit()
-            logger.info(f"DebtBurn event saved: {event}")
-        except SQLAlchemyError as e:
-            db.rollback()
-            logger.error(f"Error creating DebtBurnEventModel: {e}")
-            raise e
-        finally:
-            db.close()
-
-    def create_debt_transfer_event(
-        self, protocol_id: str, event_name: str, block_number: int, event_data: dict
-    ) -> None:
-        """
-        Creates a DebtTransferEventModel record in the database.
-        """
-        db = self.Session()
-        try:
-            event = DebtTransferEventModel(
-                protocol_id=protocol_id,
-                event_name=event_name,
-                block_number=block_number,
-                sender=event_data.get("sender"),
-                recipient=event_data.get("recipient"),
-                amount=event_data.get("amount"),
-            )
-            db.add(event)
-            db.commit()
-            logger.info(f"DebtTransfer event saved: {event}")
-        except SQLAlchemyError as e:
-            db.rollback()
-            logger.error(f"Error creating DebtTransferEventModel: {e}")
-            raise e
-        finally:
-            db.close()
 
     def create_bearing_collateral_burn_event(
         self, protocol_id: str, event_name: str, block_number: int, event_data: dict
@@ -948,24 +884,166 @@ class NostraEventDBConnector(DBConnector):
         """
         Creates a BearingCollateralBurnEventModel record in the database.
         """
-        db = self.Session()
+        event = BearingCollateralBurnEventModel(
+            protocol_id=protocol_id,
+            event_name=event_name,
+            block_number=block_number,
+            user=event_data.get("user"),
+            amount=event_data.get("amount"),
+        )
         try:
-            event = BearingCollateralBurnEventModel(
-                protocol_id=protocol_id,
-                event_name=event_name,
-                block_number=block_number,
-                user=event_data.get("user"),
-                amount=event_data.get("amount"),
-            )
-            db.add(event)
-            db.commit()
+            self.write_to_db(event)
             logger.info(f"BearingCollateralBurn event saved: {event}")
         except SQLAlchemyError as e:
-            db.rollback()
             logger.error(f"Error creating BearingCollateralBurnEventModel: {e}")
             raise e
-        finally:
-            db.close()
+
+    def create_bearing_collateral_mint_event(
+        self, protocol_id: str, event_name: str, block_number: int, event_data: dict
+    ) -> None:
+        """
+        Creates a BearingCollateralMintEventModel record in the database.
+        """
+        event = BearingCollateralMintEventModel(
+            protocol_id=protocol_id,
+            event_name=event_name,
+            block_number=block_number,
+            user=event_data.get("user"),
+            amount=event_data.get("amount"),
+        )
+        try:
+            self.write_to_db(event)
+            logger.info(f"BearingCollateralMint event saved: {event}")
+        except SQLAlchemyError as e:
+            logger.error(f"Error creating BearingCollateralMintEventModel: {e}")
+            raise e
+
+    def create_debt_burn_event(
+        self, protocol_id: str, event_name: str, block_number: int, event_data: dict
+    ) -> None:
+        """
+        Creates a DebtBurnEventModel record in the database.
+        """
+        event = DebtBurnEventModel(
+            protocol_id=protocol_id,
+            event_name=event_name,
+            block_number=block_number,
+            user=event_data.get("user"),
+            amount=event_data.get("amount"),
+        )
+        try:
+            self.write_to_db(event)
+            logger.info(f"DebtBurn event saved: {event}")
+        except SQLAlchemyError as e:
+            logger.error(f"Error creating DebtBurnEventModel: {e}")
+            raise e
+
+    def create_debt_mint_event(
+        self, protocol_id: str, event_name: str, block_number: int, event_data: dict
+    ) -> None:
+        """
+        Creates a DebtMintEventModel record in the database.
+        """
+        event = DebtMintEventModel(
+            protocol_id=protocol_id,
+            event_name=event_name,
+            block_number=block_number,
+            user=event_data.get("user"),
+            amount=event_data.get("amount"),
+        )
+        try:
+            self.write_to_db(event)
+            logger.info(f"DebtMint event saved: {event}")
+        except SQLAlchemyError as e:
+            logger.error(f"Error creating DebtMintEventModel: {e}")
+            raise e
+
+    def create_debt_transfer_event(
+        self, protocol_id: str, event_name: str, block_number: int, event_data: dict
+    ) -> None:
+        """
+        Creates a DebtTransferEventModel record in the database.
+        """
+        event = DebtTransferEventModel(
+            protocol_id=protocol_id,
+            event_name=event_name,
+            block_number=block_number,
+            sender=event_data.get("sender"),
+            recipient=event_data.get("recipient"),
+            amount=event_data.get("amount"),
+        )
+        try:
+            self.write_to_db(event)
+            logger.info(f"DebtTransfer event saved: {event}")
+        except SQLAlchemyError as e:
+            logger.error(f"Error creating DebtTransferEventModel: {e}")
+            raise e
+
+    def create_interest_rate_model_event(
+        self, protocol_id: str, event_name: str, block_number: int, event_data: dict
+    ) -> None:
+        """
+        Creates a InterestRateModelEventModel record in the database.
+        """
+        event = InterestRateModelEventModel(
+            protocol_id=protocol_id,
+            event_name=event_name,
+            block_number=block_number,
+            debt_token=event_data.get("debt_token"),
+            lending_index=event_data.get("lending_index"),
+            borrow_index=event_data.get("borrow_index"),
+        )
+        try:
+            self.write_to_db(event)
+            logger.info(f"InterestRateModel event saved: {event}")
+        except SQLAlchemyError as e:
+            logger.error(f"Error creating InterestRateModelEventModel: {e}")
+            raise e
+
+    def create_non_interest_bearing_collateral_burn_event(
+        self, protocol_id: str, event_name: str, block_number: int, event_data: dict
+    ) -> None:
+        """
+        Creates a NonInterestBearingCollateralBurnEventModel record in the database.
+        """
+        event = NonInterestBearingCollateralBurnEventModel(
+            protocol_id=protocol_id,
+            event_name=event_name,
+            block_number=block_number,
+            user=event_data.get("user"),
+            amount=event_data.get("amount"),
+        )
+        try:
+            self.write_to_db(event)
+            logger.info(f"NonInterestBearingCollateralBurn event saved: {event}")
+        except SQLAlchemyError as e:
+            logger.error(
+                f"Error creating NonInterestBearingCollateralBurnEventModel: {e}"
+            )
+            raise e
+
+    def create_non_interest_bearing_collateral_mint_event(
+        self, protocol_id: str, event_name: str, block_number: int, event_data: dict
+    ) -> None:
+        """
+        Creates a NonInterestBearingCollateralMintEventModel record in the database.
+        """
+        event = NonInterestBearingCollateralMintEventModel(
+            protocol_id=protocol_id,
+            event_name=event_name,
+            block_number=block_number,
+            sender=event_data.get("sender"),
+            recipient=event_data.get("recipient"),
+            amount=event_data.get("amount"),
+        )
+        try:
+            self.write_to_db(event)
+            logger.info(f"NonInterestBearingCollateralMint event saved: {event}")
+        except SQLAlchemyError as e:
+            logger.error(
+                f"Error creating NonInterestBearingCollateralMintEventModel: {e}"
+            )
+            raise e
 
     def get_all_events(
         self,
@@ -976,43 +1054,25 @@ class NostraEventDBConnector(DBConnector):
         """
         Retrieves all types of Nostra events based on filtering criteria.
         """
-        db = self.Session()
+        event_models = [
+            BearingCollateralBurnEventModel,
+            BearingCollateralMintEventModel,
+            DebtBurnEventModel,
+            DebtMintEventModel,
+            DebtTransferEventModel,
+            InterestRateModelEventModel,
+            NonInterestBearingCollateralBurnEventModel,
+            NonInterestBearingCollateralMintEventModel,
+        ]
+
         try:
-
-            def apply_filters(query, model):
-                if protocol_id is not None:
-                    query = query.filter(model.protocol_id == protocol_id)
-                if event_name is not None:
-                    query = query.filter(model.event_name == event_name)
-                if block_number is not None:
-                    query = query.filter(model.block_number == block_number)
-                return query
-
-            debt_mint_query = apply_filters(
-                db.query(DebtMintEventModel), DebtMintEventModel
+            events = self.get_all_events_from_models(
+                models=event_models,
+                protocol_id=protocol_id,
+                event_name=event_name,
+                block_number=block_number,
             )
-            debt_burn_query = apply_filters(
-                db.query(DebtBurnEventModel), DebtBurnEventModel
-            )
-            debt_transfer_query = apply_filters(
-                db.query(DebtTransferEventModel), DebtTransferEventModel
-            )
-            bearing_collateral_burn_query = apply_filters(
-                db.query(BearingCollateralBurnEventModel),
-                BearingCollateralBurnEventModel,
-            )
-
-            combined_query = debt_mint_query.union_all(
-                debt_burn_query,
-                debt_transfer_query,
-                bearing_collateral_burn_query,
-            )
-            events = combined_query.all()
             return events
-
         except SQLAlchemyError as e:
             logger.error(f"Error retrieving Nostra events: {e}")
             raise e
-
-        finally:
-            db.close()
