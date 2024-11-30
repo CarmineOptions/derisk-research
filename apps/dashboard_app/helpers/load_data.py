@@ -1,3 +1,7 @@
+"""
+This module loads and handle the data.
+"""
+
 import asyncio
 import logging
 import math
@@ -69,7 +73,7 @@ class DashboardDataHandler:
         zklend_state.interest_rate_models.debt = zklend_interest_rate_data["debt"].iloc[
             0
         ]
-        logger.info(f"Initialized ZkLend state in {monotonic() - start:.2f}s")
+        logger.info("Initialized ZkLend state in %.2fs", monotonic() - start)
 
         return zklend_state
 

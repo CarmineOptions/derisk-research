@@ -1,0 +1,44 @@
+name: Dashboard App
+
+on: [push]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pylint
+
+    - name: Debug Information
+      run: |
+        echo "Current directory:"
+        pwd
+        echo "\nDirectory structure:"
+        ls -R
+        echo "\nGit root directory:"
+        git rev-parse --show-toplevel
+        echo "\nSearching for Python files:"
+        find . -name "*.py"
+        echo "\nGit ls-files output:"
+        git ls-files
+        echo "\nSpecific path search:"
+        git ls-files 'dashboard_app/*.py'
+        git ls-files './dashboard_app/*.py'
+        git ls-files 'apps/dashboard_app/*.py'
+        git ls-files './apps/dashboard_app/*.py'
+
+    - name: Run Pylint
+      run: |
+        files=$(git ls-files 'dashboard_app/*.py')
+        if [ -n "$files" ]; then
+          pylint $files --disable=all --enable=C0114,C0115,C0116,C0301
+        fi

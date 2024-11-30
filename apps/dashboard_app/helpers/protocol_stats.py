@@ -1,3 +1,7 @@
+"""
+This module handles the collection and computation of statistics related to the protocol.
+"""
+
 import asyncio
 from collections import defaultdict
 from decimal import Decimal
@@ -36,9 +40,12 @@ def get_general_stats(
             {
                 "Protocol": protocol,
                 "Number of active users": number_of_active_users,
-                # At the moment, Hashstack V0 and Hashstack V1 are the only protocols for which the number of active
-                # loans doesn't equal the number of active users. The reason is that Hashstack V0 and Hashstack V1
-                # allow for liquidations on the loan level, whereas other protocols use user-level liquidations.
+                # At the moment, Hashstack V0 and Hashstack V1 are the only protocols
+                #  for which the number of active
+                # loans doesn't equal the number of active users.
+                # The reason is that Hashstack V0 and Hashstack V1
+                # allow for liquidations on the loan level, whereas other
+                #  protocols use user-level liquidations.
                 "Number of active loans": state.compute_number_of_active_loan_entities(),
                 "Number of active borrowers": number_of_active_borrowers,
                 "Total debt (USD)": round(loan_stats[protocol]["Debt (USD)"].sum(), 4),
@@ -119,6 +126,11 @@ def get_supply_stats(
 def get_collateral_stats(
     states: list[State],
 ) -> pd.DataFrame:
+    """
+    Get collateral stats for the dashboard.
+    :param states: States zklend, nostra_alpha, nostra_mainnet
+    :return: DataFrame with collateral stats
+    """
     data = []
     for state in states:
         protocol = get_protocol(state=state)
@@ -172,6 +184,11 @@ def get_collateral_stats(
 def get_debt_stats(
     states: list[State],
 ) -> pd.DataFrame:
+    """
+    Get debts for the dashboard.
+    :param states: States zklend, nostra_alpha, nostra_mainnet
+    :return: DataFrame with debt stats
+    """
     data = []
     for state in states:
         protocol = get_protocol(state=state)
@@ -229,6 +246,12 @@ def get_utilization_stats(
     supply_stats: pd.DataFrame,
     debt_stats: pd.DataFrame,
 ) -> pd.DataFrame:
+    """
+    Get utilization stats for the dashboard.
+    :param stats: DataFrame containing 
+    general_stats, supply_stats, debt_stat.
+    :return: DataFrame with utilization stats
+    """
     data = pd.DataFrame(
         {
             "Protocol": general_stats["Protocol"],

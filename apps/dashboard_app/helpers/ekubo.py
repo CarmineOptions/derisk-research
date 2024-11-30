@@ -1,3 +1,8 @@
+"""
+A module that interacts with an API to fetch the latest
+liquidity data and applies it to a dataframe.
+"""
+
 import logging
 import time
 
@@ -6,6 +11,10 @@ import requests
 
 
 class EkuboLiquidity:
+    """
+     Fetches data from a liquidity API and send it to the dataframe which updates the
+     liquidity of a token pair. 
+    """
     URL = "http://178.32.172.153/orderbook/"
     DEX = "Ekubo"
     LOWER_BOUND_VALUE = 0.95
@@ -61,7 +70,7 @@ class EkuboLiquidity:
                 data=liquidity,
                 price=price,
                 price_diff=price_diff,
-                bids=True if bids_or_asks["type"] == "bids" else False,
+                bids = bids_or_asks["type"] == "bids",
             ),
         )
         self.data["debt_token_supply"] += self.data["Ekubo_debt_token_supply"]

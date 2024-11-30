@@ -1,8 +1,16 @@
+"""
+This module includes functions to generate financial charts using token price and liquidity data.
+"""
+
 import math
 
 import pandas as pd
 import plotly.express
 import plotly.graph_objs
+
+from shared.amms import SwapAmm
+from shared.state import State
+from shared.types import Prices
 
 from dashboard_app.helpers.settings import TOKEN_SETTINGS
 from dashboard_app.helpers.tools import (
@@ -11,9 +19,6 @@ from dashboard_app.helpers.tools import (
     get_prices,
     get_underlying_address,
 )
-from shared.amms import SwapAmm
-from shared.state import State
-from shared.types import Prices
 
 AMMS = ("10kSwap", "MySwap", "SithSwap", "JediSwap")
 
@@ -25,6 +30,11 @@ def get_main_chart_data(
     collateral_token_underlying_symbol: str,
     debt_token_underlying_symbol: str,
 ) -> pd.DataFrame:
+    """
+    Generates financial chart data based on token prices, liquidity, and debt information.
+    Takes five parameters and 
+    Returns: A DataFrame containing calculated token prices and liquidable debt data.
+    """
     collateral_token_underlying_address = get_underlying_address(
         token_parameters=state.token_parameters.collateral,
         underlying_symbol=collateral_token_underlying_symbol,
@@ -64,6 +74,10 @@ def get_main_chart_data(
         data[f"{amm}_debt_token_supply"] = 0
 
     def compute_supply_at_price(collateral_token_price: float):
+        """
+        Computes the token supply for each AMM at a given collateral token price and
+        Returns: the token supplied by AMM and total supply across all AMMs.
+        """
         supplies = {
             amm: swap_amms.get_supply_at_price(
                 collateral_token_underlying_symbol=collateral_token_underlying_symbol,
@@ -79,7 +93,7 @@ def get_main_chart_data(
     supplies_and_totals = data["collateral_token_price"].apply(compute_supply_at_price)
     for amm in AMMS:
         data[f"{amm}_debt_token_supply"] = supplies_and_totals.apply(
-            lambda x: x[0][amm]
+            lambda x, amm=amm: x[0][amm]
         )
     data["debt_token_supply"] = supplies_and_totals.apply(lambda x: x[1])
 
@@ -92,6 +106,10 @@ def get_main_chart_figure(
     debt_token: str,
     collateral_token_price: float,
 ) -> plotly.graph_objs.Figure:
+    """
+    Generates a plotly figure for the main chart the function takes in four paramters and
+    Returns: A Plotly figure object for the chart.
+    """
     color_map_protocol = {
         "liquidable_debt_at_interval_zkLend": "#fff7bc",  # light yellow
         "liquidable_debt_at_interval_Nostra Alpha": "#fec44f",  # yellow
@@ -143,11 +161,12 @@ def get_main_chart_figure(
     # Update layout for the stacked bar plot and the separate trace
     figure.update_layout(
         barmode="stack",
-        title=f"Liquidable debt and the corresponding supply of {debt_token} at various price intervals of {collateral_token}",
+        title=f"Liquidable debt and the corresponding supply of {debt_token}"
+        f" at various price intervals of {collateral_token}",
         xaxis_title=f"{collateral_token} Price (USD)",
         yaxis_title="Volume (USD)",
         legend_title="Legend",
-        yaxis2=dict(overlaying="y", side="left", matches="y"),
+        yaxis2={"overlaying": 'y', "side": 'left', "matches": 'y'},
     )
 
     # Add the vertical line and shaded region for the current price
@@ -177,6 +196,10 @@ def get_bar_chart_figures(
 ) -> tuple[
     plotly.graph_objs.Figure, plotly.graph_objs.Figure, plotly.graph_objs.Figure
 ]:
+    """
+    Generates a bar chart figures for supply, collateral, and debt stats and then
+    Returns: A tuple of three objects (supply, collateral, and debt charts).
+    """
     underlying_addresses_to_decimals = {
         x.address: int(math.log10(x.decimal_factor)) for x in TOKEN_SETTINGS.values()
     }
@@ -281,6 +304,10 @@ def get_bar_chart_figures(
 def get_specific_loan_usd_amounts(
     loan: pd.DataFrame,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    This function gets the loan amount in usd and then it
+    Returns: A tuple containing two DataFrames with specific loan USD amounts.
+    """
     underlying_addresses_to_decimals = {
         x.address: int(math.log10(x.decimal_factor)) for x in TOKEN_SETTINGS.values()
     }

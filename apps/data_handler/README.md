@@ -95,6 +95,7 @@ Go to bash
 docker-compose exec backend bash
 ```
 
+
 ## How to run migration command:
 1. Set up `.env.dev` into `derisk-research/apps/data_handler`
 2. Go back to `derisk-research/apps` directory
