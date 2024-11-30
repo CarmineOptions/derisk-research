@@ -6,16 +6,15 @@ from typing import Iterator
 import pandas as pd
 import requests
 from google.cloud.storage import Client
+from shared.blockchain_call import func_call
+from shared.constants import TOKEN_SETTINGS
+from shared.types import TokenParameters
 from starknet_py.cairo.felt import decode_shortstring
 
 from dashboard_app.helpers.settings import (
     PAIRS,
     UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES,
 )
-from shared.blockchain_call import func_call
-from shared.types import TokenParameters
-
-GS_BUCKET_NAME = "derisk-persistent-state/v3"
 
 
 def float_range(start: float, stop: float, step: float) -> Iterator[float]:
@@ -55,38 +54,6 @@ def get_collateral_token_range(
     return list(float_range(start=readable_step, stop=stop_price, step=readable_step))
 
 
-def load_data(protocol: str) -> tuple[dict[str, pd.DataFrame], pd.DataFrame]:
-    directory = f"{protocol.lower().replace(' ', '_')}_data"
-    main_chart_data = {}
-    for pair in PAIRS:
-        collateral_token_underlying_symbol, debt_token_underlying_symbol = pair.split(
-            "-"
-        )
-        collateral_token_underlying_address = (
-            UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[
-                collateral_token_underlying_symbol
-            ]
-        )
-        debt_token_underlying_address = UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[
-            debt_token_underlying_symbol
-        ]
-        underlying_addresses_pair = (
-            f"{collateral_token_underlying_address}-{debt_token_underlying_address}"
-        )
-        try:
-            main_chart_data[pair] = pd.read_parquet(
-                f"gs://{GS_BUCKET_NAME}/{directory}/{underlying_addresses_pair}.parquet",
-                engine="fastparquet",
-            )
-        except FileNotFoundError:
-            main_chart_data[pair] = pd.DataFrame()
-    loans_data = pd.read_parquet(
-        f"gs://{GS_BUCKET_NAME}/{directory}/loans.parquet",
-        engine="fastparquet",
-    )
-    return main_chart_data, loans_data
-
-
 async def get_symbol(token_address: str) -> str:
     # DAI V2's symbol is `DAI` but we don't want to mix it with DAI = DAI V1.
     if (
@@ -106,59 +73,51 @@ async def get_symbol(token_address: str) -> str:
 
 
 def get_prices(token_decimals: dict[str, int]) -> dict[str, float]:
+    """
+    Get the prices of the tokens.
+    :param token_decimals: Token decimals.
+    :return: Dict with token addresses as keys and token prices as values.
+    """
     URL = "https://starknet.impulse.avnu.fi/v1/tokens/short"
     response = requests.get(URL)
 
-    if response.ok:
-        # Fetch information about tokens.
-        tokens_info = response.json()
-
-        prices = {}
-        for token, decimals in token_decimals.items():
-            token_info = list(
-                filter(
-                    lambda x: (add_leading_zeros(x["address"]) == token), tokens_info
-                )
-            )
-
-            # Remove duplicates.
-            token_info = [dict(y) for y in {tuple(x.items()) for x in token_info}]
-
-            # Perform sanity checks.
-            assert len(token_info) == 1
-            assert decimals == token_info[0]["decimals"]
-
-            prices[token] = token_info[0]["currentPrice"]
-        return prices
-    else:
+    if not response.ok:
         response.raise_for_status()
 
+    tokens_info = response.json()
 
-def upload_file_to_bucket(source_path: str, target_path: str):
-    bucket_name, folder = GS_BUCKET_NAME.split("/")
-    target_path = f"{folder}/{target_path}"
+    # Define the addresses for which you do not want to apply add_leading_zeros
+    skip_leading_zeros_addresses = {
+        TOKEN_SETTINGS["STRK"].address,
+    }
 
-    # Initialize the Google Cloud Storage client with the credentials.
-    storage_client = Client.from_service_account_json(os.getenv("CREDENTIALS_PATH", ""))
+    # Create a map of token addresses to token information, applying add_leading_zeros conditionally
+    token_info_map = {
+        (
+            token["address"]
+            if token["address"] in skip_leading_zeros_addresses
+            else add_leading_zeros(token["address"])
+        ): token
+        for token in tokens_info
+    }
 
-    # Get the target bucket.
-    bucket = storage_client.bucket(bucket_name)
+    prices = {}
+    for token, decimals in token_decimals.items():
+        token_info = token_info_map.get(token)
 
-    # Upload the file to the bucket.
-    blob = bucket.blob(target_path)
-    blob.upload_from_filename(source_path)
-    logging.debug(
-        f"File = {source_path} uploaded to = gs://{bucket_name}/{target_path}."
-    )
+        if not token_info:
+            logging.error(f"Token {token} not found in response.")
+            continue
 
+        if decimals != token_info.get("decimals"):
+            logging.error(
+                f"Decimal mismatch for token {token}: expected {decimals}, got {token_info.get('decimals')}"
+            )
+            continue
 
-def save_dataframe(data: pd.DataFrame, path: str) -> None:
-    directory = path.rstrip(path.split("/")[-1])
-    if not directory == "":
-        os.makedirs(directory, exist_ok=True)
-    data.to_parquet(path, index=False, engine="fastparquet", compression="gzip")
-    upload_file_to_bucket(source_path=path, target_path=path)
-    os.remove(path)
+        prices[token] = token_info.get("currentPrice")
+
+    return prices
 
 
 def add_leading_zeros(hash: str) -> str:

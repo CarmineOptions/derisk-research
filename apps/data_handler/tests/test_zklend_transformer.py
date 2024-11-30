@@ -376,10 +376,9 @@ def test_save_collateral_enabled_event(transformer, sample_collateral_enabled_ev
     Test saving a collateral enabled event.
     """
     transformer.api_connector.get_data.return_value = [sample_collateral_enabled_event_data]
-
     expected_parsed_data = CollateralEnabledDisabledEventData(
         user=sample_collateral_enabled_event_data['data'][0],
-        token=sample_collateral_enabled_event_data['data'][1]
+        token=sample_collateral_enabled_event_data['data'][1],
     )
 
     transformer.fetch_and_transform_events(

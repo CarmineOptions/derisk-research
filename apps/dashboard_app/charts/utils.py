@@ -13,7 +13,7 @@ from dashboard_app.helpers.settings import (
     TOKEN_SETTINGS,
     UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES,
 )
-from dashboard_app.helpers.tools import GS_BUCKET_NAME, get_prices, load_data
+from dashboard_app.helpers.tools import get_prices
 
 
 def process_liquidity(
@@ -190,39 +190,6 @@ def get_protocol_data_mappings(
             protocol_main_chart_data[protocol_name] = main_chart_data[current_pair]
 
     return protocol_main_chart_data, protocol_loans_data
-
-
-def load_stats_data() -> (
-    tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]
-):
-    """
-    Load general stats, supply stats, collateral stats, and debt stats data.
-    :return: tuple of DataFrames containing general stats, supply stats, collateral stats, debt stats, and utilization stats.
-    """
-    BASE_GS_PATH = f"gs://{GS_BUCKET_NAME}/data"
-
-    @st.cache_data(ttl=300)
-    def read_and_set_index(file_path: str) -> pd.DataFrame:
-        """
-        Read a parquet file and set the index to 'Protocol'.
-        :param file_path: file_path
-        :return: DataFrame
-        """
-        return pd.read_parquet(file_path, engine="fastparquet").set_index("Protocol")
-
-    # Read the parquet files
-    general_stats = read_and_set_index(f"{BASE_GS_PATH}/general_stats.parquet")
-    supply_stats = read_and_set_index(f"{BASE_GS_PATH}/supply_stats.parquet")
-    collateral_stats = read_and_set_index(f"{BASE_GS_PATH}/collateral_stats.parquet")
-    debt_stats = read_and_set_index(f"{BASE_GS_PATH}/debt_stats.parquet")
-
-    # Calculate TVL (USD)
-    general_stats["TVL (USD)"] = (
-        supply_stats["Total supply (USD)"] - general_stats["Total debt (USD)"]
-    )
-    utilization_stats = read_and_set_index(f"{BASE_GS_PATH}/utilization_stats.parquet")
-
-    return supply_stats, collateral_stats, debt_stats, general_stats, utilization_stats
 
 
 def transform_loans_data(

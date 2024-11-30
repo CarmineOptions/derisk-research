@@ -126,11 +126,16 @@ class LoanEntity(ABC):
         Check if the entity has any collateral.
         :return: bool
         """
-        return any(token_amount for token_amount in self.collateral.values())
+        try:
+            collateral_tokens = self.collateral.values()
+        except TypeError:
+            collateral_tokens = self.collateral.values
+
+        return any(token_amount for token_amount in collateral_tokens)
 
     def has_debt(self) -> bool:
         """
         Check if the entity has any debt.
         :return: bool
         """
-        return any(token_amount for token_amount in self.debt.values())
+        return any(token_amount for token_amount in self.debt.values)

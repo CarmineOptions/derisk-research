@@ -19,6 +19,7 @@ from data_handler.handler_tools.nostra_alpha_settings import (
 from data_handler.handlers.helpers import blockchain_call, get_addresses, get_symbol
 from data_handler.handlers.settings import TokenSettings
 from data_handler.handlers.state import NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS
+from data_handler.handler_tools.data_parser.nostra import NostraDataParser
 
 from shared.constants import ProtocolIDs
 from shared.helpers import add_leading_zeros
@@ -339,16 +340,16 @@ class NostraAlphaState(State):
             # `lendIndex`, ``, `borrowIndex`, ``.
             # Example:
             # https://starkscan.co/event/0x05e95588e281d7cab6f89aa266057c4c9bcadf3ff0bb85d4feea40a4faa94b09_4.
-            debt_token = add_leading_zeros(event["data"][0])
-            collateral_interest_rate_index = decimal.Decimal(str(int(event["data"][5], base=16))
-                                                             ) / decimal.Decimal("1e18")
-            debt_interest_rate_index = decimal.Decimal(str(int(event["data"][7], base=16))
-                                                       ) / decimal.Decimal("1e18")
+            # Parse the event using the new serializer
+            data = NostraDataParser.parse_interest_rate_model_event(event["data"])
+            debt_token = parsed_event_data.debt_token
+            collateral_interest_rate_index = parsed_event_data.lending_index
+            debt_interest_rate_index = parsed_event_data.borrow_index
         else:
             raise ValueError("Event = {} has an unexpected structure.".format(event))
+            
         collateral_token = self.debt_token_addresses_to_interest_bearing_collateral_token_addresses.get(
-            debt_token, None
-        )
+            debt_token, None)  
         # The indices are saved under the respective collateral or debt token address.
         if collateral_token:
             self.interest_rate_models.collateral[collateral_token] = (
@@ -368,32 +369,30 @@ class NostraAlphaState(State):
             # `from_`, `to`, `value`, ``.
             # Example:
             # https://starkscan.co/event/0x06ddd34767c8cef97d4508bcbb4e3771b1c93e160e02ca942cadbdfa29ef9ba8_2.
-            sender = add_leading_zeros(event["data"][0])
-            recipient = add_leading_zeros(event["data"][1])
-            raw_amount = decimal.Decimal(str(int(event["data"][2], base=16)))
+            parsed_event = NostraDataParser.parse_non_interest_bearing_collateral_mint_event(event["data"])
         else:
             raise ValueError("Event = {} has an unexpected structure.".format(event))
-        if self.ZERO_ADDRESS in {sender, recipient}:
+        if self.ZERO_ADDRESS in {parsed_event.sender, parsed_event.recipient}:
             return
 
         token = add_leading_zeros(event["from_address"])
-        if sender != self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
-            self.loan_entities[sender].collateral.increase_value(token=token, value=-raw_amount)
-            self.loan_entities[sender].extra_info.block = event["block_number"]
-            self.loan_entities[sender].extra_info.timestamp = event["timestamp"]
-        if recipient != self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
-            self.loan_entities[recipient].collateral.increase_value(token=token, value=raw_amount)
-            self.loan_entities[recipient].extra_info.block = event["block_number"]
-            self.loan_entities[recipient].extra_info.timestamp = event["timestamp"]
-        if self.verbose_user in {sender, recipient}:
+        if parsed_event.sender != self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
+            self.loan_entities[parsed_event.sender].collateral.increase_value(token=token, value=-parsed_event.raw_amount)
+            self.loan_entities[parsed_event.sender].extra_info.block = event["block_number"]
+            self.loan_entities[parsed_event.sender].extra_info.timestamp = event["timestamp"]
+        if parsed_event.recipient != self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
+            self.loan_entities[parsed_event.recipient].collateral.increase_value(token=token, value=parsed_event.raw_amount)
+            self.loan_entities[parsed_event.recipient].extra_info.block = event["block_number"]
+            self.loan_entities[parsed_event.recipient].extra_info.timestamp = event["timestamp"]
+        if self.verbose_user in {parsed_event.sender, parsed_event.recipient}:
             logging.info(
                 "In block number = {}, collateral of raw amount = {} of token = {} was transferred from user = {} to user = {}."
                 .format(
                     event["block_number"],
-                    raw_amount,
+                    parsed_event.raw_amount,
                     token,
-                    sender,
-                    recipient,
+                    parsed_event.sender,
+                    parsed_event.recipient,
                 )
             )
 
@@ -462,9 +461,10 @@ class NostraAlphaState(State):
             # `from_`, `to`, `value`, ``.
             # Example:
             # https://starkscan.co/event/0x0786a8918c8897db760899ee35b43071bfd723fec76487207882695e4b3014a0_1.
-            sender = add_leading_zeros(event["data"][0])
-            recipient = add_leading_zeros(event["data"][1])
-            raw_amount = decimal.Decimal(str(int(event["data"][2], base=16)))
+            event_data = NostraDataParser.parse_debt_transfer_event(event["data"])
+            sender = event_data.sender 
+            recipient = event_data.recipient
+            raw_amount = event_data.amount
         else:
             raise ValueError("Event = {} has an unexpected structure.".format(event))
         if self.ZERO_ADDRESS in {sender, recipient}:
@@ -497,27 +497,26 @@ class NostraAlphaState(State):
         # The order of the values in the `data` column is: `user`, `amount`, ``.
         # Example:
         # https://starkscan.co/event/0x00744177ee88dd3d96dda1784e2dff50f0c989b7fd48755bc42972af2e951dd6_1.
-        user = event["data"][0]
-        if user == self.IGNORE_USER:
+        parsed_event = NostraDataParser.parse_non_interest_bearing_collateral_burn_event(event["data"])
+        if parsed_event.user == self.IGNORE_USER:
             return
         token = self.ADDRESSES_TO_TOKENS[event["from_address"]]
-        face_amount = decimal.Decimal(str(int(event["data"][1], base=16)))
-        raw_amount = face_amount / self.collateral_interest_rate_models.values[token]
+        raw_amount = parsed_event.face_amount / self.collateral_interest_rate_models.values[token]
         # add additional info block and timestamp
-        self.loan_entities[user].extra_info.block = event["block_number"]
-        self.loan_entities[user].extra_info.timestamp = event["timestamp"]
+        self.loan_entities[parsed_event.user].extra_info.block = event["block_number"]
+        self.loan_entities[parsed_event.user].extra_info.timestamp = event["timestamp"]
 
-        self.loan_entities[user].non_interest_bearing_collateral.increase_value(
+        self.loan_entities[parsed_event.user].non_interest_bearing_collateral.increase_value(
             token=token, value=-raw_amount
         )
-        self.loan_entities[user].collateral.values = {
+        self.loan_entities[parsed_event.user].collateral.values = {
             token: (
-                self.loan_entities[user].non_interest_bearing_collateral.values[token] +
-                self.loan_entities[user].interest_bearing_collateral.values[token]
+                self.loan_entities[parsed_event.user].non_interest_bearing_collateral.values[token] +
+                self.loan_entities[parsed_event.user].interest_bearing_collateral.values[token]
             )
             for token in NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS
         }
-        if user == self.verbose_user:
+        if parsed_event.user == self.verbose_user:
             logging.info(
                 "In block number = {}, non-interest-bearing collateral of raw amount = {} of token = {} was withdrawn."
                 .format(
@@ -532,11 +531,14 @@ class NostraAlphaState(State):
         # The order of the values in the `data` column is: `user`, `amount`, ``.
         # Example:
         # https://starkscan.co/event/0x07d222d9a70edbe717001ab4305a7a8cfb05116a35da24a9406209dbb07b6d0b_5.
-        user = event["data"][0]
+        data = NostraDataParser.parse_interest_bearing_collateral_mint_event(event["data"])
+        user, face_amount = data.user, data.amount
+         
         if user == self.IGNORE_USER:
             return
+        
         token = self.ADDRESSES_TO_TOKENS[event["from_address"]]
-        face_amount = decimal.Decimal(str(int(event["data"][1], base=16)))
+
         raw_amount = face_amount / self.collateral_interest_rate_models.values[token]
         # add additional info block and timestamp
         self.loan_entities[user].extra_info.block = event["block_number"]
@@ -567,11 +569,14 @@ class NostraAlphaState(State):
         # The order of the values in the `data` column is: `user`, `amount`, ``.
         # Example:
         # https://starkscan.co/event/0x0106494005bbab6f01e7779760891eb9ae20e01b905afdb16111f7cf3a28a53e_1.
-        user = event["data"][0]
+         
+        data = NostraDataParser.parse_interest_bearing_collateral_mint_event(event["data"])
+        user, face_amount = data.user, data.amount
+        
         if user == self.IGNORE_USER:
             return
+        
         token = self.ADDRESSES_TO_TOKENS[event["from_address"]]
-        face_amount = decimal.Decimal(str(int(event["data"][1], base=16)))
         raw_amount = face_amount / self.collateral_interest_rate_models.values[token]
         # add additional info block and timestamp
         self.loan_entities[user].extra_info.block = event["block_number"]
@@ -606,8 +611,8 @@ class NostraAlphaState(State):
             # The order of the values in the `data` column is: `user`, `amount`, ``.
             # Example:
             # https://starkscan.co/event/0x030d23c4769917bc673875e107ebdea31711e2bdc45e658125dbc2e988945f69_4.
-            user = add_leading_zeros(event["data"][0])
-            face_amount = decimal.Decimal(str(int(event["data"][1], base=16)))
+            data = NostraDataParser.parse_debt_mint_event(event["data"])
+            user, face_amount = data.user, data.amount
         else:
             raise ValueError("Event = {} has an unexpected structure.".format(event))
         if user == self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
@@ -637,8 +642,8 @@ class NostraAlphaState(State):
             # The order of the values in the `data` column is: `user`, `amount`, ``.
             # Example:
             # https://starkscan.co/event/0x002e4ee376785f687f32715d8bbed787b6d0fa9775dc9329ca2185155a139ca3_5.
-            user = add_leading_zeros(event["data"][0])
-            face_amount = decimal.Decimal(str(int(event["data"][1], base=16)))
+            data = NostraDataParser.parse_debt_mint_event(event["data"])
+            user, face_amount = data.user, data.amount
         else:
             raise ValueError("Event = {} has an unexpected structure.".format(event))
         if user == self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:

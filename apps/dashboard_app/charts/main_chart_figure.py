@@ -10,7 +10,6 @@ from dashboard_app.helpers.tools import (
     get_custom_data,
     get_prices,
     get_underlying_address,
-    save_dataframe,
 )
 from shared.amms import SwapAmm
 from shared.state import State
