@@ -75,7 +75,7 @@ def get_supply_stats(
     for state in states:
         protocol = get_protocol(state=state)
         token_supplies = {}
-        for token in TOKEN_SETTINGS.items():
+        for token in TOKEN_SETTINGS:
             (
                 addresses,
                 selector,
@@ -135,7 +135,7 @@ def get_collateral_stats(
     for state in states:
         protocol = get_protocol(state=state)
         token_collaterals = defaultdict(float)
-        for token in TOKEN_SETTINGS():
+        for token in TOKEN_SETTINGS:
             # TODO: save zkLend amounts under token_addresses?
             if protocol == "zkLend":
                 token_addresses = [
