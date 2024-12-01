@@ -1,3 +1,7 @@
+"""
+This module defines the Dashboard class for rendering a DeRisk dashboard using Streamlit.
+"""
+
 import streamlit as st
 
 from dashboard_app.charts.main_chart_figure import get_main_chart_figure
@@ -16,6 +20,9 @@ from .utils import (
 
 
 class Dashboard:
+    """
+    A class representing a dashboard for managing protocol names.
+    """
     PROTOCOL_NAMES = [
         "zkLend",
         # "Nostra Alpha",
@@ -44,6 +51,9 @@ class Dashboard:
         self.collateral_token_price = 0
 
     def load_sidebar(self):
+        """
+        Creates an interactive sidebar for selecting multiple protocols, debt and collateral token.
+        """
         col1, _ = st.columns([1, 3])
         with col1:
             self.protocols = st.multiselect(
@@ -73,6 +83,9 @@ class Dashboard:
                 )
 
     def load_main_chart(self):
+        """
+        Generates a chart that visualizes liquidable debt against available supply.
+        """
         (
             protocol_main_chart_data_mapping,
             protocol_loans_data_mapping,
@@ -116,6 +129,9 @@ class Dashboard:
         st.plotly_chart(figure_or_data=figure, use_container_width=True)
 
     def run(self):
+        """
+        This function executes/runs the load_sidebar() and load_main_chart() function.
+        """
         # Load sidebar with protocol settings
         self.load_sidebar()
         self.load_main_chart()

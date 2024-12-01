@@ -1,3 +1,7 @@
+"""
+This is module connects to a PostgreSQL database and fetches data. 
+"""
+
 import os
 
 import pandas as pd
@@ -8,6 +12,9 @@ load_dotenv()
 
 
 class DataConnector:
+    """
+    Handles database connection and fetches data.
+    """
     REQUIRED_VARS = ("DB_USER", "DB_PASSWORD", "DB_HOST", "DB_PORT", "DB_NAME")
     ZKLEND_SQL_QUERY = """
         SELECT

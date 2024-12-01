@@ -1,3 +1,7 @@
+"""
+This script loads data and runs the dashboard.
+"""
+
 import logging
 from dashboard_app.charts import Dashboard
 from dashboard_app.helpers.load_data import DashboardDataHandler
