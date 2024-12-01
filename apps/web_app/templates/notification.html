@@ -1,84 +1,254 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Notification</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <link rel="stylesheet" href="{{ url_for('static', path='/notification.css') }}">
-</head>
-<body>
-    <div class="alert alert-warning">
-        Currently, we update our data once every 30 minutes. Very soon, we will switch to more frequent updates.
-    </div>
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{% if message_type == 'error' %}danger{% elif message_type == 'success' %}success{% endif %}">
-                {{ message }}
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', path='/notification.css') }}"
+    />
+  </head>
+  <body class="bg-basebg h-full" style="display: grid; min-height: 100vh">
+    <main style="grid-area: 1/1">
+      <header class="grid place-items-center mt-8 mb-12">
+        <nav
+          class="flex items-center justify-between h-[5.5rem] w-full lg:w-[70rem] rounded-2xl shadow-carmine px-6 py-5 no-underline"
+        >
+          <div class="flex justify-center items-center gap-8">
+            <div>
+              <a href="" class="no-underline">
+                <img
+                  src="{{ url_for('static', path='/Carmine_logo.svg') }}"
+                  alt=""
+                />
+              </a>
             </div>
-        {% endfor %}
-    {% endif %}
-    {% if activation_link %}
-        <div class="alert alert-info">
-            Your activation link: <a href="{{activation_link}}" id="tg_link">Click here!</a>
+            <div
+              class="hidden lg:flex space-between justify-center items-center gap-6"
+            >
+              <a href="">
+                <img src="{{ url_for('static', path='twitter.svg') }}" alt="" />
+              </a>
+              <a href="">
+                <img src="{{ url_for('static', path='discord.svg') }}" alt="" />
+              </a>
+              <a href="">
+                <img src="{{ url_for('static', path='Vector.svg') }}" alt="" />
+              </a>
+            </div>
+          </div>
+          <div>
+            <a
+              href="#"
+              class="group border border-basefull rounded-lg flex gap-2 px-6 py-3 text-basefull text-sm font-instrument-sans font-medium hover:border-0 hover:bg-basefull hover:text-basebg transition-colors"
+            >
+              <span>Connect Wallet</span>
+              <span class="hidden lg:block">
+                <img
+                  src="{{ url_for('static', path='arrow.svg') }}"
+                  alt=""
+                  class="block group-hover:hidden"
+                />
+                <img
+                  src="{{ url_for('static', path='barrow.svg') }}"
+                  alt=""
+                  class="hidden group-hover:block"
+                />
+              </span>
+            </a>
+          </div>
+        </nav>
+      </header>
+      <div class="w-full" style="grid-area: 1/1">
+        <div class="w-full mb-12">
+          <form method="post" class="w-full px-5">
+            <input
+              type="text"
+              hidden
+              id="ip_address"
+              name="ip_address"
+              value="{{ ip_address }}"
+            />
+            <h1
+              class="text-[#f9f9f9] text-xl font-semibold font-instrument-sans text-center mb-12"
+            >
+              Create subscription
+            </h1>
+            <p
+              class="text-[#e6ebf0] text-sm italic text-center font-normal font-open-sans leading-normal mb-6"
+            >
+              Fill in these details to create a new subscription
+            </p>
+            <div
+              class="flex flex-col gap-12 w-full justify-center items-center"
+            >
+              <div class="flex flex-col gap-3 w-full lg:w-auto justify-center">
+                <div>
+                  <label
+                    for="wallet_id"
+                    class="text-[#9b9b9b] text-base font-medium font-montserrat text-start"
+                    >Wallet ID: <span style="color: red">*</span></label
+                  >
+                </div>
+                <div class="input-data">
+                  <input
+                    type="text"
+                    id="wallet_id"
+                    name="wallet_id"
+                    placeholder="Enter your wallet address"
+                    class="px-4 py-6 w-full lg:w-[44rem] bg-[#1c1c1c] rounded-lg justify-start items-center gap-3 inline-flex text-[#fefefe] text-sm font-normal font-instrument-sans outline-none"
+                    required
+                  />
+                </div>
+              </div>
+              <div class="flex flex-col gap-3 w-full lg:w-auto justify-center">
+                <div>
+                  <label
+                    for="health_ratio_level"
+                    class="text-[#9b9b9b] text-base font-medium font-montserrat"
+                    >Health ratio level:
+                    <span style="color: red">*</span></label
+                  >
+                </div>
+                <div class="input-data">
+                  <input
+                    type="text"
+                    name="health_ratio_level"
+                    id="health_ratio_level"
+                    placeholder="Enter health ratio level"
+                    class="px-4 py-6 w-full lg:w-[44rem] bg-[#1c1c1c] rounded-lg justify-start items-center gap-3 inline-flex text-[#fefefe] text-sm font-normal font-instrument-sans outline-none"
+                    required
+                  />
+                </div>
+              </div>
+              <div class="flex flex-col gap-3 w-full lg:w-auto justify-center">
+                <div>
+                  <label
+                    for="protocol_id"
+                    class="text-[#9b9b9b] text-base font-medium font-montserrat"
+                    >Protocol ID: <span style="color: red">*</span></label
+                  >
+                </div>
+                <div class="input-data">
+                  <select
+                    id="protocol_id"
+                    name="protocol_id"
+                    class="px-4 py-6 w-full lg:w-[44rem] bg-[#1c1c1c] rounded-lg justify-start items-center gap-3 inline-flex text-[#fefefe] text-sm font-normal font-instrument-sans outline-none border-r-8 border-[#1c1c1c]"
+                  >
+                    {% for protocol_id in protocol_ids %}
+                    <option>{{protocol_id}}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+              <div class="submit w-full lg:w-auto">
+                <button
+                  class="h-[60px] w-full lg:w-[44rem] px-6 py-3 rounded-lg border border-[#ffb80d] justify-center items-center gap-2 inline-flex hover:bg-basefull text-[#ffb80d] hover:text-[#0c0c0c] text-sm font-medium font-instrument-sans transition-colors"
+                  type="submit"
+                  value="Submit"
+                >
+                  Subscribe
+                </button>
+              </div>
+            </div>
+          </form>
         </div>
-    {% endif %}
-    <div class="container">
-        <div class="form">
-            <form method="post">
-                <input type="text" hidden id="ip_address" name="ip_address" value="{{ ip_address }}">
-                <div class="title">
-                    Create subscription
-                </div>
-                <div>
-                    <label for="wallet_id">Wallet ID:<span style="color: red">*</span></label>
-                </div>
-                <div class="input-data">
-                    <input type="text" id="wallet_id" name="wallet_id" required>
-                </div>
-                <div>
-                    <label for="health_ratio_level">Health ratio level:<span style="color: red">*</span></label>
-                </div>
-                <div class="input-data">
-                    <input type="text" name="health_ratio_level" id="health_ratio_level" required>
-                </div>
-                <div>
-                    <label for="protocol_id">Protocol ID:<span style="color: red">*</span></label>
-                </div>
-                <div class="input-data">
-                    <select id="protocol_id" name="protocol_id">
-                        {% for protocol_id in protocol_ids %}
-                            <option>{{protocol_id}}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="submit">
-                    <button type="submit" value="Submit">Subscribe</button>
-                </div>
-            </form>
+      </div>
+    </main>
+    {% if messages %} {% for message in messages %}
+    <div
+      class="w-full h-full bg-basebg/25 backdrop-blur-sm grid place-items-center gap-2.5"
+      style="grid-area: 1/1"
+    >
+      <div
+        class="w-[22rem] lg:w-[43.5rem] h-[28rem] lg:h-[26.25rem] lg:px-20 py-[3.75rem] bg-basebg rounded-lg border border-{% if message_type == 'error' %}[#720000]{% elif message_type == 'success' %}[#362000]{% endif %} flex-col justify-center items-center gap-12 flex"
+      >
+        <h1
+          class="{% if message_type == 'error' %}hidden{% endif %} text-[#fefefe] text-sm font-bold font-instrument-sans"
+        >
+          Subscription created successfully
+        </h1>
+        <div
+          class="{% if message_type == 'success' %}hidden{% endif %} flex justify-center items-center gap-2"
+        >
+          <h1 class="text-[#fefefe] text-sm font-bold font-instrument-sans">
+            Subscription was NOT created successfully
+          </h1>
+          <img
+            src="{{ url_for('static', path='alert-circle.png') }}"
+            alt=""
+            class="h-6 w-6"
+          />
         </div>
+        <div class="h-[89px] flex-col justify-start items-center gap-6 flex">
+          <div
+            class="flex justify-center items-center gap-2 text-center text-[#fefefe] text-sm font-normal font-instrument-sans"
+          >
+            {{ message }}
+            <img
+              src="{{ url_for('static', path='verified.png') }}"
+              alt=""
+              class="{% if message_type == 'error' %}hidden{% endif %} h-6 w-6"
+            />
+          </div>
+          {% endfor %} {% endif %} {% if activation_link %}
+          <a
+            class="self-stretch h-12 px-6 py-3 rounded-lg border border-basefull justify-center items-center gap-2 inline-flex text-basefull text-sm font-medium font-instrument-sans cursor-pointer hover:bg-basefull hover:text-basebg hover:border-basebg"
+            href="{{activation_link}}"
+            id="tg_link"
+          >
+            Get Link
+          </a>
+          {% elif retry_link %}
+          <a
+            class="self-stretch h-12 px-6 py-3 rounded-lg border border-basefull justify-center items-center gap-2 inline-flex text-basefull text-sm font-medium font-instrument-sans cursor-pointer hover:bg-basefull hover:text-basebg hover:border-basebg"
+            href="{{retry_link}}"
+            id="tg_link"
+          >
+            Retry
+          </a>
+          {% endif %}
+        </div>
+      </div>
     </div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-<script>
-    document.getElementById('tg_link').addEventListener('click', function(event) {
-        event.preventDefault();
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+      crossorigin="anonymous"
+    ></script>
+    <script>
+      document
+        .getElementById("tg_link")
+        .addEventListener("click", function (event) {
+          event.preventDefault();
 
-        const windowWidth = 500;
-        const windowHeight = 500;
+          const windowWidth = 500;
+          const windowHeight = 500;
 
-        const screenWidth = window.screen.width;
-        const screenHeight = window.screen.height;
-        const left = (screenWidth - windowWidth) / 2;
-        const top = (screenHeight - windowHeight) / 2;
+          const screenWidth = window.screen.width;
+          const screenHeight = window.screen.height;
+          const left = (screenWidth - windowWidth) / 2;
+          const top = (screenHeight - windowHeight) / 2;
 
-
-        window.open(
-            '{{activation_link}}',
-            '_blank',
+          window.open(
+            "{{activation_link}}",
+            "_blank",
             `noopener,noreferrer,width=${windowWidth},height=${windowHeight},left=${left},top=${top}`
-        );
-    });
-</script>
-
-</body>
+          );
+        });
+    </script>
+  </body>
 </html>
