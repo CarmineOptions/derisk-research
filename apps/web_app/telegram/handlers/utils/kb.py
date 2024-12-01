@@ -2,6 +2,7 @@ from uuid import UUID
 
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from utils.values import ProtocolIDs
 
 
 def go_menu():
@@ -71,6 +72,11 @@ def menu():
             ],
             [
                 InlineKeyboardButton(
+                    text="Create subscription", callback_data="create_subscription"
+                )
+            ],
+            [
+                InlineKeyboardButton(
                     text="Unsubscribe all", callback_data="all_unsubscribe"
                 )
             ],
@@ -97,4 +103,22 @@ def pagination_notifications(curent_uuid: UUID, page: int):
     markup.adjust(3, 1, 1)
     if page == 0:
         markup.adjust(2, 1, 1)
+    return markup.as_markup()
+
+def cancel_form():
+    """
+    Returns an InlineKeyboardMarkup with a single button labeled "Cancel" with the callback data "cancel_form".
+    """
+    return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Cancel", callback_data="cancel_form")]])
+
+
+def protocols():
+    """
+    Returns an InlineKeyboardMarkup with buttons for each protocol.
+    """
+    # Create protocol selection buttons
+    markup = InlineKeyboardBuilder()
+    for protocol in ProtocolIDs:
+        markup.button(text=protocol.name, callback_data=f"protocol_{protocol.value}")
+    markup.button(text="Cancel", callback_data="cancel_form")
     return markup.as_markup()
