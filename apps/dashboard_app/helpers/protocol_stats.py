@@ -276,5 +276,7 @@ def get_utilization_stats(
         },
     )
     utilization_columns = [x for x in data.columns if "utilization" in x]
-    data[utilization_columns] = data[utilization_columns].map(lambda x: round(x, 4))
+    # NOTE: .map doesn't work for some reason. apply works
+    data[utilization_columns] = data[utilization_columns].apply(lambda x: x.round(4))
+    # data[utilization_columns] = data[utilization_columns].map(lambda x: round(x, 4))
     return data
