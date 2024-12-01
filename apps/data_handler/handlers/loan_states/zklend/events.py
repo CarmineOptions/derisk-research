@@ -293,7 +293,7 @@ class ZkLendState(State):
 
         # Calculate the raw amount from face amount
         raw_amount = (
-            decimal.Decimal(str(data.face_amount)) / self.interest_rate_models.collateral[token]
+            decimal.Decimal(str(data.amount)) / self.interest_rate_models.collateral[token]
         )
 
         # Add additional info: block number and timestamp

@@ -61,7 +61,7 @@ class ZklendDataParser:
         - event_data[0]: The user address (as a hexadecimal string).
         - event_data[1]: The amount withdrawn (as a string).
         - event_data[2]: The token address (as a hexadecimal string).
-        - event_data[3]: Additional data, if applicable (e.g., transaction ID).
+        - event_data[3]: The face value of the amount withdrawn (as a string).
 
         Args:
             event_data (list[Any]): A list containing the raw event data, typically with 3 or more elements:
