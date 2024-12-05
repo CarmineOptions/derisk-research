@@ -16,7 +16,11 @@ from dashboard_app.helpers.loans_table import (
     get_protocol,
     get_supply_function_call_parameters,
 )
-from dashboard_app.helpers.tools import get_addresses, get_underlying_address
+from dashboard_app.helpers.tools import (
+    add_leading_zeros,
+    get_addresses,
+    get_underlying_address,
+)
 
 
 def get_general_stats(
@@ -116,7 +120,11 @@ def get_supply_stats(
     df = pd.DataFrame(data)
     df["Total supply (USD)"] = sum(
         df[column]
-        * Decimal(prices[TOKEN_SETTINGS[column.replace(" supply", "")].address])
+        * Decimal(
+            prices[
+                add_leading_zeros(TOKEN_SETTINGS[column.replace(" supply", "")].address)
+            ]
+        )
         for column in df.columns
         if "supply" in column
     ).apply(lambda x: round(x, 4))
@@ -248,7 +256,7 @@ def get_utilization_stats(
 ) -> pd.DataFrame:
     """
     Get utilization stats for the dashboard.
-    :param stats: DataFrame containing 
+    :param stats: DataFrame containing
     general_stats, supply_stats, debt_stat.
     :return: DataFrame with utilization stats
     """
