@@ -6,6 +6,7 @@ import asyncio
 from collections import defaultdict
 from decimal import Decimal
 
+import numpy as np
 import pandas as pd
 from data_handler.handlers import blockchain_call
 from shared.constants import TOKEN_SETTINGS
@@ -256,35 +257,48 @@ def get_utilization_stats(
 ) -> pd.DataFrame:
     """
     Get utilization stats for the dashboard.
-    :param stats: DataFrame containing
-    general_stats, supply_stats, debt_stat.
+    :param general_stats: DataFrame containing general stats.
+    :param supply_stats: DataFrame containing supply stats.
+    :param debt_stats: DataFrame containing debt stats.
     :return: DataFrame with utilization stats
     """
+
+    general_stats.columns = general_stats.columns.str.lower()
+    supply_stats.columns = supply_stats.columns.str.lower()
+    debt_stats.columns = debt_stats.columns.str.lower()
+
+    required_columns_general = {"protocol", "total debt (usd)"}
+    required_columns_supply = {"total supply (usd)"}
+    if not required_columns_general.issubset(
+        general_stats.columns
+    ) or not required_columns_supply.issubset(supply_stats.columns):
+        return pd.DataFrame()
+
     data = pd.DataFrame(
         {
-            "Protocol": general_stats["Protocol"],
-            "Total utilization": general_stats["Total debt (USD)"]
-            / (general_stats["Total debt (USD)"] + supply_stats["Total supply (USD)"]),
-            "ETH utilization": debt_stats["ETH debt"]
-            / (supply_stats["ETH supply"] + debt_stats["ETH debt"]),
-            "WBTC utilization": debt_stats["WBTC debt"]
-            / (supply_stats.get("WBTC supply") + debt_stats.get("WBTC debt")),
-            "USDC utilization": debt_stats["USDC debt"]
-            / (supply_stats["USDC supply"] + debt_stats["USDC debt"]),
-            "DAI utilization": debt_stats["DAI debt"]
-            / (supply_stats["DAI supply"] + debt_stats["DAI debt"]),
-            "USDT utilization": debt_stats["USDT debt"]
-            / (supply_stats["USDT supply"] + debt_stats["USDT debt"]),
-            "wstETH utilization": debt_stats["wstETH debt"]
-            / (supply_stats["wstETH supply"] + debt_stats["wstETH debt"]),
-            "LORDS utilization": debt_stats["LORDS debt"]
-            / (supply_stats["LORDS supply"] + debt_stats["LORDS debt"]),
-            "STRK utilization": debt_stats["STRK debt"]
-            / (supply_stats["STRK supply"] + debt_stats["STRK debt"]),
-        },
+            "Protocol": general_stats["protocol"],
+        }
     )
-    utilization_columns = [x for x in data.columns if "utilization" in x]
-    # NOTE: .map doesn't work for some reason. apply works
-    data[utilization_columns] = data[utilization_columns].apply(lambda x: x.round(4))
-    # data[utilization_columns] = data[utilization_columns].map(lambda x: round(x, 4))
+
+    total_debt = general_stats["total debt (usd)"].astype(float)
+    total_supply = supply_stats["total supply (usd)"].astype(float)
+    total_utilization = total_debt / (total_debt + total_supply)
+    total_utilization = total_utilization.replace([np.inf, -np.inf], 0).fillna(0)
+    data["Total utilization"] = total_utilization.round(4)
+
+    tokens = ["eth", "wbtc", "usdc", "dai", "usdt", "wsteth", "lords", "strk"]
+
+    for token in tokens:
+        debt_col = f"{token} debt"
+        supply_col = f"{token} supply"
+
+        if debt_col in debt_stats.columns and supply_col in supply_stats.columns:
+            debt = debt_stats[debt_col].astype(float)
+            supply = supply_stats[supply_col].astype(float)
+            utilization = debt / (debt + supply)
+            utilization = utilization.replace([np.inf, -np.inf], 0).fillna(0)
+            data[f"{token.upper()} utilization"] = utilization.round(4)
+        else:
+            data[f"{token.upper()} utilization"] = 0.0
+
     return data
