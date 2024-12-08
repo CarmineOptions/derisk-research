@@ -68,8 +68,8 @@ poetry run pytest
 2. Create feature branch
 3. Submit pull request
 
-Read [contribution guide](CONTRIBUTING.md)
+Read [contribution guide](https://github.com/CarmineOptions/derisk-research/blob/master/CONTRIBUTING.md)
 
 ## License
 
-[License details](LICENSE.txt)
+[License details](https://github.com/CarmineOptions/derisk-research/blob/master/LICENSE.txt)
