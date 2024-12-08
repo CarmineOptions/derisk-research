@@ -30,7 +30,7 @@ poetry run python dashboard.py
 
 2. Run the container:
 
-3. stop container:
+3. Stop container:
 
 ## Key Features
 
@@ -72,4 +72,4 @@ Read [contribution guide](CONTRIBUTING.md)
 
 ## License
 
-[License details](LICENSE.txt)
+[License details](https://github.com/CarmineOptions/derisk-research/blob/master/LICENSE.txt)
