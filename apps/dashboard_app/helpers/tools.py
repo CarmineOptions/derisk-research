@@ -40,7 +40,7 @@ def get_collateral_token_range(
     collateral_token_price: float,
 ) -> list[float]:
     """
-    Generates a range of prices for a collateral token and 
+    Generates a range of prices for a collateral token and
     Returns:  A list of float values representing the range of prices for the collateral token.
     """
     target_number_of_values = 50
@@ -54,7 +54,7 @@ def get_collateral_token_range(
     difference = [
         abs(50 - stop_price / (k * magnitude)) for k in step_factors
     ]  # Stores the difference between the target value and
-       #number of values generated from each step factor.
+    # number of values generated from each step factor.
     readable_step = (
         step_factors[difference.index(min(difference))] * magnitude
     )  # Gets readable step from step factor with values closest to the target value.
@@ -98,19 +98,9 @@ def get_prices(token_decimals: dict[str, int]) -> dict[str, float]:
 
     tokens_info = response.json()
 
-    # Define the addresses for which you do not want to apply add_leading_zeros
-    skip_leading_zeros_addresses = {
-        TOKEN_SETTINGS["STRK"].address,
-    }
-
     # Create a map of token addresses to token information, applying add_leading_zeros conditionally
     token_info_map = {
-        (
-            token["address"]
-            if token["address"] in skip_leading_zeros_addresses
-            else add_leading_zeros(token["address"])
-        ): token
-        for token in tokens_info
+        add_leading_zeros(token["address"]): token for token in tokens_info
     }
 
     prices = {}
@@ -123,8 +113,11 @@ def get_prices(token_decimals: dict[str, int]) -> dict[str, float]:
 
         if decimals != token_info.get("decimals"):
             logging.error(
-                "Decimal mismatch for token %s: expected %d, got %d"
-                 ,token, decimals, token_info.get('decimals'))
+                "Decimal mismatch for token %s: expected %d, got %d",
+                token,
+                decimals,
+                token_info.get("decimals"),
+            )
             continue
 
         prices[token] = token_info.get("currentPrice")

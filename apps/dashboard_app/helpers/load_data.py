@@ -20,7 +20,7 @@ from dashboard_app.helpers.protocol_stats import (
     get_supply_stats,
     get_utilization_stats,
 )
-from dashboard_app.helpers.tools import get_prices
+from dashboard_app.helpers.tools import add_leading_zeros, get_prices
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +54,9 @@ class DashboardDataHandler:
         logger.info("Initializing ZkLend state.")
         zklend_state = ZkLendState()
         start = monotonic()
-        zklend_data = self.data_connector.fetch_data(self.data_connector.ZKLEND_SQL_QUERY)
+        zklend_data = self.data_connector.fetch_data(
+            self.data_connector.ZKLEND_SQL_QUERY
+        )
         zklend_interest_rate_data = self.data_connector.fetch_data(
             self.data_connector.ZKLEND_INTEREST_RATE_SQL_QUERY
         )
@@ -114,7 +116,7 @@ class DashboardDataHandler:
             )
         self.underlying_addresses_to_decimals.update(
             {
-                x.address: int(math.log10(x.decimal_factor))
+                add_leading_zeros(x.address): int(math.log10(x.decimal_factor))
                 for x in TOKEN_SETTINGS.values()
             }
         )
