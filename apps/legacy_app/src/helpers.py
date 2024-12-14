@@ -159,6 +159,10 @@ def get_prices(token_decimals: dict[str, int]) -> dict[str, float]:
             # Remove duplicates.
             token_info = [dict(y) for y in {tuple(x.items()) for x in token_info}]
 
+            if not token_info:
+                logging.error("Token %s not found in response.", token)
+                continue
+
             # Perform sanity checks.
             assert len(token_info) == 1
             assert decimals == token_info[0]["decimals"]

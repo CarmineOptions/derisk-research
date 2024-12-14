@@ -328,8 +328,14 @@ class LoanEntity(abc.ABC):
                 else 1.0
             )
             * float(collateral_interest_rate_model[token])
-            * prices[collateral_token_parameters[token].underlying_address]
+            * prices[underlying_address]
             for token, token_amount in self.collateral.items()
+            if (
+                underlying_address := collateral_token_parameters[
+                    token
+                ].underlying_address
+            )
+            in prices
         )
 
     def compute_debt_usd(
@@ -344,8 +350,10 @@ class LoanEntity(abc.ABC):
             / (10 ** debt_token_parameters[token].decimals)
             / (debt_token_parameters[token].debt_factor if risk_adjusted else 1.0)
             * float(debt_interest_rate_model[token])
-            * prices[debt_token_parameters[token].underlying_address]
+            * prices[underlying_address]
             for token, token_amount in self.debt.items()
+            if (underlying_address := debt_token_parameters[token].underlying_address)
+            in prices
         )
 
     @abc.abstractmethod
