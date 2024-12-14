@@ -48,16 +48,15 @@ class State(abc.ABC):
         # Fill up `self.loan_entities` with `loan_entities`.
         for _, loan_entity in loan_entities.iterrows():
             user = loan_entity["user"]
-            for collateral_token, collateral_amount in json.loads(
-                loan_entity["collateral"].decode("utf-8")
-            ).items():
+            for collateral_token, collateral_amount in loan_entity[
+                "collateral"
+            ].items():
                 if collateral_amount:
-                    self.loan_entities[user].collateral[
-                        collateral_token
-                    ] = decimal.Decimal(str(collateral_amount))
-            for debt_token, debt_amount in json.loads(
-                loan_entity["debt"].decode("utf-8")
-            ).items():
+                    self.loan_entities[user].collateral[collateral_token] = (
+                        decimal.Decimal(str(collateral_amount))
+                    )
+
+            for debt_token, debt_amount in loan_entity["debt"].items():
                 if debt_amount:
                     self.loan_entities[user].debt[debt_token] = decimal.Decimal(
                         str(debt_amount)
