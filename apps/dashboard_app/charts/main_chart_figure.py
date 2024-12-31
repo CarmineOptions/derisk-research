@@ -107,7 +107,7 @@ def get_main_chart_figure(
     collateral_token_price: float,
 ) -> plotly.graph_objs.Figure:
     """
-    Generates a plotly figure for the main chart the function takes in four paramters and
+    Generates a plotly figure for the main chart the function takes in four parameters and
     Returns: A Plotly figure object for the chart.
     """
     color_map_protocol = {

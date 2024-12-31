@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-# add "type: ignore" to not delete from reformated code
+# add "type: ignore" to not delete from reformatted code
 from .models import Base  # type: ignore
 
 load_dotenv()
