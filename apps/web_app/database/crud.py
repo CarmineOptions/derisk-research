@@ -66,7 +66,7 @@ def validate_fields(
     db: Session = None, obj: ModelType = None, model: Type[ModelType] = None
 ) -> dict:
     """
-    Validates all fields in the object and returns a dict with validation errors if they were occured
+    Validates all fields in the object and returns a dict with validation errors if they were occurred
     :param db: Session = Depends(get_database)
     :param obj: Base = None
     :param model: type[Base] = None

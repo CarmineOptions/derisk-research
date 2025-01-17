@@ -75,7 +75,7 @@ class ZkLendLoanEntity(LoanEntity):
     it implements the `deposit` and
     `collateral_enabled` attributes in order to help with accounting for the changes in 
     collateral. This is because
-    under zkLend, collateral is the amount deposited that is specificaly flagged with
+    under zkLend, collateral is the amount deposited that is specifically flagged with
       `collateral_enabled` set to True
     for the given token. To properly account for the changes in collateral, we must hold the 
     information about the
