@@ -7,7 +7,6 @@ from data_handler.handler_tools.constants import ProtocolAddresses
 from data_handler.handlers.loan_states.abstractions import LoanStateComputationBase
 from data_handler.handlers.loan_states.zklend.events import ZkLendState
 from data_handler.handlers.loan_states.zklend.utils import ZkLendInitializer
-
 from shared.constants import ProtocolIDs
 from shared.state import State
 
@@ -26,7 +25,9 @@ class ZkLendLoanStateComputation(LoanStateComputationBase):
         "zklend::market::Market::AccumulatorsSync",
     ]
 
-    def process_event(self, instance_state: State, method_name: str, event: pd.Series) -> None:
+    def process_event(
+        self, instance_state: State, method_name: str, event: pd.Series
+    ) -> None:
         """
         Processes an event based on the method name and the event data.
 
@@ -41,21 +42,25 @@ class ZkLendLoanStateComputation(LoanStateComputationBase):
         try:
             block_number = event.get("block_number")
             self.set_interest_rate(instance_state, block_number, self.PROTOCOL_TYPE)
-            # For each block number, process the interest rate event
-            if (self.last_block < block_number and event["key_name"] in self.INTEREST_RATES_KEYS):
-                self.process_interest_rate_event(instance_state, event)
-
             if block_number and block_number >= self.last_block:
+                # For each block number, process the interest rate event
+                if event["key_name"] in self.INTEREST_RATES_KEYS:
+                    self.process_interest_rate_event(instance_state, event)
+
                 self.last_block = block_number
                 method = getattr(instance_state, method_name, None)
                 if method:
                     method(event)
                 else:
-                    logger.info(f"No method named {method_name} found for processing event.")
+                    logger.info(
+                        f"No method named {method_name} found for processing event."
+                    )
         except Exception as e:
             logger.exception(f"Failed to process event due to an error: {e}")
 
-    def process_interest_rate_event(self, zklend_state: ZkLendState, event: pd.Series) -> None:
+    def process_interest_rate_event(
+        self, zklend_state: ZkLendState, event: pd.Series
+    ) -> None:
         """
         Processes an interest rate event.
 
@@ -95,10 +100,8 @@ class ZkLendLoanStateComputation(LoanStateComputationBase):
 
         result_df = self.get_result_df(zklend_state.loan_entities)
         result_df["deposit"] = [
-            {
-                token: float(amount)
-                for token, amount in loan.deposit.items()
-            } for loan in zklend_state.loan_entities.values()
+            {token: float(amount) for token, amount in loan.deposit.items()}
+            for loan in zklend_state.loan_entities.values()
         ]
         logger.info(f"Processed data for block {self.last_block}")
         return result_df
@@ -119,18 +122,16 @@ class ZkLendLoanStateComputation(LoanStateComputationBase):
             "protocol": [self.PROTOCOL_TYPE for _ in loan_entities_values],
             "user": [user for user in loan_entities.keys()],
             "collateral": [
-                {
-                    token: float(amount)
-                    for token, amount in loan.collateral.items()
-                } for loan in loan_entities_values
+                {token: float(amount) for token, amount in loan.collateral.items()}
+                for loan in loan_entities_values
             ],
             "block": [entity.extra_info.block for entity in loan_entities_values],
-            "timestamp": [entity.extra_info.timestamp for entity in loan_entities_values],
+            "timestamp": [
+                entity.extra_info.timestamp for entity in loan_entities_values
+            ],
             "debt": [
-                {
-                    token: float(amount)
-                    for token, amount in loan.debt.items()
-                } for loan in loan_entities_values
+                {token: float(amount) for token, amount in loan.debt.items()}
+                for loan in loan_entities_values
             ],
         }
 

@@ -309,10 +309,9 @@ class ZkLendState(State):
         user, token = data.user, data.token
 
         # Calculate the raw amount from face amount
-        raw_amount = (
-            decimal.Decimal(str(data.amount))
-            / self.interest_rate_models.collateral[token]
-        )
+        raw_amount = decimal.Decimal(
+            str(data.amount)
+        ) / self.interest_rate_models.collateral.get(token, decimal.Decimal("1"))
 
         # Add additional info: block number and timestamp
         self.loan_entities[user].extra_info.block = event["block_number"]
@@ -398,7 +397,9 @@ class ZkLendState(State):
 
         collateral_raw_amount = (
             data.collateral_amount
-            / self.interest_rate_models.collateral[data.collateral_token]
+            / self.interest_rate_models.collateral.get(
+                data.collateral_token, decimal.Decimal("1")
+            )
         )
         # add additional info block and timestamp
         self.loan_entities[user].extra_info.block = event["block_number"]
