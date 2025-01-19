@@ -1,4 +1,4 @@
-"""change interger to biginteger
+"""change integer to biginteger
 
 Revision ID: a9d6a1c36e33
 Revises: 841f539c35e9
