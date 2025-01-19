@@ -5,10 +5,9 @@ from abc import ABC, abstractmethod
 from typing import Dict, Optional
 
 import pandas as pd
-from data_handler.handler_tools.api_connector import DeRiskAPIConnector
-
 from data_handler.db.crud import DBConnector
 from data_handler.db.models import InterestRate, LoanState
+from data_handler.handler_tools.api_connector import DeRiskAPIConnector
 from shared.constants import ProtocolIDs
 from shared.state import State
 from shared.types import InterestRateModels
@@ -39,7 +38,9 @@ class LoanStateComputationBase(ABC):
         self.last_block = self.db_connector.get_last_block(self.PROTOCOL_TYPE)
         self.interest_rate_result: list = []
 
-    def process_interest_rate_event(self, instance_state: State, event: pd.Series) -> None:
+    def process_interest_rate_event(
+        self, instance_state: State, event: pd.Series
+    ) -> None:
         """
         Processes an interest rate event.
 
@@ -62,7 +63,9 @@ class LoanStateComputationBase(ABC):
         """
         pass
 
-    def process_event(self, instance_state: State, method_name: str, event: pd.Series) -> None:
+    def process_event(
+        self, instance_state: State, method_name: str, event: pd.Series
+    ) -> None:
         """
         Processes an event based on the method name and the event data.
 
@@ -84,7 +87,9 @@ class LoanStateComputationBase(ABC):
                 if method:
                     method(event)
                 else:
-                    logger.debug(f"No method named {method_name} found for processing event.")
+                    logger.debug(
+                        f"No method named {method_name} found for processing event."
+                    )
         except Exception as e:
             logger.exception(f"Failed to process event due to an error: {e}")
 
@@ -107,7 +112,9 @@ class LoanStateComputationBase(ABC):
             max_block_number=min_block + self.PAGINATION_SIZE,
         )
 
-    def get_addresses_data(self, from_addresses: list[str], min_block: int) -> list[dict]:
+    def get_addresses_data(
+        self, from_addresses: list[str], min_block: int
+    ) -> list[dict]:
         """
         Fetches data from the DeRisk API endpoint using the defined protocol address.
         This method must be implemented by subclasses to specify how data is retrieved from the API.
@@ -188,15 +195,16 @@ class LoanStateComputationBase(ABC):
                 {
                     token: float(amount)
                     for token, amount in loan.collateral.values.items()
-                } for loan in loan_entities_values
+                }
+                for loan in loan_entities_values
             ],
             "block": [entity.extra_info.block for entity in loan_entities_values],
-            "timestamp": [entity.extra_info.timestamp for entity in loan_entities_values],
+            "timestamp": [
+                entity.extra_info.timestamp for entity in loan_entities_values
+            ],
             "debt": [
-                {
-                    token: float(amount)
-                    for token, amount in loan.debt.values.items()
-                } for loan in loan_entities_values
+                {token: float(amount) for token, amount in loan.debt.values.items()}
+                for loan in loan_entities_values
             ],
         }
         result_df = pd.DataFrame(result_dict)
@@ -208,22 +216,33 @@ class LoanStateComputationBase(ABC):
         :param state_instance: The state instance to add the data to.
         :param event: The event data.
         """
-        self.interest_rate_result.append(
-            {
-                "block": event["block_number"],
-                "timestamp": event["timestamp"],
-                "debt": {
-                    token: float(amount)
-                    for token, amount in state_instance.interest_rate_models.debt.items()
-                },
-                "collateral": {
-                    token: float(amount)
-                    for token, amount in state_instance.interest_rate_models.collateral.items()
-                },
-            }
-        )
+        block = event["block_number"]
 
-    def set_interest_rate(self, instance_state: State, block: int, protocol_type: str) -> None:
+        # Create new data entry
+        new_data = {
+            "block": block,
+            "timestamp": event["timestamp"],
+            "debt": {
+                token: float(amount)
+                for token, amount in state_instance.interest_rate_models.debt.items()
+            },
+            "collateral": {
+                token: float(amount)
+                for token, amount in state_instance.interest_rate_models.collateral.items()
+            },
+        }
+
+        # Replace existing entry if block exists, otherwise append
+        for i, existing in enumerate(self.interest_rate_result):
+            if existing["block"] == block:
+                self.interest_rate_result[i] = new_data
+                return
+
+        self.interest_rate_result.append(new_data)
+
+    def set_interest_rate(
+        self, instance_state: State, block: int, protocol_type: str
+    ) -> None:
         """
         Sets the interest rate for the zkLend protocol.
 
@@ -240,16 +259,19 @@ class LoanStateComputationBase(ABC):
         interest_rate_data = self.db_connector.get_interest_rate_by_block(
             block_number=block, protocol_id=protocol_type
         )
-        if (interest_rate_data
-                and instance_state.last_interest_rate_block_number != interest_rate_data.block):
+        if not interest_rate_data:
+            logger.debug(
+                f"No interest rate data found for block {block} and protocol {protocol_type}"
+            )
+            return
+
+        if instance_state.last_interest_rate_block_number != interest_rate_data.block:
             (
                 collateral_interest_rate,
                 debt_interest_rate,
             ) = interest_rate_data.get_json_deserialized()
-            instance_state.interest_rate_models.collateral = InterestRateModels(
-                collateral_interest_rate
-            )
-            instance_state.interest_rate_models.debt = InterestRateModels(debt_interest_rate)
+            instance_state.interest_rate_models.collateral = collateral_interest_rate
+            instance_state.interest_rate_models.debt = debt_interest_rate
             instance_state.last_interest_rate_block_number = block
 
     def run(self) -> None:
@@ -309,21 +331,26 @@ class HashstackBaseLoanStateComputation(LoanStateComputationBase):
 
         result_dict = {
             "protocol": [self.PROTOCOL_TYPE for _ in filtered_loan_entities.keys()],
-            "user": [loan_entity.user for loan_entity in filtered_loan_entities.values()],
+            "user": [
+                loan_entity.user for loan_entity in filtered_loan_entities.values()
+            ],
             "collateral": [
                 {
                     token: float(amount)
                     for token, amount in loan.collateral.values.items()
-                } for loan in filtered_loan_entities.values()
+                }
+                for loan in filtered_loan_entities.values()
             ],
-            "block": [entity.extra_info.block for entity in filtered_loan_entities.values()],
-            "timestamp":
-            [entity.extra_info.timestamp for entity in filtered_loan_entities.values()],
+            "block": [
+                entity.extra_info.block for entity in filtered_loan_entities.values()
+            ],
+            "timestamp": [
+                entity.extra_info.timestamp
+                for entity in filtered_loan_entities.values()
+            ],
             "debt": [
-                {
-                    token: float(amount)
-                    for token, amount in loan.debt.values.items()
-                } for loan in filtered_loan_entities.values()
+                {token: float(amount) for token, amount in loan.debt.values.items()}
+                for loan in filtered_loan_entities.values()
             ],
         }
 

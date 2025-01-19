@@ -167,8 +167,12 @@ def get_collateral_stats(
                             float(loan_entity.collateral.values.get(token_address, 0.0))
                             for loan_entity in state.loan_entities.values()
                         )
-                        / TOKEN_SETTINGS[token].decimal_factor
-                        * float(state.interest_rate_models.collateral[token_address])
+                        / float(TOKEN_SETTINGS[token].decimal_factor)
+                        * float(
+                            state.interest_rate_models.collateral.get(
+                                token_address, 1.0
+                            )
+                        )
                     )
                     token_collaterals[token] += round(collateral, 4)
                 except TypeError:
@@ -225,8 +229,8 @@ def get_debt_stats(
                             float(loan_entity.debt[token_address])
                             for loan_entity in state.loan_entities.values()
                         )
-                        / TOKEN_SETTINGS[token].decimal_factor
-                        * float(state.interest_rate_models.debt[token_address])
+                        / float(TOKEN_SETTINGS[token].decimal_factor)
+                        * float(state.interest_rate_models.debt.get(token_address, 1.0))
                     )
                     token_debts[token] = round(debt, 4)
                 except TypeError:
