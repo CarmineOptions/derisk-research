@@ -4,21 +4,13 @@ A module that fetches data of token prices, liquidity etc.
 
 import logging
 import math
-import os
 from typing import Iterator
 
 import pandas as pd
 import requests
-from google.cloud.storage import Client
 from shared.blockchain_call import func_call
-from shared.constants import TOKEN_SETTINGS
 from shared.types import TokenParameters
 from starknet_py.cairo.felt import decode_shortstring
-
-from dashboard_app.helpers.settings import (
-    PAIRS,
-    UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES,
-)
 
 
 def float_range(start: float, stop: float, step: float) -> Iterator[float]:

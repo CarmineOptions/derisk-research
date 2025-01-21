@@ -11,8 +11,8 @@ from shared.amms import SwapAmm
 from shared.state import State
 from shared.types import Prices
 
-from dashboard_app.helpers.settings import TOKEN_SETTINGS
-from dashboard_app.helpers.tools import (
+from helpers.settings import TOKEN_SETTINGS
+from helpers.tools import (
     get_collateral_token_range,
     get_custom_data,
     get_prices,

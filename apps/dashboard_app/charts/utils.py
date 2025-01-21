@@ -10,15 +10,15 @@ import pandas as pd
 import streamlit as st
 from shared.helpers import load_data
 
-from dashboard_app.helpers.ekubo import EkuboLiquidity
-from dashboard_app.helpers.settings import (
+from helpers.ekubo import EkuboLiquidity
+from helpers.settings import (
     COLLATERAL_TOKENS,
     DEBT_TOKENS,
     STABLECOIN_BUNDLE_NAME,
     TOKEN_SETTINGS,
     UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES,
 )
-from dashboard_app.helpers.tools import get_prices
+from helpers.tools import get_prices
 
 
 def process_liquidity(

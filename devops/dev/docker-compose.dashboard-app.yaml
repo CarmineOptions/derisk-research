@@ -1,0 +1,9 @@
+services:
+  streamlit:
+    build:
+      context: ../../apps
+      dockerfile: dashboard_app/dev/Dockerfile
+    ports:
+      - "8501:8501"
+    env_file:
+      - ../../apps/dashboard_app/.env

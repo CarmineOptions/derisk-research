@@ -13,11 +13,11 @@ from shared.constants import TOKEN_SETTINGS
 from shared.state import State
 from shared.types import Prices
 
-from dashboard_app.helpers.loans_table import (
+from helpers.loans_table import (
     get_protocol,
     get_supply_function_call_parameters,
 )
-from dashboard_app.helpers.tools import (
+from helpers.tools import (
     add_leading_zeros,
     get_addresses,
     get_underlying_address,
