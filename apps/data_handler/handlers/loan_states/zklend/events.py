@@ -319,7 +319,6 @@ class ZkLendState(State):
 
         # Update the user's deposit and collateral values
         self.loan_entities[user].deposit.increase_value(token=token, value=-raw_amount)
-        self.loan_entities[user].deposit.increase_value(token=token, value=-raw_amount)
 
         if self.loan_entities[user].collateral_enabled[token]:
             self.loan_entities[user].collateral.increase_value(
