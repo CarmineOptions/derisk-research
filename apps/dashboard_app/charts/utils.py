@@ -8,6 +8,7 @@ from collections import defaultdict
 
 import pandas as pd
 import streamlit as st
+from shared.helpers import load_data
 
 from dashboard_app.helpers.ekubo import EkuboLiquidity
 from dashboard_app.helpers.settings import (
@@ -84,17 +85,17 @@ def create_stablecoin_bundle(data: dict[str, pd.DataFrame]) -> dict[str, pd.Data
     Creates a stablecoin bundle by merging relevant DataFrames for collateral tokens and debt
     tokens.
 
-    For each collateral token specified in `src.settings.COLLATERAL_TOKENS`, this function finds 
+    For each collateral token specified in `src.settings.COLLATERAL_TOKENS`, this function finds
     the relevant stablecoin pairs from the provided `data` dictionary and merges the corresponding
-    Dataframes based on the 'collateral_token_price' column. It combines the debt and liquidity 
-    data for multiple stablecoin pairs and adds the result back to the `data` dictionary under a 
+    Dataframes based on the 'collateral_token_price' column. It combines the debt and liquidity
+    data for multiple stablecoin pairs and adds the result back to the `data` dictionary under a
     new key.
 
     Parameters:
     data (dict[str, pandas.DataFrame]): A dictionary where the keys are token pairs and the values
      are corresponding DataFrames containing price and supply data.
 
-    Returns: dict[str, pandas.DataFrame]: 
+    Returns: dict[str, pandas.DataFrame]:
     The updated dictionary with the newly created stablecoin bundle added.
     """
 
@@ -169,7 +170,7 @@ def get_data(
 
 def get_protocol_data_mappings(
     current_pair: str, stable_coin_pair: str, protocols: list[str]
-) -> tuple[dict[str, dict], dict[str, dict]]:
+) -> tuple[dict[str, pd.DataFrame], dict[str, dict]]:
     """
     Get protocol data mappings for main chart data and loans data.
 
@@ -181,7 +182,7 @@ def get_protocol_data_mappings(
         - protocol_loans_data: Mapping of protocol names to their loans data.
     """
 
-    protocol_main_chart_data: dict[str, dict] = {}
+    protocol_main_chart_data: dict[str, pd.DataFrame] = {}
     protocol_loans_data: dict[str, dict] = {}
 
     for protocol_name in protocols:
@@ -251,9 +252,9 @@ def transform_main_chart_data(
             main_chart_data[f"liquidable_debt_{protocol}"] = protocol_main_chart_data[
                 "liquidable_debt"
             ]
-            main_chart_data[f"liquidable_debt_at_interval_{protocol}"] = (
-                protocol_main_chart_data["liquidable_debt_at_interval"]
-            )
+            main_chart_data[
+                f"liquidable_debt_at_interval_{protocol}"
+            ] = protocol_main_chart_data["liquidable_debt_at_interval"]
         else:
             main_chart_data["liquidable_debt"] += protocol_main_chart_data[
                 "liquidable_debt"
@@ -264,8 +265,8 @@ def transform_main_chart_data(
             main_chart_data[f"liquidable_debt_{protocol}"] = protocol_main_chart_data[
                 "liquidable_debt"
             ]
-            main_chart_data[f"liquidable_debt_at_interval_{protocol}"] = (
-                protocol_main_chart_data["liquidable_debt_at_interval"]
-            )
+            main_chart_data[
+                f"liquidable_debt_at_interval_{protocol}"
+            ] = protocol_main_chart_data["liquidable_debt_at_interval"]
 
     return main_chart_data

@@ -7,7 +7,6 @@ import math
 import pandas as pd
 import plotly.express
 import plotly.graph_objs
-
 from shared.amms import SwapAmm
 from shared.state import State
 from shared.types import Prices
@@ -32,7 +31,7 @@ def get_main_chart_data(
 ) -> pd.DataFrame:
     """
     Generates financial chart data based on token prices, liquidity, and debt information.
-    Takes five parameters and 
+    Takes five parameters and
     Returns: A DataFrame containing calculated token prices and liquidable debt data.
     """
     collateral_token_underlying_address = get_underlying_address(
@@ -93,7 +92,7 @@ def get_main_chart_data(
     supplies_and_totals = data["collateral_token_price"].apply(compute_supply_at_price)
     for amm in AMMS:
         data[f"{amm}_debt_token_supply"] = supplies_and_totals.apply(
-            lambda x, amm=amm: x[0][amm]
+            lambda x, amm: x[0][amm]
         )
     data["debt_token_supply"] = supplies_and_totals.apply(lambda x: x[1])
 
@@ -166,7 +165,7 @@ def get_main_chart_figure(
         xaxis_title=f"{collateral_token} Price (USD)",
         yaxis_title="Volume (USD)",
         legend_title="Legend",
-        yaxis2={"overlaying": 'y', "side": 'left', "matches": 'y'},
+        yaxis2={"overlaying": "y", "side": "left", "matches": "y"},
     )
 
     # Add the vertical line and shaded region for the current price
