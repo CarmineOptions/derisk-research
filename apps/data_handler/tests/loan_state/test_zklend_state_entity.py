@@ -115,11 +115,11 @@ class TestZkLendState:
         """Test withdrawal event processing"""
         mock_parsed_data = MagicMock()
         mock_parsed_data.user = "0x123"
-        mock_parsed_data.token = "0x456"
+        mock_parsed_data.amount = "123"
         mock_parsed_data.face_amount = int(1e18)
 
         with patch(
-            "data_handler.handler_tools.data_parser.zklend.ZklendDataParser.parse_withdrawal_event",
+            "data_handler.handlers.loan_states.zklend.events.ZklendDataParser.parse_withdrawal_event",
             return_value=mock_parsed_data,
         ):
             user = mock_parsed_data.user
@@ -131,7 +131,6 @@ class TestZkLendState:
             loan_entity.extra_info = MagicMock()
 
             zklend_state.loan_entities[user] = loan_entity
-
             zklend_state.process_withdrawal_event(sample_event)
 
             mock_portfolio.increase_value.assert_called()

@@ -5,7 +5,7 @@ WORKDIR /code
 COPY data_handler/poetry.lock data_handler/pyproject.toml /code/
 COPY data_handler/entrypoint.sh /code/entrypoint.sh
 
-RUN pip install poetry \
+RUN curl -sSL https://install.python-poetry.org | POETRY_HOME=/usr/local/ POETRY_VERSION=1.8.3 python3 -\
     && poetry config virtualenvs.create false \
     && poetry install --no-dev
 
