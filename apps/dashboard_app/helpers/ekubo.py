@@ -61,7 +61,7 @@ class EkuboLiquidity:
         ).astype(float)
 
         liquidity.sort_values(by="price", inplace=True)
-        price_diff = self.data["collateral_token_price"].diff().max()
+        price_diff = self.data["Collateral"].diff().max()
 
         self.data["Ekubo_debt_token_supply"] = self.data[
             "collateral_token_price"
