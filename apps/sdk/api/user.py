@@ -1,9 +1,9 @@
 from typing import Dict
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
 import pandas as pd
 import json
 from pathlib import Path
+from user_model import UserCollateralResponse
 
 router = APIRouter(
     prefix="/user",
@@ -11,10 +11,6 @@ router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
-class UserCollateralResponse(BaseModel):
-    wallet_id: str
-    protocol_name: str
-    collateral: Dict[str, float]
 
 @router.get("/debt", response_model=UserCollateralResponse)
 async def get_user_debt(wallet_id: str, protocol_name: str) -> UserCollateralResponse:
