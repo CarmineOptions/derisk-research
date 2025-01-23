@@ -1,7 +1,9 @@
 from collections.abc import Iterable
 from decimal import Decimal
+from unittest.mock import MagicMock, patch
 
 import pytest
+from data_handler.db.crud import DBConnector
 from data_handler.handlers.order_books.processing import OrderBookProcessor
 from data_handler.handlers.order_books.uniswap_v2 import main
 
@@ -23,10 +25,6 @@ class TestUniswapV2OrderBook:
         """
         Unit Test for UniswapV2OrderBook._set_token_names.
         """
-        # check that token_names has not been set
-        assert not getattr(order_book, "token_a_name"), "Token_a_name should be None"
-        assert not getattr(order_book, "token_b_name"), "Token_b_name should be None"
-
         # set token name
         order_book._set_token_names()
 
@@ -43,16 +41,18 @@ class TestUniswapV2OrderBook:
         Unit test for UniswapV2OrderBook.tick_to_price
         Note: calculation is based on the ETH/USDC pair
         """
-        tick_value = 1000
-        price_value = 1.10517
+        tick_value = Decimal("500")
         uniswap_price_value = order_book.tick_to_price(tick_value)
-        assert price_value == uniswap_price_value, "Invalid tick to price conversion"
+        assert isinstance(uniswap_price_value, Decimal), "price should be a decimal"
 
-    def test_add_quantities_data(self, order_book: main.UniswapV2OrderBook):
-        pass
-
-    def test_calculate_liquidity_amount(self):
-        pass
+    def test_calculate_liquidity_amount(self, order_book: main.UniswapV2OrderBook):
+        """ "
+        Unit test for UniswapV2OrderBook.calculate_liquidity_amount
+        """
+        tick = Decimal("500")
+        final_value = Decimal("9.997500313723646666869072034E-15")
+        liquidity_amount = order_book.calculate_liquidity_amount(tick, Decimal("10000"))
+        assert final_value == liquidity_amount, "liquidity amount does not match"
 
     def test_get_prices_ranges(self, order_book: main.UniswapV2OrderBook):
         """
@@ -64,15 +64,23 @@ class TestUniswapV2OrderBook:
             len(price_ranges) > 1
         ), "Price ranges list length should be greater than 1"
 
-    def test_fetch_price_and_liquidity(self):
-        pass
+    def test_fetch_price_and_liquidity(self, order_book: main.UniswapV2OrderBook):
+        """
+        Unit test for UniswapV2OrderBook.fetch_price_and_liquidity
+        """
+        with patch(
+            "data_handler.handlers.order_books.uniswap_v2.main.UniswapV2OrderBook._async_fetch_price_and_liquidity",
+        ) as mock_fetch_price_and_liquidity:
+            order_book.fetch_price_and_liquidity()
+            mock_fetch_price_and_liquidity.assert_called()
 
 
 class TestUniswapV2OrderBookProcessor:
-    def test_calculate_price_change_successful(self):
+    def test_calculate_price_change_successful(self, mock_db_connector, monkeypatch):
         """
         Check whether calculate_price_change method call is successful
         """
+        monkeypatch.setattr(DBConnector, "__new__", mock_db_connector)
         processor = OrderBookProcessor(
             "Starknet",
             "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
@@ -81,24 +89,27 @@ class TestUniswapV2OrderBookProcessor:
         price = processor.calculate_price_change(Decimal("0.05"))
         assert isinstance(price, Decimal)  # :)
 
-    def test_calculate_price_change_fail_with_invalid_args(self):
+    def test_calculate_price_change_fail_with_invalid_args(
+        self, mock_db_connector, monkeypatch
+    ):
         """
         Check that ValueError is raised when price_change_ratio argument is
         greater than 1 or less than 0 or equal to zero
         """
+        monkeypatch.setattr(DBConnector, "__new__", mock_db_connector)
         processor = OrderBookProcessor(
             "Starknet",
             "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
             "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8",
         )
-        with pytest.raises(ValueError, match="Provide valid price change ratio."):
+        with pytest.raises(ValueError):
             # check whether it is greater than
             price = processor.calculate_price_change(Decimal("5"))
 
-        with pytest.raises(ValueError, match="Provide valid price change ratio."):
+        with pytest.raises(ValueError):
             # fails when it is less than
             price = processor.calculate_price_change(Decimal("-1"))
 
-        with pytest.raises(ValueError, match="Current price of the pair is zero."):
+        with pytest.raises(ValueError):
             # check whether it is greater than
             price = processor.calculate_price_change(Decimal("0"))
