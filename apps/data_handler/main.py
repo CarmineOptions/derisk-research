@@ -4,6 +4,7 @@ user health ratios, and order book records, with a 10 requests/second rate
 limit per endpoint.
 """
 import logging
+import os
 from typing import List, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Path, Query, Request, status
@@ -13,7 +14,18 @@ from slowapi.util import get_remote_address
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
-from data_handler.db.database import Base, engine, get_database
+# imports for rate limit for endpoints
+from typing import Dict
+
+import redis.asyncio as redis
+from fastapi import Depends, FastAPI
+from fastapi_limiter import FastAPILimiter
+from fastapi_limiter.depends import RateLimiter
+
+# migrating
+
+# from data_handler.db.database import Base, engine, get_database
+from db.database import Base, engine, get_database
 from data_handler.db.models import (
     HealthRatioLevel,
     InterestRate,
@@ -38,6 +50,59 @@ app = FastAPI()
 app.state.limiter = limiter
 app.add_middleware(SlowAPIMiddleware)
 
+@app.on_event("startup")
+async def startup() -> None:
+    """
+    Initialize rate limiter with Redis on application startup.
+    
+    This function runs when the FastAPI application starts and:
+    1. Establishes connection to Redis
+    2. Initializes the FastAPI rate limiter
+    
+    Note:
+        Requires a running Redis instance at redis://redis:6379/0
+    
+    Returns:
+        None
+    """
+    try:
+        redis_connection = redis.from_url(
+            f"redis://{os.getenv('REDIS_HOST', 'localhost')}:{os.getenv('REDIS_PORT', 6379)}",
+            encoding="utf-8",
+            decode_responses=True
+        )
+        await FastAPILimiter.init(redis_connection)
+    except Exception as e:
+        print(f"Failed to initialize rate limiter: {str(e)}")
+        raise e
+
+@app.get(
+    "/test-rate-limit",
+    dependencies=[Depends(RateLimiter(times=2, seconds=5))],
+    response_model=Dict[str, str]
+)
+async def test_rate_limit() -> Dict[str, str]:
+    """
+    Test endpoint for debugging and demonstrating rate limiting functionality.
+    
+    This endpoint is protected by a rate limiter that allows:
+    - Maximum 2 requests
+    - Within a 5 second window
+    - Per unique client (identified by IP address)
+    
+    After the limit is reached, subsequent requests will receive a 429 status code
+    until the time window expires.
+    
+    Returns:
+        Dict[str, str]: A dictionary containing success message and rate limit details
+        
+    Raises:
+        HTTPException: 429 Too Many Requests when rate limit is exceeded
+    """
+    return {
+        "message": "Rate limit test successful",
+        "details": "This endpoint is limited to 2 requests per 5 seconds"
+    }
 
 @limiter.limit("10/second")
 @app.get("/loan_states", response_model=List[LoanStateResponse])
