@@ -10,8 +10,9 @@ from shared.helpers import (
 )
 
 from helpers.settings import COLLATERAL_TOKENS, DEBT_TOKENS, STABLECOIN_BUNDLE_NAME
-
+from data_handler.handlers.loan_states.abstractions import State
 from .main_chart_figure import get_main_chart_figure
+from .constants import ChartsHeaders
 from .utils import (
     get_protocol_data_mappings,
     process_liquidity,
@@ -31,10 +32,9 @@ class Dashboard:
         # "Nostra Mainnet",
     ]
 
-    def __init__(self, zklend_state):
+    def __init__(self, state: State):
         """
         Initialize the dashboard.
-        :param zklend_state: ZkLendState
         """
         # Set the page configuration
         st.set_page_config(
@@ -51,6 +51,7 @@ class Dashboard:
         self.current_pair = None
         self.stable_coin_pair = None
         self.collateral_token_price = 0
+        self.state = state
 
     def load_sidebar(self):
         """
@@ -95,6 +96,7 @@ class Dashboard:
             current_pair=self.current_pair,
             stable_coin_pair=self.stable_coin_pair,
             protocols=self.PROTOCOL_NAMES,
+            state=self.state,
         )
         loans_data = ( # TODO: remove unused `loans_data` variable or use it
             transform_loans_data(
@@ -143,6 +145,7 @@ class Dashboard:
             current_pair=self.current_pair,
             stable_coin_pair=self.stable_coin_pair,
             protocols=self.PROTOCOL_NAMES,
+            state=self.state,
         )
         loans_data = transform_loans_data(
             protocol_loans_data_mapping, self.PROTOCOL_NAMES
@@ -155,7 +158,7 @@ class Dashboard:
             )
             loans_data = update_loan_data_with_symbols(loans_data, token_symbols)
 
-        st.header("Loans with low health factor")
+        st.header(ChartsHeaders.low_health_factor_loans)
 
         col1, _ = st.columns([1, 3])
         with col1:

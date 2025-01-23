@@ -8,8 +8,9 @@ from collections import defaultdict
 
 import pandas as pd
 import streamlit as st
-from shared.helpers import load_data
 
+from data_handler.handlers.loan_states.abstractions import State
+from data_handler.handlers.liquidable_debt.utils import Prices
 from helpers.ekubo import EkuboLiquidity
 from helpers.settings import (
     COLLATERAL_TOKENS,
@@ -18,8 +19,16 @@ from helpers.settings import (
     TOKEN_SETTINGS,
     UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES,
 )
-from helpers.tools import get_prices
+from shared.constants import PAIRS
+from shared.amms import SwapAmm
+from helpers.loans_table import get_loans_table_data
+from helpers.tools import get_prices, get_main_chart_data
 
+from shared.tests.test_swap_amm import swap_amm
+
+GS_BUCKET_NAME = "derisk-persistent-state/v3"
+
+logger = logging.getLogger(__name__)
 
 def process_liquidity(
     main_chart_data: pd.DataFrame, collateral_token: str, debt_token: str
@@ -155,21 +164,68 @@ def create_stablecoin_bundle(data: dict[str, pd.DataFrame]) -> dict[str, pd.Data
     # Return the updated data dictionary
     return data
 
-
-@st.cache_data(ttl=300)
 def get_data(
     protocol_name: str,
-) -> tuple[dict[str, pd.DataFrame], dict[str, pd.DataFrame]]:
+    state: State
+) -> tuple[dict[str, pd.DataFrame], pd.DataFrame]:
     """
     Load loan data and main chart data for the specified protocol.
     :param protocol_name: Protocol name.
+    :param state: State to load data for.
     :return: DataFrames containing loan data and main chart data.
     """
-    return load_data(protocol=protocol_name)
+    # directory = f"{protocol_name.lower().replace(' ', '_')}_data"
+    main_chart_data = {}
+    current_prices = Prices()
 
+    for pair in PAIRS:
+        collateral_token_underlying_symbol, debt_token_underlying_symbol = pair.split(
+            "-"
+        )
+        # collateral_token_underlying_address = (
+        #     UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[
+        #         collateral_token_underlying_symbol
+        #     ]
+        # )
+        # debt_token_underlying_address = UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[
+        #     debt_token_underlying_symbol
+        # ]
+        # underlying_addresses_pair = (
+        #     f"{collateral_token_underlying_address}-{debt_token_underlying_address}"
+        # )
+        try:
+            main_chart_data[pair] = get_main_chart_data(
+                state=state,
+                prices=current_prices,
+                swap_amm=SwapAmm(),
+                collateral_token_underlying_symbol=collateral_token_underlying_symbol,
+                debt_token_underlying_symbol=debt_token_underlying_symbol,
+            ) #DB data
+            # main_chart_data[pair] = pd.read_parquet( # File data
+            #     f"gs://{GS_BUCKET_NAME}/{directory}/{underlying_addresses_pair}.parquet",
+            #     engine="fastparquet",
+            # )
+            # logger.info(f"Columns: {main_chart_data[pair].columns}")
+        except FileNotFoundError:
+            main_chart_data[pair] = pd.DataFrame()
+
+    loans_data = get_loans_table_data(
+        state=state,
+        prices=current_prices
+    )
+    return main_chart_data, loans_data
+
+# @st.cache_data(ttl=300)
+# def get_data(protocol_name: str) -> tuple[dict[str, pd.DataFrame], pd.DataFrame]:
+#     """
+#     Load loan data and main chart data for the specified protocol.
+#     :param protocol_name: Protocol name.
+#     :return: DataFrames containing loan data and main chart data.
+#     """
+#     return load_data(protocol_name)
 
 def get_protocol_data_mappings(
-    current_pair: str, stable_coin_pair: str, protocols: list[str]
+    current_pair: str, stable_coin_pair: str, protocols: list[str], state: State
 ) -> tuple[dict[str, pd.DataFrame], dict[str, dict]]:
     """
     Get protocol data mappings for main chart data and loans data.
@@ -177,6 +233,7 @@ def get_protocol_data_mappings(
     :param current_pair: The current pair for which data is to be fetched.
     :param stable_coin_pair: The stable coin pair to check against.
     :param protocols: List of protocols for which data is to be fetched.
+    :param state: State to load data for.
     :return: tuple of dictionaries containing:
         - protocol_main_chart_data: Mapping of protocol names to their main chart data.
         - protocol_loans_data: Mapping of protocol names to their loans data.
@@ -186,7 +243,7 @@ def get_protocol_data_mappings(
     protocol_loans_data: dict[str, dict] = {}
 
     for protocol_name in protocols:
-        main_chart_data, loans_data = get_data(protocol_name)
+        main_chart_data, loans_data = get_data(state=state, protocol_name=protocol_name)
         protocol_loans_data[protocol_name] = loans_data
 
         if current_pair == stable_coin_pair:

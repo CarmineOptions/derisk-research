@@ -198,10 +198,10 @@ class DashboardDataHandler:
         logger.info("Loan stats collected.")
         return loan_stats
 
-    def load_data(self) -> dict:
+    def load_data(self) -> tuple:
         """
         Get the dashboard data.
-        :return: dict - The dashboard data.
+        :return: tuple - The dashboard data.
         """
         logger.info("Getting dashboard data.")
         # Get token parameters.
