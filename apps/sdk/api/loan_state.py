@@ -1,8 +1,18 @@
 from fastapi import APIRouter, HTTPException
 from schemas.schemas import UserLoanByWalletParams, UserLoanByWalletResponse
+import json
 import pandas as pd
 
 loan_router = APIRouter
+
+def parse_json(data):
+    try:
+        parsed = json.loads(data.replace("'", '"'))
+        if not parsed:
+          parsed = {}
+        return parsed
+    except (json.JSONDecodeError, AttributeError, TypeError):
+        return {}
 
 @loan_router.get("/loan_data_by_wallet_id", response_model=UserLoanByWalletResponse)
 async def get_loans_by_wallet_id(params: UserLoanByWalletParams = Depends()):
@@ -47,25 +57,19 @@ async def get_loans_by_wallet_id(params: UserLoanByWalletParams = Depends()):
         status_code=404,
         detail=f"No data found for user {params.wallet_id} in protocol {params.protocol_name}"
       )
-    
-    collateral_map = {}
-    debt_map = {}
-    deposit_map ={}
-    
-    for _, row in filter_df.iterrows():
-      for token, value in row['collateral'].items():
-        collateral_map[token] = collateral_map.get(token, 0) + value
-      for token, value in row['debt'].items():
-        debt_map[token] = debt_map.get(token, 0) + value
-      for token, value in row['deposit'].items():
-        deposit_map[token] = deposit_map.get(token, 0) + value
+      
+    latest_entry = filter_df.sort_values('timestamp', ascending=False).iloc[0]
 
+    collateral = parse_json(latest_entry['collateral'])
+    debt = parse_json(latest_entry['debt'])
+    deposit = parse_json(latest_entry['deposit'])
+    
     return UserLoanByWalletResponse(
       wallet_id=params.wallet_id,
       protocol_name=params.protocol_name,
-      collateral=collateral_map,
-      debt=debt_map,
-      deposit=deposit_map
+      collateral=collateral,
+      debt=debt,
+      deposit=deposit
     )
     
   except Exception as e:
