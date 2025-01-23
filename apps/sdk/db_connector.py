@@ -1,11 +1,25 @@
 import psycopg2
 from dotenv import load_dotenv
 import os
+import logging
+
+load_dotenv()
 
 class DBConnector:
-    def __init__(self):     
-  
-        load_dotenv()
+    """
+    DBConnector manages PostgreSQL database connection and operations.
+
+    Methods:
+        get_user_debt(protocol_id: str, wallet_id: str) -> float | None: Fetches user debt.
+        get_user_collateral(protocol_id: str, wallet_id: str) -> float | None: Fetches user collateral.
+        get_loan_state(protocol_id: str, wallet_id: str) -> str | None: Fetches loan state.
+        close_connection() -> None: Closes the database connection.
+    """
+
+    def __init__(self):
+        """
+        Initializes DBConnector by connecting to the PostgreSQL database.
+        """
         host = os.getenv("DB_HOST")
         database = os.getenv("DB_NAME")
         user = os.getenv("DB_USER")
@@ -19,12 +33,22 @@ class DBConnector:
                 password=password
             )
             self.cur = self.conn.cursor()
-            print("connected to PostgreSQL successfully.")
+            logging.info("Connected to PostgreSQL  successfully.")
         except (Exception, psycopg2.Error) as error:
-            print("Error while connecting to PostgreSQL:", error)
+            logging.info(f"Error while connecting to PostgreSQL: {error}")
+            raise
 
-    def get_user_debt(self, protocol_id, wallet_id):
-       
+    def get_user_debt(self, protocol_id: str, wallet_id: str) -> float | None:
+        """
+        fetches  user debt for a given protocol and wallet.
+
+        Args:
+            protocol_id (str): Protocol ID.
+            wallet_id (str): User's wallet ID.
+
+        Returns:
+            float | None: User debt if found, otherwise None.
+        """
         try:
             sql = """
                 SELECT debt 
@@ -33,16 +57,22 @@ class DBConnector:
             """
             self.cur.execute(sql, (protocol_id, wallet_id))
             result = self.cur.fetchone()
-            if result:
-                return result[0]
-            else:
-                return None
+            return result[0] if result else None
         except (Exception, psycopg2.Error) as error:
-            print("Error while fetching user debt:", error)
-            return None
+            logging.info(f"Error while fetching user debt: {error}")
+            raise
 
-    def get_user_collateral(self, protocol_id, wallet_id):
-        
+    def get_user_collateral(self, protocol_id: str, wallet_id: str) -> float | None:
+        """
+        fetches user collateral for a given protocol and wallet.
+
+        Args:
+            protocol_id (str): protocol ID
+            wallet_id (str): user wallet ID.
+
+        Returns:
+            float | None: User collateral if found, otherwise None.
+        """
         try:
             sql = """
                 SELECT collateral 
@@ -51,16 +81,22 @@ class DBConnector:
             """
             self.cur.execute(sql, (protocol_id, wallet_id))
             result = self.cur.fetchone()
-            if result:
-                return result[0]
-            else:
-                return None
+            return result[0] if result else None
         except (Exception, psycopg2.Error) as error:
-            print("Error while fetching user collateral:", error)
-            return None
+            logging.info(f"Error while fetching user collateral: {error}")
+            raise
 
-    def get_loan_state(self, protocol_id, wallet_id):
-        # loan_state not in the test file 
+    def get_loan_state(self, protocol_id: str, wallet_id: str) -> str | None:
+        """
+        fetches  user loan state for a given protocol and wallet.
+
+        Args:
+            protocol_id (str): Protocol ID.
+            wallet_id (str): User's wallet ID.
+
+        Returns:
+            str | None: User's loan state if found, otherwise None.
+        """
         try:
             sql = """
                 SELECT loan_state 
@@ -69,17 +105,16 @@ class DBConnector:
             """
             self.cur.execute(sql, (protocol_id, wallet_id))
             result = self.cur.fetchone()
-            if result:
-                return result[0]
-            else:
-                return None
+            return result[0] if result else None
         except (Exception, psycopg2.Error) as error:
-            print("Error while fetching user loan state:", error)
-            return None
+            logging.info(f"Error while fetching user loan state: {error}")
+            raise
 
-    def close_connection(self):
-        
+    def close_connection(self) -> None:
+        """
+        closes the database connection if open.
+        """
         if self.conn:
             self.cur.close()
             self.conn.close()
-            print("postgre sql connection closed.")
+            logging.info("PostgreSQL connection closed.")
