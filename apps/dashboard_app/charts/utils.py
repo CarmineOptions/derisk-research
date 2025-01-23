@@ -206,7 +206,7 @@ def get_data(
             #     engine="fastparquet",
             # )
             # logger.info(f"Columns: {main_chart_data[pair].columns}")
-        except FileNotFoundError:
+        except Exception:
             main_chart_data[pair] = pd.DataFrame()
 
     loans_data = get_loans_table_data(
