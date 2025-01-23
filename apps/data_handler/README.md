@@ -59,7 +59,7 @@ docker-compose down
 ```
 
 ## Data migrations with Alembic
-In this project is using `alembic` for data migrations.
+This project is using `alembic` for data migrations.
 
 ### Generating Migrations
 Navigate to the `apps` folder and generate a new migration using the following command:
