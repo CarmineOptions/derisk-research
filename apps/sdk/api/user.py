@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException
 import pandas as pd
 import json
 from pathlib import Path
-from apps.data_handler.db.schemas import UserCollateralResponse
+from sdk.schemas.schemas import UserCollateralResponse
 
 router = APIRouter(
     prefix="/user",
