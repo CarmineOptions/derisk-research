@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir poetry
+RUN curl -sSL https://install.python-poetry.org/ | POETRY_HOME=/usr/local/ POETRY_VERSION=1.8.3 python3 -
 
 RUN poetry config virtualenvs.create false
 
