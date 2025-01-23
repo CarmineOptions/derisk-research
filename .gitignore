@@ -3,3 +3,4 @@ __pycache__
 .vscode
 .env
 storage_credentials.json
+env/
