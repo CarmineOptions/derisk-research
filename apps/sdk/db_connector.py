@@ -20,20 +20,30 @@ class DBConnector:
         """
         Initializes DBConnector by connecting to the PostgreSQL database.
         """
+        self.conn, self.cur = self.connect_to_db()
+
+    def connect_to_db(self):
+        """
+        make  connection to the PostgreSQL DB and returns the connection and cursor.
+
+        Returns:
+            tuple: (conn, cur) where conn is  connection object and cur is  cursor object.
+        """
         host = os.getenv("DB_HOST")
         database = os.getenv("DB_NAME")
         user = os.getenv("DB_USER")
         password = os.getenv("DB_PASSWORD")
 
         try:
-            self.conn = psycopg2.connect(
+            conn = psycopg2.connect(
                 host=host,
                 database=database,
                 user=user,
                 password=password
             )
-            self.cur = self.conn.cursor()
-            logging.info("Connected to PostgreSQL  successfully.")
+            cur = conn.cursor()
+            logging.info("Connected to PostgreSQL successfully.")
+            return conn, cur
         except (Exception, psycopg2.Error) as error:
             logging.info(f"Error while connecting to PostgreSQL: {error}")
             raise
