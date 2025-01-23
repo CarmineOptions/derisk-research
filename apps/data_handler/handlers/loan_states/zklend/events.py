@@ -15,6 +15,7 @@ Functions:
 import copy
 import decimal
 import logging
+from decimal import Decimal
 from typing import Optional
 
 import pandas as pd
@@ -116,7 +117,7 @@ class ZkLendLoanEntity(LoanEntity):
         if debt_usd == decimal.Decimal("0"):
             return decimal.Decimal("Inf")
 
-        return risk_adjusted_collateral_usd / debt_usd
+        return Decimal(risk_adjusted_collateral_usd) / debt_usd
 
     def compute_debt_to_be_liquidated(
         self,
