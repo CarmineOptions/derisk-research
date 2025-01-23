@@ -32,3 +32,4 @@ class UserLoanByWalletResponse(BaseModel):
     collateral: Dict[str, str] 
     debt: Dict[str, str]
     deposit: Dict[str, str]
+    

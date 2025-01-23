@@ -77,4 +77,3 @@ async def get_loans_by_wallet_id(params: UserLoanByWalletParams = Depends()):
       status_code=500,
       detail=f"Internal server error: {str(e)}"
     )  
-  
