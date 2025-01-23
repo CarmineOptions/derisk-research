@@ -1,6 +1,6 @@
 # DeRisk Starknet
 
-This project consist of a monorepo with components required for the implementation of DeRisk on Starknet.
+This project consists of a monorepo with components required for the implementation of DeRisk on Starknet.
 There are several components in this repository, each with its own purpose and functionality. The main components are:
 - [`data_handler`](./apps/data_handler/README.md) - Data processing and analysis component
 - [`web_app`](./apps/web_app/README.md) - Main web application interface
