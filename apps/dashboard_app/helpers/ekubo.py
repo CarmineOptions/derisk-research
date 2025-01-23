@@ -61,7 +61,18 @@ class EkuboLiquidity:
         ).astype(float)
 
         liquidity.sort_values(by="price", inplace=True)
-        price_diff = self.data["Collateral"].diff().max()
+        if self.data.empty:
+            self.data = self.data.append(
+                pandas.DataFrame(
+                    {
+                        "price": [0],
+                        "debt_token_supply": [0],
+                        "collateral_token_price": [0],
+                        "Ekubo_debt_token_supply": [0],
+                    }
+                )
+            )
+        price_diff = self.data["collateral_token_price"].diff().max() # FIXME use Collateral
 
         self.data["Ekubo_debt_token_supply"] = self.data[
             "collateral_token_price"

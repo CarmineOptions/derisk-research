@@ -162,11 +162,12 @@ class Dashboard:
 
         col1, _ = st.columns([1, 3])
         with col1:
+         # TODO: remove this line when debugging is done
             debt_usd_lower_bound, debt_usd_upper_bound = st.slider(
                 label="Select range of USD borrowings",
                 min_value=0,
                 max_value=int(loans_data["Debt (USD)"].max()),
-                value=(0, int(loans_data["Debt (USD)"].max())),
+                value=(0, int(loans_data["Debt (USD)"].max()) or 1), # FIXME remove 1
             )
         st.dataframe(
             loans_data[
