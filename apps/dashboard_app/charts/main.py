@@ -195,6 +195,65 @@ class Dashboard:
                 use_container_width=True,
             )
 
+    def load_top_loans_chart(self):
+        (
+            protocol_main_chart_data_mapping,
+            protocol_loans_data_mapping,
+        ) = get_protocol_data_mappings(
+            current_pair=self.current_pair,
+            stable_coin_pair=self.stable_coin_pair,
+            protocols=self.PROTOCOL_NAMES,
+            state=self.state,
+        )
+        loans_data = transform_loans_data(
+            protocol_loans_data_mapping, self.PROTOCOL_NAMES
+        )
+
+        st.header("Top loans")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.subheader("Sorted by collateral")
+            try:
+                st.dataframe(
+                    loans_data[
+                        loans_data["Health factor"] > 1  # TODO: debug the negative HFs
+                        ]
+                    .sort_values("Collateral (USD)", ascending=False)
+                    .iloc[:20],
+                    use_container_width=True,
+                )
+            except TypeError:
+                st.dataframe(
+                    pd.DataFrame(
+                        {
+                            "price": [0],
+                            "Health factor (Collateral (USD))": [0],
+                        }
+                    ),
+                    use_container_width=True,
+                )
+        with col2:
+            st.subheader("Sorted by debt")
+            try:
+                st.dataframe(
+                    loans_data[
+                        loans_data["Health factor"] > 1  # TODO: debug the negative HFs
+                        ]
+                    .sort_values("Debt (USD)", ascending=False)
+                    .iloc[:20],
+                    use_container_width=True,
+                )
+            except TypeError:
+                st.dataframe(
+                    pd.DataFrame(
+                        {
+                            "price": [0],
+                            "Health factor (Debt (USD))": [0],
+                        }
+                    ),
+                    use_container_width=True,
+                )
+
     def run(self):
         """
         This function executes/runs the load_sidebar() and load_main_chart() function.
@@ -203,3 +262,4 @@ class Dashboard:
         self.load_sidebar()
         self.load_main_chart()
         self.load_loans_with_low_health_factor_chart()
+        self.load_top_loans_chart()

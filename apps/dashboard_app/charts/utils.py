@@ -256,7 +256,7 @@ def get_protocol_data_mappings(
 
 
 def transform_loans_data(
-    protocol_loans_data_mapping: pd.DataFrame, protocols: list[str]
+    protocol_loans_data_mapping: dict[str, dict], protocols: list[str]
 ) -> pd.DataFrame:
     """
     Transform protocol loans data
