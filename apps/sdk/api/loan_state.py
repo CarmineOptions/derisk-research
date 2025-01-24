@@ -6,15 +6,6 @@ import pandas as pd
 
 loan_router = APIRouter()
 
-# def parse_json(data):
-#     try:
-#         parsed = json.loads(data.replace("'", '"'))
-#         if not parsed:
-#           parsed = {}
-#         return parsed
-#     except (json.JSONDecodeError, AttributeError, TypeError):
-#         return {}
-
 def parse_json(data):
     if isinstance(data, str):
         try:
