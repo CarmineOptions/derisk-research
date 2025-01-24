@@ -1,18 +1,19 @@
 from fastapi import APIRouter, HTTPException
+from fastapi import Depends
 from schemas.schemas import UserLoanByWalletParams, UserLoanByWalletResponse
 import json
 import pandas as pd
 
-loan_router = APIRouter
+loan_router = APIRouter()
 
 def parse_json(data):
-    try:
-        parsed = json.loads(data.replace("'", '"'))
-        if not parsed:
-          parsed = {}
-        return parsed
-    except (json.JSONDecodeError, AttributeError, TypeError):
-        return {}
+    if isinstance(data, str):
+        try:
+            return json.loads(data.replace("'", '"'))
+        except json.JSONDecodeError:
+            pass
+    return {}
+
 
 @loan_router.get("/loan_data_by_wallet_id", response_model=UserLoanByWalletResponse)
 async def get_loans_by_wallet_id(params: UserLoanByWalletParams = Depends()):
