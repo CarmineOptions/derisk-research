@@ -4,12 +4,14 @@ This module defines the Dashboard class for rendering a DeRisk dashboard using S
 import pandas as pd
 import streamlit as st
 from data_handler.handlers.loan_states.abstractions import State
+from data_handler.handlers.loan_states.zklend.events import ZkLendState, ZkLendLoanEntity
+from data_handler.handlers.liquidable_debt.utils import Prices
 from shared.helpers import (
     extract_token_addresses,
     fetch_token_symbols_from_set_of_loan_addresses,
     update_loan_data_with_symbols,
 )
-
+from shared.types import TokenParameters, InterestRateModels
 from helpers.settings import COLLATERAL_TOKENS, DEBT_TOKENS, STABLECOIN_BUNDLE_NAME
 
 from .constants import ChartsHeaders
@@ -207,6 +209,17 @@ class Dashboard:
         )
         loans_data = transform_loans_data(
             protocol_loans_data_mapping, self.PROTOCOL_NAMES
+        )
+
+        if isinstance(self.state, ZkLendState): # TODO add for others protocols
+            loan_entity = ZkLendLoanEntity()
+
+        prices = Prices()
+        token_paramethers = TokenParameters()
+        interest_models = InterestRateModels()
+        collateral_usd = loan_entity.compute_collateral_usd(
+            risk_adjusted=False,
+            prices=prices.prices,
         )
 
         st.header("Top loans")

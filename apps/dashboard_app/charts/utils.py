@@ -12,7 +12,6 @@ from data_handler.handlers.liquidable_debt.utils import Prices
 from data_handler.handlers.loan_states.abstractions import State
 from shared.amms import SwapAmm
 from shared.constants import PAIRS
-from shared.tests.test_swap_amm import swap_amm
 
 from helpers.ekubo import EkuboLiquidity
 from helpers.loans_table import get_loans_table_data
