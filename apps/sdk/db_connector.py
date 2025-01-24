@@ -45,14 +45,12 @@ class DBConnector:
                     user=self.user,
                     password=self.password,
                     port=self.port
-                   
                 )
                 self.cur = self.conn.cursor()
+                logging.info("Connection opened successfully.")
             except psycopg2.DatabaseError as e:
-                logging.error(e)
+                logging.error(f"Error while connecting to the database: {e}")
                 raise e
-            finally:
-                logging.info('Connection opened successfully.')
 
     def get_user_debt(self, protocol_id: str, wallet_id: str) -> float | None:
         """
@@ -67,15 +65,15 @@ class DBConnector:
         """
         try:
             sql = """
-                SELECT debt 
-                FROM user_data 
+                SELECT CAST(debt->>'amount' AS FLOAT) AS debt_value
+                FROM mytable
                 WHERE protocol_id = %s AND user = %s;
             """
             self.cur.execute(sql, (protocol_id, wallet_id))
             result = self.cur.fetchone()
-            return result[0] if result else None
+            return float(result[0]) if result and result[0] is not None else None
         except (Exception, psycopg2.Error) as error:
-            logging.info(f"Error while fetching user debt: {error}")
+            logging.error(f"Error while fetching user debt: {error}")
             raise
 
     def get_user_collateral(self, protocol_id: str, wallet_id: str) -> float | None:
@@ -83,23 +81,23 @@ class DBConnector:
         Fetches user collateral for a given protocol and wallet.
 
         Args:
-            protocol_id (str): Protocol ID
-            wallet_id (str): User wallet ID.
+            protocol_id (str): Protocol ID.
+            wallet_id (str): User's wallet ID.
 
         Returns:
             float | None: User collateral if found, otherwise None.
         """
         try:
             sql = """
-                SELECT collateral 
-                FROM user_data 
+                SELECT CAST(collateral->>'amount' AS FLOAT) AS collateral_value
+                FROM mytable
                 WHERE protocol_id = %s AND user = %s;
             """
             self.cur.execute(sql, (protocol_id, wallet_id))
             result = self.cur.fetchone()
-            return result[0] if result else None
+            return float(result[0]) if result and result[0] is not None else None
         except (Exception, psycopg2.Error) as error:
-            logging.info(f"Error while fetching user collateral: {error}")
+            logging.error(f"Error while fetching user collateral: {error}")
             raise
 
     def get_loan_state(self, protocol_id: str, wallet_id: str) -> str | None:
@@ -115,15 +113,15 @@ class DBConnector:
         """
         try:
             sql = """
-                SELECT loan_state 
-                FROM user_data 
+                SELECT loan_state
+                FROM mytable
                 WHERE protocol_id = %s AND user = %s;
             """
             self.cur.execute(sql, (protocol_id, wallet_id))
             result = self.cur.fetchone()
-            return result[0] if result else None
+            return str(result[0]) if result and result[0] is not None else None
         except (Exception, psycopg2.Error) as error:
-            logging.info(f"Error while fetching user loan state: {error}")
+            logging.error(f"Error while fetching user loan state: {error}")
             raise
 
     def close_connection(self) -> None:
