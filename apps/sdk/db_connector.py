@@ -20,39 +20,43 @@ class DBConnector:
         """
         Initializes DBConnector by connecting to the PostgreSQL database.
         """
+        self.host = os.getenv("DB_HOST")
+        self.database = os.getenv("DB_NAME")
+        self.user = os.getenv("DB_USER")
+        self.password = os.getenv("DB_PASSWORD")
+        self.port = os.getenv("DB_PORT")
 
-        host = os.getenv("DB_HOST")
-        database = os.getenv("DB_NAME")
-        user = os.getenv("DB_USER")
-        password = os.getenv("DB_PASSWORD")
-
-        self.conn, self.cur = self.connect_to_db()
+        self.conn = None
+        self.cur = None
+        self.connect_to_db()
 
     def connect_to_db(self):
         """
-        make  connection to the PostgreSQL DB and returns the connection and cursor.
+        Make connection to the PostgreSQL DB and set the connection and cursor.
 
         Returns:
-            tuple: (conn, cur) where conn is  connection object and cur is  cursor object.
+            None
         """
-        
-        try:
-            conn = psycopg2.connect(
-                host=host,
-                database=database,
-                user=user,
-                password=password
-            )
-            cur = conn.cursor()
-            logging.info("Connected to PostgreSQL successfully.")
-            return conn, cur
-        except (Exception, psycopg2.Error) as error:
-            logging.info(f"Error while connecting to PostgreSQL: {error}")
-            raise
+        if self.conn is None:
+            try:
+                self.conn = psycopg2.connect(
+                    host=self.host,
+                    database=self.database,
+                    user=self.user,
+                    password=self.password,
+                    port=self.port
+                   
+                )
+                self.cur = self.conn.cursor()
+            except psycopg2.DatabaseError as e:
+                logging.error(e)
+                raise e
+            finally:
+                logging.info('Connection opened successfully.')
 
     def get_user_debt(self, protocol_id: str, wallet_id: str) -> float | None:
         """
-        fetches  user debt for a given protocol and wallet.
+        Fetches user debt for a given protocol and wallet.
 
         Args:
             protocol_id (str): Protocol ID.
@@ -76,11 +80,11 @@ class DBConnector:
 
     def get_user_collateral(self, protocol_id: str, wallet_id: str) -> float | None:
         """
-        fetches user collateral for a given protocol and wallet.
+        Fetches user collateral for a given protocol and wallet.
 
         Args:
-            protocol_id (str): protocol ID
-            wallet_id (str): user wallet ID.
+            protocol_id (str): Protocol ID
+            wallet_id (str): User wallet ID.
 
         Returns:
             float | None: User collateral if found, otherwise None.
@@ -100,7 +104,7 @@ class DBConnector:
 
     def get_loan_state(self, protocol_id: str, wallet_id: str) -> str | None:
         """
-        fetches  user loan state for a given protocol and wallet.
+        Fetches user loan state for a given protocol and wallet.
 
         Args:
             protocol_id (str): Protocol ID.
@@ -124,9 +128,10 @@ class DBConnector:
 
     def close_connection(self) -> None:
         """
-        closes the database connection if open.
+        Closes the database connection if open.
         """
         if self.conn:
             self.cur.close()
             self.conn.close()
             logging.info("PostgreSQL connection closed.")
+
