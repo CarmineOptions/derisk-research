@@ -41,6 +41,8 @@ def get_user_debt(wallet_id: str, protocol_name: str):
         ResponseModel: The debt details including wallet ID, protocol name, and token-value pairs.
     """
     wallet_data = debt_data.get(wallet_id)
+    debt_data = debt_data.get(protocol)
+    return {"wallet_id": wallet_id, "protocol": protocol, "debt": debt_data}
     if not wallet_data:
         return {"wallet_id": wallet_id, "protocol_name": protocol_name, "debt": {}}
 
