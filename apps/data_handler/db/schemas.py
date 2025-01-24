@@ -73,9 +73,3 @@ class OrderBookResponseModel(BaseModel):
         if value is None:
             return 0
         return value
-
-class UserCollateralResponse(BaseModel):
-    """ Base class for UserCollateralResponse """
-    wallet_id: str
-    protocol_name: str
-    collateral: Dict[str, float]
