@@ -73,3 +73,8 @@ class OrderBookResponseModel(BaseModel):
         if value is None:
             return 0
         return value
+    
+class ResponseModel(BaseModel):
+    wallet_id: str
+    protocol_name: str
+    debt: Dict[str, float]  

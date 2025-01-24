@@ -3,15 +3,9 @@ from pydantic import BaseModel
 from typing import Dict
 import pandas as pd
 import json
+from data_handler.db.schemas import ResponseModel
 
-app = FastAPI()
-
-
-class ResponseModel(BaseModel):
-    wallet_id: str
-    protocol_name: str
-    debt: Dict[str, float]  
-
+app = FastAPI()  
 
 file_path = "../mock_data.csv"
 mock_data = pd.read_csv(file_path)
