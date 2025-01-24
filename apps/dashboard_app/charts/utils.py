@@ -8,10 +8,14 @@ from collections import defaultdict
 
 import pandas as pd
 import streamlit as st
-
-from data_handler.handlers.loan_states.abstractions import State
 from data_handler.handlers.liquidable_debt.utils import Prices
+from data_handler.handlers.loan_states.abstractions import State
+from shared.amms import SwapAmm
+from shared.constants import PAIRS
+from shared.tests.test_swap_amm import swap_amm
+
 from helpers.ekubo import EkuboLiquidity
+from helpers.loans_table import get_loans_table_data
 from helpers.settings import (
     COLLATERAL_TOKENS,
     DEBT_TOKENS,
@@ -19,16 +23,12 @@ from helpers.settings import (
     TOKEN_SETTINGS,
     UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES,
 )
-from shared.constants import PAIRS
-from shared.amms import SwapAmm
-from helpers.loans_table import get_loans_table_data
-from helpers.tools import get_prices, get_main_chart_data
-
-from shared.tests.test_swap_amm import swap_amm
+from helpers.tools import get_main_chart_data, get_prices
 
 GS_BUCKET_NAME = "derisk-persistent-state/v3"
 
 logger = logging.getLogger(__name__)
+
 
 def process_liquidity(
     main_chart_data: pd.DataFrame, collateral_token: str, debt_token: str
@@ -164,9 +164,9 @@ def create_stablecoin_bundle(data: dict[str, pd.DataFrame]) -> dict[str, pd.Data
     # Return the updated data dictionary
     return data
 
+
 def get_data(
-    protocol_name: str,
-    state: State
+    protocol_name: str, state: State
 ) -> tuple[dict[str, pd.DataFrame], pd.DataFrame]:
     """
     Load loan data and main chart data for the specified protocol.
@@ -200,7 +200,7 @@ def get_data(
                 swap_amm=SwapAmm(),
                 collateral_token_underlying_symbol=collateral_token_underlying_symbol,
                 debt_token_underlying_symbol=debt_token_underlying_symbol,
-            ) #DB data
+            )  # DB data
             # main_chart_data[pair] = pd.read_parquet( # File data
             #     f"gs://{GS_BUCKET_NAME}/{directory}/{underlying_addresses_pair}.parquet",
             #     engine="fastparquet",
@@ -209,11 +209,9 @@ def get_data(
         except Exception:
             main_chart_data[pair] = pd.DataFrame()
 
-    loans_data = get_loans_table_data(
-        state=state,
-        prices=current_prices
-    )
+    loans_data = get_loans_table_data(state=state, prices=current_prices)
     return main_chart_data, loans_data
+
 
 # @st.cache_data(ttl=300)
 # def get_data(protocol_name: str) -> tuple[dict[str, pd.DataFrame], pd.DataFrame]:
@@ -223,6 +221,7 @@ def get_data(
 #     :return: DataFrames containing loan data and main chart data.
 #     """
 #     return load_data(protocol_name)
+
 
 def get_protocol_data_mappings(
     current_pair: str, stable_coin_pair: str, protocols: list[str], state: State

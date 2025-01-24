@@ -12,9 +12,10 @@ import requests
 
 class EkuboLiquidity:
     """
-     Fetches data from a liquidity API and send it to the dataframe which updates the
-     liquidity of a token pair. 
+    Fetches data from a liquidity API and send it to the dataframe which updates the
+    liquidity of a token pair.
     """
+
     URL = "http://51.195.57.201/orderbook/"
     DEX = "Ekubo"
     LOWER_BOUND_VALUE = 0.95
@@ -62,17 +63,17 @@ class EkuboLiquidity:
 
         liquidity.sort_values(by="price", inplace=True)
         if self.data.empty:
-            self.data = self.data.append(
-                pandas.DataFrame(
-                    {
-                        "price": [0],
-                        "debt_token_supply": [0],
-                        "collateral_token_price": [0],
-                        "Ekubo_debt_token_supply": [0],
-                    }
-                )
+            self.data = pandas.DataFrame(
+                {
+                    "price": [0],
+                    "debt_token_supply": [0],
+                    "collateral_token_price": [0],
+                    "Ekubo_debt_token_supply": [0],
+                }
             )
-        price_diff = self.data["collateral_token_price"].diff().max() # FIXME use Collateral
+        price_diff = (
+            self.data["collateral_token_price"].diff().max()
+        )  # FIXME use Collateral
 
         self.data["Ekubo_debt_token_supply"] = self.data[
             "collateral_token_price"
@@ -81,7 +82,7 @@ class EkuboLiquidity:
                 data=liquidity,
                 price=price,
                 price_diff=price_diff,
-                bids = bids_or_asks["type"] == "bids",
+                bids=bids_or_asks["type"] == "bids",
             ),
         )
         self.data["debt_token_supply"] += self.data["Ekubo_debt_token_supply"]

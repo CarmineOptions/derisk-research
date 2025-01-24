@@ -8,13 +8,12 @@ from typing import Iterator
 
 import pandas as pd
 import requests
+from data_handler.handlers.liquidable_debt.utils import Prices
+from data_handler.handlers.loan_states.abstractions import State
+from shared.amms import SwapAmm
 from shared.blockchain_call import func_call
 from shared.types import TokenParameters
 from starknet_py.cairo.felt import decode_shortstring
-
-from data_handler.handlers.loan_states.abstractions import State
-from data_handler.handlers.liquidable_debt.utils import Prices
-from shared.amms import SwapAmm
 
 AMMS = ["10kSwap", "MySwap", "SithSwap", "JediSwap"]
 
@@ -208,11 +207,11 @@ def get_custom_data(data: pd.DataFrame) -> list:
 
 
 def get_main_chart_data(
-        state: State,
-        prices: Prices,
-        swap_amms: SwapAmm,
-        collateral_token_underlying_symbol: str,
-        debt_token_underlying_symbol: str,
+    state: State,
+    prices: Prices,
+    swap_amms: SwapAmm,
+    collateral_token_underlying_symbol: str,
+    debt_token_underlying_symbol: str,
 ) -> pd.DataFrame:
     """
     Returns the main chart data for the given state and prices.

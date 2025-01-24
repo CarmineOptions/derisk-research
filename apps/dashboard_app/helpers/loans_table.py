@@ -11,11 +11,10 @@ from shared.types import Prices
 
 def get_protocol(state: State) -> str:
     """
-    Takes a parameter of State which gets the loan entities and 
+    Takes a parameter of State which gets the loan entities and
     returns the string.
     """
     return state.get_protocol_name
-
 
 
 def get_loans_table_data(
