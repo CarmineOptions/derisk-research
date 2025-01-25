@@ -219,14 +219,38 @@ class Dashboard:
         interest_models = InterestRateModels()
         collateral_usd = loan_entity.compute_collateral_usd(
             risk_adjusted=False,
+            collateral_token_parameters=token_paramethers,
+            collateral_interest_rate_model=interest_models,
+            prices=prices.prices,
+        )
+        risk_adjusted_collateral_usd = loan_entity.compute_collateral_usd(
+            risk_adjusted=True,
+            collateral_token_parameters=token_paramethers,
+            collateral_interest_rate_model=interest_models,
+            prices=prices.prices,
+        )
+        debt_usd = loan_entity.compute_debt_usd(
+            risk_adjusted=False,
+            debt_token_parameters=token_paramethers,
+            debt_interest_rate_model=interest_models,
+            prices=prices.prices,
+        )
+        risk_adjusted_debt_usd = loan_entity.compute_debt_usd(
+            risk_adjusted=True,
+            debt_token_parameters=token_paramethers,
+            debt_interest_rate_model=interest_models,
             prices=prices.prices,
         )
 
-        st.header("Top loans")
+        # import pdb
+        # pdb.set_trace()
+        st.header(ChartsHeaders.top_loans)
         col1, col2 = st.columns(2)
         with col1:
             st.subheader("Sorted by collateral")
             try:
+                loans_data["Collateral USD"] = collateral_usd
+                loans_data["Risk adjusted Collateral USD"] = risk_adjusted_collateral_usd
                 st.dataframe(
                     loans_data[
                         loans_data["Health factor"] > 1  # TODO: debug the negative HFs
@@ -241,12 +265,16 @@ class Dashboard:
                         {
                             "price": [0],
                             "Health factor (Collateral (USD))": [0],
+                            "Collateral USD": collateral_usd,
+                            "Risk adjusted Collateral USD": risk_adjusted_collateral_usd,
                         }
                     ),
                     use_container_width=True,
                 )
         with col2:
             st.subheader("Sorted by debt")
+            loans_data["Debt USD"] = debt_usd
+            loans_data["Risk adjusted Debt USD"] = debt_usd
             try:
                 st.dataframe(
                     loans_data[
@@ -257,13 +285,16 @@ class Dashboard:
                     use_container_width=True,
                 )
             except TypeError:
-                st.dataframe(
-                    pd.DataFrame(
+                df = pd.DataFrame(
                         {
                             "price": [0],
                             "Health factor (Debt (USD))": [0],
+                            "Debt USD": debt_usd,
+                            "Risk adjusted Debt USD": risk_adjusted_debt_usd,
                         }
-                    ),
+                    )
+                st.dataframe(
+                    df,
                     use_container_width=True,
                 )
 

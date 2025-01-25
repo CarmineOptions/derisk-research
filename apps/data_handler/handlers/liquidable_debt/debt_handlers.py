@@ -18,7 +18,7 @@ from data_handler.db.crud import DBConnector
 from data_handler.db.models import LoanState
 from shared.constants import ProtocolIDs
 from shared.state import LoanEntity, State
-from shared.types import TokenValues
+from shared.custom_types import TokenValues
 
 
 class BaseDBLiquidableDebtDataHandler:
