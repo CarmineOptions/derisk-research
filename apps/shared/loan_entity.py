@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from decimal import Decimal
 
 from shared.constants import TOKEN_SETTINGS
-from shared.types import (
+from shared.custom_types import (
     ExtraInfo,
     InterestRateModels,
     Portfolio,

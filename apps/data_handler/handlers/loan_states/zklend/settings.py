@@ -3,7 +3,7 @@ import decimal
 from dataclasses import dataclass
 
 from shared.constants import TOKEN_SETTINGS
-from shared.types import TokenSettings
+from shared.custom_types import TokenSettings
 
 
 @dataclass

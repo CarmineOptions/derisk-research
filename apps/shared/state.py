@@ -7,7 +7,7 @@ import pandas as pd
 
 from shared.error_handler import BOT, MessageTemplates, TokenSettingsNotFound
 from shared.loan_entity import LoanEntity
-from shared.types import (
+from shared.custom_types import (
     CollateralAndDebtInterestRateModels,
     CollateralAndDebtTokenParameters,
     InterestRateModels,
