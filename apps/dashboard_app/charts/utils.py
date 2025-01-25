@@ -191,7 +191,12 @@ def get_data(
         except Exception:
             main_chart_data[pair] = pd.DataFrame()
 
-    loans_data = get_loans_table_data(state=state, prices=current_prices)
+    underlying_addresses_to_decimals = {
+        x.address: int(math.log10(x.decimal_factor)) for x in TOKEN_SETTINGS.values()
+    }
+    prices = get_prices(token_decimals=underlying_addresses_to_decimals)
+
+    loans_data = get_loans_table_data(state=state, prices=prices)
     return main_chart_data, loans_data
 
 
