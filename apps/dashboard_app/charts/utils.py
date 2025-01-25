@@ -24,8 +24,6 @@ from helpers.settings import (
 )
 from helpers.tools import get_main_chart_data, get_prices
 
-GS_BUCKET_NAME = "derisk-persistent-state/v3"
-
 logger = logging.getLogger(__name__)
 
 
@@ -181,17 +179,6 @@ def get_data(
         collateral_token_underlying_symbol, debt_token_underlying_symbol = pair.split(
             "-"
         )
-        # collateral_token_underlying_address = (
-        #     UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[
-        #         collateral_token_underlying_symbol
-        #     ]
-        # )
-        # debt_token_underlying_address = UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[
-        #     debt_token_underlying_symbol
-        # ]
-        # underlying_addresses_pair = (
-        #     f"{collateral_token_underlying_address}-{debt_token_underlying_address}"
-        # )
         try:
             main_chart_data[pair] = get_main_chart_data(
                 state=state,
@@ -199,27 +186,12 @@ def get_data(
                 swap_amm=SwapAmm(),
                 collateral_token_underlying_symbol=collateral_token_underlying_symbol,
                 debt_token_underlying_symbol=debt_token_underlying_symbol,
-            )  # DB data
-            # main_chart_data[pair] = pd.read_parquet( # File data
-            #     f"gs://{GS_BUCKET_NAME}/{directory}/{underlying_addresses_pair}.parquet",
-            #     engine="fastparquet",
-            # )
-            # logger.info(f"Columns: {main_chart_data[pair].columns}")
+            )
         except Exception:
             main_chart_data[pair] = pd.DataFrame()
 
     loans_data = get_loans_table_data(state=state, prices=current_prices)
     return main_chart_data, loans_data
-
-
-# @st.cache_data(ttl=300)
-# def get_data(protocol_name: str) -> tuple[dict[str, pd.DataFrame], pd.DataFrame]:
-#     """
-#     Load loan data and main chart data for the specified protocol.
-#     :param protocol_name: Protocol name.
-#     :return: DataFrames containing loan data and main chart data.
-#     """
-#     return load_data(protocol_name)
 
 
 def get_protocol_data_mappings(
