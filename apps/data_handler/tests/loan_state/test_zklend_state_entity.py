@@ -6,8 +6,7 @@ import pandas as pd
 import pytest
 
 from data_handler.handlers.loan_states.zklend.events import ZkLendState
-from shared.loan_entity import LoanEntity
-from shared.types import InterestRateModels, Portfolio, ZkLendCollateralEnabled
+from shared.custom_types import Portfolio, ZkLendCollateralEnabled
 
 
 @pytest.fixture
