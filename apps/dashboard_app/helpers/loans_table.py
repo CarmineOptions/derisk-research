@@ -5,18 +5,16 @@ This module organizes and handles the loan data in a tabular manner.
 import pandas as pd
 from data_handler.handlers.loan_states.nostra_alpha.events import NostraAlphaState
 from data_handler.handlers.loan_states.nostra_mainnet.events import NostraMainnetState
-from data_handler.handlers.loan_states.zklend.events import ZkLendState
 from shared.state import State
 from shared.types import Prices
 
 
 def get_protocol(state: State) -> str:
     """
-    Takes a parameter of State which gets the loan entities and 
+    Takes a parameter of State which gets the loan entities and
     returns the string.
     """
     return state.get_protocol_name
-
 
 
 def get_loans_table_data(

@@ -42,23 +42,30 @@ class LoanEntity(ABC):
         :param prices: Prices
         :return: sum of the value of the collateral in USD
         """
-        return sum(
-            float(token_amount)
-            / (10 ** collateral_token_parameters[token].decimals)
-            * (collateral_token_parameters[token].collateral_factor if risk_adjusted else 1.0)
-            * float(collateral_interest_rate_model.get(token, 1.0))
-            * prices[underlying_address]
-            for token, token_amount in self.collateral.values.items()
-            if (underlying_address := collateral_token_parameters[token].underlying_address)
-            in prices
-        )
+        total_sum = Decimal("0")
+        for token, token_amount in self.collateral.items():
+            if (
+                underlying_address := collateral_token_parameters[token].underlying_address
+            ) in prices.values:
+                total_sum += Decimal(
+                    float(token_amount)
+                    / (10 ** collateral_token_parameters[token].decimals)
+                    * (
+                        collateral_token_parameters[token].collateral_factor
+                        if risk_adjusted
+                        else 1.0
+                    )
+                    * float(collateral_interest_rate_model.get(token, 1.0))
+                    * prices[underlying_address]
+                )
+        return total_sum
 
     def compute_debt_usd(
         self,
         risk_adjusted: bool,
         debt_token_parameters: TokenParameters,
         debt_interest_rate_model: InterestRateModels,
-        prices: TokenValues,
+        prices: Prices,
     ) -> Decimal:
         """
         Compute the value of the debt in USD.
@@ -68,15 +75,19 @@ class LoanEntity(ABC):
         :param prices: Prices
         :return: Decimal
         """
-        return sum(
-            float(token_amount)
-            / (10 ** debt_token_parameters[token].decimals)
-            / (debt_token_parameters[token].debt_factor if risk_adjusted else 1.0)
-            * float(debt_interest_rate_model.get(token, 1.0))
-            * prices[underlying_address]
-            for token, token_amount in self.debt.values.items()
-            if (underlying_address := debt_token_parameters[token].underlying_address) in prices
-        )
+        result_sum = Decimal("0")
+        for token, token_amount in self.debt.items():
+            debt_token = debt_token_parameters[token]
+            if (underlying_address := debt_token_parameters[token].underlying_address) in prices.prices.values:
+                result_sum += Decimal(
+                    float(token_amount)
+                    / (10**debt_token.decimals)
+                    / (debt_token.debt_factor if risk_adjusted else 1.0)
+                    * float(debt_interest_rate_model[token])
+                    * prices[underlying_address]
+                )
+
+        return result_sum
 
     @abstractmethod
     def compute_health_factor(self, *args, **kwargs):

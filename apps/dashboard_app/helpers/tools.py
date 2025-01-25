@@ -4,21 +4,18 @@ A module that fetches data of token prices, liquidity etc.
 
 import logging
 import math
-import os
 from typing import Iterator
 
 import pandas as pd
 import requests
-from google.cloud.storage import Client
+from data_handler.handlers.liquidable_debt.utils import Prices
+from data_handler.handlers.loan_states.abstractions import State
+from shared.amms import SwapAmm
 from shared.blockchain_call import func_call
-from shared.constants import TOKEN_SETTINGS
 from shared.types import TokenParameters
 from starknet_py.cairo.felt import decode_shortstring
 
-from dashboard_app.helpers.settings import (
-    PAIRS,
-    UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES,
-)
+AMMS = ["10kSwap", "MySwap", "SithSwap", "JediSwap"]
 
 
 def float_range(start: float, stop: float, step: float) -> Iterator[float]:
@@ -207,3 +204,83 @@ def get_custom_data(data: pd.DataFrame) -> list:
     customdata = list(zip(*customdata))
 
     return customdata
+
+
+def get_main_chart_data(
+    state: State,
+    prices: Prices,
+    swap_amms: SwapAmm,
+    collateral_token_underlying_symbol: str,
+    debt_token_underlying_symbol: str,
+) -> pd.DataFrame:
+    """
+    Returns the main chart data for the given state and prices.
+    Args:
+        state:
+        prices:
+        swap_amms:
+        collateral_token_underlying_symbol:
+        debt_token_underlying_symbol:
+
+    Returns: DataFrame
+
+    """
+    collateral_token_underlying_address = get_underlying_address(
+        token_parameters=state.token_parameters.collateral,
+        underlying_symbol=collateral_token_underlying_symbol,
+    )
+    if not collateral_token_underlying_address:
+        return pd.DataFrame()
+
+    data = pd.DataFrame(
+        {
+            "collateral_token_price": get_collateral_token_range(
+                collateral_token_underlying_address=collateral_token_underlying_address,
+                collateral_token_price=prices[collateral_token_underlying_address],
+            ),
+        }
+    )
+
+    debt_token_underlying_address = get_underlying_address(
+        token_parameters=state.token_parameters.debt,
+        underlying_symbol=debt_token_underlying_symbol,
+    )
+    if not debt_token_underlying_address:
+        return pd.DataFrame()
+
+    data["liquidable_debt"] = data["collateral_token_price"].apply(
+        lambda x: state.compute_liquidable_debt_at_price(
+            prices=prices,
+            collateral_token_underlying_address=collateral_token_underlying_address,
+            collateral_token_price=x,
+            debt_token_underlying_address=debt_token_underlying_address,
+        )
+    )
+
+    data["liquidable_debt_at_interval"] = data["liquidable_debt"].diff().abs()
+    data.dropna(inplace=True)
+
+    for amm in AMMS:
+        data[f"{amm}_debt_token_supply"] = 0
+
+    def compute_supply_at_price(collateral_token_price: float):
+        supplies = {
+            amm: swap_amms.get_supply_at_price(
+                collateral_token_underlying_symbol=collateral_token_underlying_symbol,
+                collateral_token_price=collateral_token_price,
+                debt_token_underlying_symbol=debt_token_underlying_symbol,
+                amm=amm,
+            )
+            for amm in AMMS
+        }
+        total_supply = sum(supplies.values())
+        return supplies, total_supply
+
+    supplies_and_totals = data["collateral_token_price"].apply(compute_supply_at_price)
+    for amm in AMMS:
+        data[f"{amm}_debt_token_supply"] = supplies_and_totals.apply(
+            lambda x: x[0][amm]
+        )
+    data["debt_token_supply"] = supplies_and_totals.apply(lambda x: x[1])
+
+    return data

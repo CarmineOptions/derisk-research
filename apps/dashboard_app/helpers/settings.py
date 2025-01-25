@@ -8,9 +8,10 @@ from dataclasses import dataclass
 @dataclass
 class TokenSettings:
     """
-     This class represents the structure and properties of a token it has a
-     symbol, address and decimal factor.
+    This class represents the structure and properties of a token it has a
+    symbol, address and decimal factor.
     """
+
     symbol: str
     # Source: Starkscan, e.g.
     # https://starkscan.co/token/0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7
