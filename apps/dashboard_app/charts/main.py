@@ -11,7 +11,7 @@ from shared.helpers import (
     fetch_token_symbols_from_set_of_loan_addresses,
     update_loan_data_with_symbols,
 )
-from shared.types import TokenParameters, InterestRateModels
+from shared.custom_types import TokenParameters, InterestRateModels
 from helpers.settings import COLLATERAL_TOKENS, DEBT_TOKENS, STABLECOIN_BUNDLE_NAME
 
 from .constants import ChartsHeaders

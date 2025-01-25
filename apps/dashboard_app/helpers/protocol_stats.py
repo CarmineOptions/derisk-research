@@ -11,7 +11,7 @@ import pandas as pd
 from data_handler.handlers import blockchain_call
 from shared.constants import TOKEN_SETTINGS
 from shared.state import State
-from shared.types import Prices
+from shared.custom_types import Prices
 
 from helpers.loans_table import get_protocol, get_supply_function_call_parameters
 from helpers.tools import add_leading_zeros, get_addresses, get_underlying_address

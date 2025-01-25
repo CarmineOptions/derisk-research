@@ -9,7 +9,7 @@ import plotly.express
 import plotly.graph_objs
 from shared.amms import SwapAmm
 from shared.state import State
-from shared.types import Prices
+from shared.custom_types import Prices
 
 from helpers.settings import TOKEN_SETTINGS
 from helpers.tools import (
