@@ -158,10 +158,11 @@ class ZkLendLoanEntity(LoanEntity):
                 ].liquidation_bonus
             )
         )
-        max_debt_to_be_liquidated = numerator / denominator
+        max_debt_to_be_liquidated = numerator / Decimal(str(denominator))
         # The liquidator can't liquidate more debt than what is available.
         debt_to_be_liquidated = min(
-            float(self.debt[debt_token_underlying_address]), max_debt_to_be_liquidated
+            float(self.debt.values[debt_token_underlying_address]),
+            max_debt_to_be_liquidated,
         )
         return debt_to_be_liquidated
 
@@ -436,12 +437,12 @@ class ZkLendState(State):
     ) -> float:
         changed_prices = copy.deepcopy(prices)
         changed_prices[collateral_token_underlying_address] = collateral_token_price
-        max_liquidated_amount = 0.0
+        max_liquidated_amount = Decimal("0")
         for loan_entity in self.loan_entities.values():
             # Filter out entities where the collateral token of interest is deposited as collateral.
             collateral_token_underlying_addresses = {
                 token  # TODO: this assumes that `token` is the underlying address
-                for token, token_amount in loan_entity.collateral.items()
+                for token, token_amount in loan_entity.collateral.values.items()
                 if token_amount > decimal.Decimal("0")
             }
             if (
@@ -453,7 +454,7 @@ class ZkLendState(State):
             # Filter out entities where the debt token of interest is borrowed.
             debt_token_underlying_addresses = {
                 token  # TODO: this assumes that `token` is the underlying address
-                for token, token_amount in loan_entity.debt.items()
+                for token, token_amount in loan_entity.debt.values.items()
                 if token_amount > decimal.Decimal("0")
             }
             if debt_token_underlying_address not in debt_token_underlying_addresses:
@@ -486,13 +487,17 @@ class ZkLendState(State):
             # We assume that the liquidator receives the
             # collateral token of interest even though it might not be the most
             # optimal choice for the liquidator.
-            max_liquidated_amount += loan_entity.compute_debt_to_be_liquidated(
-                debt_token_underlying_address=debt_token_underlying_address,
-                collateral_token_underlying_address=collateral_token_underlying_address,
-                prices=changed_prices,
-                collateral_token_parameters=self.token_parameters.collateral,
-                risk_adjusted_collateral_usd=risk_adjusted_collateral_usd,
-                debt_usd=debt_usd,
+            max_liquidated_amount += Decimal(
+                str(
+                    loan_entity.compute_debt_to_be_liquidated(
+                        debt_token_underlying_address=debt_token_underlying_address,
+                        collateral_token_underlying_address=collateral_token_underlying_address,
+                        prices=changed_prices,
+                        collateral_token_parameters=self.token_parameters.collateral,
+                        risk_adjusted_collateral_usd=risk_adjusted_collateral_usd,
+                        debt_usd=debt_usd,
+                    )
+                )
             )
         return max_liquidated_amount
 

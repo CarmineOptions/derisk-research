@@ -2,17 +2,17 @@
 This moudel process and transform liquidity, loan, and chart data for protocols.
 """
 
+import asyncio
 import logging
 import math
+import time
 from collections import defaultdict
 
 import pandas as pd
 import streamlit as st
-from data_handler.handlers.liquidable_debt.utils import Prices
 from data_handler.handlers.loan_states.abstractions import State
 from shared.amms import SwapAmm
 from shared.constants import PAIRS
-from shared.tests.test_swap_amm import swap_amm
 
 from helpers.ekubo import EkuboLiquidity
 from helpers.loans_table import get_loans_table_data
@@ -174,7 +174,15 @@ def get_data(
     """
     # directory = f"{protocol_name.lower().replace(' ', '_')}_data"
     main_chart_data = {}
-    current_prices = Prices()
+    underlying_addresses_to_decimals = {
+        x.address: int(math.log10(x.decimal_factor)) for x in TOKEN_SETTINGS.values()
+    }
+    current_prices = get_prices(token_decimals=underlying_addresses_to_decimals)
+    t_swap = time.time()
+    swap_amm = SwapAmm()
+    swap_amm.__init__()
+    asyncio.run(swap_amm.get_balance())
+    logging.info(f"swap in {time.time() - t_swap}s")
 
     for pair in PAIRS:
         collateral_token_underlying_symbol, debt_token_underlying_symbol = pair.split(
@@ -184,7 +192,7 @@ def get_data(
             main_chart_data[pair] = get_main_chart_data(
                 state=state,
                 prices=current_prices,
-                swap_amm=SwapAmm(),
+                swap_amms=swap_amm,
                 collateral_token_underlying_symbol=collateral_token_underlying_symbol,
                 debt_token_underlying_symbol=debt_token_underlying_symbol,
             )

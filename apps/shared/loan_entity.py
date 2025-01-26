@@ -43,10 +43,12 @@ class LoanEntity(ABC):
         :return: sum of the value of the collateral in USD
         """
         total_sum = Decimal("0")
-        for token, token_amount in self.collateral.items():
+        for token, token_amount in self.collateral.values.items():
             if (
-                underlying_address := collateral_token_parameters[token].underlying_address
-            ) in prices.values:
+                underlying_address := collateral_token_parameters[
+                    token
+                ].underlying_address
+            ) in prices:
                 total_sum += Decimal(
                     float(token_amount)
                     / (10 ** collateral_token_parameters[token].decimals)
@@ -76,9 +78,11 @@ class LoanEntity(ABC):
         :return: Decimal
         """
         result_sum = Decimal("0")
-        for token, token_amount in self.debt.items():
+        for token, token_amount in self.debt.values.items():
             debt_token = debt_token_parameters[token]
-            if (underlying_address := debt_token_parameters[token].underlying_address) in prices.prices.values:
+            if (
+                underlying_address := debt_token_parameters[token].underlying_address
+            ) in prices:
                 result_sum += Decimal(
                     float(token_amount)
                     / (10**debt_token.decimals)

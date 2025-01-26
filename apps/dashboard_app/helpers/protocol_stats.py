@@ -219,7 +219,7 @@ def get_debt_stats(
                 try:
                     debt = (
                         sum(
-                            float(loan_entity.debt[token_address])
+                            float(loan_entity.debt.values.get(token_address, 0.0))
                             for loan_entity in state.loan_entities.values()
                         )
                         / float(TOKEN_SETTINGS[token].decimal_factor)
