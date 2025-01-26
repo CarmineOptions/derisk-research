@@ -65,9 +65,8 @@ class DBConnector:
         """
         try:
             sql = """
-                SELECT CAST(debt->>'amount' AS FLOAT) AS debt_value
-                FROM mytable
-                WHERE protocol_id = %s AND user = %s;
+                SELECT debt FROM loan_state
+                WHERE protocol_id = %s and "user" = %s;
             """
             self.cur.execute(sql, (protocol_id, wallet_id))
             result = self.cur.fetchone()
@@ -89,9 +88,8 @@ class DBConnector:
         """
         try:
             sql = """
-                SELECT CAST(collateral->>'amount' AS FLOAT) AS collateral_value
-                FROM mytable
-                WHERE protocol_id = %s AND user = %s;
+                SELECT collateral FROM loan_state
+                WHERE protocol_id = %s and "user" = %s;
             """
             self.cur.execute(sql, (protocol_id, wallet_id))
             result = self.cur.fetchone()
@@ -113,9 +111,8 @@ class DBConnector:
         """
         try:
             sql = """
-                SELECT loan_state
-                FROM mytable
-                WHERE protocol_id = %s AND user = %s;
+                SELECT * FROM loan_state
+                WHERE protocol_id = %s and "user" = %s;
             """
             self.cur.execute(sql, (protocol_id, wallet_id))
             result = self.cur.fetchone()
