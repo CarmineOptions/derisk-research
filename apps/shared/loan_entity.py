@@ -43,7 +43,7 @@ class LoanEntity(ABC):
         :return: sum of the value of the collateral in USD
         """
         total_sum = Decimal("0")
-        for token, token_amount in self.collateral.values.items():
+        for token, token_amount in self.collateral.items():
             if (
                 underlying_address := collateral_token_parameters[
                     token
