@@ -12,8 +12,8 @@ from data_handler.handlers.loan_states.zklend.events import ZkLendState
 from shared.constants import TOKEN_SETTINGS
 
 from dashboard_app.data_conector import DataConnector
-from helpers.loans_table import get_loans_table_data, get_protocol
-from helpers.protocol_stats import (
+from dashboard_app.helpers.loans_table import get_loans_table_data, get_protocol
+from dashboard_app.helpers.protocol_stats import (
     get_collateral_stats,
     get_debt_stats,
     get_general_stats,
