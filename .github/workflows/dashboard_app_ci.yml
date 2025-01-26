@@ -44,4 +44,4 @@ jobs:
           cp .env.dev .env
       - name: Run Tests for Dashboard_App
         working-directory: ./apps/dashboard_app
-        run: pytest
+        run: poetry run pytest
