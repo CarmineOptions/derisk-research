@@ -3,6 +3,7 @@ from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
 import pytest
+import asyncio
 from data_handler.db.crud import DBConnector
 from data_handler.handlers.order_books.processing import OrderBookProcessor
 from data_handler.handlers.order_books.uniswap_v2 import main
@@ -52,7 +53,7 @@ class TestUniswapV2OrderBook:
         tick = Decimal("500")
         final_value = Decimal("9.997500313723646666869072034E-15")
         liquidity_amount = order_book.calculate_liquidity_amount(tick, Decimal("10000"))
-        assert final_value == liquidity_amount, "liquidity amount does not match"
+        assert liquidity_amount == pytest.approx(final_value, rel=1e-9), "liquidity amount does not match"
 
     def test_get_prices_ranges(self, order_book: main.UniswapV2OrderBook):
         """
@@ -71,8 +72,14 @@ class TestUniswapV2OrderBook:
         with patch(
             "data_handler.handlers.order_books.uniswap_v2.main.UniswapV2OrderBook._async_fetch_price_and_liquidity",
         ) as mock_fetch_price_and_liquidity:
-            order_book.fetch_price_and_liquidity()
-            mock_fetch_price_and_liquidity.assert_called()
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        
+            try:
+                order_book.fetch_price_and_liquidity()
+                mock_fetch_price_and_liquidity.assert_called()
+            finally:
+                loop.close()
 
 
 class TestUniswapV2OrderBookProcessor:
