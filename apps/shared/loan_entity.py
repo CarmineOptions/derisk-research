@@ -49,17 +49,11 @@ class LoanEntity(ABC):
                     token
                 ].underlying_address
             ) in prices:
-                total_sum += Decimal(
-                    float(token_amount)
-                    / (10 ** collateral_token_parameters[token].decimals)
-                    * (
-                        collateral_token_parameters[token].collateral_factor
-                        if risk_adjusted
-                        else 1.0
-                    )
-                    * float(collateral_interest_rate_model.get(token, 1.0))
-                    * prices[underlying_address]
-                )
+                decimal_amount = token_amount / Decimal(str(10 ** collateral_token_parameters[token].decimals))
+                collateral_factor = Decimal(str(collateral_token_parameters[token].collateral_factor)) if risk_adjusted else Decimal("1.0")
+                interest_rate = Decimal(str(collateral_interest_rate_model.get(token, 1.0)))
+                price = Decimal(str(prices[underlying_address]))
+                total_sum += decimal_amount * collateral_factor * interest_rate * price
         return total_sum
 
     def compute_debt_usd(
