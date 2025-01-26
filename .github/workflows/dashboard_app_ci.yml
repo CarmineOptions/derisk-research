@@ -1,6 +1,11 @@
 name: DashBoard App CI Workflow
 
-on: [push]
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "apps/dashboard_app"
 
 jobs:
   run_tests:

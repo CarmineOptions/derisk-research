@@ -1,6 +1,11 @@
 name: Web App CI Workflow
 
-on: [push]
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "apps/web_app"
 
 jobs:
   run_tests:
@@ -21,11 +26,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-    
+
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install Poetry
         run: |

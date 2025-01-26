@@ -41,7 +41,7 @@ jobs:
         working-directory: ./apps/sdk
         run: |
           echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
-          poetry lock --no-update
+          poetry lock
           poetry install
 
       - name: Prepare Environment File
