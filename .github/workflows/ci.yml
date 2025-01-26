@@ -50,7 +50,7 @@ jobs:
         working-directory: ./apps/shared
         run: |
           echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
-          poetry lock --no-update
+          poetry lock
           poetry install
     
       - name: Run Tests for Shared

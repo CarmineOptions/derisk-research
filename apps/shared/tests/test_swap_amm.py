@@ -11,7 +11,7 @@ import pytest
 # insert root directory into python module search path
 sys.path.insert(1, os.getcwd())
 from shared.amms import MySwapPool, Pool, SwapAmm
-from shared.types import TokenSettings, TokenValues
+from shared.custom_types import TokenSettings, TokenValues
 
 
 class MockPool(Pool):

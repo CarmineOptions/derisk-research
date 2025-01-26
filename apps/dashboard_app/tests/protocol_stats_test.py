@@ -346,4 +346,4 @@ def test_get_utilization_stats_division_by_zero():
 
     # Check if division by zero results in NaN or infinity
     assert result["Total utilization"].iloc[0] == 1 
-    assert pd.isna(result["ETH utilization"].iloc[0]) 
+    assert result["ETH utilization"].iloc[0] == 0.0

@@ -61,7 +61,7 @@ with patch.dict(
         ),
     },
 ):
-    from shared.types.base import (
+    from shared.custom_types.base import (
         Portfolio,
         ExtraInfo,
         TokenParameters,
@@ -216,7 +216,7 @@ def test_mock_loan_entity_compute_collateral_usd():
     # Expected calculation:
     # 1 token * 0.8 (collateral factor) * 1.1 (interest) * 1000 (price)
     # = 1 * 0.8 * 1.1 * 1000 = 880.0
-    assert value == pytest.approx(880.0)
+    assert float(value) == pytest.approx(880.0)
 
 
 def test_mock_state_invalid_event_method():

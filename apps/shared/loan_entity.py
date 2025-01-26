@@ -46,7 +46,7 @@ class LoanEntity(ABC):
         for token, token_amount in self.collateral.items():
             if (
                 underlying_address := collateral_token_parameters[token].underlying_address
-            ) in prices.values:
+            ) in prices:
                 total_sum += Decimal(
                     float(token_amount)
                     / (10 ** collateral_token_parameters[token].decimals)
