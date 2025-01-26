@@ -1,12 +1,14 @@
-from typing import Dict
-from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, FastAPI
 import pandas as pd
 import json
-from pathlib import Path
-from sdk.schemas.schemas import UserCollateralResponse, ResponseModel
+from sdk.schemas.schemas import UserCollateralResponse, UserDebtResponseModel
 
-app = FastAPI()  
+app = FastAPI()
+router = APIRouter(
+    prefix="/user",
+    tags=["user"],
+    responses={404: {"description": "Not found"}},
+)
 
 file_path = "../mock_data.csv"
 mock_data = pd.read_csv(file_path)
@@ -28,28 +30,6 @@ for _, row in mock_data.iterrows():
     if wallet_id not in debt_data:
         debt_data[wallet_id] = {}
     debt_data[wallet_id][protocol] = debt
-
-@app.get("/get_user_debt", response_model=ResponseModel)
-def get_user_debt(wallet_id: str, protocol_name: str):
-    """
-    Endpoint to get the debt details of a user for a specific protocol.
-    
-    Args:
-        wallet_id (str): The wallet ID of the user.
-        protocol_name (str): The protocol name for which debt details are requested.
-
-    Returns:
-        ResponseModel: The debt details including wallet ID, protocol name, and token-value pairs.
-    """
-    wallet_data = debt_data.get(wallet_id)
-    debt_data = debt_data.get(protocol)
-    return {"wallet_id": wallet_id, "protocol": protocol, "debt": debt_data}
-
-router = APIRouter(
-    prefix="/user",
-    tags=["user"],
-    responses={404: {"description": "Not found"}},
-)
 
 
 @router.get("/debt", response_model=UserCollateralResponse)
