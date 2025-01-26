@@ -13,8 +13,8 @@ from shared.constants import TOKEN_SETTINGS
 from shared.state import State
 from shared.custom_types import Prices
 
-from helpers.loans_table import get_protocol, get_supply_function_call_parameters
-from helpers.tools import add_leading_zeros, get_addresses, get_underlying_address
+from dashboard_app.helpers.loans_table import get_protocol, get_supply_function_call_parameters
+from dashboard_app.helpers.tools import add_leading_zeros, get_addresses, get_underlying_address
 
 
 def get_general_stats(

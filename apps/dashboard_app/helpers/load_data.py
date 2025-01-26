@@ -11,7 +11,7 @@ from time import monotonic
 from data_handler.handlers.loan_states.zklend.events import ZkLendState
 from shared.constants import TOKEN_SETTINGS
 
-from data_conector import DataConnector
+from dashboard_app.data_conector import DataConnector
 from helpers.loans_table import get_loans_table_data, get_protocol
 from helpers.protocol_stats import (
     get_collateral_stats,

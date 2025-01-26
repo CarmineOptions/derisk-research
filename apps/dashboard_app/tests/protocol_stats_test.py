@@ -7,7 +7,6 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
-# from shared.types import Prices
 from dashboard_app.helpers.protocol_stats import (
     get_general_stats,
     get_supply_stats,
