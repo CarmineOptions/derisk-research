@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "derisk sdk"
+version = "0.1.0"
+description = ""
+authors = ["djeck1432 <oleh.kostashchuk@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+twine = "^6.0.1"
+fastapi = "^0.115.6"
+uvicorn = "^0.34.0"
+pydantic = "^2.10.5"
+redis = "^5.0.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
