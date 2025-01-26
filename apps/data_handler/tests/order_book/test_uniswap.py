@@ -53,7 +53,7 @@ class TestUniswapV2OrderBook:
         tick = Decimal("500")
         final_value = Decimal("9.997500313723646666869072034E-15")
         liquidity_amount = order_book.calculate_liquidity_amount(tick, Decimal("10000"))
-        assert liquidity_amount == pytest.approx(final_value, rel=1e-9), "liquidity amount does not match"
+        assert float(liquidity_amount) == pytest.approx(float(final_value), rel=1e-9), "liquidity amount does not match"
 
     def test_get_prices_ranges(self, order_book: main.UniswapV2OrderBook):
         """
