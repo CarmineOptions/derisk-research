@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Dict, Optional
-
+from datetime import datetime
 
 class UserLoanByWalletParams(BaseModel):
     """
@@ -29,14 +29,14 @@ class UserLoanByWalletResponse(BaseModel):
         deposit: A dictionary mapping token addresses to deposit values.
     """
     wallet_id: str
-    collateral: Dict[str, str] 
+    collateral: Dict[str, str]
     debt: Dict[str, str]
     deposit: Dict[str, str]
 
 
 class UserCollateralResponse(BaseModel):
-    """ Base class for UserCollateralResponse 
-    
+    """ Base class for UserCollateralResponse
+
     Attributes:
         wallet_id: The unique identifier of the user's wallet address.
         protocol_name: The name of the loan protocol (e.g., zkLend, Nostra).
@@ -54,3 +54,14 @@ class UserDebtResponseModel(BaseModel):
     wallet_id: str
     protocol_name: str
     debt: Dict[str, float]
+
+class Token(BaseModel):
+    """
+    Data model representing token response.
+
+    Attributes:
+        access_token (str): The access token string.
+        access_token_expires (datetime): The expiration datetime of the access token.
+    """
+    access_token: str
+    access_token_expires: datetime
