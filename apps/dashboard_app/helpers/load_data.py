@@ -20,7 +20,7 @@ from dashboard_app.helpers.protocol_stats import (
     get_supply_stats,
     get_utilization_stats,
 )
-from helpers.tools import add_leading_zeros, get_prices
+from dashboard_app.helpers.tools import add_leading_zeros, get_prices
 
 logger = logging.getLogger(__name__)
 
