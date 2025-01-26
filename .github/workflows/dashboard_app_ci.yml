@@ -38,12 +38,11 @@ jobs:
           echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
           poetry lock
           poetry install --no-root
+          poetry run pip install -e .
       - name: Prepare Environment File
         working-directory: ./apps/dashboard_app
         run: |
           cp .env.dev .env
       - name: Run Tests for Dashboard_App
         working-directory: ./apps/dashboard_app
-        run: | 
-             poetry run pytest 
-             poetry run pip install -e .
+        run: poetry run pytest
