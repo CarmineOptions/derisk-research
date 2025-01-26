@@ -42,7 +42,3 @@ liquidation = ["matplotlib", "tqdm", "yfinance"]
 
 [tool.isort]
 profile = "black"
-
-[tool.poetry.packages]
-include = "dashboard_app"
-from = "apps"
