@@ -45,8 +45,12 @@ class UserCollateralResponse(BaseModel):
     wallet_id: str
     protocol_name: str
     collateral: Dict[str, float]
-      
-class ResponseModel(BaseModel):
+
+
+class UserDebtResponseModel(BaseModel):
+    """
+    Data model representing the response for user debt details by wallet ID.
+    """
     wallet_id: str
     protocol_name: str
     debt: Dict[str, float]
