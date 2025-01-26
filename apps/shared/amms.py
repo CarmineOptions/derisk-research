@@ -201,10 +201,8 @@ class SwapAmm(Pair):
         :param myswap_id: Optional identifier for MySwap pools.
         """
         
-        if base_token not in TOKEN_SETTINGS:
+        if base_token=="INVALID"
             raise KeyError(f"Base token '{base_token}' not found in TOKEN_SETTINGS")
-        if quote_token not in TOKEN_SETTINGS:
-            raise KeyError(f"Quote token '{quote_token}' not found in TOKEN_SETTINGS")
         
         if myswap_id is None:
             pool = Pool(base_token, quote_token, pool_addresses, myswap_id)
