@@ -115,7 +115,7 @@ class TestZkLendState:
         mock_parsed_data = MagicMock()
         mock_parsed_data.user = "0x123"
         mock_parsed_data.token = "0x456"
-        mock_parsed_data.face_amount = int(1e18)
+        mock_parsed_data.amount = int(1e18)
 
         with patch(
             "data_handler.handler_tools.data_parser.zklend.ZklendDataParser.parse_withdrawal_event",
