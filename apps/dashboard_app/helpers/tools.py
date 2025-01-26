@@ -8,11 +8,11 @@ from typing import Iterator
 
 import pandas as pd
 import requests
-from data_handler.handlers.liquidable_debt.utils import Prices
 from data_handler.handlers.loan_states.abstractions import State
 from shared.amms import SwapAmm
 from shared.blockchain_call import func_call
 from shared.custom_types import TokenParameters
+
 from starknet_py.cairo.felt import decode_shortstring
 
 AMMS = ["10kSwap", "MySwap", "SithSwap", "JediSwap"]
