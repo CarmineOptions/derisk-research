@@ -1,11 +1,6 @@
 name: SDK testing workflow
 
-on:
-  push:
-    branches:
-      - master
-    paths:
-      - "apps/sdk"
+on: [push]
 
 jobs:
   run_tests:
