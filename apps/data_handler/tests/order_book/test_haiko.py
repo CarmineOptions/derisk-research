@@ -2,10 +2,9 @@ import pytest
 from decimal import Decimal
 from unittest.mock import patch, MagicMock
 
-from data_handler.handlers.order_books.haiko.haiko_order_book import HaikoOrderBook
+from data_handler.handlers.order_books.haiko.main import HaikoOrderBook
 
 class TestHaikoOrderBook:
-    # Valid token pairs for testing
     VALID_TOKEN_PAIRS = [
         (
             "0x042b8f0484674ca266ac5d08e4ac6a3fe65bd3129795def2dca5c34ecc5f96d2",  # wstETH
@@ -32,7 +31,7 @@ class TestHaikoOrderBook:
     @patch('data_handler.handlers.order_books.haiko.haiko_order_book.HaikoAPIConnector')
     def test_usd_price_retrieval(self, mock_connector):
         """Test USD price retrieval functionality"""
-        # Mock successful price retrieval
+
         mock_connector.return_value.get_usd_prices.return_value = {
             "wstETH": Decimal("1850.50"),
             "ETH": Decimal("1850.50")
@@ -49,7 +48,6 @@ class TestHaikoOrderBook:
         token_a, token_b = self.VALID_TOKEN_PAIRS[0]
         order_book = HaikoOrderBook(token_a, token_b)
         
-        # Test tick to price conversion
         test_tick = Decimal("100")
         price = order_book.tick_to_price(test_tick)
         assert isinstance(price, Decimal)
@@ -59,7 +57,7 @@ class TestHaikoOrderBook:
     @patch('data_handler.handlers.order_books.haiko.haiko_order_book.HaikoBlastAPIConnector')
     def test_fetch_price_and_liquidity(self, mock_blast_connector, mock_haiko_connector):
         """Test fetch price and liquidity with mocked API responses"""
-        # Mock market data
+
         mock_haiko_connector.return_value.get_pair_markets.return_value = [
             {
                 "marketId": "market1",
@@ -70,7 +68,7 @@ class TestHaikoOrderBook:
             }
         ]
         
-        # Mock block info
+
         mock_blast_connector.return_value.get_block_info.return_value = {
             "result": {
                 "block_number": 12345,
@@ -78,7 +76,7 @@ class TestHaikoOrderBook:
             }
         }
         
-        # Mock market depth
+
         mock_haiko_connector.return_value.get_market_depth.return_value = [
             {
                 "price": "1800",
@@ -108,12 +106,11 @@ class TestHaikoOrderBook:
         current_sqrt = Decimal("42.123")
         next_sqrt = Decimal("43.456")
         
-        # Test ask calculation
+
         ask_amount = order_book._get_token_amount(current_liq, current_sqrt, next_sqrt)
         assert isinstance(ask_amount, Decimal)
         assert ask_amount > 0
         
-        # Test bid calculation
         bid_amount = order_book._get_token_amount(current_liq, current_sqrt, next_sqrt, is_ask=False)
         assert isinstance(bid_amount, Decimal)
         assert bid_amount > 0
