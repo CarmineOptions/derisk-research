@@ -61,7 +61,7 @@ class Token(BaseModel):
 
     Attributes:
         access_token (str): The access token string.
-        access_token_expires (datetime): The expiration datetime of the access token.
+        expiration_date (datetime): The expiration datetime of the access token.
     """
     access_token: str
-    access_token_expires: datetime
+    expiration_date: datetime
