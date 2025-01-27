@@ -17,7 +17,7 @@ This project is a FastAPI-based application, set up with Poetry for dependency m
 git clone https://github.com/CarmineOptions/derisk-research.git
 ```
 
-2. Go to `data_handler/`
+2. Go to `sdk/`
 
 
 ```bash
