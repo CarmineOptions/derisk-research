@@ -13,9 +13,9 @@ jobs:
         ports:
           - 5433:5432
         options: >-
-          --health-cmd "pg_isready -U postgres" 
-          --health-interval 10s 
-          --health-timeout 5s 
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
           --health-retries 5
 
     steps:
@@ -32,11 +32,22 @@ jobs:
           curl -sSL https://install.python-poetry.org | python3 -
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
+      - name: Configure Poetry
+        run: |
+          poetry config virtualenvs.create true
+          poetry config virtualenvs.in-project true
+
+      - name: Cache Poetry dependencies
+        uses: actions/cache@v3
+        with:
+          path: ./apps/sdk/.venv
+          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-
+
       - name: Install dependencies for sdk
         working-directory: ./apps/sdk
         run: |
-          echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
-          poetry lock
           poetry install --no-root
 
       - name: Prepare Environment File
@@ -58,7 +69,8 @@ jobs:
 
       - name: Run Tests for sdk
         working-directory: ./apps/sdk
-        run: poetry run pytest --junitxml=results.xml
+        run: |
+          poetry run python -m pytest --junitxml=results.xml
 
       - name: Upload Test Results
         uses: actions/upload-artifact@v3
