@@ -52,3 +52,6 @@ exclude = '''
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.packages]
+include = ["web_app"]
