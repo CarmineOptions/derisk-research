@@ -11,7 +11,39 @@ This project is a FastAPI-based application, set up with Poetry for dependency m
 
 ### Run the Project
 
-1. **Build and Run the Services**
+1. Clone git repository
+
+```bash
+git clone https://github.com/CarmineOptions/derisk-research.git
+```
+
+2. Go to `data_handler/`
+
+
+```bash
+cd sdk 
+```
+
+3. Configure Environment Variables
+
+Create `.env` file or just rename `.env.dev` --> `.env`
+
+```bash
+mv .env.example .env
+```
+
+4. Provide all environment variables needed
+
+```bash
+# postgresql 
+DB_HOST=
+DB_NAME=
+DB_USER=
+DB_PASSWORD=
+DB_PORT=
+```
+
+5. **Build and Run the Services**
 
    Use `docker-compose` to build and run the project:
 
@@ -23,7 +55,7 @@ This project is a FastAPI-based application, set up with Poetry for dependency m
 
    • The Redis service will run on port 6379.
 
-2. **Stop the Services**
+6. **Stop the Services**
 
    To stop the running containers, use:
 
