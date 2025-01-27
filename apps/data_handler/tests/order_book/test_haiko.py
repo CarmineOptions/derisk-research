@@ -1,6 +1,6 @@
 import pytest
 from decimal import Decimal
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from data_handler.handlers.order_books.haiko.main import HaikoOrderBook
 
