@@ -16,6 +16,7 @@ pyjwt = "^2.10.1"
 python-dotenv = "^1.0.1"
 slowapi = "^0.1.9"
 pandas = "^2.2.3"
+pytest = "^7.0.0" 
 
 
 [build-system]
