@@ -29,7 +29,7 @@ cd sdk
 Create `.env` file or just rename `.env.dev` --> `.env`
 
 ```bash
-mv .env.example .env
+mv .env.dev .env
 ```
 
 4. Provide all environment variables needed
