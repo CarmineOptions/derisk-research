@@ -1,11 +1,6 @@
 name: Web App CI Workflow
 
-on:
-  push:
-    branches:
-      - master
-    paths:
-      - "apps/web_app"
+on: [push]
 
 jobs:
   run_tests:
