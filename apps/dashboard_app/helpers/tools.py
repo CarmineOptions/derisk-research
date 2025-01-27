@@ -11,7 +11,7 @@ import requests
 from data_handler.handlers.loan_states.abstractions import State
 from shared.amms import SwapAmm
 from shared.blockchain_call import func_call
-from shared.custom_types import TokenParameters
+from shared.custom_types import TokenParameters, Prices
 
 from starknet_py.cairo.felt import decode_shortstring
 

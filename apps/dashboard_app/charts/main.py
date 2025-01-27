@@ -1,17 +1,24 @@
 """
 This module defines the Dashboard class for rendering a DeRisk dashboard using Streamlit.
 """
+
+import asyncio
+import math
+from decimal import Decimal
+
 import pandas as pd
 import streamlit as st
 from data_handler.handlers.loan_states.abstractions import State
-from data_handler.handlers.loan_states.zklend.events import ZkLendState, ZkLendLoanEntity
-from data_handler.handlers.liquidable_debt.utils import Prices
+from data_handler.handlers.loan_states.zklend.events import (
+    ZkLendLoanEntity,
+    ZkLendState,
+)
 from shared.helpers import (
     extract_token_addresses,
     fetch_token_symbols_from_set_of_loan_addresses,
     update_loan_data_with_symbols,
 )
-from shared.custom_types import TokenParameters, InterestRateModels
+
 from helpers.settings import COLLATERAL_TOKENS, DEBT_TOKENS, STABLECOIN_BUNDLE_NAME
 
 from .constants import ChartsHeaders
@@ -171,33 +178,22 @@ class Dashboard:
                 value=(0, int(loans_data["Debt (USD)"].max()) or 1),  # FIXME remove 1
             )
 
-        try:
-            st.dataframe(
-                loans_data[
-                    (loans_data["Health factor"] > 0)  # TODO: debug the negative HFs
-                    & loans_data["Debt (USD)"].between(
-                        debt_usd_lower_bound, debt_usd_upper_bound
-                    )
-                ]
-                .sort_values("Health factor")
-                .iloc[:20],
-                use_container_width=True,
-            )
-
-        except TypeError:
-            st.dataframe(
-                pd.DataFrame(
-                    {
-                        "price": [0],
-                        "debt_token_supply": [0],
-                        "collateral_token_price": [0],
-                        "Ekubo_debt_token_supply": [0],
-                    }
-                ),
-                use_container_width=True,
-            )
+        st.dataframe(
+            loans_data[
+                (loans_data["Health factor"] > 0)  # TODO: debug the negative HFs
+                & loans_data["Debt (USD)"].between(
+                    debt_usd_lower_bound, debt_usd_upper_bound
+                )
+            ]
+            .sort_values("Health factor")
+            .iloc[:20],
+            use_container_width=True,
+        )
 
     def load_top_loans_chart(self):
+        """
+        Gererate a chart that shows top loans.
+        """
         (
             protocol_main_chart_data_mapping,
             protocol_loans_data_mapping,
@@ -211,92 +207,35 @@ class Dashboard:
             protocol_loans_data_mapping, self.PROTOCOL_NAMES
         )
 
-        if isinstance(self.state, ZkLendState): # TODO add for others protocols
-            loan_entity = ZkLendLoanEntity()
-
-        prices = Prices()
-        token_paramethers = TokenParameters()
-        interest_models = InterestRateModels()
-        collateral_usd = loan_entity.compute_collateral_usd(
-            risk_adjusted=False,
-            collateral_token_parameters=token_paramethers,
-            collateral_interest_rate_model=interest_models,
-            prices=prices.prices,
-        )
-        risk_adjusted_collateral_usd = loan_entity.compute_collateral_usd(
-            risk_adjusted=True,
-            collateral_token_parameters=token_paramethers,
-            collateral_interest_rate_model=interest_models,
-            prices=prices.prices,
-        )
-        debt_usd = loan_entity.compute_debt_usd(
-            risk_adjusted=False,
-            debt_token_parameters=token_paramethers,
-            debt_interest_rate_model=interest_models,
-            prices=prices.prices,
-        )
-        risk_adjusted_debt_usd = loan_entity.compute_debt_usd(
-            risk_adjusted=True,
-            debt_token_parameters=token_paramethers,
-            debt_interest_rate_model=interest_models,
-            prices=prices.prices,
-        )
-
-        # import pdb
-        # pdb.set_trace()
         st.header(ChartsHeaders.top_loans)
         col1, col2 = st.columns(2)
+        loans_data["Standardized health factor"] = pd.to_numeric(
+            loans_data["Standardized health factor"], errors="coerce"
+        )
         with col1:
             st.subheader("Sorted by collateral")
-            try:
-                loans_data["Collateral USD"] = collateral_usd
-                loans_data["Risk adjusted Collateral USD"] = risk_adjusted_collateral_usd
-                st.dataframe(
-                    loans_data[
-                        loans_data["Health factor"] > 1  # TODO: debug the negative HFs
-                        ]
-                    .sort_values("Collateral (USD)", ascending=False)
-                    .iloc[:20],
-                    use_container_width=True,
-                )
-            except TypeError:
-                st.dataframe(
-                    pd.DataFrame(
-                        {
-                            "price": [0],
-                            "Health factor (Collateral (USD))": [0],
-                            "Collateral USD": collateral_usd,
-                            "Risk adjusted Collateral USD": risk_adjusted_collateral_usd,
-                        }
-                    ),
-                    use_container_width=True,
-                )
+            st.dataframe(
+                loans_data[
+                    (loans_data["Health factor"] > 1)  # TODO: debug the negative HFs
+                    & (loans_data["Standardized health factor"] != float("inf"))
+                ]
+                .sort_values("Collateral (USD)", ascending=False)
+                .iloc[:20],
+                use_container_width=True,
+            )
         with col2:
             st.subheader("Sorted by debt")
-            loans_data["Debt USD"] = debt_usd
-            loans_data["Risk adjusted Debt USD"] = debt_usd
-            try:
-                st.dataframe(
-                    loans_data[
-                        loans_data["Health factor"] > 1  # TODO: debug the negative HFs
-                        ]
-                    .sort_values("Debt (USD)", ascending=False)
-                    .iloc[:20],
-                    use_container_width=True,
-                )
-            except TypeError:
-                df = pd.DataFrame(
-                        {
-                            "price": [0],
-                            "Health factor (Debt (USD))": [0],
-                            "Debt USD": debt_usd,
-                            "Risk adjusted Debt USD": risk_adjusted_debt_usd,
-                        }
-                    )
-                st.dataframe(
-                    df,
-                    use_container_width=True,
-                )
+            st.dataframe(
+                loans_data[
+                    (loans_data["Health factor"] > 1)
+                    & (
+                        loans_data["Standardized health factor"] != float("inf")
+                    )  # TODO: debug the negative HFs
+                ]
+                .sort_values("Debt (USD)", ascending=False)
+                .iloc[:20],
+                use_container_width=True,
+            )
 
     def run(self):
         """
