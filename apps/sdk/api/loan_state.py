@@ -21,15 +21,13 @@ async def get_loans_by_wallet_id(params: UserLoanByWalletParams = Depends()):
     Retrieve loan data associated with a specific wallet ID.
 
     endpoint allows users to query their loan details by providing a 
-    wallet ID and optional block range parameters. The response includes 
+    wallet ID. The response includes
     information about the user's collateral, debt, and deposits across 
     the specified loan protocol.
     
     Args:
       wallet_id (str): The wallet ID of the user
       protocol_name (str): The name of the loan protocol
-      start_block (int): The start block
-      end_block (int): The end block
     
     Returns:
       UserLoanByWalletResponse: User loan Information
