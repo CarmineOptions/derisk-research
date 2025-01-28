@@ -6,8 +6,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 def normalize_sql(query):
-    return ' '.join(query.split())
+    return " ".join(query.split())
+
 
 class DBConnector:
     """
@@ -48,7 +50,7 @@ class DBConnector:
                     database=self.database,
                     user=self.user,
                     password=self.password,
-                    port=self.port
+                    port=self.port,
                 )
                 self.cur = self.conn.cursor()
                 logging.info("Connection opened successfully.")
@@ -56,7 +58,13 @@ class DBConnector:
                 logging.error(f"Error while connecting to the database: {e}")
                 raise e
 
-    def get_user_debt(self, protocol_id: str, wallet_id: str, start_block: int | None = None, end_block: int | None = None) -> float | None:
+    def get_user_debt(
+        self,
+        protocol_id: str,
+        wallet_id: str,
+        start_block: int | None = None,
+        end_block: int | None = None,
+    ) -> float | None:
         """
         Fetches user debt for a given protocol and wallet, with optional block range filtering.
 
@@ -93,7 +101,13 @@ class DBConnector:
             logging.error(f"Error while fetching user debt: {error}")
             raise
 
-    def get_user_collateral(self, protocol_id: str, wallet_id: str, start_block: int | None = None, end_block: int | None = None) -> float | None:
+    def get_user_collateral(
+        self,
+        protocol_id: str,
+        wallet_id: str,
+        start_block: int | None = None,
+        end_block: int | None = None,
+    ) -> float | None:
         """
         Fetches user collateral for a given protocol and wallet, with optional block range filtering.
 
@@ -132,7 +146,13 @@ class DBConnector:
             logging.error(f"Error while fetching user collateral: {error}")
             raise
 
-    def get_loan_state(self, protocol_id: str, wallet_id: str, start_block: int | None = None, end_block: int | None = None) -> str | None:
+    def get_loan_state(
+        self,
+        protocol_id: str,
+        wallet_id: str,
+        start_block: int | None = None,
+        end_block: int | None = None,
+    ) -> str | None:
         """
         Fetches user loan state for a given protocol and wallet, with optional block range filtering.
 
