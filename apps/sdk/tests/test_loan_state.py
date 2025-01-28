@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 from unittest.mock import AsyncMock, patch
 from db_connector import DBConnector
 
-# Import or define your router here
+
 loan_router = APIRouter()
 
 # Setup a test FastAPI app and include the loan router
@@ -38,7 +38,7 @@ loan_response = {
 class TestLoanEndpoint(unittest.TestCase):
     @patch("apps.sdk.api.loan_state.DBConnector")
     def test_get_loans_complex(self, mock_db_connector):
-        # Mocking the database response with complex data
+        """Test the /loan_data_by_wallet_id endpoint with a mocked database response."""
         mock_db_connector.return_value.get_loan_state = AsyncMock(return_value={
             "collateral": loan_response["collateral"],
             "debt": loan_response["debt"],
@@ -54,6 +54,6 @@ class TestLoanEndpoint(unittest.TestCase):
         # Asserting the response JSON matches the expected response
         self.assertDictEqual(response.json(), loan_response)
 
-# Run the tests if the script is executed directly
+
 if __name__ == "__main__":
     unittest.main()
