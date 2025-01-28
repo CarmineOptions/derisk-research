@@ -1,162 +1,100 @@
-import logging
-import os
+from fastapi import APIRouter, HTTPException, FastAPI
+from sdk.db_connector import DBConnector
+from sdk.schemas.schemas import UserCollateralResponse, UserDebtResponseModel, UserDepositResponse
 
-import psycopg2
-from dotenv import load_dotenv
+app = FastAPI()
+router = APIRouter(
+    prefix="/user",
+    tags=["user"],
+    responses={404: {"description": "Not found"}},
+)
 
-load_dotenv()
+# Create a single instance of DBConnector to be used across endpoints
+db = DBConnector()
 
-
-class DBConnector:
+@router.get("/debt", response_model=UserDebtResponseModel)
+async def get_user_debt(wallet_id: str, protocol_name: str) -> UserDebtResponseModel:
     """
-    DBConnector manages PostgreSQL database connection and operations.
-
-    Methods:
-        get_user_debt(protocol_id: str, wallet_id: str) -> float | None: Fetches user debt.
-        get_user_collateral(protocol_id: str, wallet_id: str) -> float | None: Fetches user collateral.
-        get_loan_state(protocol_id: str, wallet_id: str) -> str | None: Fetches loan state.
-        close_connection() -> None: Closes the database connection.
+    Get user's debt information for a specific protocol.
     """
+    try:
+        debt = db.get_user_debt(protocol_name, wallet_id)
+        
+        if debt is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No debt data found for wallet {wallet_id} in protocol {protocol_name}"
+            )
+            
+        return UserDebtResponseModel(
+            wallet_id=wallet_id,
+            protocol_name=protocol_name,
+            debt=debt
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error: {str(e)}"
+        )
 
-    def __init__(self):
-        """
-        Initializes DBConnector by connecting to the PostgreSQL database.
-        """
-        self.host = os.getenv("DB_HOST")
-        self.database = os.getenv("DB_NAME")
-        self.user = os.getenv("DB_USER")
-        self.password = os.getenv("DB_PASSWORD")
-        self.port = os.getenv("DB_PORT")
+@router.get("/collateral", response_model=UserCollateralResponse)
+async def get_user_collateral(wallet_id: str, protocol_name: str) -> UserCollateralResponse:
+    """
+    Get user's collateral information for a specific protocol.
+    """
+    try:
+        collateral = db.get_user_collateral(protocol_name, wallet_id)
+        
+        if collateral is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No collateral data found for wallet {wallet_id} in protocol {protocol_name}"
+            )
+            
+        return UserCollateralResponse(
+            wallet_id=wallet_id,
+            protocol_name=protocol_name,
+            collateral=collateral
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error: {str(e)}"
+        )
 
-        self.conn = None
-        self.cur = None
-        self.connect_to_db()
+@router.get("/deposit", response_model=UserDepositResponse)
+async def get_user_deposit(wallet_id: str, protocol_name: str) -> UserDepositResponse:
+    """
+    Get user's deposit information for a specific protocol.
+    """
+    try:
+        deposit = db.get_user_deposit(protocol_name, wallet_id)
+        
+        if deposit is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No deposit data found for wallet {wallet_id} in protocol {protocol_name}"
+            )
+            
+        return UserDepositResponse(
+            wallet_id=wallet_id,
+            protocol_name=protocol_name,
+            deposit=deposit
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error: {str(e)}"
+        )
 
-    def connect_to_db(self):
-        """
-        Make connection to the PostgreSQL DB and set the connection and cursor.
+# Include the router in the app
+app.include_router(router)
 
-        Returns:
-            None
-        """
-        if self.conn is None:
-            try:
-                self.conn = psycopg2.connect(
-                    host=self.host,
-                    database=self.database,
-                    user=self.user,
-                    password=self.password,
-                    port=self.port,
-                )
-                self.cur = self.conn.cursor()
-                logging.info("Connection opened successfully.")
-            except psycopg2.DatabaseError as e:
-                logging.error(f"Error while connecting to the database: {e}")
-                raise e
-
-    def get_user_debt(self, protocol_id: str, wallet_id: str) -> float | None:
-        """
-        Fetches user debt for a given protocol and wallet.
-
-        Args:
-            protocol_id (str): Protocol ID.
-            wallet_id (str): User's wallet ID.
-
-        Returns:
-            float | None: User debt if found, otherwise None.
-        """
-        try:
-            sql = """
-                SELECT debt FROM loan_state
-                WHERE protocol_id = %s and "user" = %s;
-            """
-            self.cur.execute(sql, (protocol_id, wallet_id))
-            result = self.cur.fetchone()
-            return float(result[0]) if result and result[0] is not None else None
-        except (Exception, psycopg2.Error) as error:
-            logging.error(f"Error while fetching user debt: {error}")
-            raise
-
-    def get_user_deposit(self, protocol_id: str, wallet_id: str) -> float | None:
-        """
-        Fetches user deposit for a given protocol and wallet.
-
-        Args:
-            protocol_id (str): Protocol ID.
-            wallet_id (str): User's wallet ID.
-
-        Returns:
-            float | None: User deposit if found, otherwise None.
-        """
-        try:
-            sql = """
-                SELECT deposit FROM loan_state
-                WHERE protocol_id = %s and "user" = %s;
-            """
-            self.cur.execute(sql, (protocol_id, wallet_id))
-            result = self.cur.fetchone()
-            return float(result[0]) if result and result[0] is not None else None
-        except (Exception, psycopg2.Error) as error:
-            logging.error(f"Error while fetching user deposit: {error}")
-            raise
-
-    def get_user_collateral(self, protocol_id: str, wallet_id: str) -> float | None:
-        """
-        Fetches user collateral for a given protocol and wallet.
-
-        Args:
-            protocol_id (str): Protocol ID.
-            wallet_id (str): User's wallet ID.
-
-        Returns:
-            float | None: User collateral if found, otherwise None.
-        """
-        try:
-            sql = """
-                SELECT collateral FROM loan_state
-                WHERE protocol_id = %s and "user" = %s;
-            """
-            self.cur.execute(sql, (protocol_id, wallet_id))
-            result = self.cur.fetchone()
-            return float(result[0]) if result and result[0] is not None else None
-        except (Exception, psycopg2.Error) as error:
-            logging.error(f"Error while fetching user collateral: {error}")
-            raise
-
-    def get_loan_state(self, protocol_id: str, wallet_id: str) -> str | None:
-        """
-        Fetches user loan state for a given protocol and wallet.
-
-        Args:
-            protocol_id (str): Protocol ID.
-            wallet_id (str): User's wallet ID.
-
-        Returns:
-            str | None: User's loan state if found, otherwise None.
-        """
-        try:
-            sql = """
-                SELECT collateral, debt, deposit FROM loan_state
-                WHERE protocol_id = %s and "user" = %s;
-            """
-            self.cur.execute(sql, (protocol_id, wallet_id))
-            result = self.cur.fetchone()
-            if result:
-                return {
-                    "collateral": result[0],
-                    "debt": result[1],
-                    "deposit": result[2],
-                }
-            return {}
-        except (Exception, psycopg2.Error) as error:
-            logging.error(f"Error while fetching user loan state: {error}")
-            raise
-
-    def close_connection(self) -> None:
-        """
-        Closes the database connection if open.
-        """
-        if self.conn:
-            self.cur.close()
-            self.conn.close()
-            logging.info("PostgreSQL connection closed.")
+# If this file is run directly, start the server
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+    
