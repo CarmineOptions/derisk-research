@@ -36,10 +36,9 @@ isort = "^5.13.2"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-# A list of all of the optional dependencies
+# A list of all the optional dependencies
 [tool.poetry.extras]
 liquidation = ["matplotlib", "tqdm", "yfinance"]
 
 [tool.isort]
 profile = "black"
-

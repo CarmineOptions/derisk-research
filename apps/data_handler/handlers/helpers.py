@@ -19,7 +19,7 @@ from data_handler.db.models import InterestRate
 from shared.constants import TOKEN_SETTINGS, ProtocolIDs
 from shared.error_handler import BOT
 from shared.error_handler.values import MessageTemplates
-from shared.types import TokenValues
+from shared.custom_types import TokenValues
 
 GS_BUCKET_NAME = "derisk-persistent-state"
 ERROR_LOGS = set()

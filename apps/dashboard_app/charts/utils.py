@@ -172,7 +172,6 @@ def get_data(
     :param state: State to load data for.
     :return: DataFrames containing loan data and main chart data.
     """
-    # directory = f"{protocol_name.lower().replace(' ', '_')}_data"
     main_chart_data = {}
     underlying_addresses_to_decimals = {
         x.address: int(math.log10(x.decimal_factor)) for x in TOKEN_SETTINGS.values()
@@ -236,7 +235,7 @@ def get_protocol_data_mappings(
 
 
 def transform_loans_data(
-    protocol_loans_data_mapping: pd.DataFrame, protocols: list[str]
+    protocol_loans_data_mapping: dict[str, dict], protocols: list[str]
 ) -> pd.DataFrame:
     """
     Transform protocol loans data

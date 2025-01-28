@@ -169,29 +169,62 @@ class Dashboard:
                 value=(0, int(loans_data["Debt (USD)"].max()) or 1),  # FIXME remove 1
             )
 
-        try:
+        st.dataframe(
+            loans_data[
+                (loans_data["Health factor"] > 0)  # TODO: debug the negative HFs
+                & loans_data["Debt (USD)"].between(
+                    debt_usd_lower_bound, debt_usd_upper_bound
+                )
+            ]
+            .sort_values("Health factor")
+            .iloc[:20],
+            use_container_width=True,
+        )
+
+    def load_top_loans_chart(self):
+        """
+        Gererate a chart that shows top loans.
+        """
+        (
+            protocol_main_chart_data_mapping,
+            protocol_loans_data_mapping,
+        ) = get_protocol_data_mappings(
+            current_pair=self.current_pair,
+            stable_coin_pair=self.stable_coin_pair,
+            protocols=self.PROTOCOL_NAMES,
+            state=self.state,
+        )
+        loans_data = transform_loans_data(
+            protocol_loans_data_mapping, self.PROTOCOL_NAMES
+        )
+
+        st.header(ChartsHeaders.top_loans)
+        col1, col2 = st.columns(2)
+        loans_data["Standardized health factor"] = pd.to_numeric(
+            loans_data["Standardized health factor"], errors="coerce"
+        )
+        with col1:
+            st.subheader("Sorted by collateral")
             st.dataframe(
                 loans_data[
-                    (loans_data["Health factor"] > 0)  # TODO: debug the negative HFs
-                    & loans_data["Debt (USD)"].between(
-                        debt_usd_lower_bound, debt_usd_upper_bound
-                    )
+                    (loans_data["Health factor"] > 1)  # TODO: debug the negative HFs
+                    & (loans_data["Standardized health factor"] != float("inf"))
                 ]
-                .sort_values("Health factor")
+                .sort_values("Collateral (USD)", ascending=False)
                 .iloc[:20],
                 use_container_width=True,
             )
-
-        except TypeError:
+        with col2:
+            st.subheader("Sorted by debt")
             st.dataframe(
-                pd.DataFrame(
-                    {
-                        "price": [0],
-                        "debt_token_supply": [0],
-                        "collateral_token_price": [0],
-                        "Ekubo_debt_token_supply": [0],
-                    }
-                ),
+                loans_data[
+                    (loans_data["Health factor"] > 1)
+                    & (
+                        loans_data["Standardized health factor"] != float("inf")
+                    )  # TODO: debug the negative HFs
+                ]
+                .sort_values("Debt (USD)", ascending=False)
+                .iloc[:20],
                 use_container_width=True,
             )
 
@@ -203,3 +236,4 @@ class Dashboard:
         self.load_sidebar()
         self.load_main_chart()
         self.load_loans_with_low_health_factor_chart()
+        self.load_top_loans_chart()

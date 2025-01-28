@@ -61,12 +61,12 @@ with patch.dict(
         ),
     },
 ):
-    from shared.types.base import (
+    from data_handler.handlers.liquidable_debt.utils import Prices
+    from shared.custom_types.base import (
         Portfolio,
         ExtraInfo,
         TokenParameters,
         InterestRateModels,
-        Prices,
     )
     from shared.loan_entity import LoanEntity
     from shared.state import State
@@ -189,34 +189,34 @@ def test_mock_state_compute_number_of_active_loan_entities():
 def test_mock_loan_entity_compute_collateral_usd():
     """Test collateral USD computation"""
     entity = MockLoanEntity()
-    entity.collateral["TOKEN1"] = Decimal("1000000000000000000")  # 1 token
+    entity.collateral.values = {"TOKEN1": Decimal("1000000000000000000")}
 
     # Create collateral parameters
     collateral_params = TokenParameters()
     collateral_params["TOKEN1"].decimals = 18
-    collateral_params["TOKEN1"].collateral_factor = float(0.8)
+    collateral_params["TOKEN1"].collateral_factor = 0.8
     collateral_params["TOKEN1"].underlying_address = "0x123"
 
     # Create interest rate model
     # Use float for interest rate to match implementation
     interest_model = InterestRateModels()
-    interest_model["TOKEN1"] = float(1.1)
+    interest_model["TOKEN1"] = 1.1
 
     # Create prices
     prices = Prices()
-    prices["0x123"] = float(1000)
+    prices.prices.values["0x123"] = 1000.0
 
     value = entity.compute_collateral_usd(
         risk_adjusted=True,
         collateral_token_parameters=collateral_params,
         collateral_interest_rate_model=interest_model,
-        prices=prices,
+        prices=prices.prices.values,
     )
 
     # Expected calculation:
     # 1 token * 0.8 (collateral factor) * 1.1 (interest) * 1000 (price)
     # = 1 * 0.8 * 1.1 * 1000 = 880.0
-    assert value == pytest.approx(880.0)
+    assert float(value) == pytest.approx(880.0)
 
 
 def test_mock_state_invalid_event_method():

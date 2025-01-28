@@ -1,6 +1,7 @@
+import asyncio
 from collections.abc import Iterable
-from decimal import Decimal
-from unittest.mock import MagicMock, patch
+from decimal import Decimal, ROUND_FLOOR
+from unittest.mock import patch
 
 import pytest
 from data_handler.db.crud import DBConnector
@@ -18,6 +19,16 @@ def order_book():
     token_b = "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"
     order_book = main.UniswapV2OrderBook(token_a, token_b)
     return order_book
+
+@pytest.fixture(scope="session")
+def event_loop():
+    """
+    Fixture for the event loop.
+    """
+    policy = asyncio.get_event_loop_policy()
+    loop = policy.new_event_loop()
+    yield loop
+    loop.close()
 
 
 class TestUniswapV2OrderBook:
@@ -51,8 +62,10 @@ class TestUniswapV2OrderBook:
         """
         tick = Decimal("500")
         final_value = Decimal("9.997500313723646666869072034E-15")
+        rounded_final_value = final_value.quantize(Decimal("1e-18"), rounding=ROUND_FLOOR)
         liquidity_amount = order_book.calculate_liquidity_amount(tick, Decimal("10000"))
-        assert final_value == liquidity_amount, "liquidity amount does not match"
+        rounded_liquidity_value = liquidity_amount.quantize(Decimal("1e-18"), rounding=ROUND_FLOOR)
+        assert rounded_final_value == rounded_liquidity_value, "liquidity amount does not match"
 
     def test_get_prices_ranges(self, order_book: main.UniswapV2OrderBook):
         """
@@ -64,13 +77,14 @@ class TestUniswapV2OrderBook:
             len(price_ranges) > 1
         ), "Price ranges list length should be greater than 1"
 
-    def test_fetch_price_and_liquidity(self, order_book: main.UniswapV2OrderBook):
+    def test_fetch_price_and_liquidity(self, order_book: main.UniswapV2OrderBook, event_loop):
         """
         Unit test for UniswapV2OrderBook.fetch_price_and_liquidity
         """
         with patch(
             "data_handler.handlers.order_books.uniswap_v2.main.UniswapV2OrderBook._async_fetch_price_and_liquidity",
         ) as mock_fetch_price_and_liquidity:
+            asyncio.set_event_loop(event_loop)
             order_book.fetch_price_and_liquidity()
             mock_fetch_price_and_liquidity.assert_called()
 

@@ -17,7 +17,7 @@ from data_handler.db.crud import InitializerDBConnector
 from shared.constants import ProtocolIDs, TOKEN_SETTINGS
 from shared.loan_entity import LoanEntity
 from shared.state import State
-from shared.types import InterestRateModels, Portfolio, TokenValues, TokenSettings
+from shared.custom_types import InterestRateModels, Portfolio, TokenValues, TokenSettings
 
 ADDRESS: str = "0x03dcf5c72ba60eb7b2fe151032769d49dd3df6b04fa3141dffd6e2aa162b7a6e"
 
