@@ -9,7 +9,6 @@ from shared.custom_types import (
     Prices,
     TokenParameters,
     TokenSettings,
-    TokenValues,
 )
 
 
