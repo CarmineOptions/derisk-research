@@ -38,22 +38,25 @@ loan_response = {
 class TestLoanEndpoint(unittest.TestCase):
     @patch("apps.sdk.api.loan_state.DBConnector")
     def test_get_loans_complex(self, mock_db_connector):
-        """Test the /loan_data_by_wallet_id endpoint with a mocked database response."""
+        # Mocking the database response with complex data
         mock_db_connector.return_value.get_loan_state = AsyncMock(return_value={
             "collateral": loan_response["collateral"],
             "debt": loan_response["debt"],
             "deposit": loan_response["deposit"],
         })
-
+    
         # Sending the GET request
         response = client.get("/loan_data_by_wallet_id", params=endpoint_params)
-
+    
         # Asserting the response status code
         self.assertEqual(response.status_code, 200)
-
+    
         # Asserting the response JSON matches the expected response
         self.assertDictEqual(response.json(), loan_response)
+    
 
 
 if __name__ == "__main__":
     unittest.main()
+
+
