@@ -28,9 +28,11 @@ async def get_loans_by_wallet_id(
     Raises:
       HTTPException: If address is not mapped
     """
-
     try:
-        loan_states = db.get_loan_state(params.wallet_id, params.protocol_name)
+        loan_states = db.get_loan_state(
+            wallet_id=params.wallet_id,
+            protocol_id=params.protocol_name,
+        )
         if not loan_states:
             raise HTTPException(
                 status_code=404,
