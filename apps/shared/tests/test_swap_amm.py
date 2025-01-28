@@ -356,24 +356,6 @@ class TestSwapAmmNegative:
             swap_amm.get_pool("NONEXISTENT", "TOKEN")
         assert "Trying to get pools that are not set" in str(exc_info.value)
 
-    # TODO: should we delete this pseudo test? (impossible scenario)
-    # def test_add_pool_invalid_tokens(self, swap_amm: SwapAmm) -> None:
-    #     """
-    #     Test adding a pool with invalid token settings.
-    #
-    #     Args:
-    #         swap_amm: SwapAmm instance
-    #
-    #     Raises:
-    #         KeyError: When using invalid token symbols
-    #     """
-    #     with patch("shared.constants.TOKEN_SETTINGS", {}), pytest.raises(KeyError):
-    #         swap_amm.add_pool(
-    #             base_token="INVALID",
-    #             quote_token="TOKEN",
-    #             pool_addresses=["0xaddress"],
-    #         )
-
     @pytest.mark.asyncio
     async def test_get_balance_failure(self, swap_amm: SwapAmm) -> None:
         """
