@@ -10,7 +10,7 @@ from data_handler.handlers.blockchain_call import balance_of, func_call, get_mys
 
 from shared.constants import TOKEN_SETTINGS
 from shared.helpers import add_leading_zeros
-from shared.types import TokenSettings, TokenValues
+from shared.custom_types import TokenSettings, TokenValues
 
 
 class Pair:

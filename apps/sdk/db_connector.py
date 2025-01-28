@@ -136,12 +136,18 @@ class DBConnector:
         """
         try:
             sql = """
-                SELECT * FROM loan_state
+                SELECT collateral, debt, deposit FROM loan_state
                 WHERE protocol_id = %s and "user" = %s;
             """
             self.cur.execute(sql, (protocol_id, wallet_id))
             result = self.cur.fetchone()
-            return str(result[0]) if result and result[0] is not None else None
+            if result:
+                return {
+                    "collateral": result[0],
+                    "debt": result[1],
+                    "deposit": result[2],
+                }
+            return {}
         except (Exception, psycopg2.Error) as error:
             logging.error(f"Error while fetching user loan state: {error}")
             raise

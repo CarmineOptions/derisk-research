@@ -5,7 +5,7 @@ import dataclasses
 import decimal
 
 from shared.constants import TOKEN_SETTINGS
-from shared.types import TokenSettings
+from shared.custom_types import TokenSettings
 
 
 @dataclasses.dataclass

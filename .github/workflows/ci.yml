@@ -52,6 +52,7 @@ jobs:
           poetry lock 
           poetry install --no-root
 
+
       - name: Run Tests for Shared
         working-directory: ./apps/shared
         run: |

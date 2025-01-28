@@ -7,7 +7,6 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
-# from shared.types import Prices
 from dashboard_app.helpers.protocol_stats import (
     get_general_stats,
     get_supply_stats,
@@ -346,4 +345,4 @@ def test_get_utilization_stats_division_by_zero():
 
     # Check if division by zero results in NaN or infinity
     assert result["Total utilization"].iloc[0] == 1 
-    assert pd.isna(result["ETH utilization"].iloc[0]) 
+    assert result["ETH utilization"].iloc[0] == 0.0

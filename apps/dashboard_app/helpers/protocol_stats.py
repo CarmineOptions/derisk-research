@@ -11,10 +11,10 @@ import pandas as pd
 from data_handler.handlers import blockchain_call
 from shared.constants import TOKEN_SETTINGS
 from shared.state import State
-from shared.types import Prices
+from shared.custom_types import Prices
 
-from helpers.loans_table import get_protocol, get_supply_function_call_parameters
-from helpers.tools import add_leading_zeros, get_addresses, get_underlying_address
+from dashboard_app.helpers.loans_table import get_protocol, get_supply_function_call_parameters
+from dashboard_app.helpers.tools import add_leading_zeros, get_addresses, get_underlying_address
 
 
 def get_general_stats(
@@ -219,7 +219,7 @@ def get_debt_stats(
                 try:
                     debt = (
                         sum(
-                            float(loan_entity.debt.values.get(token_address, 0.0))
+                            float(loan_entity.debt.get(token_address, 0.0))
                             for loan_entity in state.loan_entities.values()
                         )
                         / float(TOKEN_SETTINGS[token].decimal_factor)
