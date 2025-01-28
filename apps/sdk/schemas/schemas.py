@@ -25,9 +25,9 @@ class UserLoanByWalletResponse(BaseModel):
         deposit: A dictionary mapping token addresses to deposit values.
     """
     wallet_id: str
-    collateral: Dict[str, str]
-    debt: Dict[str, str]
-    deposit: Dict[str, str]
+    collateral: Dict[str, float]
+    debt: Dict[str, float]
+    deposit: Dict[str, float]
 
 
 class UserCollateralResponse(BaseModel):
