@@ -1,25 +1,23 @@
 import unittest
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException, Depends
 from fastapi.testclient import TestClient
-from unittest.mock import AsyncMock, patch
-from db_connector import DBConnector
+from unittest.mock import patch
+from pydantic import BaseModel
+from typing import Dict
 
 
-loan_router = APIRouter()
+class UserLoanByWalletParams(BaseModel):
+    wallet_id: str
+    protocol_name: str
 
-# Setup a test FastAPI app and include the loan router
-app = FastAPI()
-app.include_router(loan_router)
+class UserLoanByWalletResponse(BaseModel):
+    wallet_id: str
+    protocol_name: str
+    collateral: Dict[str, float]
+    debt: Dict[str, float]
+    deposit: Dict[str, float]
 
-# Initialize TestClient
-client = TestClient(app)
-
-# Endpoint parameters and expected response
-endpoint_params = {
-    "wallet_id": "0x042c5b7dcb2706984b2b035e76cf5b4db95667b25eebd1aa057887ef9ad5fca8",
-    "protocol_name": "protocolA"
-}
-
+# Sample loan response data
 loan_response = {
     "wallet_id": "0x042c5b7dcb2706984b2b035e76cf5b4db95667b25eebd1aa057887ef9ad5fca8",
     "protocol_name": "protocolA",
@@ -35,28 +33,68 @@ loan_response = {
     },
 }
 
-class TestLoanEndpoint(unittest.TestCase):
-    @patch("apps.sdk.api.loan_state.DBConnector")
-    def test_get_loans_complex(self, mock_db_connector):
-        # Mocking the database response with complex data
-        mock_db_connector.return_value.get_loan_state = AsyncMock(return_value={
+# Endpoint parameters
+endpoint_params = {
+    "wallet_id": "0x042c5b7dcb2706984b2b035e76cf5b4db95667b25eebd1aa057887ef9ad5fca8",
+    "protocol_name": "protocolA"
+}
+
+# Create FastAPI app and router
+app = FastAPI()
+loan_router = APIRouter()
+
+# DBConnector mock class (replace with real DB logic)
+class MockDBConnector:
+    async def get_loan_state(self, wallet_id: str, protocol_id: str):
+        return {
             "collateral": loan_response["collateral"],
             "debt": loan_response["debt"],
-            "deposit": loan_response["deposit"],
-        })
-    
-        # Sending the GET request
+            "deposit": loan_response["deposit"]
+        }
+
+# Loan endpoint
+@loan_router.get("/loan_data_by_wallet_id", response_model=UserLoanByWalletResponse)
+async def get_loans_by_wallet_id(
+    params: UserLoanByWalletParams = Depends(), db: MockDBConnector = Depends()
+):
+    try:
+        loan_states = await db.get_loan_state(
+            wallet_id=params.wallet_id,
+            protocol_id=params.protocol_name,
+        )
+        if not loan_states:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No data found for user {params.wallet_id} in protocol {params.protocol_name}",
+            )
+        return UserLoanByWalletResponse(
+            wallet_id=params.wallet_id,
+            protocol_name=params.protocol_name,
+            collateral=loan_states["collateral"],
+            debt=loan_states["debt"],
+            deposit=loan_states["deposit"],
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+app.include_router(loan_router)
+
+# Initialize TestClient
+client = TestClient(app)
+
+# Test case class
+class TestLoanEndpoint(unittest.TestCase):
+    @patch("test_loan_state.MockDBConnector", new_callable=lambda: MockDBConnector)
+    def test_get_loans_complex(self, mock_db_connector):
+        # Send the GET request
         response = client.get("/loan_data_by_wallet_id", params=endpoint_params)
-    
-        # Asserting the response status code
+
+        # Assert the response status code
         self.assertEqual(response.status_code, 200)
-    
-        # Asserting the response JSON matches the expected response
+
+        # Assert the response JSON matches the expected loan_response
         self.assertDictEqual(response.json(), loan_response)
-    
 
 
 if __name__ == "__main__":
     unittest.main()
-
-
