@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, FastAPI
 import pandas as pd
 import json
-from sdk.schemas.schemas import UserCollateralResponse, UserDebtResponseModel
+from sdk.schemas.schemas import UserCollateralResponse, UserDebtResponseModel, UserDepositResponse
 
 app = FastAPI()
 router = APIRouter(
@@ -74,6 +74,59 @@ async def get_user_debt(wallet_id: str, protocol_name: str) -> UserCollateralRes
             wallet_id=wallet_id,
             protocol_name=protocol_name,
             collateral=collateral
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error: {str(e)}"
+        )
+
+
+
+def parse_deposit_data(row):
+    try:
+        return json.loads(row) if row.strip() else {}
+    except json.JSONDecodeError:
+        return {}
+
+mock_data["deposit"] = mock_data["deposit"].apply(parse_deposit_data)
+
+@router.get("/deposit", response_model=UserDepositResponse)
+async def get_user_deposit(wallet_id: str) -> UserDepositResponse:
+    """
+    Get user's deposit information.
+    
+    Args:
+        wallet_id (str): The wallet ID of the user.
+        
+    Returns:
+        UserDepositResponse: User's deposit information.
+        
+    Raises:
+        HTTPException: If user is not found or an internal error occurs.
+    """
+    try:
+        user_data = mock_data[mock_data["user"] == wallet_id]
+        
+        if user_data.empty:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No deposit data found for wallet {wallet_id}"
+            )
+        
+        latest_entry = user_data.sort_values("timestamp", ascending=False).iloc[0]
+        
+        try:
+            deposit = json.loads(latest_entry["deposit"].replace("'", '"'))
+            if not deposit:
+                deposit = {}
+        except (json.JSONDecodeError, AttributeError):
+            deposit = {}
+        
+        return UserDepositResponse(
+            wallet_id=wallet_id,
+            deposit=deposit
         )
         
     except Exception as e:

@@ -36,8 +36,8 @@ jobs:
         working-directory: ./apps/dashboard_app
         run: |
           echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
-          poetry lock --no-update
-          poetry install
+          poetry lock
+          poetry install --no-root
       - name: Prepare Environment File
         working-directory: ./apps/dashboard_app
         run: |

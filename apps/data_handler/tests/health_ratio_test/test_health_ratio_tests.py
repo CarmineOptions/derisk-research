@@ -3,13 +3,12 @@
 import pytest
 from decimal import Decimal
 from unittest.mock import MagicMock, patch
-from datetime import datetime
 
 from data_handler.handlers.health_ratio_level.health_ratio_handlers import (
     BaseHealthRatioHandler,
 )
 from shared.state import State, LoanEntity
-from shared.types import TokenValues
+from shared.custom_types import TokenValues
 from shared.constants import ProtocolIDs
 
 

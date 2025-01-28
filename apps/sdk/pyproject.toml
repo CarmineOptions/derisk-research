@@ -8,10 +8,14 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.11"
 twine = "^6.0.1"
-fastapi = "^0.115.6"
+fastapi = {extras = ["standard"], version = "^0.115.7"}
 uvicorn = "^0.34.0"
 pydantic = "^2.10.5"
 redis = "^5.0.0"
+pyjwt = "^2.10.1"
+python-dotenv = "^1.0.1"
+slowapi = "^0.1.9"
+pandas = "^2.2.3"
 
 
 [build-system]

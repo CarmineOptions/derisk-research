@@ -17,7 +17,7 @@ from starknet_py.net.full_node_client import FullNodeClient
 
 from shared.constants import TOKEN_SETTINGS
 from shared.helpers import add_leading_zeros
-from shared.types import TokenValues
+from shared.custom_types import TokenValues
 
 NET = FullNodeClient(node_url="https://starknet-mainnet.public.blastapi.io")
 

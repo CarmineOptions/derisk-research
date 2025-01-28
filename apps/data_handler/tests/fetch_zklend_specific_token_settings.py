@@ -1,12 +1,11 @@
 """ Test the fetch_zklend_specific_token_settings.py """
-import asyncio
 import decimal
 
 from data_handler.handlers.loan_states.zklend.fetch_zklend_specific_token_settings import (
     ZkLendSpecificTokenSettings,
     get_token_settings,
 )
-from shared.types import TokenSettings
+from shared.custom_types import TokenSettings
 
 
 # Mock response for the on chain call (func_call)
