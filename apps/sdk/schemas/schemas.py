@@ -65,3 +65,15 @@ class Token(BaseModel):
     """
     access_token: str
     expiration_date: datetime
+
+
+class UserDepositResponse(BaseModel):
+    """
+    Data model representing the response for user deposit details by wallet ID.
+
+    Attributes:
+        wallet_id: The unique identifier of the user's wallet address.
+        deposit: A dictionary mapping token addresses to deposit values.
+    """
+    wallet_id: str
+    deposit: Dict[str, float]
