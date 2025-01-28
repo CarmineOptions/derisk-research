@@ -6,15 +6,17 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+def normalize_sql(query):
+    return ' '.join(query.split())
 
 class DBConnector:
     """
     DBConnector manages PostgreSQL database connection and operations.
 
     Methods:
-        get_user_debt(protocol_id: str, wallet_id: str) -> float | None: Fetches user debt.
-        get_user_collateral(protocol_id: str, wallet_id: str) -> float | None: Fetches user collateral.
-        get_loan_state(protocol_id: str, wallet_id: str) -> str | None: Fetches loan state.
+        get_user_debt(protocol_id: str, wallet_id: str, start_block: int | None, end_block: int | None) -> float | None: Fetches user debt.
+        get_user_collateral(protocol_id: str, wallet_id: str, start_block: int | None, end_block: int | None) -> float | None: Fetches user collateral.
+        get_loan_state(protocol_id: str, wallet_id: str, start_block: int | None, end_block: int | None) -> str | None: Fetches loan state.
         close_connection() -> None: Closes the database connection.
     """
 
@@ -46,7 +48,7 @@ class DBConnector:
                     database=self.database,
                     user=self.user,
                     password=self.password,
-                    port=self.port,
+                    port=self.port
                 )
                 self.cur = self.conn.cursor()
                 logging.info("Connection opened successfully.")
@@ -54,13 +56,15 @@ class DBConnector:
                 logging.error(f"Error while connecting to the database: {e}")
                 raise e
 
-    def get_user_debt(self, protocol_id: str, wallet_id: str) -> float | None:
+    def get_user_debt(self, protocol_id: str, wallet_id: str, start_block: int | None = None, end_block: int | None = None) -> float | None:
         """
-        Fetches user debt for a given protocol and wallet.
+        Fetches user debt for a given protocol and wallet, with optional block range filtering.
 
         Args:
             protocol_id (str): Protocol ID.
             wallet_id (str): User's wallet ID.
+            start_block (int | None): Start block for filtering.
+            end_block (int | None): End block for filtering.
 
         Returns:
             float | None: User debt if found, otherwise None.
@@ -68,68 +72,75 @@ class DBConnector:
         try:
             sql = """
                 SELECT debt FROM loan_state
-                WHERE protocol_id = %s and "user" = %s;
+                WHERE protocol_id = %s AND "user" = %s
             """
-            self.cur.execute(sql, (protocol_id, wallet_id))
+            params = [protocol_id, wallet_id]
+
+            # Add block range filtering if provided
+            if start_block is not None:
+                sql += " AND block >= %s"
+                params.append(start_block)
+            if end_block is not None:
+                sql += " AND block <= %s"
+                params.append(end_block)
+
+            sql += " ORDER BY timestamp DESC LIMIT 1;"
+
+            self.cur.execute(normalize_sql(sql), tuple(params))
             result = self.cur.fetchone()
             return float(result[0]) if result and result[0] is not None else None
         except (Exception, psycopg2.Error) as error:
             logging.error(f"Error while fetching user debt: {error}")
             raise
 
-    def get_user_deposit(self, protocol_id: str, wallet_id: str) -> float | None:
+    def get_user_collateral(self, protocol_id: str, wallet_id: str, start_block: int | None = None, end_block: int | None = None) -> float | None:
         """
-        Fetches user deposit for a given protocol and wallet.
+        Fetches user collateral for a given protocol and wallet, with optional block range filtering.
 
         Args:
             protocol_id (str): Protocol ID.
             wallet_id (str): User's wallet ID.
-
-        Returns:
-            float | None: User deposit if found, otherwise None.
-        """
-        try:
-            sql = """
-                SELECT deposit FROM loan_state
-                WHERE protocol_id = %s and "user" = %s;
-            """
-            self.cur.execute(sql, (protocol_id, wallet_id))
-            result = self.cur.fetchone()
-            return float(result[0]) if result and result[0] is not None else None
-        except (Exception, psycopg2.Error) as error:
-            logging.error(f"Error while fetching user deposit: {error}")
-            raise
-
-    def get_user_collateral(self, protocol_id: str, wallet_id: str) -> float | None:
-        """
-        Fetches user collateral for a given protocol and wallet.
-
-        Args:
-            protocol_id (str): Protocol ID.
-            wallet_id (str): User's wallet ID.
+            start_block (int | None): Start block for filtering.
+            end_block (int | None): End block for filtering.
 
         Returns:
             float | None: User collateral if found, otherwise None.
+
         """
+
         try:
             sql = """
                 SELECT collateral FROM loan_state
-                WHERE protocol_id = %s and "user" = %s;
+                WHERE protocol_id = %s AND "user" = %s
             """
-            self.cur.execute(sql, (protocol_id, wallet_id))
+            params = [protocol_id, wallet_id]
+
+            # Add block range filtering if provided
+            if start_block is not None:
+                sql += " AND block >= %s"
+                params.append(start_block)
+            if end_block is not None:
+                sql += " AND block <= %s"
+                params.append(end_block)
+
+            sql += " ORDER BY timestamp DESC LIMIT 1;"
+
+            self.cur.execute(normalize_sql(sql), tuple(params))
             result = self.cur.fetchone()
             return float(result[0]) if result and result[0] is not None else None
         except (Exception, psycopg2.Error) as error:
             logging.error(f"Error while fetching user collateral: {error}")
             raise
 
-    def get_loan_state(self, protocol_id: str, wallet_id: str) -> str | None:
+    def get_loan_state(self, protocol_id: str, wallet_id: str, start_block: int | None = None, end_block: int | None = None) -> str | None:
         """
-        Fetches user loan state for a given protocol and wallet.
+        Fetches user loan state for a given protocol and wallet, with optional block range filtering.
 
         Args:
             protocol_id (str): Protocol ID.
             wallet_id (str): User's wallet ID.
+            start_block (int | None): Start block for filtering.
+            end_block (int | None): End block for filtering.
 
         Returns:
             str | None: User's loan state if found, otherwise None.
@@ -137,9 +148,21 @@ class DBConnector:
         try:
             sql = """
                 SELECT * FROM loan_state
-                WHERE protocol_id = %s and "user" = %s;
+                WHERE protocol_id = %s AND "user" = %s
             """
-            self.cur.execute(sql, (protocol_id, wallet_id))
+            params = [protocol_id, wallet_id]
+
+            # Add block range filtering if provided
+            if start_block is not None:
+                sql += " AND block >= %s"
+                params.append(start_block)
+            if end_block is not None:
+                sql += " AND block <= %s"
+                params.append(end_block)
+
+            sql += " ORDER BY timestamp DESC LIMIT 1;"
+
+            self.cur.execute(normalize_sql(sql), tuple(params))
             result = self.cur.fetchone()
             return str(result[0]) if result and result[0] is not None else None
         except (Exception, psycopg2.Error) as error:
