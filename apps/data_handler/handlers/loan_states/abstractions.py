@@ -10,7 +10,7 @@ from data_handler.db.models import InterestRate, LoanState
 from data_handler.handler_tools.api_connector import DeRiskAPIConnector
 from shared.constants import ProtocolIDs
 from shared.state import State
-from shared.types import InterestRateModels
+from shared.custom_types import InterestRateModels
 
 logger = logging.getLogger(__name__)
 

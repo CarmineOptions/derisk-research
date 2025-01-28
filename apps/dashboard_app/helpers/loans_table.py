@@ -6,7 +6,7 @@ import pandas as pd
 from data_handler.handlers.loan_states.nostra_alpha.events import NostraAlphaState
 from data_handler.handlers.loan_states.nostra_mainnet.events import NostraMainnetState
 from shared.state import State
-from shared.types import Prices
+from shared.custom_types import Prices
 
 
 def get_protocol(state: State) -> str:

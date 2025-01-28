@@ -26,8 +26,8 @@ from shared.helpers import add_leading_zeros
 from shared.loan_entity import LoanEntity
 from shared.starknet_client import StarknetClient
 from shared.state import State
-from shared.types import InterestRateModels, Portfolio, Prices, TokenParameters
-from shared.types.nostra import (
+from shared.custom_types import InterestRateModels, Portfolio, Prices, TokenParameters
+from shared.custom_types.nostra import (
     NostraAlphaCollateralTokenParameters,
     NostraDebtTokenParameters,
 )

@@ -16,7 +16,7 @@ from shared.constants import TOKEN_SETTINGS, ProtocolIDs
 from shared.helpers import add_leading_zeros
 from shared.loan_entity import LoanEntity
 from shared.state import State
-from shared.types import InterestRateModels, Portfolio, TokenValues
+from shared.custom_types import InterestRateModels, Portfolio, TokenValues
 
 logger = logging.getLogger(__name__)
 

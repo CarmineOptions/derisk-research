@@ -26,7 +26,7 @@ from data_handler.handlers.loan_states.zklend.events import (
 from data_handler.db.crud import DBConnector
 from shared.constants import ProtocolIDs
 from shared.state import LoanEntity, State
-from shared.types import TokenValues
+from shared.custom_types import TokenValues
 
 
 class BaseHealthRatioHandler:

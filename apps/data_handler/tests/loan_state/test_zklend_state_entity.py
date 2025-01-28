@@ -6,8 +6,7 @@ import pandas as pd
 import pytest
 
 from data_handler.handlers.loan_states.zklend.events import ZkLendState
-from shared.loan_entity import LoanEntity
-from shared.types import InterestRateModels, Portfolio, ZkLendCollateralEnabled
+from shared.custom_types import Portfolio, ZkLendCollateralEnabled
 
 
 @pytest.fixture
@@ -115,8 +114,8 @@ class TestZkLendState:
         """Test withdrawal event processing"""
         mock_parsed_data = MagicMock()
         mock_parsed_data.user = "0x123"
-        mock_parsed_data.amount = "123"
-        mock_parsed_data.face_amount = int(1e18)
+        mock_parsed_data.token = "0x456"
+        mock_parsed_data.amount = int(1e18)
 
         with patch(
             "data_handler.handlers.loan_states.zklend.events.ZklendDataParser.parse_withdrawal_event",

@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 from data_handler.handlers import blockchain_call
 from shared.constants import ProtocolIDs
-from shared.types import (
+from shared.custom_types import (
     InterestRateModels,
     Portfolio,
     Prices,

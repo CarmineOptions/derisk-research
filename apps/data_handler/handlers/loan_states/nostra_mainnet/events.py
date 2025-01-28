@@ -21,8 +21,8 @@ from data_handler.handlers.loan_states.nostra_alpha.events import (
 from shared.constants import ProtocolIDs
 from shared.helpers import add_leading_zeros
 from shared.starknet_client import StarknetClient
-from shared.types import InterestRateModels, Prices, TokenParameters
-from shared.types.nostra import (
+from shared.custom_types import InterestRateModels, Prices, TokenParameters
+from shared.custom_types.nostra import (
     NostraDebtTokenParameters,
     NostraMainnetCollateralTokenParameters,
 )
