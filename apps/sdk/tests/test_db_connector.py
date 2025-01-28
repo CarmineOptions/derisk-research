@@ -13,7 +13,7 @@ def mock_db_connector():
     """
     Fixture to create a mock DBConnector instance.
     """
-    with patch("app.sdk.db_connector.psycopg2.connect") as mock_connect:
+    with patch("sdk.db_connector.psycopg2.connect") as mock_connect:
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_connect.return_value = mock_conn
