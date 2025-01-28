@@ -1,80 +1,73 @@
-from fastapi import APIRouter, HTTPException
-from fastapi import Depends
+from fastapi import APIRouter, HTTPException, Depends
 from schemas.schemas import UserLoanByWalletParams, UserLoanByWalletResponse
-import json
-import pandas as pd
+from db_connector import DBConnector
 
 loan_router = APIRouter()
 
-def parse_json(data):
-    if isinstance(data, str):
-        try:
-            return json.loads(data.replace("'", '"'))
-        except json.JSONDecodeError:
-            pass
-    return {}
-
-
 @loan_router.get("/loan_data_by_wallet_id", response_model=UserLoanByWalletResponse)
 async def get_loans_by_wallet_id(params: UserLoanByWalletParams = Depends()):
-  """
+    """
     Retrieve loan data associated with a specific wallet ID.
 
-    endpoint allows users to query their loan details by providing a 
-    wallet ID and optional block range parameters. The response includes 
-    information about the user's collateral, debt, and deposits across 
-    the specified loan protocol.
-    
     Args:
-      wallet_id (str): The wallet ID of the user
-      protocol_name (str): The name of the loan protocol
-      start_block (int): The start block
-      end_block (int): The end block
-    
+      params (UserLoanByWalletParams): Query parameters containing wallet ID, protocol name, and optional block range.
+
     Returns:
-      UserLoanByWalletResponse: User loan Information
+      UserLoanByWalletResponse: User loan information.
       
     Raises:
-      HTTPException: If address is not mapped
-  """
-  
-  try:
-    data_path = "apps/sdk/mock_data.csv"
-    df = pd.read_csv(data_path)
-    
-    filter_df = df[
-      (df['user'] == params.wallet_id) & 
-      (df['protocol_id'] == params.protocol_name)
-    ]
-    
-    if params.start_block is not None:
-      filter_df = filter_df[filter_df['block'] >= params.start_block]
-      
-    if params.end_block is not None:
-      filter_df = filter_df[filter_df['block'] <= params.end_block]
-      
-    if filter_df.empty:
-      raise HTTPException(
-        status_code=404,
-        detail=f"No data found for user {params.wallet_id} in protocol {params.protocol_name}"
-      )
-      
-    latest_entry = filter_df.sort_values('timestamp', ascending=False).iloc[0]
+      HTTPException: If no data is found or an error occurs during data fetching.
+    """
+    try:
+        db = DBConnector()
 
-    collateral = parse_json(latest_entry['collateral'])
-    debt = parse_json(latest_entry['debt'])
-    deposit = parse_json(latest_entry['deposit'])
-    
-    return UserLoanByWalletResponse(
-      wallet_id=params.wallet_id,
-      protocol_name=params.protocol_name,
-      collateral=collateral,
-      debt=debt,
-      deposit=deposit
-    )
-    
-  except Exception as e:
-    raise HTTPException(
-      status_code=500,
-      detail=f"Internal server error: {str(e)}"
-    )  
+        # Fetch collateral, debt, and loan state from the database
+        collateral = db.get_user_collateral(
+            protocol_id=params.protocol_name,
+            wallet_id=params.wallet_id,
+            start_block=params.start_block,
+            end_block=params.end_block
+        )
+        debt = db.get_user_debt(
+            protocol_id=params.protocol_name,
+            wallet_id=params.wallet_id,
+            start_block=params.start_block,
+            end_block=params.end_block
+        )
+        loan_state = db.get_loan_state(
+            protocol_id=params.protocol_name,
+            wallet_id=params.wallet_id,
+            start_block=params.start_block,
+            end_block=params.end_block
+        )
+
+        # Check if all retrieved data is None or empty
+        if not any([collateral, debt, loan_state]):
+            raise HTTPException(
+                status_code=404,
+                detail=f"No data found for wallet ID '{params.wallet_id}' in protocol '{params.protocol_name}'."
+            )
+
+        # Default to empty dictionaries if data is None or not a dictionary
+        collateral_data = collateral if isinstance(collateral, dict) else {}
+        debt_data = debt if isinstance(debt, dict) else {}
+        loan_state_data = loan_state if isinstance(loan_state, dict) else {}
+
+        # Construct and return the response
+        return UserLoanByWalletResponse(
+            wallet_id=params.wallet_id,
+            protocol_name=params.protocol_name,
+            collateral=collateral_data,
+            debt=debt_data,
+            deposit=loan_state_data  # Assuming `loan_state` represents deposit
+        )
+
+    except HTTPException as e:
+        # Re-raise known HTTP exceptions
+        raise e
+    except Exception as e:
+        # Handle unexpected errors
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error: {str(e)}"
+        )
