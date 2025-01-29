@@ -218,6 +218,9 @@ class Dashboard:
             )
 
     def load_detail_loan_chart(self):
+        """
+        Gererate a chart that shows detail loans.
+        """
         (
             protocol_main_chart_data_mapping,
             protocol_loans_data_mapping,
