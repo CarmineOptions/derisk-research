@@ -80,7 +80,7 @@ async def test_get_user_deposit(monkeypatch, mock_user_data):
 
     expected_deposit = json.loads(mock_user_data["deposit"])
 
-    # Normalize both expected and received data
+    
     def normalize_values(deposit_dict):
         return {
             k: (

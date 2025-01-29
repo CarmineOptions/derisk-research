@@ -45,7 +45,7 @@ async def get_user_debt_endpoint(
         try:
             if user_data.get("collateral"):
                 collateral = json.loads(str(user_data["collateral"]).replace("'", '"'))
-                # Ensure all values are strings
+                
                 collateral = {k: str(v) for k, v in collateral.items()}
             else:
                 collateral = {}
@@ -80,7 +80,7 @@ async def get_user_deposit(wallet_id: str) -> UserDepositResponse:
                 deposit = {}
             else:
                 deposit = json.loads(str(latest_entry["deposit"]).replace("'", '"'))
-                # Format numbers consistently
+                
                 deposit = {
                     k: (
                         f"{float(v):.1f}"
