@@ -5,3 +5,4 @@ from dataclasses import dataclass
 class ChartsHeaders:
     low_health_factor_loans: str = "Loans with low health factor"
     top_loans: str = "Top loans"
+    detail_loans: str = "Detail of a loan"

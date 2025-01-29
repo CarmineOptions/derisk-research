@@ -1,6 +1,8 @@
 """
 This module defines the Dashboard class for rendering a DeRisk dashboard using Streamlit.
 """
+import plotly
+import numpy as np
 import pandas as pd
 import streamlit as st
 from data_handler.handlers.loan_states.abstractions import State
@@ -8,17 +10,19 @@ from shared.helpers import (
     extract_token_addresses,
     fetch_token_symbols_from_set_of_loan_addresses,
     update_loan_data_with_symbols,
+    add_leading_zeros
 )
 
 from helpers.settings import COLLATERAL_TOKENS, DEBT_TOKENS, STABLECOIN_BUNDLE_NAME
 
 from .constants import ChartsHeaders
-from .main_chart_figure import get_main_chart_figure
+from .main_chart_figure import get_main_chart_figure, get_specific_loan_usd_amounts
 from .utils import (
     get_protocol_data_mappings,
     process_liquidity,
     transform_loans_data,
     transform_main_chart_data,
+    infer_protocol_name,
 )
 
 
@@ -228,6 +232,98 @@ class Dashboard:
                 use_container_width=True,
             )
 
+    def load_detail_loan_chart(self):
+        (
+            protocol_main_chart_data_mapping,
+            protocol_loans_data_mapping,
+        ) = get_protocol_data_mappings(
+            current_pair=self.current_pair,
+            stable_coin_pair=self.stable_coin_pair,
+            protocols=self.PROTOCOL_NAMES,
+            state=self.state,
+        )
+        loans_data = transform_loans_data(
+            protocol_loans_data_mapping, self.PROTOCOL_NAMES
+        )
+        loans_data_main = loans_data.copy()
+
+        token_symbols = None
+        if not loans_data.empty:
+            token_addresses = extract_token_addresses(loans_data)
+            if token_addresses:
+                token_symbols = fetch_token_symbols_from_set_of_loan_addresses(
+                    token_addresses
+                )
+                loans_data = update_loan_data_with_symbols(loans_data, token_symbols)
+
+        st.header(ChartsHeaders.detail_loans)
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            user = st.text_input("User")
+            protocol = st.text_input("Protocol")
+
+            users_and_protocols_with_debt = list(
+                loans_data.loc[
+                    loans_data["Debt (USD)"] > 0,
+                    ["User", "Protocol"],
+                ].itertuples(index=False, name=None)
+            )
+            random_user, random_protocol = users_and_protocols_with_debt[
+                np.random.randint(len(users_and_protocols_with_debt))
+            ]
+
+            if not user:
+                st.write(f"Selected random user = {random_user}.")
+                user = random_user
+            if not protocol:
+                st.write(f"Selected random protocol = {random_protocol}.")
+                protocol = random_protocol
+
+            # Normalize the user address by adding leading zeroes if necessary
+            user = add_leading_zeros(user)
+
+            # Infer the correct protocol name using fuzzy matching
+            valid_protocols = loans_data["Protocol"].unique()
+            protocol = infer_protocol_name(protocol, valid_protocols)
+
+        loan = loans_data_main.loc[
+            (loans_data["User"] == user) & (loans_data["Protocol"] == protocol),
+        ]
+
+        if loan.empty:
+            st.warning(
+                f"No loan found for user = {user} and protocol = {protocol}."
+            )
+        else:
+            (
+                collateral_usd_amounts,
+                debt_usd_amounts,
+            ) = get_specific_loan_usd_amounts(loan=loan)
+
+            with col2:
+                figure = plotly.express.pie(
+                    collateral_usd_amounts,
+                    values="amount_usd",
+                    names="token",
+                    title="Collateral (USD)",
+                    color_discrete_sequence=plotly.express.colors.sequential.Oranges_r,
+                )
+                st.plotly_chart(figure, True)
+
+            with col3:
+                figure = plotly.express.pie(
+                    debt_usd_amounts,
+                    values="amount_usd",
+                    names="token",
+                    title="Debt (USD)",
+                    color_discrete_sequence=plotly.express.colors.sequential.Greens_r,
+                )
+                st.plotly_chart(figure, True)
+            if token_symbols:
+                st.dataframe(update_loan_data_with_symbols(loan, token_symbols))
+            else:
+                st.warning("No tokens found for curend user.")
+
     def run(self):
         """
         This function executes/runs the load_sidebar() and load_main_chart() function.
@@ -237,3 +333,4 @@ class Dashboard:
         self.load_main_chart()
         self.load_loans_with_low_health_factor_chart()
         self.load_top_loans_chart()
+        self.load_detail_loan_chart()
