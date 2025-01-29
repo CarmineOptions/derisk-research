@@ -1,62 +1,51 @@
 import unittest
-from fastapi import FastAPI, APIRouter
 from fastapi.testclient import TestClient
-from unittest.mock import AsyncMock, patch
-from db_connector import DBConnector
+from unittest.mock import MagicMock
+from sdk.main import app
+from sdk.db_connector import DBConnector
 
+class TestGetLoansByWalletId(unittest.TestCase):
 
-loan_router = APIRouter()
+    def setUp(self):
+        self.client = TestClient(app)
+        self.mock_db = MagicMock(DBConnector)
 
-# Setup a test FastAPI app and include the loan router
-app = FastAPI()
-app.include_router(loan_router)
+    def test_get_loans_by_wallet_id_success(self):
+        # Mock the database response
+        self.mock_db.get_loan_state.return_value = {
+            "collateral": 1000,
+            "debt": 500,
+            "deposit": 200,
+        }
 
-# Initialize TestClient
-client = TestClient(app)
-
-# Endpoint parameters and expected response
-endpoint_params = {
-    "wallet_id": "0x042c5b7dcb2706984b2b035e76cf5b4db95667b25eebd1aa057887ef9ad5fca8",
-    "protocol_name": "protocolA"
-}
-
-loan_response = {
-    "wallet_id": "0x042c5b7dcb2706984b2b035e76cf5b4db95667b25eebd1aa057887ef9ad5fca8",
-    "protocol_name": "protocolA",
-    "collateral": {
-        "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7": 5.59987142124803e16
-    },
-    "debt": {
-        "0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8": 0.0
-    },
-    "deposit": {
-        "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7": 5.59987142124803e16,
-        "0x00000000000000000000000000000000000000000000000000c4f1656259e56a": -4.17404284944524e75
-    },
-}
-
-class TestLoanEndpoint(unittest.TestCase):
-    @patch("apps.sdk.api.loan_state.DBConnector")
-    def test_get_loans_complex(self, mock_db_connector):
-        # Mocking the database response with complex data
-        mock_db_connector.return_value.get_loan_state = AsyncMock(return_value={
-            "collateral": loan_response["collateral"],
-            "debt": loan_response["debt"],
-            "deposit": loan_response["deposit"],
-        })
-    
-        # Sending the GET request
-        response = client.get("/loan_data_by_wallet_id", params=endpoint_params)
-    
-        # Asserting the response status code
+        # Test with valid parameters
+        response = self.client.get("/loan_data_by_wallet_id?wallet_id=test_wallet&protocol_name=test_protocol")
         self.assertEqual(response.status_code, 200)
-    
-        # Asserting the response JSON matches the expected response
-        self.assertDictEqual(response.json(), loan_response)
-    
+        data = response.json()
+        self.assertEqual(data["wallet_id"], "test_wallet")
+        self.assertEqual(data["protocol_name"], "test_protocol")
+        self.assertEqual(data["collateral"], 1000)
+        self.assertEqual(data["debt"], 500)
+        self.assertEqual(data["deposit"], 200)
 
+    def test_get_loans_by_wallet_id_not_found(self):
+        # Mock the database response when no data is found
+        self.mock_db.get_loan_state.return_value = None
 
-if __name__ == "__main__":
-    unittest.main()
+        # Test with invalid wallet_id
+        response = self.client.get("/loan_data_by_wallet_id?wallet_id=invalid_wallet&protocol_name=test_protocol")
+        self.assertEqual(response.status_code, 404)
+        error_detail = response.json()["detail"]
+        self.assertEqual(error_detail, "No data found for user invalid_wallet in protocol test_protocol")
+
+    def test_get_loans_by_wallet_id_internal_server_error(self):
+        # Mock an internal server error in database operation
+        self.mock_db.get_loan_state.side_effect = Exception("Database connection error")
+
+        # Test with valid parameters
+        response = self.client.get("/loan_data_by_wallet_id?wallet_id=test_wallet&protocol_name=test_protocol")
+        self.assertEqual(response.status_code, 500)
+        error_detail = response.json()["detail"]
+        self.assertEqual(error_detail, "Internal server error: Database connection error")
 
 
