@@ -80,8 +80,15 @@ async def get_user_deposit(wallet_id: str) -> UserDepositResponse:
                 deposit = {}
             else:
                 deposit = json.loads(str(latest_entry["deposit"]).replace("'", '"'))
-                # Ensure all values are strings
-                deposit = {k: str(v) for k, v in deposit.items()}
+                # Format numbers consistently
+                deposit = {
+                    k: (
+                        f"{float(v):.1f}"
+                        if str(v).replace(".", "", 1).isdigit()
+                        else str(v)
+                    )
+                    for k, v in deposit.items()
+                }
         except (json.JSONDecodeError, AttributeError, KeyError):
             deposit = {}
 

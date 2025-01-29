@@ -1,11 +1,9 @@
-import unittest
+import pytest
 from fastapi import FastAPI, APIRouter
 from fastapi.testclient import TestClient
 from unittest.mock import AsyncMock, patch
 from db_connector import DBConnector
-
-
-loan_router = APIRouter()
+from api.loan_state import loan_router
 
 # Setup a test FastAPI app and include the loan router
 app = FastAPI()
@@ -35,28 +33,30 @@ loan_response = {
     },
 }
 
-class TestLoanEndpoint(unittest.TestCase):
-    @patch("apps.sdk.api.loan_state.DBConnector")
-    def test_get_loans_complex(self, mock_db_connector):
+
+def test_get_loans_complex(mock_db_connector):
+    with patch("db_connector.DBConnector.get_loan_state") as mock_get_loan_state:
         # Mocking the database response with complex data
-        mock_db_connector.return_value.get_loan_state = AsyncMock(return_value={
+        mock_get_loan_state.return_value = {
             "collateral": loan_response["collateral"],
             "debt": loan_response["debt"],
             "deposit": loan_response["deposit"],
-        })
-    
+        }
+
         # Sending the GET request
         response = client.get("/loan_data_by_wallet_id", params=endpoint_params)
-    
-        # Asserting the response status code
-        self.assertEqual(response.status_code, 200)
-    
-        # Asserting the response JSON matches the expected response
-        self.assertDictEqual(response.json(), loan_response)
-    
 
+        # Check if the mock was called with the correct arguments
+        mock_get_loan_state.assert_called_once_with(
+            protocol_id=endpoint_params["protocol_name"],
+            wallet_id=endpoint_params["wallet_id"]
+        )
 
-if __name__ == "__main__":
-    unittest.main()
+    # Asserting the response status code
+    assert response.status_code == 200
+
+    # Asserting the response JSON matches the expected response
+    assert response.json() == loan_response
+    
 
 
