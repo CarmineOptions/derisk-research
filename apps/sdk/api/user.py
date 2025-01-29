@@ -6,7 +6,7 @@ from sdk.schemas.schemas import (
     UserDebtResponseModel,
     UserDepositResponse,
 )
-from sdk.db.connector import get_db_connection
+from db_connector import get_user_debt
 
 app = FastAPI()
 router = APIRouter(
@@ -38,58 +38,45 @@ for _, row in mock_data.iterrows():
         debt_data[wallet_id] = {}
     debt_data[wallet_id][protocol] = debt
 
-    @router.get("/debt", response_model=UserCollateralResponse)
-    async def get_user_debt(
-        wallet_id: str, protocol_name: str
-    ) -> UserCollateralResponse:
-        """
-        Get user's collateral information for a specific protocol.
 
-        Args:
-            wallet_id (str): The wallet ID of the user
-            protocol_name (str): The name of the protocol (e.g., 'zkLend')
+@router.get("/debt", response_model=UserCollateralResponse)
+async def get_user_debt(wallet_id: str, protocol_id: str) -> UserCollateralResponse:
+    """
+    Get user's collateral information for a specific protocol.
 
-        Returns:
-            UserCollateralResponse: User's collateral information
+    Args:
+        wallet_id (str): The wallet ID of the user
+        protocol_name (str): The name of the protocol (e.g., 'zkLend')
 
-        Raises:
-            HTTPException: If user or protocol not found
-        """
-        try:
-            conn = get_db_connection()
-            query = """
-            SELECT * FROM user_data
-            WHERE user = %s AND protocol_id = %s
-            ORDER BY timestamp DESC
-            LIMIT 1
-            """
-            user_data = pd.read_sql(query, conn, params=(wallet_id, protocol_name))
+    Returns:
+        UserCollateralResponse: User's collateral information
 
-            if user_data.empty:
-                raise HTTPException(
-                    status_code=404,
-                    detail=f"No data found for wallet {wallet_id} in protocol {protocol_name}",
-                )
-
-            latest_entry = user_data.iloc[0]
-
-            try:
-                collateral = json.loads(latest_entry["collateral"].replace("'", '"'))
-                if not collateral:
-                    collateral = {}
-            except (json.JSONDecodeError, AttributeError):
-                collateral = {}
-
-            return UserCollateralResponse(
-                wallet_id=wallet_id, protocol_name=protocol_name, collateral=collateral
-            )
-
-        except Exception as e:
+    Raises:
+        HTTPException: If user or protocol not found
+    """
+    try:
+        user_data = get_user_debt(protocol_id, wallet_id)
+        if not user_data:
             raise HTTPException(
-                status_code=500, detail=f"Internal server error: {str(e)}"
+                status_code=404,
+                detail=f"No data found for wallet {wallet_id} in protocol {protocol_name}",
             )
-        finally:
-            conn.close()
+
+        latest_entry = sorted(user_data, key=lambda x: x["timestamp"], reverse=True)[0]
+
+        try:
+            collateral = json.loads(latest_entry["collateral"].replace("'", '"'))
+            if not collateral:
+                collateral = {}
+        except (json.JSONDecodeError, AttributeError):
+            collateral = {}
+
+        return UserCollateralResponse(
+            wallet_id=wallet_id, protocol_name=protocol_name, collateral=collateral
+        )
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
 def parse_deposit_data(row):
