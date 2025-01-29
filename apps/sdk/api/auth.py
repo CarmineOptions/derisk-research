@@ -5,7 +5,7 @@ import dotenv
 from fastapi import APIRouter, HTTPException
 from fastapi import Body, status
 from pydantic import EmailStr
-from schemas.schemas import Token
+from schemas.models import Token
 from datetime import timedelta, datetime, timezone
 
 

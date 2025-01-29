@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from fastapi import Depends
-from schemas.schemas import UserLoanByWalletParams, UserLoanByWalletResponse
+from schemas.models import UserLoanByWalletParams, UserLoanByWalletResponse
 from db_connector import DBConnector
 
 loan_router = APIRouter()

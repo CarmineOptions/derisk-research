@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Dict, Optional
+from typing import Dict
 from datetime import datetime
 
 class UserLoanByWalletParams(BaseModel):
