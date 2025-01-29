@@ -123,7 +123,7 @@ class DBConnector:
             logging.error(f"Error while fetching user collateral: {error}")
             raise
 
-    def get_loan_state(self, protocol_id: str, wallet_id: str) -> str | None:
+    def get_loan_state(self, protocol_id: str, wallet_id: str) -> dict | None:
         """
         Fetches user loan state for a given protocol and wallet.
 
@@ -132,7 +132,7 @@ class DBConnector:
             wallet_id (str): User's wallet ID.
 
         Returns:
-            str | None: User's loan state if found, otherwise None.
+            dict | None: User's loan state if found, otherwise None.
         """
         try:
             sql = """
@@ -147,7 +147,7 @@ class DBConnector:
                     "debt": result[1],
                     "deposit": result[2],
                 }
-            return {}
+            return None
         except (Exception, psycopg2.Error) as error:
             logging.error(f"Error while fetching user loan state: {error}")
             raise

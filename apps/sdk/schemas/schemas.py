@@ -20,11 +20,13 @@ class UserLoanByWalletResponse(BaseModel):
 
     Attributes:
         wallet_id: The unique identifier of the user's wallet address.
+        protocol_name: The name of the loan protocol (e.g., zkLend, Nostra).
         collateral: A dictionary mapping token addresses to collateral values.
         debt: A dictionary mapping token addresses to debt values.
         deposit: A dictionary mapping token addresses to deposit values.
     """
     wallet_id: str
+    protocol_name: str
     collateral: Dict[str, float]
     debt: Dict[str, float]
     deposit: Dict[str, float]
