@@ -27,7 +27,7 @@ class HaikoOrderBook(OrderBookBase):
         self.haiko_connector = HaikoAPIConnector()
         self.blast_connector = HaikoBlastAPIConnector()
         self.apply_filtering = apply_filtering
-        self.logger = get_logger("Haiko", Path().resolve().joinpath("./logs"), echo=True)
+        self.logger = get_logger("Haiko", Path().resolve().joinpath("./logs"))
 
         self.token_a_price = Decimal(0)
         self.token_b_price = Decimal(0)
