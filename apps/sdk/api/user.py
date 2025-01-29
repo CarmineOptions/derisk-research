@@ -6,7 +6,7 @@ from sdk.schemas.schemas import (
     UserDebtResponseModel,
     UserDepositResponse,
 )
-from db_connector import get_user_debt
+from sdk.db_connector import DBConnector
 
 app = FastAPI()
 router = APIRouter(
@@ -15,93 +15,55 @@ router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
-file_path = "../mock_data.csv"
-mock_data = pd.read_csv(file_path)
-
-
-def parse_debt_data(row):
-    try:
-        return json.loads(row) if row.strip() else {}
-    except json.JSONDecodeError:
-        return {}
-
-
-mock_data["debt"] = mock_data["debt"].apply(parse_debt_data)
-
-
-debt_data = {}
-for _, row in mock_data.iterrows():
-    wallet_id = row["user"]
-    protocol = row["protocol_id"]
-    debt = row["debt"]
-    if wallet_id not in debt_data:
-        debt_data[wallet_id] = {}
-    debt_data[wallet_id][protocol] = debt
+file_path = "mock_data.csv"
+try:
+    mock_data = pd.read_csv(file_path)
+except FileNotFoundError:
+    mock_data = pd.DataFrame(
+        columns=["user", "protocol_id", "deposit", "debt", "timestamp"]
+    )
 
 
 @router.get("/debt", response_model=UserCollateralResponse)
-async def get_user_debt(wallet_id: str, protocol_id: str) -> UserCollateralResponse:
+async def get_user_debt_endpoint(
+    wallet_id: str, protocol_id: str
+) -> UserCollateralResponse:
     """
     Get user's collateral information for a specific protocol.
-
-    Args:
-        wallet_id (str): The wallet ID of the user
-        protocol_name (str): The name of the protocol (e.g., 'zkLend')
-
-    Returns:
-        UserCollateralResponse: User's collateral information
-
-    Raises:
-        HTTPException: If user or protocol not found
     """
+    db = None
     try:
-        user_data = get_user_debt(protocol_id, wallet_id)
-        if not user_data:
+        db = DBConnector()
+        user_data = db.get_loan_state(protocol_id, wallet_id)
+
+        if user_data is None:
             raise HTTPException(
                 status_code=404,
-                detail=f"No data found for wallet {wallet_id} in protocol {protocol_name}",
+                detail=f"No data found for wallet {wallet_id} in protocol {protocol_id}",
             )
 
-        latest_entry = sorted(user_data, key=lambda x: x["timestamp"], reverse=True)[0]
-
         try:
-            collateral = json.loads(latest_entry["collateral"].replace("'", '"'))
-            if not collateral:
+            if user_data.get("collateral"):
+                collateral = json.loads(str(user_data["collateral"]).replace("'", '"'))
+                # Ensure all values are strings
+                collateral = {k: str(v) for k, v in collateral.items()}
+            else:
                 collateral = {}
         except (json.JSONDecodeError, AttributeError):
             collateral = {}
 
         return UserCollateralResponse(
-            wallet_id=wallet_id, protocol_name=protocol_name, collateral=collateral
+            wallet_id=wallet_id, protocol_name=protocol_id, collateral=collateral
         )
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
-
-
-def parse_deposit_data(row):
-    try:
-        return json.loads(row) if row.strip() else {}
-    except json.JSONDecodeError:
-        return {}
-
-
-mock_data["deposit"] = mock_data["deposit"].apply(parse_deposit_data)
+    finally:
+        if db:
+            db.close_connection()
 
 
 @router.get("/deposit", response_model=UserDepositResponse)
 async def get_user_deposit(wallet_id: str) -> UserDepositResponse:
     """
     Get user's deposit information.
-
-    Args:
-        wallet_id (str): The wallet ID of the user.
-
-    Returns:
-        UserDepositResponse: User's deposit information.
-
-    Raises:
-        HTTPException: If user is not found or an internal error occurs.
     """
     try:
         user_data = mock_data[mock_data["user"] == wallet_id]
@@ -114,13 +76,17 @@ async def get_user_deposit(wallet_id: str) -> UserDepositResponse:
         latest_entry = user_data.sort_values("timestamp", ascending=False).iloc[0]
 
         try:
-            deposit = json.loads(latest_entry["deposit"].replace("'", '"'))
-            if not deposit:
+            if pd.isna(latest_entry.get("deposit")):
                 deposit = {}
-        except (json.JSONDecodeError, AttributeError):
+            else:
+                deposit = json.loads(str(latest_entry["deposit"]).replace("'", '"'))
+                # Ensure all values are strings
+                deposit = {k: str(v) for k, v in deposit.items()}
+        except (json.JSONDecodeError, AttributeError, KeyError):
             deposit = {}
 
         return UserDepositResponse(wallet_id=wallet_id, deposit=deposit)
-
     except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
