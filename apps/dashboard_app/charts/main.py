@@ -15,7 +15,7 @@ from shared.helpers import (
 
 from helpers.settings import COLLATERAL_TOKENS, DEBT_TOKENS, STABLECOIN_BUNDLE_NAME
 
-from .constants import ChartsHeaders
+from .constants import ChartsHeaders, CommonValues
 from .main_chart_figure import get_main_chart_figure, get_specific_loan_usd_amounts
 from .utils import (
     get_protocol_data_mappings,
@@ -97,12 +97,7 @@ class Dashboard:
         (
             protocol_main_chart_data_mapping,
             protocol_loans_data_mapping,
-        ) = get_protocol_data_mappings(
-            current_pair=self.current_pair,
-            stable_coin_pair=self.stable_coin_pair,
-            protocols=self.PROTOCOL_NAMES,
-            state=self.state,
-        )
+        ) = self.__get_protocol_data_mappings()
         loans_data = (  # TODO: remove unused `loans_data` variable or use it
             transform_loans_data(protocol_loans_data_mapping, self.PROTOCOL_NAMES)
         )
@@ -144,12 +139,7 @@ class Dashboard:
         (
             protocol_main_chart_data_mapping,
             protocol_loans_data_mapping,
-        ) = get_protocol_data_mappings(
-            current_pair=self.current_pair,
-            stable_coin_pair=self.stable_coin_pair,
-            protocols=self.PROTOCOL_NAMES,
-            state=self.state,
-        )
+        ) = self.__get_protocol_data_mappings()
         loans_data = transform_loans_data(
             protocol_loans_data_mapping, self.PROTOCOL_NAMES
         )
@@ -169,18 +159,18 @@ class Dashboard:
             debt_usd_lower_bound, debt_usd_upper_bound = st.slider(
                 label="Select range of USD borrowings",
                 min_value=0,
-                max_value=int(loans_data["Debt (USD)"].max()),
-                value=(0, int(loans_data["Debt (USD)"].max()) or 1),  # FIXME remove 1
+                max_value=int(loans_data[CommonValues.debt_usd.value].max()),
+                value=(0, int(loans_data[CommonValues.debt_usd.value].max()) or 1),  # FIXME remove 1
             )
 
         st.dataframe(
             loans_data[
-                (loans_data["Health factor"] > 0)  # TODO: debug the negative HFs
-                & loans_data["Debt (USD)"].between(
+                (loans_data[CommonValues.health_factor.value] > 0)  # TODO: debug the negative HFs
+                & loans_data[CommonValues.debt_usd.value].between(
                     debt_usd_lower_bound, debt_usd_upper_bound
                 )
             ]
-            .sort_values("Health factor")
+            .sort_values(CommonValues.health_factor.value)
             .iloc[:20],
             use_container_width=True,
         )
@@ -192,29 +182,24 @@ class Dashboard:
         (
             protocol_main_chart_data_mapping,
             protocol_loans_data_mapping,
-        ) = get_protocol_data_mappings(
-            current_pair=self.current_pair,
-            stable_coin_pair=self.stable_coin_pair,
-            protocols=self.PROTOCOL_NAMES,
-            state=self.state,
-        )
+        ) = self.__get_protocol_data_mappings()
         loans_data = transform_loans_data(
             protocol_loans_data_mapping, self.PROTOCOL_NAMES
         )
 
         st.header(ChartsHeaders.top_loans)
         col1, col2 = st.columns(2)
-        loans_data["Standardized health factor"] = pd.to_numeric(
-            loans_data["Standardized health factor"], errors="coerce"
+        loans_data[CommonValues.standardized_health_factor.value] = pd.to_numeric(
+            loans_data[CommonValues.standardized_health_factor.value], errors="coerce"
         )
         with col1:
             st.subheader("Sorted by collateral")
             st.dataframe(
                 loans_data[
-                    (loans_data["Health factor"] > 1)  # TODO: debug the negative HFs
-                    & (loans_data["Standardized health factor"] != float("inf"))
+                    (loans_data[CommonValues.health_factor.value] > 1)  # TODO: debug the negative HFs
+                    & (loans_data[CommonValues.standardized_health_factor.value] != float("inf"))
                 ]
-                .sort_values("Collateral (USD)", ascending=False)
+                .sort_values(CommonValues.collateral_usd.value, ascending=False)
                 .iloc[:20],
                 use_container_width=True,
             )
@@ -222,12 +207,12 @@ class Dashboard:
             st.subheader("Sorted by debt")
             st.dataframe(
                 loans_data[
-                    (loans_data["Health factor"] > 1)
+                    (loans_data[CommonValues.health_factor.value] > 1)
                     & (
-                        loans_data["Standardized health factor"] != float("inf")
+                        loans_data[CommonValues.standardized_health_factor.value] != float("inf")
                     )  # TODO: debug the negative HFs
                 ]
-                .sort_values("Debt (USD)", ascending=False)
+                .sort_values(CommonValues.debt_usd.value, ascending=False)
                 .iloc[:20],
                 use_container_width=True,
             )
@@ -236,12 +221,7 @@ class Dashboard:
         (
             protocol_main_chart_data_mapping,
             protocol_loans_data_mapping,
-        ) = get_protocol_data_mappings(
-            current_pair=self.current_pair,
-            stable_coin_pair=self.stable_coin_pair,
-            protocols=self.PROTOCOL_NAMES,
-            state=self.state,
-        )
+        ) = self.__get_protocol_data_mappings()
         loans_data = transform_loans_data(
             protocol_loans_data_mapping, self.PROTOCOL_NAMES
         )
@@ -259,13 +239,13 @@ class Dashboard:
         st.header(ChartsHeaders.detail_loans)
         col1, col2, col3 = st.columns(3)
         with col1:
-            user = st.text_input("User")
-            protocol = st.text_input("Protocol")
+            user = st.text_input(CommonValues.user.value)
+            protocol = st.text_input(CommonValues.protocol.value)
 
             users_and_protocols_with_debt = list(
                 loans_data.loc[
-                    loans_data["Debt (USD)"] > 0,
-                    ["User", "Protocol"],
+                    loans_data[CommonValues.debt_usd.value] > 0,
+                    [CommonValues.user.value, CommonValues.protocol.value],
                 ].itertuples(index=False, name=None)
             )
             random_user, random_protocol = users_and_protocols_with_debt[
@@ -283,11 +263,11 @@ class Dashboard:
             user = add_leading_zeros(user)
 
             # Infer the correct protocol name using fuzzy matching
-            valid_protocols = loans_data["Protocol"].unique()
+            valid_protocols = loans_data[CommonValues.protocol.value].unique()
             protocol = infer_protocol_name(protocol, valid_protocols)
 
         loan = loans_data_main.loc[
-            (loans_data["User"] == user) & (loans_data["Protocol"] == protocol),
+            (loans_data[CommonValues.user.value] == user) & (loans_data[CommonValues.protocol.value] == protocol),
         ]
 
         if loan.empty:
@@ -303,9 +283,9 @@ class Dashboard:
             with col2:
                 figure = plotly.express.pie(
                     collateral_usd_amounts,
-                    values="amount_usd",
-                    names="token",
-                    title="Collateral (USD)",
+                    values=CommonValues.amount_usd.value,
+                    names=CommonValues.token.value,
+                    title=CommonValues.collateral_usd.value,
                     color_discrete_sequence=plotly.express.colors.sequential.Oranges_r,
                 )
                 st.plotly_chart(figure, True)
@@ -313,9 +293,9 @@ class Dashboard:
             with col3:
                 figure = plotly.express.pie(
                     debt_usd_amounts,
-                    values="amount_usd",
-                    names="token",
-                    title="Debt (USD)",
+                    values=CommonValues.amount_usd.value,
+                    names=CommonValues.token.value,
+                    title=CommonValues.debt_usd.value,
                     color_discrete_sequence=plotly.express.colors.sequential.Greens_r,
                 )
                 st.plotly_chart(figure, True)
@@ -323,6 +303,18 @@ class Dashboard:
                 st.dataframe(update_loan_data_with_symbols(loan, token_symbols))
             else:
                 st.warning("No tokens found for curend user.")
+
+    def __get_protocol_data_mappings(self) -> tuple:
+        """
+        Return a tuple of protocol_main_chart_data_mapping and protocol_loans_data_mapping.
+        :return: tuple
+        """
+        return get_protocol_data_mappings(
+            current_pair=self.current_pair,
+            stable_coin_pair=self.stable_coin_pair,
+            protocols=self.PROTOCOL_NAMES,
+            state=self.state,
+        )
 
     def run(self):
         """
