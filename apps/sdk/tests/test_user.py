@@ -53,7 +53,6 @@ async def test_get_user_debt(mock_db):
     assert "collateral" in data
     assert isinstance(data["collateral"], dict)
 
-    # Normalize both the expected and actual values to ensure consistent string format
     expected_collateral = normalize_values(
         json.loads(mock_db.get_loan_state.return_value["collateral"])
     )
