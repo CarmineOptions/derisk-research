@@ -1,25 +1,13 @@
 import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 from fastapi.testclient import TestClient
 import json
-import pandas as pd
 from sdk.api.user import app, router
 from sdk.schemas.schemas import UserCollateralResponse, UserDepositResponse
 from sdk.db_connector import DBConnector
 
 app.include_router(router)
 client = TestClient(app)
-
-
-@pytest.fixture
-def mock_user_data():
-    return {
-        "user": "0x123",
-        "protocol_id": "zkLend",
-        "deposit": json.dumps({"USDC": "1000", "ETH": "2.5"}),
-        "debt": json.dumps({"USDC": "500", "ETH": "1.0"}),
-        "timestamp": "2024-01-29T00:00:00Z",
-    }
 
 
 @pytest.fixture
@@ -66,41 +54,28 @@ async def test_get_user_debt_not_found(mock_db_connector):
 
 
 @pytest.mark.asyncio
-async def test_get_user_deposit(monkeypatch, mock_user_data):
-    mock_df = pd.DataFrame([mock_user_data])
-    monkeypatch.setattr("sdk.api.user.mock_data", mock_df)
+async def test_get_user_deposit(mock_db_connector):
+    wallet_id = "0x123"
 
-    response = client.get(f"/user/deposit?wallet_id={mock_user_data['user']}")
+    mock_db_connector.get_loan_state.return_value = {
+        "deposit": json.dumps({"USDC": "1000", "ETH": "2.5"}),
+        "debt": json.dumps({"USDC": "500", "ETH": "1.0"}),
+    }
+
+    response = client.get(f"/user/deposit?wallet_id={wallet_id}")
 
     assert response.status_code == 200
     data = response.json()
-    assert data["wallet_id"] == mock_user_data["user"]
+    assert data["wallet_id"] == wallet_id
     assert "deposit" in data
     assert isinstance(data["deposit"], dict)
-
-    expected_deposit = json.loads(mock_user_data["deposit"])
-
-    
-    def normalize_values(deposit_dict):
-        return {
-            k: (
-                f"{float(v):.1f}"
-                if isinstance(v, (int, float)) or v.replace(".", "", 1).isdigit()
-                else v
-            )
-            for k, v in deposit_dict.items()
-        }
-
-    expected_deposit = normalize_values(expected_deposit)
-    received_deposit = normalize_values(data["deposit"])
-
-    assert received_deposit == expected_deposit
+    assert data["deposit"] == {"USDC": 1000.0, "ETH": 2.5}
+    mock_db_connector.get_loan_state.assert_called_once_with(None, wallet_id)
 
 
 @pytest.mark.asyncio
-async def test_get_user_deposit_not_found(monkeypatch):
-    mock_df = pd.DataFrame(columns=["user", "deposit", "timestamp"])
-    monkeypatch.setattr("sdk.api.user.mock_data", mock_df)
+async def test_get_user_deposit_not_found(mock_db_connector):
+    mock_db_connector.get_loan_state.return_value = None
 
     response = client.get("/user/deposit?wallet_id=0xnonexistent")
 
