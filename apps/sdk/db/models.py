@@ -25,7 +25,7 @@ class User(Base):
     :ivar request_number: Counter for number of requests made.
     """
 
-    __tablename__ = "users"
+    __tablename__ = "user" 
 
     wallet_id = Column(String, unique=True, nullable=True, index=True)
     email = Column(String, unique=True, nullable=True, index=True)
