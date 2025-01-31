@@ -104,7 +104,7 @@ class Dashboard:
         (
             protocol_main_chart_data_mapping,
             protocol_loans_data_mapping,
-        ) = self.__get_protocol_data_mappings()
+        ) = self._get_protocol_data_mappings()
         loans_data = (  # TODO: remove unused `loans_data` variable or use it
             transform_loans_data(protocol_loans_data_mapping, self.PROTOCOL_NAMES)
         )
@@ -146,7 +146,7 @@ class Dashboard:
         (
             protocol_main_chart_data_mapping,
             protocol_loans_data_mapping,
-        ) = self.__get_protocol_data_mappings()
+        ) = self._get_protocol_data_mappings()
         loans_data = transform_loans_data(
             protocol_loans_data_mapping, self.PROTOCOL_NAMES
         )
@@ -189,7 +189,7 @@ class Dashboard:
         (
             protocol_main_chart_data_mapping,
             protocol_loans_data_mapping,
-        ) = self.__get_protocol_data_mappings()
+        ) = self._get_protocol_data_mappings()
         loans_data = transform_loans_data(
             protocol_loans_data_mapping, self.PROTOCOL_NAMES
         )
@@ -231,7 +231,7 @@ class Dashboard:
         (
             protocol_main_chart_data_mapping,
             protocol_loans_data_mapping,
-        ) = self.__get_protocol_data_mappings()
+        ) = self._get_protocol_data_mappings()
         loans_data = transform_loans_data(
             protocol_loans_data_mapping, self.PROTOCOL_NAMES
         )
@@ -370,7 +370,7 @@ class Dashboard:
 
         # TODO: add last update functionality
 
-    def __get_protocol_data_mappings(self) -> tuple:
+    def _get_protocol_data_mappings(self) -> tuple:
         """
         Return a tuple of protocol_main_chart_data_mapping and protocol_loans_data_mapping.
         :return: tuple

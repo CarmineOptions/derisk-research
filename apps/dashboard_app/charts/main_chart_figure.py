@@ -207,13 +207,16 @@ def get_bar_chart_figures(
         x.symbol: x.address for x in TOKEN_SETTINGS.values()
     }
     prices = get_prices(token_decimals=underlying_addresses_to_decimals)
-    bar_chart_supply_stats = pd.DataFrame()
-    bar_chart_collateral_stats = pd.DataFrame()
-    bar_chart_debt_stats = pd.DataFrame()
-    import pdb
+    bar_chart_supply_stats = pd.DataFrame(index=[0])
+    bar_chart_collateral_stats = pd.DataFrame(index=[0])
+    bar_chart_debt_stats = pd.DataFrame(index=[0])
     for column in supply_stats.columns:
-        pdb.set_trace()
-        if "protocol" in column.lower() or "total" in column.lower():
+        if "protocol" in column.lower():
+            bar_chart_supply_stats[column] = supply_stats[column][0]
+            bar_chart_collateral_stats[column] = collateral_stats[column][0]
+            bar_chart_debt_stats[column] = debt_stats[column][0]
+            continue
+        elif "total" in column.lower():
             continue
         underlying_symbol = column.split(" ")[0]
         underlying_address = underlying_symbols_to_addresses[SUPPLY_STATS_TOKEN_SYMBOLS_MAPPING[underlying_symbol]]
@@ -237,18 +240,7 @@ def get_bar_chart_figures(
                 y=bar_chart_supply_stats["zkLend"],
                 marker=plotly.graph_objs.bar.Marker(color="#fff7bc"),
             ),
-            plotly.graph_objs.Bar(
-                name="Nostra Alpha",
-                x=bar_chart_supply_stats.index,
-                y=bar_chart_supply_stats["Nostra Alpha"],
-                marker=plotly.graph_objs.bar.Marker(color="#fec44f"),
-            ),
-            plotly.graph_objs.Bar(
-                name="Nostra Mainnet",
-                x=bar_chart_supply_stats.index,
-                y=bar_chart_supply_stats["Nostra Mainnet"],
-                marker=plotly.graph_objs.bar.Marker(color="#d95f0e"),
-            ),
+            # TODO: add functionality for other protocols
         ],
     )
     supply_figure.update_layout(title_text="Supply (USD) per token")
@@ -260,18 +252,7 @@ def get_bar_chart_figures(
                 y=bar_chart_collateral_stats["zkLend"],
                 marker=plotly.graph_objs.bar.Marker(color="#fff7bc"),
             ),
-            plotly.graph_objs.Bar(
-                name="Nostra Alpha",
-                x=bar_chart_collateral_stats.index,
-                y=bar_chart_collateral_stats["Nostra Alpha"],
-                marker=plotly.graph_objs.bar.Marker(color="#fec44f"),
-            ),
-            plotly.graph_objs.Bar(
-                name="Nostra Mainnet",
-                x=bar_chart_collateral_stats.index,
-                y=bar_chart_collateral_stats["Nostra Mainnet"],
-                marker=plotly.graph_objs.bar.Marker(color="#d95f0e"),
-            ),
+            # TODO: add functionality for other protocols
         ],
     )
     collateral_figure.update_layout(title_text="Collateral (USD) per token")
@@ -283,18 +264,7 @@ def get_bar_chart_figures(
                 y=bar_chart_debt_stats["zkLend"],
                 marker=plotly.graph_objs.bar.Marker(color="#fff7bc"),
             ),
-            plotly.graph_objs.Bar(
-                name="Nostra Alpha",
-                x=bar_chart_debt_stats.index,
-                y=bar_chart_debt_stats["Nostra Alpha"],
-                marker=plotly.graph_objs.bar.Marker(color="#fec44f"),
-            ),
-            plotly.graph_objs.Bar(
-                name="Nostra Mainnet",
-                x=bar_chart_debt_stats.index,
-                y=bar_chart_debt_stats["Nostra Mainnet"],
-                marker=plotly.graph_objs.bar.Marker(color="#d95f0e"),
-            ),
+            # TODO: add functionality for other protocols
         ],
     )
     debt_figure.update_layout(title_text="Debt (USD) per token")
