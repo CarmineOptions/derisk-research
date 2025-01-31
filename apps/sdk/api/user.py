@@ -11,53 +11,35 @@ router = APIRouter(
 )
 
 
-mock_data = pd.DataFrame(
-    columns=["user", "protocol_id", "deposit", "debt", "timestamp"]
-)
-
-
 @router.get("/debt", response_model=UserCollateralResponse)
 async def get_user_debt(
     wallet_id: str, protocol_name: str, db: DBConnector = Depends()
 ) -> UserCollateralResponse:
     """
-    Get user's collateral information for a specific protocol.
-
-    Args:
-        wallet_id (str): The wallet ID of the user
-        protocol_name (str): The name of the protocol (e.g., 'zkLend')
-
-    Returns:
-        UserCollateralResponse: User's collateral information
-
-    Raises:
-        HTTPException: If user or protocol not found
+    Get user's debt information for a specific protocol.
     """
     try:
         user_data = db.get_loan_state(protocol_name, wallet_id)
 
-        if not user_data:
+        if user_data is None:
             raise HTTPException(
                 status_code=404,
                 detail=f"No data found for wallet {wallet_id} in protocol {protocol_name}",
             )
 
         try:
-            collateral = json.loads(
-                str(user_data.get("collateral", "{}")).replace("'", '"')
-            )
-            if not collateral:
-                collateral = {}
-        except (json.JSONDecodeError, AttributeError):
-            collateral = {}
+            debt_value = user_data.get("debt", "0")
+            collateral = {"debt": float(debt_value)}  # Add debt as part of collateral
+        except (ValueError, TypeError, AttributeError) as e:
+            collateral = {"debt": 0.0}
 
         return UserCollateralResponse(
             wallet_id=wallet_id, protocol_name=protocol_name, collateral=collateral
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
-        if isinstance(e, HTTPException):
-            raise e
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
@@ -67,6 +49,17 @@ def parse_deposit_data(row):
     except json.JSONDecodeError:
         return {}
 
+
+mock_data = pd.DataFrame(
+    {
+        "user": ["wallet123", "wallet456"],
+        "deposit": [
+            '{"amount": 100.0, "currency": "USD"}',
+            '{"amount": 200.0, "currency": "EUR"}',
+        ],
+        "timestamp": ["2023-01-01", "2023-02-01"],
+    }
+)
 
 mock_data["deposit"] = mock_data["deposit"].apply(parse_deposit_data)
 
