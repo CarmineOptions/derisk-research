@@ -322,13 +322,13 @@ def get_specific_loan_usd_amounts(
         collateral_usd_amount_symbol = pd.DataFrame(
             {
                 "token": [symbol],
-                "amount_usd": [loan_collateral[address] * prices[address]],
+                "amount_usd": [loan_collateral[address] * prices.get(address, 0)],
             },
         )
         debt_usd_amount_symbol = pd.DataFrame(
             {
                 "token": [symbol],
-                "amount_usd": [loan_debt[address] * prices[address]],
+                "amount_usd": [loan_debt[address] * prices.get(address, 0)],
             },
         )
         collateral_usd_amounts = pd.concat(
