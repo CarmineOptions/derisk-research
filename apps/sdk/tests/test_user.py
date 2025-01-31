@@ -4,7 +4,6 @@ from sdk.api.user import router
 from sdk.db_connector import DBConnector
 from fastapi import FastAPI
 
-# Create a new FastAPI application for testing
 app = FastAPI()
 app.include_router(router)
 client = TestClient(app)

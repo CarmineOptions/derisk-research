@@ -29,7 +29,7 @@ async def get_user_debt(
 
         try:
             debt_value = user_data.get("debt", "0")
-            collateral = {"debt": float(debt_value)}  # Add debt as part of collateral
+            collateral = {"debt": float(debt_value)}
         except (ValueError, TypeError, AttributeError) as e:
             collateral = {"debt": 0.0}
 
