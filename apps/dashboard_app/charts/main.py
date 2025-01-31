@@ -307,7 +307,7 @@ class Dashboard:
             else:
                 st.warning("No tokens found for curend user.")
 
-    def __get_protocol_data_mappings(self) -> tuple:
+    def _get_protocol_data_mappings(self) -> tuple:
         """
         Return a tuple of protocol_main_chart_data_mapping and protocol_loans_data_mapping.
         :return: tuple
