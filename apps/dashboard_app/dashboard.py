@@ -20,5 +20,5 @@ if __name__ == "__main__":
         utilization_stats,
     ) = dashboard_data_handler.load_data()
 
-    dashboard = Dashboard(zklend_state)
+    dashboard = Dashboard(zklend_state, general_stats, supply_stats, collateral_stats, debt_stats, utilization_stats)
     dashboard.run()

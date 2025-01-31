@@ -3,7 +3,7 @@ This module includes functions to generate financial charts using token price an
 """
 
 import math
-
+from decimal import Decimal
 import pandas as pd
 import plotly.express
 import plotly.graph_objs
@@ -18,6 +18,7 @@ from helpers.tools import (
     get_prices,
     get_underlying_address,
 )
+from .constants import SUPPLY_STATS_TOKEN_SYMBOLS_MAPPING
 
 AMMS = ("10kSwap", "MySwap", "SithSwap", "JediSwap")
 
@@ -209,21 +210,21 @@ def get_bar_chart_figures(
     bar_chart_supply_stats = pd.DataFrame()
     bar_chart_collateral_stats = pd.DataFrame()
     bar_chart_debt_stats = pd.DataFrame()
+    import pdb
     for column in supply_stats.columns:
-        if "Protocol" in column or "Total" in column:
+        pdb.set_trace()
+        if "protocol" in column.lower() or "total" in column.lower():
             continue
         underlying_symbol = column.split(" ")[0]
-        underlying_address = underlying_symbols_to_addresses[underlying_symbol]
-        bar_chart_supply_stats[underlying_symbol] = (
-            supply_stats[column] * prices[underlying_address]
-        )
-        bar_chart_collateral_stats[underlying_symbol] = (
-            collateral_stats[underlying_symbol + " collateral"]
-            * prices[underlying_address]
-        )
-        bar_chart_debt_stats[underlying_symbol] = (
-            debt_stats[underlying_symbol + " debt"] * prices[underlying_address]
-        )
+        underlying_address = underlying_symbols_to_addresses[SUPPLY_STATS_TOKEN_SYMBOLS_MAPPING[underlying_symbol]]
+        bar_chart_supply_stats[underlying_symbol] = supply_stats[column].loc[0] * Decimal(prices[underlying_address])
+        # handling the specific case with WBTC token
+        if underlying_symbol == "wbtc":
+            bar_chart_collateral_stats[underlying_symbol] = (collateral_stats["wBTC collateral"].loc[0] * prices[underlying_address])
+        else:
+            bar_chart_collateral_stats[underlying_symbol] = (collateral_stats[SUPPLY_STATS_TOKEN_SYMBOLS_MAPPING[underlying_symbol] + " collateral"].loc[0] * prices[underlying_address])
+        bar_chart_debt_stats[underlying_symbol] = (debt_stats[underlying_symbol + " debt"].loc[0] * prices[underlying_address])
+
     bar_chart_supply_stats = bar_chart_supply_stats.T
     bar_chart_collateral_stats = bar_chart_collateral_stats.T
     bar_chart_debt_stats = bar_chart_debt_stats.T

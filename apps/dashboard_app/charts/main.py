@@ -5,6 +5,7 @@ import plotly
 import numpy as np
 import pandas as pd
 import streamlit as st
+from datetime import datetime, UTC
 from data_handler.handlers.loan_states.abstractions import State
 from shared.helpers import (
     extract_token_addresses,
@@ -13,16 +14,17 @@ from shared.helpers import (
     add_leading_zeros
 )
 
-from helpers.settings import COLLATERAL_TOKENS, DEBT_TOKENS, STABLECOIN_BUNDLE_NAME
+from helpers.settings import COLLATERAL_TOKENS, DEBT_TOKENS, STABLECOIN_BUNDLE_NAME, TOKEN_SETTINGS
 
 from .constants import ChartsHeaders, CommonValues
-from .main_chart_figure import get_main_chart_figure, get_specific_loan_usd_amounts
+from .main_chart_figure import get_main_chart_figure, get_specific_loan_usd_amounts, get_bar_chart_figures
 from .utils import (
     get_protocol_data_mappings,
     process_liquidity,
     transform_loans_data,
     transform_main_chart_data,
     infer_protocol_name,
+
 )
 
 
@@ -37,7 +39,7 @@ class Dashboard:
         # "Nostra Mainnet",
     ]
 
-    def __init__(self, state: State):
+    def __init__(self, state: State, general_stats: dict, supply_stats: dict, collateral_stats: dict, debt_stats: dict, utilization_stats: dict):
         """
         Initialize the dashboard.
         """
@@ -57,6 +59,11 @@ class Dashboard:
         self.stable_coin_pair = None
         self.collateral_token_price = 0
         self.state = state
+        self.general_stats = pd.DataFrame(general_stats)
+        self.supply_stats = pd.DataFrame(supply_stats)
+        self.collateral_stats = pd.DataFrame(collateral_stats)
+        self.debt_stats = pd.DataFrame(debt_stats)
+        self.utilization_stats = pd.DataFrame(utilization_stats)
 
     def load_sidebar(self):
         """
@@ -307,6 +314,62 @@ class Dashboard:
             else:
                 st.warning("No tokens found for curend user.")
 
+    def load_comparison_lending_protocols_chart(self):
+        """
+        Gererate a chart that shows comparison lending protocols.
+        """
+        st.header(ChartsHeaders.comparison_lending_protocols)
+        # Display dataframes
+        st.dataframe(self.general_stats)
+        st.dataframe(self.utilization_stats)
+        # USD deposit, collateral and debt per token (bar chart).
+        (
+            supply_figure,
+            collateral_figure,
+            debt_figure,
+        ) = get_bar_chart_figures(
+            supply_stats=self.supply_stats.copy(),
+            collateral_stats=self.collateral_stats.copy(),
+            debt_stats=self.debt_stats.copy(),
+        )
+        st.plotly_chart(figure_or_data=supply_figure, use_container_width=True)
+        st.plotly_chart(figure_or_data=collateral_figure, use_container_width=True)
+        st.plotly_chart(figure_or_data=debt_figure, use_container_width=True)
+
+        columns = st.columns(4)
+        tokens = list(TOKEN_SETTINGS.keys())
+        for column, token_1, token_2 in zip(columns, tokens[:4], tokens[4:]):
+            with column:
+                for token in [token_1, token_2]:
+                    figure = plotly.express.pie(
+                        self.collateral_stats.reset_index(),
+                        values=f"{token} collateral",
+                        names=CommonValues.protocol.value,
+                        title=f"{token} collateral",
+                        color_discrete_sequence=plotly.express.colors.sequential.Oranges_r,
+                    )
+                    st.plotly_chart(figure, True)
+                for token in [token_1, token_2]:
+                    figure = plotly.express.pie(
+                        self.debt_stats.reset_index(),
+                        values=f"{token} debt",
+                        names=CommonValues.protocol.value,
+                        title=f"{token} debt",
+                        color_discrete_sequence=plotly.express.colors.sequential.Greens_r,
+                    )
+                    st.plotly_chart(figure, True)
+                for token in [token_1, token_2]:
+                    figure = plotly.express.pie(
+                        self.supply_stats.reset_index(),
+                        values=f"{token} supply",
+                        names=CommonValues.protocol.value,
+                        title=f"{token} supply",
+                        color_discrete_sequence=plotly.express.colors.sequential.Blues_r,
+                    )
+                    st.plotly_chart(figure, True)
+
+        # TODO: add last update functionality
+
     def __get_protocol_data_mappings(self) -> tuple:
         """
         Return a tuple of protocol_main_chart_data_mapping and protocol_loans_data_mapping.
@@ -321,11 +384,12 @@ class Dashboard:
 
     def run(self):
         """
-        This function executes/runs the load_sidebar() and load_main_chart() function.
+        This function executes/runs the load_sidebar(), load_main_chart(), self.load_loans_with_low_health_factor_chart(), self.load_top_loans_chart(), self.load_detail_loan_chart() and self.load_comparison_lending_protocols_chart() function.
         """
         # Load sidebar with protocol settings
         self.load_sidebar()
         self.load_main_chart()
-        self.load_loans_with_low_health_factor_chart()
-        self.load_top_loans_chart()
-        self.load_detail_loan_chart()
+        # self.load_loans_with_low_health_factor_chart()
+        # self.load_top_loans_chart()
+        # self.load_detail_loan_chart()
+        self.load_comparison_lending_protocols_chart()
