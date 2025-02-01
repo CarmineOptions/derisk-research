@@ -1,0 +1,25 @@
+Generic single-database configuration.
+
+## Database Migrations
+
+### Running Migrations
+
+To upgrade the database to the latest migration:
+
+```bash
+alembic upgrade head
+```
+
+To downgrade the database by one version:
+
+```bash
+alembic downgrade -1
+```
+
+### Creating New Migrations
+
+To generate a new migration file:
+
+```bash
+alembic revision --autogenerate -m "description of changes"
+```

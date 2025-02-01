@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, FastAPI
 import pandas as pd
-import json
-from sdk.schemas.schemas import UserCollateralResponse, UserDebtResponseModel, UserDepositResponse
+import json 
+from schemas.schemas import UserCollateralResponse, UserDepositResponse
 
 app = FastAPI()
 router = APIRouter(
@@ -48,8 +48,7 @@ async def get_user_debt(wallet_id: str, protocol_name: str) -> UserCollateralRes
         HTTPException: If user or protocol not found
     """
     try:
-        data_path = "apps/sdk/mock_data.csv"
-        df = pd.read_csv(data_path)
+        df = pd.read_csv(file_path)
 
         user_data = df[
             (df['user'] == wallet_id) & 

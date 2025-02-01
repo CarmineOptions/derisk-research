@@ -45,10 +45,10 @@ DB_PORT=
 
 5. **Build and Run the Services**
 
-   Use `docker-compose` to build and run the project:
+   Use `docker compose` to build and run the project:
 
    ```bash
-   docker-compose up --build
+   docker compose up --build
    ```
 
    • The backend service will be accessible at http://localhost:8000.
