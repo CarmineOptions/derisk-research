@@ -40,6 +40,11 @@ class Dashboard:
     A class representing a dashboard for managing protocol names.
     """
 
+    FIGURE_COLORS_DATA_MAPPING = {
+        "collateral": plotly.express.colors.sequential.Oranges_r,
+        "debt": plotly.express.colors.sequential.Greens_r,
+        "supply": plotly.express.colors.sequential.Blues_r,
+    }
     PROTOCOL_NAMES = [
         "zkLend",
         # "Nostra Alpha",
@@ -366,38 +371,38 @@ class Dashboard:
         for column, token_1, token_2 in zip(columns, tokens[:4], tokens[4:]):
             with column:
                 for token in [token_1, token_2]:
-                    if token == "WBTC":
-                        token = "wBTC"
-                    figure = plotly.express.pie(
-                        self.collateral_stats.reset_index(),
-                        values=f"{token} collateral",
-                        names=CommonValues.protocol.value,
-                        title=f"{token} collateral",
-                        color_discrete_sequence=plotly.express.colors.sequential.Oranges_r,
-                    )
+                    token = "wBTC" if token == "WBTC" else token
+                    figure = self._plot_chart(token, "collateral")
                     st.plotly_chart(figure, True)
+
                 for token in [token_1, token_2]:
-                    figure = plotly.express.pie(
-                        self.debt_stats.reset_index(),
-                        values=f"{token} debt".lower(),
-                        names=CommonValues.protocol.value.lower(),
-                        title=f"{token} debt",
-                        color_discrete_sequence=plotly.express.colors.sequential.Greens_r,
-                    )
+                    figure = self._plot_chart(token, "debt")
                     st.plotly_chart(figure, True)
+
                 for token in [token_1, token_2]:
                     if "dai" in token.lower():
                         continue
-                    figure = plotly.express.pie(
-                        self.supply_stats.reset_index(),
-                        values=f"{token} supply".lower(),
-                        names=CommonValues.protocol.value.lower(),
-                        title=f"{token} supply",
-                        color_discrete_sequence=plotly.express.colors.sequential.Blues_r,
-                    )
+                    figure = self._plot_chart(token, "supply")
                     st.plotly_chart(figure, True)
 
         # TODO: add last update functionality
+
+    def _plot_chart(self, token: str, stats_type: str) -> plotly.express.Data:
+        """
+        Returns a ploted figure.
+        :return plotly.express.Data: Figure.
+        """
+        return plotly.express.pie(
+            getattr(self, f"{stats_type}_stats").reset_index(),
+            values=f"{token} {stats_type}"
+            if stats_type == "collateral"
+            else f"{token} {stats_type}".lower(),
+            names=CommonValues.protocol.value
+            if stats_type == "collateral"
+            else CommonValues.protocol.value.lower(),
+            title=f"{token} {stats_type}",
+            color_discrete_sequence=self.FIGURE_COLORS_DATA_MAPPING[stats_type],
+        )
 
     def _get_protocol_data_mappings(self) -> tuple:
         """
