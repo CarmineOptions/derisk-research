@@ -413,7 +413,7 @@ class Dashboard:
 
     def run(self):
         """
-        This function executes/runs the load_sidebar(), load_main_chart(), self.load_loans_with_low_health_factor_chart(), self.load_top_loans_chart(), self.load_detail_loan_chart() and self.load_comparison_lending_protocols_chart() function.
+        This function executes/runs all chart loading methods.
         """
         # Load sidebar with protocol settings
         self.load_sidebar()

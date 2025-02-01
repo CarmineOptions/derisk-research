@@ -258,6 +258,18 @@ def get_bar_chart_figures(
                 y=bar_chart_supply_stats[0],
                 marker=plotly.graph_objs.bar.Marker(color="#fff7bc"),
             ),
+            # plotly.graph_objs.Bar(
+            #     name="Nostra Alpha",
+            #     x=bar_chart_supply_stats.index,
+            #     y=bar_chart_supply_stats["Nostra Alpha"],
+            #     marker=plotly.graph_objs.bar.Marker(color="#fec44f"),
+            # ),
+            # plotly.graph_objs.Bar(
+            #     name="Nostra Mainnet",
+            #     x=bar_chart_supply_stats.index,
+            #     y=bar_chart_supply_stats["Nostra Mainnet"],
+            #     marker=plotly.graph_objs.bar.Marker(color="#d95f0e"),
+            # ),
             # TODO: add functionality for other protocols
         ],
     )
@@ -270,6 +282,18 @@ def get_bar_chart_figures(
                 y=bar_chart_collateral_stats[0],
                 marker=plotly.graph_objs.bar.Marker(color="#fff7bc"),
             ),
+            # plotly.graph_objs.Bar(
+            #     name="Nostra Alpha",
+            #     x=bar_chart_collateral_stats.index,
+            #     y=bar_chart_collateral_stats["Nostra Alpha"],
+            #     marker=plotly.graph_objs.bar.Marker(color="#fec44f"),
+            # ),
+            # plotly.graph_objs.Bar(
+            #     name="Nostra Mainnet",
+            #     x=bar_chart_collateral_stats.index,
+            #     y=bar_chart_collateral_stats["Nostra Mainnet"],
+            #     marker=plotly.graph_objs.bar.Marker(color="#d95f0e"),
+            # ),
             # TODO: add functionality for other protocols
         ],
     )
@@ -282,6 +306,18 @@ def get_bar_chart_figures(
                 y=bar_chart_debt_stats[0],
                 marker=plotly.graph_objs.bar.Marker(color="#fff7bc"),
             ),
+            # plotly.graph_objs.Bar(
+            #     name="Nostra Alpha",
+            #     x=bar_chart_debt_stats.index,
+            #     y=bar_chart_debt_stats["Nostra Alpha"],
+            #     marker=plotly.graph_objs.bar.Marker(color="#fec44f"),
+            # ),
+            # plotly.graph_objs.Bar(
+            #     name="Nostra Mainnet",
+            #     x=bar_chart_debt_stats.index,
+            #     y=bar_chart_debt_stats["Nostra Mainnet"],
+            #     marker=plotly.graph_objs.bar.Marker(color="#d95f0e"),
+            # ),
             # TODO: add functionality for other protocols
         ],
     )
