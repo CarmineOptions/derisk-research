@@ -1,30 +1,37 @@
 """
 This module defines the Dashboard class for rendering a DeRisk dashboard using Streamlit.
 """
-import plotly
 import numpy as np
 import pandas as pd
+import plotly
 import streamlit as st
-from datetime import datetime, UTC
 from data_handler.handlers.loan_states.abstractions import State
 from shared.helpers import (
+    add_leading_zeros,
     extract_token_addresses,
     fetch_token_symbols_from_set_of_loan_addresses,
     update_loan_data_with_symbols,
-    add_leading_zeros
 )
 
-from helpers.settings import COLLATERAL_TOKENS, DEBT_TOKENS, STABLECOIN_BUNDLE_NAME, TOKEN_SETTINGS
+from helpers.settings import (
+    COLLATERAL_TOKENS,
+    DEBT_TOKENS,
+    STABLECOIN_BUNDLE_NAME,
+    TOKEN_SETTINGS,
+)
 
 from .constants import ChartsHeaders, CommonValues
-from .main_chart_figure import get_main_chart_figure, get_specific_loan_usd_amounts, get_bar_chart_figures
+from .main_chart_figure import (
+    get_bar_chart_figures,
+    get_main_chart_figure,
+    get_specific_loan_usd_amounts,
+)
 from .utils import (
     get_protocol_data_mappings,
+    infer_protocol_name,
     process_liquidity,
     transform_loans_data,
     transform_main_chart_data,
-    infer_protocol_name,
-
 )
 
 
@@ -39,7 +46,15 @@ class Dashboard:
         # "Nostra Mainnet",
     ]
 
-    def __init__(self, state: State, general_stats: dict, supply_stats: dict, collateral_stats: dict, debt_stats: dict, utilization_stats: dict):
+    def __init__(
+        self,
+        state: State,
+        general_stats: dict,
+        supply_stats: dict,
+        collateral_stats: dict,
+        debt_stats: dict,
+        utilization_stats: dict,
+    ):
         """
         Initialize the dashboard.
         """
@@ -167,12 +182,17 @@ class Dashboard:
                 label="Select range of USD borrowings",
                 min_value=0,
                 max_value=int(loans_data[CommonValues.debt_usd.value].max()),
-                value=(0, int(loans_data[CommonValues.debt_usd.value].max()) or 1),  # FIXME remove 1
+                value=(
+                    0,
+                    int(loans_data[CommonValues.debt_usd.value].max()) or 1,
+                ),  # FIXME remove 1
             )
 
         st.dataframe(
             loans_data[
-                (loans_data[CommonValues.health_factor.value] > 0)  # TODO: debug the negative HFs
+                (
+                    loans_data[CommonValues.health_factor.value] > 0
+                )  # TODO: debug the negative HFs
                 & loans_data[CommonValues.debt_usd.value].between(
                     debt_usd_lower_bound, debt_usd_upper_bound
                 )
@@ -203,8 +223,13 @@ class Dashboard:
             st.subheader("Sorted by collateral")
             st.dataframe(
                 loans_data[
-                    (loans_data[CommonValues.health_factor.value] > 1)  # TODO: debug the negative HFs
-                    & (loans_data[CommonValues.standardized_health_factor.value] != float("inf"))
+                    (
+                        loans_data[CommonValues.health_factor.value] > 1
+                    )  # TODO: debug the negative HFs
+                    & (
+                        loans_data[CommonValues.standardized_health_factor.value]
+                        != float("inf")
+                    )
                 ]
                 .sort_values(CommonValues.collateral_usd.value, ascending=False)
                 .iloc[:20],
@@ -216,7 +241,8 @@ class Dashboard:
                 loans_data[
                     (loans_data[CommonValues.health_factor.value] > 1)
                     & (
-                        loans_data[CommonValues.standardized_health_factor.value] != float("inf")
+                        loans_data[CommonValues.standardized_health_factor.value]
+                        != float("inf")
                     )  # TODO: debug the negative HFs
                 ]
                 .sort_values(CommonValues.debt_usd.value, ascending=False)
@@ -277,13 +303,12 @@ class Dashboard:
             protocol = infer_protocol_name(protocol, valid_protocols)
 
         loan = loans_data_main.loc[
-            (loans_data[CommonValues.user.value] == user) & (loans_data[CommonValues.protocol.value] == protocol),
+            (loans_data[CommonValues.user.value] == user)
+            & (loans_data[CommonValues.protocol.value] == protocol),
         ]
 
         if loan.empty:
-            st.warning(
-                f"No loan found for user = {user} and protocol = {protocol}."
-            )
+            st.warning(f"No loan found for user = {user} and protocol = {protocol}.")
         else:
             (
                 collateral_usd_amounts,
@@ -341,6 +366,8 @@ class Dashboard:
         for column, token_1, token_2 in zip(columns, tokens[:4], tokens[4:]):
             with column:
                 for token in [token_1, token_2]:
+                    if token == "WBTC":
+                        token = "wBTC"
                     figure = plotly.express.pie(
                         self.collateral_stats.reset_index(),
                         values=f"{token} collateral",
@@ -352,17 +379,19 @@ class Dashboard:
                 for token in [token_1, token_2]:
                     figure = plotly.express.pie(
                         self.debt_stats.reset_index(),
-                        values=f"{token} debt",
-                        names=CommonValues.protocol.value,
+                        values=f"{token} debt".lower(),
+                        names=CommonValues.protocol.value.lower(),
                         title=f"{token} debt",
                         color_discrete_sequence=plotly.express.colors.sequential.Greens_r,
                     )
                     st.plotly_chart(figure, True)
                 for token in [token_1, token_2]:
+                    if "dai" in token.lower():
+                        continue
                     figure = plotly.express.pie(
                         self.supply_stats.reset_index(),
-                        values=f"{token} supply",
-                        names=CommonValues.protocol.value,
+                        values=f"{token} supply".lower(),
+                        names=CommonValues.protocol.value.lower(),
                         title=f"{token} supply",
                         color_discrete_sequence=plotly.express.colors.sequential.Blues_r,
                     )
@@ -389,7 +418,7 @@ class Dashboard:
         # Load sidebar with protocol settings
         self.load_sidebar()
         self.load_main_chart()
-        # self.load_loans_with_low_health_factor_chart()
-        # self.load_top_loans_chart()
-        # self.load_detail_loan_chart()
+        self.load_loans_with_low_health_factor_chart()
+        self.load_top_loans_chart()
+        self.load_detail_loan_chart()
         self.load_comparison_lending_protocols_chart()

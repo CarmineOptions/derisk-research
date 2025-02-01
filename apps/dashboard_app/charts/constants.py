@@ -11,6 +11,7 @@ SUPPLY_STATS_TOKEN_SYMBOLS_MAPPING = {
     "strk": "STRK",
 }
 
+
 @dataclass
 class ChartsHeaders:
     low_health_factor_loans: str = "Loans with low health factor"

@@ -4,12 +4,13 @@ This module includes functions to generate financial charts using token price an
 
 import math
 from decimal import Decimal
+
 import pandas as pd
 import plotly.express
 import plotly.graph_objs
 from shared.amms import SwapAmm
-from shared.state import State
 from shared.custom_types import Prices
+from shared.state import State
 
 from helpers.settings import TOKEN_SETTINGS
 from helpers.tools import (
@@ -18,6 +19,7 @@ from helpers.tools import (
     get_prices,
     get_underlying_address,
 )
+
 from .constants import SUPPLY_STATS_TOKEN_SYMBOLS_MAPPING
 
 AMMS = ("10kSwap", "MySwap", "SithSwap", "JediSwap")
@@ -213,20 +215,36 @@ def get_bar_chart_figures(
     for column in supply_stats.columns:
         if "protocol" in column.lower():
             bar_chart_supply_stats[column] = supply_stats[column][0]
-            bar_chart_collateral_stats[column] = collateral_stats[column][0]
+            bar_chart_collateral_stats[column] = collateral_stats[column.capitalize()][
+                0
+            ]
             bar_chart_debt_stats[column] = debt_stats[column][0]
             continue
         elif "total" in column.lower():
             continue
         underlying_symbol = column.split(" ")[0]
-        underlying_address = underlying_symbols_to_addresses[SUPPLY_STATS_TOKEN_SYMBOLS_MAPPING[underlying_symbol]]
-        bar_chart_supply_stats[underlying_symbol] = supply_stats[column].loc[0] * Decimal(prices[underlying_address])
+        underlying_address = underlying_symbols_to_addresses[
+            SUPPLY_STATS_TOKEN_SYMBOLS_MAPPING[underlying_symbol]
+        ]
+        bar_chart_supply_stats[underlying_symbol] = supply_stats[column].loc[
+            0
+        ] * Decimal(prices[underlying_address])
         # handling the specific case with WBTC token
         if underlying_symbol == "wbtc":
-            bar_chart_collateral_stats[underlying_symbol] = (collateral_stats["wBTC collateral"].loc[0] * prices[underlying_address])
+            bar_chart_collateral_stats[underlying_symbol] = (
+                collateral_stats["wBTC collateral"].loc[0] * prices[underlying_address]
+            )
         else:
-            bar_chart_collateral_stats[underlying_symbol] = (collateral_stats[SUPPLY_STATS_TOKEN_SYMBOLS_MAPPING[underlying_symbol] + " collateral"].loc[0] * prices[underlying_address])
-        bar_chart_debt_stats[underlying_symbol] = (debt_stats[underlying_symbol + " debt"].loc[0] * prices[underlying_address])
+            bar_chart_collateral_stats[underlying_symbol] = (
+                collateral_stats[
+                    SUPPLY_STATS_TOKEN_SYMBOLS_MAPPING[underlying_symbol]
+                    + " collateral"
+                ].loc[0]
+                * prices[underlying_address]
+            )
+        bar_chart_debt_stats[underlying_symbol] = (
+            debt_stats[underlying_symbol + " debt"].loc[0] * prices[underlying_address]
+        )
 
     bar_chart_supply_stats = bar_chart_supply_stats.T
     bar_chart_collateral_stats = bar_chart_collateral_stats.T
@@ -237,7 +255,7 @@ def get_bar_chart_figures(
             plotly.graph_objs.Bar(
                 name="zkLend",
                 x=bar_chart_supply_stats.index,
-                y=bar_chart_supply_stats["zkLend"],
+                y=bar_chart_supply_stats[0],
                 marker=plotly.graph_objs.bar.Marker(color="#fff7bc"),
             ),
             # TODO: add functionality for other protocols
@@ -249,7 +267,7 @@ def get_bar_chart_figures(
             plotly.graph_objs.Bar(
                 name="zkLend",
                 x=bar_chart_collateral_stats.index,
-                y=bar_chart_collateral_stats["zkLend"],
+                y=bar_chart_collateral_stats[0],
                 marker=plotly.graph_objs.bar.Marker(color="#fff7bc"),
             ),
             # TODO: add functionality for other protocols
@@ -261,7 +279,7 @@ def get_bar_chart_figures(
             plotly.graph_objs.Bar(
                 name="zkLend",
                 x=bar_chart_debt_stats.index,
-                y=bar_chart_debt_stats["zkLend"],
+                y=bar_chart_debt_stats[0],
                 marker=plotly.graph_objs.bar.Marker(color="#fff7bc"),
             ),
             # TODO: add functionality for other protocols

@@ -1,8 +1,8 @@
 """
 This moudel process and transform liquidity, loan, and chart data for protocols.
 """
-import difflib
 import asyncio
+import difflib
 import logging
 import math
 import time
@@ -305,6 +305,7 @@ def transform_main_chart_data(
             ] = protocol_main_chart_data["liquidable_debt_at_interval"]
 
     return main_chart_data
+
 
 def infer_protocol_name(input_protocol: str, valid_protocols: list[str]) -> str:
     """Find the closest matching protocol name from a list of valid protocols using fuzzy matching.
