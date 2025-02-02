@@ -1,28 +1,37 @@
 """
 This module defines the Dashboard class for rendering a DeRisk dashboard using Streamlit.
 """
-import plotly
 import numpy as np
 import pandas as pd
+import plotly
 import streamlit as st
 from data_handler.handlers.loan_states.abstractions import State
 from shared.helpers import (
+    add_leading_zeros,
     extract_token_addresses,
     fetch_token_symbols_from_set_of_loan_addresses,
     update_loan_data_with_symbols,
-    add_leading_zeros
 )
 
-from helpers.settings import COLLATERAL_TOKENS, DEBT_TOKENS, STABLECOIN_BUNDLE_NAME
+from helpers.settings import (
+    COLLATERAL_TOKENS,
+    DEBT_TOKENS,
+    STABLECOIN_BUNDLE_NAME,
+    TOKEN_SETTINGS,
+)
 
 from .constants import ChartsHeaders, CommonValues
-from .main_chart_figure import get_main_chart_figure, get_specific_loan_usd_amounts
+from .main_chart_figure import (
+    get_bar_chart_figures,
+    get_main_chart_figure,
+    get_specific_loan_usd_amounts,
+)
 from .utils import (
     get_protocol_data_mappings,
+    infer_protocol_name,
     process_liquidity,
     transform_loans_data,
     transform_main_chart_data,
-    infer_protocol_name,
 )
 
 
@@ -31,13 +40,26 @@ class Dashboard:
     A class representing a dashboard for managing protocol names.
     """
 
+    FIGURE_COLORS_DATA_MAPPING = {
+        "collateral": plotly.express.colors.sequential.Oranges_r,
+        "debt": plotly.express.colors.sequential.Greens_r,
+        "supply": plotly.express.colors.sequential.Blues_r,
+    }
     PROTOCOL_NAMES = [
         "zkLend",
         # "Nostra Alpha",
         # "Nostra Mainnet",
     ]
 
-    def __init__(self, state: State):
+    def __init__(
+        self,
+        state: State,
+        general_stats: dict,
+        supply_stats: dict,
+        collateral_stats: dict,
+        debt_stats: dict,
+        utilization_stats: dict,
+    ):
         """
         Initialize the dashboard.
         """
@@ -57,6 +79,11 @@ class Dashboard:
         self.stable_coin_pair = None
         self.collateral_token_price = 0
         self.state = state
+        self.general_stats = pd.DataFrame(general_stats)
+        self.supply_stats = pd.DataFrame(supply_stats)
+        self.collateral_stats = pd.DataFrame(collateral_stats)
+        self.debt_stats = pd.DataFrame(debt_stats)
+        self.utilization_stats = pd.DataFrame(utilization_stats)
 
     def load_sidebar(self):
         """
@@ -160,12 +187,17 @@ class Dashboard:
                 label="Select range of USD borrowings",
                 min_value=0,
                 max_value=int(loans_data[CommonValues.debt_usd.value].max()),
-                value=(0, int(loans_data[CommonValues.debt_usd.value].max()) or 1),  # FIXME remove 1
+                value=(
+                    0,
+                    int(loans_data[CommonValues.debt_usd.value].max()) or 1,
+                ),  # FIXME remove 1
             )
 
         st.dataframe(
             loans_data[
-                (loans_data[CommonValues.health_factor.value] > 0)  # TODO: debug the negative HFs
+                (
+                    loans_data[CommonValues.health_factor.value] > 0
+                )  # TODO: debug the negative HFs
                 & loans_data[CommonValues.debt_usd.value].between(
                     debt_usd_lower_bound, debt_usd_upper_bound
                 )
@@ -196,8 +228,13 @@ class Dashboard:
             st.subheader("Sorted by collateral")
             st.dataframe(
                 loans_data[
-                    (loans_data[CommonValues.health_factor.value] > 1)  # TODO: debug the negative HFs
-                    & (loans_data[CommonValues.standardized_health_factor.value] != float("inf"))
+                    (
+                        loans_data[CommonValues.health_factor.value] > 1
+                    )  # TODO: debug the negative HFs
+                    & (
+                        loans_data[CommonValues.standardized_health_factor.value]
+                        != float("inf")
+                    )
                 ]
                 .sort_values(CommonValues.collateral_usd.value, ascending=False)
                 .iloc[:20],
@@ -209,7 +246,8 @@ class Dashboard:
                 loans_data[
                     (loans_data[CommonValues.health_factor.value] > 1)
                     & (
-                        loans_data[CommonValues.standardized_health_factor.value] != float("inf")
+                        loans_data[CommonValues.standardized_health_factor.value]
+                        != float("inf")
                     )  # TODO: debug the negative HFs
                 ]
                 .sort_values(CommonValues.debt_usd.value, ascending=False)
@@ -270,13 +308,12 @@ class Dashboard:
             protocol = infer_protocol_name(protocol, valid_protocols)
 
         loan = loans_data_main.loc[
-            (loans_data[CommonValues.user.value] == user) & (loans_data[CommonValues.protocol.value] == protocol),
+            (loans_data[CommonValues.user.value] == user)
+            & (loans_data[CommonValues.protocol.value] == protocol),
         ]
 
         if loan.empty:
-            st.warning(
-                f"No loan found for user = {user} and protocol = {protocol}."
-            )
+            st.warning(f"No loan found for user = {user} and protocol = {protocol}.")
         else:
             (
                 collateral_usd_amounts,
@@ -307,6 +344,66 @@ class Dashboard:
             else:
                 st.warning("No tokens found for curend user.")
 
+    def load_comparison_lending_protocols_chart(self):
+        """
+        Gererate a chart that shows comparison lending protocols.
+        """
+        st.header(ChartsHeaders.comparison_lending_protocols)
+        # Display dataframes
+        st.dataframe(self.general_stats)
+        st.dataframe(self.utilization_stats)
+        # USD deposit, collateral and debt per token (bar chart).
+        (
+            supply_figure,
+            collateral_figure,
+            debt_figure,
+        ) = get_bar_chart_figures(
+            supply_stats=self.supply_stats.copy(),
+            collateral_stats=self.collateral_stats.copy(),
+            debt_stats=self.debt_stats.copy(),
+        )
+        st.plotly_chart(figure_or_data=supply_figure, use_container_width=True)
+        st.plotly_chart(figure_or_data=collateral_figure, use_container_width=True)
+        st.plotly_chart(figure_or_data=debt_figure, use_container_width=True)
+
+        columns = st.columns(4)
+        tokens = list(TOKEN_SETTINGS.keys())
+        for column, token_1, token_2 in zip(columns, tokens[:4], tokens[4:]):
+            with column:
+                for token in [token_1, token_2]:
+                    token = "wBTC" if token == "WBTC" else token
+                    figure = self._plot_chart(token, "collateral")
+                    st.plotly_chart(figure, True)
+
+                for token in [token_1, token_2]:
+                    figure = self._plot_chart(token, "debt")
+                    st.plotly_chart(figure, True)
+
+                for token in [token_1, token_2]:
+                    if "dai" in token.lower():
+                        continue
+                    figure = self._plot_chart(token, "supply")
+                    st.plotly_chart(figure, True)
+
+        # TODO: add last update functionality
+
+    def _plot_chart(self, token: str, stats_type: str) -> plotly.express.Data:
+        """
+        Returns a ploted figure.
+        :return plotly.express.Data: Figure.
+        """
+        return plotly.express.pie(
+            getattr(self, f"{stats_type}_stats").reset_index(),
+            values=f"{token} {stats_type}"
+            if stats_type == "collateral"
+            else f"{token} {stats_type}".lower(),
+            names=CommonValues.protocol.value
+            if stats_type == "collateral"
+            else CommonValues.protocol.value.lower(),
+            title=f"{token} {stats_type}",
+            color_discrete_sequence=self.FIGURE_COLORS_DATA_MAPPING[stats_type],
+        )
+
     def _get_protocol_data_mappings(self) -> tuple:
         """
         Return a tuple of protocol_main_chart_data_mapping and protocol_loans_data_mapping.
@@ -321,7 +418,7 @@ class Dashboard:
 
     def run(self):
         """
-        This function executes/runs the load_sidebar() and load_main_chart() function.
+        This function executes/runs all chart loading methods.
         """
         # Load sidebar with protocol settings
         self.load_sidebar()
@@ -329,3 +426,4 @@ class Dashboard:
         self.load_loans_with_low_health_factor_chart()
         self.load_top_loans_chart()
         self.load_detail_loan_chart()
+        self.load_comparison_lending_protocols_chart()

@@ -1,12 +1,23 @@
 from dataclasses import dataclass
 from enum import Enum
 
+SUPPLY_STATS_TOKEN_SYMBOLS_MAPPING = {
+    "eth": "ETH",
+    "wbtc": "WBTC",
+    "usdc": "USDC",
+    "usdt": "USDT",
+    "wsteth": "wstETH",
+    "lords": "LORDS",
+    "strk": "STRK",
+}
+
 
 @dataclass
 class ChartsHeaders:
     low_health_factor_loans: str = "Loans with low health factor"
     top_loans: str = "Top loans"
     detail_loans: str = "Detail of a loan"
+    comparison_lending_protocols: str = "Comparison of lending protocols"
 
 
 class CommonValues(Enum):
@@ -17,4 +28,4 @@ class CommonValues(Enum):
     user: str = "User"
     protocol: str = "Protocol"
     health_factor: str = "Health factor"
-    standardized_health_factor: str = "Standatized Health factor"
+    standardized_health_factor: str = "Standardized health factor"
