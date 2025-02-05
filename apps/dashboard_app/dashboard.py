@@ -9,7 +9,8 @@ from helpers.load_data import DashboardDataHandler
 from streamlit_autorefresh import st_autorefresh
 from data_handler.celery_app.celery_conf import CRONTAB_TIME
 
-ON_MINUTE_IN_MILISECONDS = 60000 * int(CRONTAB_TIME)
+ONE_MINUTE_IN_MILISECONDS = 60000
+REFRESH_TIME = ONE_MINUTE_IN_MILISECONDS * int(CRONTAB_TIME)
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
@@ -17,7 +18,7 @@ if __name__ == "__main__":
 
     dashboard = Dashboard() # (`st.set_page_config` in `Dashboard` must be called once)
     # Set up autorefresh data config
-    st_autorefresh(interval=ON_MINUTE_IN_MILISECONDS, key="datarefresh")
+    st_autorefresh(interval=REFRESH_TIME, key="datarefresh")
 
     dashboard_data_handler = DashboardDataHandler()
     (dashboard.state,
