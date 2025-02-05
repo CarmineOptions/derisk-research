@@ -3,19 +3,14 @@ This module loads and handle the data.
 """
 
 import asyncio
-import itertools
 import logging
 import math
-import time
 from collections import defaultdict
 from time import monotonic
 
 from data_handler.handlers.loan_states.zklend.events import ZkLendState
-from data_handler.handlers.loan_states.zklend.utils import ZkLendInitializer
-from shared import SwapAmm
-from shared.constants import PAIRS, TOKEN_SETTINGS, ProtocolIDs
+from shared.constants import TOKEN_SETTINGS
 
-from dashboard_app.charts.main_chart_figure import get_main_chart_data
 from dashboard_app.data_conector import DataConnector
 from dashboard_app.helpers.loans_table import get_loans_table_data, get_protocol
 from dashboard_app.helpers.protocol_stats import (
@@ -241,100 +236,3 @@ class DashboardDataHandler:
             debt_stats,
             utilization_stats,
         )
-
-
-class ZkLendDataInitializer(ZkLendInitializer):
-    """
-    Data initializer for zkLend using aggregated data from the database.
-    """
-
-    def __init__(self, zklend_state: ZkLendState):
-        super().__init__(zklend_state)
-        self.data_connector = DataConnector()
-
-    def update_data(self) -> ZkLendState:
-        """
-        Fetch aggregated data from the database and set it in zklend_state.
-        :return: ZkLendState
-        """
-        # Fetching last updated data
-        logging.info(f"Updating DB data from {self.zklend_state.last_block_number}...")
-        query = self.data_connector.ZKLEND_SQL_QUERY
-        data = self.data_connector.fetch_data(query)
-        user_ids = self.get_user_ids_from_df(data)
-        self.set_last_loan_states_per_users(user_ids)
-
-        # Fetching token parameters
-        token_parameters_collecting_time_start = time.time()
-        asyncio.run(self.zklend_state.collect_token_parameters())
-        logging.info(
-            f"Collected token parameters in {time.time() - token_parameters_collecting_time_start}s"
-        )
-
-        underlying_addresses_to_decimals = {}
-        for token_param in self.zklend_state.token_parameters.collateral.values():
-            underlying_addresses_to_decimals[
-                token_param.underlying_address
-            ] = token_param.decimals
-        for token_param in self.zklend_state.token_parameters.debt.values():
-            underlying_addresses_to_decimals[
-                token_param.underlying_address
-            ] = token_param.decimals
-
-        underlying_addresses_to_decimals.update(
-            {
-                token.address: int(math.log10(token.decimal_factor))
-                for token in TOKEN_SETTINGS.values()
-            }
-        )
-
-        prices = get_prices(token_decimals=underlying_addresses_to_decimals)
-        swap_amm = SwapAmm()
-
-        main_chart_update_data_time_start = time.time()
-        for pair, state in itertools.product(PAIRS, [self.zklend_state]):
-            logging.info(
-                f"Preparing main chart data for {ProtocolIDs.ZKLEND.value} protocol and pair = {pair}."
-            )
-
-            (
-                collateral_token_underlying_symbol,
-                debt_token_underlying_symbol,
-            ) = pair.split("-")
-            _ = get_main_chart_data(
-                state=state,
-                prices=prices,
-                swap_amms=swap_amm,
-                collateral_token_underlying_symbol=collateral_token_underlying_symbol,
-                debt_token_underlying_symbol=debt_token_underlying_symbol,
-            )
-            logging.info(
-                f"Main chart data for protocol = {ProtocolIDs.ZKLEND.value} and pair = {pair} prepared in "
-                f"{time.time() - main_chart_update_data_time_start}s"
-            )
-        logging.info(
-            f"updated graphs in {time.time() - main_chart_update_data_time_start}s"
-        )
-
-        loan_stats = {}
-        protocol = ProtocolIDs.ZKLEND.value
-        loan_stats[protocol] = get_loans_table_data(
-            state=self.zklend_state, prices=prices
-        )
-
-        general_stats = get_general_stats(
-            states=[self.zklend_state], loan_stats=loan_stats
-        )
-        supply_stats = get_supply_stats(
-            states=[self.zklend_state],
-            prices=prices,
-        )
-        _ = get_collateral_stats(states=[self.zklend_state])
-        debt_stats = get_debt_stats(states=[self.zklend_state])
-        _ = get_utilization_stats(
-            general_stats=general_stats,
-            supply_stats=supply_stats,
-            debt_stats=debt_stats,
-        )
-
-        return self.zklend_state

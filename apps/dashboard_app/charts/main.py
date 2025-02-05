@@ -52,13 +52,13 @@ class Dashboard:
     ]
 
     def __init__(
-        self,
-        state: State,
-        general_stats: dict,
-        supply_stats: dict,
-        collateral_stats: dict,
-        debt_stats: dict,
-        utilization_stats: dict,
+            self,
+            state: State | None = None,
+            general_stats: dict | None = None,
+            supply_stats: dict | None = None,
+            collateral_stats: dict | None = None,
+            debt_stats: dict | None = None,
+            utilization_stats: dict | None = None,
     ):
         """
         Initialize the dashboard.
@@ -196,16 +196,16 @@ class Dashboard:
         st.dataframe(
             loans_data[
                 (
-                    loans_data[CommonValues.health_factor.value] > 0
+                        loans_data[CommonValues.health_factor.value] > 0
                 )  # TODO: debug the negative HFs
                 & loans_data[CommonValues.debt_usd.value].between(
                     debt_usd_lower_bound, debt_usd_upper_bound
                 )
-            ]
+                ]
             .sort_values(CommonValues.health_factor.value)
             .iloc[:20],
             use_container_width=True,
-        )
+            )
 
     def load_top_loans_chart(self):
         """
@@ -229,31 +229,31 @@ class Dashboard:
             st.dataframe(
                 loans_data[
                     (
-                        loans_data[CommonValues.health_factor.value] > 1
+                            loans_data[CommonValues.health_factor.value] > 1
                     )  # TODO: debug the negative HFs
                     & (
-                        loans_data[CommonValues.standardized_health_factor.value]
-                        != float("inf")
+                            loans_data[CommonValues.standardized_health_factor.value]
+                            != float("inf")
                     )
-                ]
+                    ]
                 .sort_values(CommonValues.collateral_usd.value, ascending=False)
                 .iloc[:20],
                 use_container_width=True,
-            )
+                )
         with col2:
             st.subheader("Sorted by debt")
             st.dataframe(
                 loans_data[
                     (loans_data[CommonValues.health_factor.value] > 1)
                     & (
-                        loans_data[CommonValues.standardized_health_factor.value]
-                        != float("inf")
+                            loans_data[CommonValues.standardized_health_factor.value]
+                            != float("inf")
                     )  # TODO: debug the negative HFs
-                ]
+                    ]
                 .sort_values(CommonValues.debt_usd.value, ascending=False)
                 .iloc[:20],
                 use_container_width=True,
-            )
+                )
 
     def load_detail_loan_chart(self):
         """
@@ -387,7 +387,7 @@ class Dashboard:
 
         # TODO: add last update functionality
 
-    def _plot_chart(self, token: str, stats_type: str) -> plotly.express.Data:
+    def _plot_chart(self, token: str, stats_type: str) -> plotly.express.data:
         """
         Returns a ploted figure.
         :return plotly.express.Data: Figure.
