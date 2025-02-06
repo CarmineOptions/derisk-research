@@ -19,6 +19,8 @@ matplotlib = "^3.7.1"
 requests = "^2.31.0"
 google-cloud-storage = "^2.19.0"
 sqlalchemy = "^2.0.37"
+psycopg2 = "^2.9.10"
+sqlalchemy-utils = "^0.41.2"
 
 
 [tool.poetry.group.dev.dependencies]
