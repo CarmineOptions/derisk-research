@@ -4,17 +4,18 @@ Tests for the protocol_stats module.
 
 from decimal import Decimal
 from unittest.mock import MagicMock, patch
+
 import pandas as pd
 import pytest
+from shared.state import State
 
 from dashboard_app.helpers.protocol_stats import (
-    get_general_stats,
-    get_supply_stats,
     get_collateral_stats,
     get_debt_stats,
+    get_general_stats,
+    get_supply_stats,
     get_utilization_stats,
 )
-from shared.state import State
 
 
 @pytest.fixture
@@ -31,7 +32,8 @@ def token_addresses():
         "USDT": "0x068f5c6a61780768455de69077e07e89787839bf8166decfbf92b645209c0fb8",
         "wstETH": "0x042b8f0484674ca266ac5d08e4ac6a3fe65bd3129795def2dca5c34ecc5f96d2",
         "LORDS": "0x0124aeb495b947201f5fac96fd1138e326ad86195b98df6dec9009158a533b49",
-        "STRK": "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d"
+        "STRK": "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d",
+        "kSTRK": "0x045cd05ee2caaac3459b87e5e2480099d201be2f62243f839f00e10dde7f500c",
     }
 
 
@@ -41,11 +43,13 @@ def mock_loan_stats():
     Returns a dictionary of loan stats.
     """
     return {
-        "zkLend": pd.DataFrame({
-            "Debt (USD)": [1000],
-            "Risk-adjusted collateral (USD)": [2000],
-            "Collateral (USD)": [2500],
-        })
+        "zkLend": pd.DataFrame(
+            {
+                "Debt (USD)": [1000],
+                "Risk-adjusted collateral (USD)": [2000],
+                "Collateral (USD)": [2500],
+            }
+        )
     }
 
 
@@ -59,7 +63,7 @@ def mock_state(token_addresses):
     state.PROTOCOL_NAME = "zkLend"
     state.compute_number_of_active_loan_entities.return_value = 10
     state.compute_number_of_active_loan_entities_with_debt.return_value = 5
-  
+
     # Setup loan entity with default values
     loan_entity = MagicMock()
     loan_entity.collateral.values = {addr: "0" for addr in token_addresses.values()}
@@ -67,12 +71,13 @@ def mock_state(token_addresses):
     loan_entity.collateral.values[token_addresses["ETH"]] = "1000000000000000000"
     loan_entity.debt[token_addresses["ETH"]] = "2000000000000000000"
     state.loan_entities = {"user1": loan_entity}
- 
+
     # Setup token parameters
     class TokenParam:
         """
         A class to represent token parameters.
         """
+
         def __init__(self, address, symbol):
             self.address = address
             self.underlying_symbol = symbol
@@ -80,8 +85,7 @@ def mock_state(token_addresses):
             self.decimal_factor = 1e18
 
     token_params = {
-        symbol: TokenParam(addr, symbol) 
-        for symbol, addr in token_addresses.items()
+        symbol: TokenParam(addr, symbol) for symbol, addr in token_addresses.items()
     }
 
     state.token_parameters = MagicMock()
@@ -95,8 +99,7 @@ def mock_state(token_addresses):
     state.interest_rate_models.debt = interest_rates.copy()
 
     with patch(
-        "dashboard_app.helpers.protocol_stats.get_protocol",
-        return_value="zkLend"
+        "dashboard_app.helpers.protocol_stats.get_protocol", return_value="zkLend"
     ):
         yield state
 
@@ -115,6 +118,7 @@ def mock_prices(token_addresses):
         token_addresses["wstETH"]: "2100",
         token_addresses["LORDS"]: "0.5",
         token_addresses["STRK"]: "1.2",
+        token_addresses["kSTRK"]: "1.25",
     }
 
 
@@ -124,10 +128,8 @@ def mock_token_settings(token_addresses):
     Returns a dictionary of token settings.
     """
     return {
-        symbol: MagicMock(
-            decimal_factor=Decimal("1e18"),
-            address=addr
-        ) for symbol, addr in token_addresses.items()
+        symbol: MagicMock(decimal_factor=Decimal("1e18"), address=addr)
+        for symbol, addr in token_addresses.items()
     }
 
 
@@ -137,8 +139,7 @@ def patch_token_settings(mock_token_settings):
     Patches the TOKEN_SETTINGS dictionary.
     """
     with patch(
-        "dashboard_app.helpers.protocol_stats.TOKEN_SETTINGS",
-        mock_token_settings
+        "dashboard_app.helpers.protocol_stats.TOKEN_SETTINGS", mock_token_settings
     ):
         yield
 
@@ -148,7 +149,7 @@ def test_get_general_stats(mock_state, mock_loan_stats):
     Tests the get_general_stats function.
     """
     result = get_general_stats([mock_state], mock_loan_stats)
- 
+
     assert isinstance(result, pd.DataFrame)
     assert "Protocol" in result.columns
     assert result["Number of active users"].iloc[0] == 10
@@ -177,13 +178,13 @@ def test_get_general_stats_invalid_loan_stats(mock_state):
 @patch("dashboard_app.helpers.protocol_stats.get_supply_function_call_parameters")
 @patch("dashboard_app.helpers.protocol_stats.asyncio.run")
 def test_get_supply_stats(
-    mock_run, 
-    mock_get_params, 
-    mock_get_protocol, 
-    mock_state, 
-    mock_prices, 
+    mock_run,
+    mock_get_params,
+    mock_get_protocol,
+    mock_state,
+    mock_prices,
     token_addresses,
-    mock_token_settings
+    mock_token_settings,
 ):
     """
     Tests the get_supply_stats function.
@@ -200,6 +201,7 @@ def test_get_supply_stats(
     assert isinstance(result, pd.DataFrame)
     assert "Protocol" in result.columns
     assert "ETH supply" in result.columns
+    assert "kSTRK supply" in result.columns
 
 
 @patch("dashboard_app.helpers.protocol_stats.get_protocol")
@@ -211,7 +213,7 @@ def test_get_supply_stats_blockchain_error(
     mock_get_protocol,
     mock_state,
     mock_prices,
-    token_addresses
+    token_addresses,
 ):
     """
     Tests the get_supply_stats function with a blockchain error.
@@ -280,32 +282,64 @@ def test_get_utilization_stats():
     """
     Tests the get_utilization_stats function.
     """
-    general_stats = pd.DataFrame({
-        "Protocol": ["zkLend"],
-        "Total debt (USD)": [1000],
-    })
+    general_stats = pd.DataFrame(
+        {
+            "Protocol": ["zkLend"],
+            "Total debt (USD)": [1000],
+        }
+    )
 
-    supply_stats = pd.DataFrame({
-        "Protocol": ["zkLend"],
-        "Total supply (USD)": [4000],
-        **{f"{token} supply": [
-            1000 if token in ["USDC", "DAI", "USDT", "LORDS", "STRK"] else 1
-        ] for token in [
-            "ETH", "WBTC", "USDC", "DAI", "USDT", "wstETH", "LORDS", "STRK"
-        ]}
-    })
+    supply_stats = pd.DataFrame(
+        {
+            "Protocol": ["zkLend"],
+            "Total supply (USD)": [4000],
+            **{
+                f"{token} supply": [
+                    1000
+                    if token in ["USDC", "DAI", "USDT", "LORDS", "STRK", "kSTRK"]
+                    else 1
+                ]
+                for token in [
+                    "ETH",
+                    "WBTC",
+                    "USDC",
+                    "DAI",
+                    "USDT",
+                    "wstETH",
+                    "LORDS",
+                    "STRK",
+                    "kSTRK",
+                ]
+            },
+        }
+    )
 
-    debt_stats = pd.DataFrame({
-        "Protocol": ["zkLend"],
-        **{f"{token} debt": [
-            500 if token in ["USDC", "DAI", "USDT", "LORDS", "STRK"] else 0.5
-        ] for token in [
-            "ETH", "WBTC", "USDC", "DAI", "USDT", "wstETH", "LORDS", "STRK"
-        ]}
-    })
+    debt_stats = pd.DataFrame(
+        {
+            "Protocol": ["zkLend"],
+            **{
+                f"{token} debt": [
+                    500
+                    if token in ["USDC", "DAI", "USDT", "LORDS", "STRK", "kSTRK"]
+                    else 0.5
+                ]
+                for token in [
+                    "ETH",
+                    "WBTC",
+                    "USDC",
+                    "DAI",
+                    "USDT",
+                    "wstETH",
+                    "LORDS",
+                    "STRK",
+                    "kSTRK",
+                ]
+            },
+        }
+    )
 
     result = get_utilization_stats(general_stats, supply_stats, debt_stats)
- 
+
     utilization_columns = [col for col in result.columns if col != "Protocol"]
     result[utilization_columns] = result[utilization_columns].applymap(
         lambda x: round(x, 4)
@@ -321,28 +355,56 @@ def test_get_utilization_stats_division_by_zero():
     """
     Tests the get_utilization_stats function with a division by zero.
     """
-    general_stats = pd.DataFrame({
-        "Protocol": ["zkLend"],
-        "Total debt (USD)": [1000],
-    })
+    general_stats = pd.DataFrame(
+        {
+            "Protocol": ["zkLend"],
+            "Total debt (USD)": [1000],
+        }
+    )
 
-    supply_stats = pd.DataFrame({
-        "Protocol": ["zkLend"],
-        "Total supply (USD)": [0], 
-        **{f"{token} supply": [0] for token in [
-            "ETH", "WBTC", "USDC", "DAI", "USDT", "wstETH", "LORDS", "STRK"
-        ]}
-    })
+    supply_stats = pd.DataFrame(
+        {
+            "Protocol": ["zkLend"],
+            "Total supply (USD)": [0],
+            **{
+                f"{token} supply": [0]
+                for token in [
+                    "ETH",
+                    "WBTC",
+                    "USDC",
+                    "DAI",
+                    "USDT",
+                    "wstETH",
+                    "LORDS",
+                    "STRK",
+                    "kSTRK",
+                ]
+            },
+        }
+    )
 
-    debt_stats = pd.DataFrame({
-        "Protocol": ["zkLend"],
-        **{f"{token} debt": [0] for token in [
-            "ETH", "WBTC", "USDC", "DAI", "USDT", "wstETH", "LORDS", "STRK"
-        ]}
-    })
+    debt_stats = pd.DataFrame(
+        {
+            "Protocol": ["zkLend"],
+            **{
+                f"{token} debt": [0]
+                for token in [
+                    "ETH",
+                    "WBTC",
+                    "USDC",
+                    "DAI",
+                    "USDT",
+                    "wstETH",
+                    "LORDS",
+                    "STRK",
+                    "kSTRK",
+                ]
+            },
+        }
+    )
 
     result = get_utilization_stats(general_stats, supply_stats, debt_stats)
 
     # Check if division by zero results in NaN or infinity
-    assert result["Total utilization"].iloc[0] == 1 
+    assert result["Total utilization"].iloc[0] == 1
     assert result["ETH utilization"].iloc[0] == 0.0

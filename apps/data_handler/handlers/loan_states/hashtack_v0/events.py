@@ -11,13 +11,17 @@ import logging
 from typing import Optional
 
 import pandas
-from data_handler.handlers.helpers import get_symbol
-
 from data_handler.db.crud import InitializerDBConnector
-from shared.constants import ProtocolIDs, TOKEN_SETTINGS
+from data_handler.handlers.helpers import get_symbol
+from shared.constants import TOKEN_SETTINGS, ProtocolIDs
+from shared.custom_types import (
+    InterestRateModels,
+    Portfolio,
+    TokenSettings,
+    TokenValues,
+)
 from shared.loan_entity import LoanEntity
 from shared.state import State
-from shared.custom_types import InterestRateModels, Portfolio, TokenValues, TokenSettings
 
 ADDRESS: str = "0x03dcf5c72ba60eb7b2fe151032769d49dd3df6b04fa3141dffd6e2aa162b7a6e"
 
@@ -69,6 +73,9 @@ HASHSTACK_V0_SPECIFIC_TOKEN_SETTINGS: dict[str, HashstackV0SpecificTokenSettings
     "STRK": HashstackV0SpecificTokenSettings(
         collateral_factor=decimal.Decimal("1"),
         debt_factor=decimal.Decimal("1"),
+    ),
+    "kSTRK": HashstackV0SpecificTokenSettings(
+        collateral_factor=decimal.Decimal("1"), debt_factor=decimal.Decimal("1")
     ),
 }
 TOKEN_SETTINGS: dict[str, TokenSettings] = {
@@ -151,7 +158,9 @@ class HashstackV0LoanEntity(LoanEntity):
                 decimal.Decimal("1.06")
                 if self.debt_category == 1
                 else (
-                    decimal.Decimal("1.05") if self.debt_category == 2 else decimal.Decimal("1.04")
+                    decimal.Decimal("1.05")
+                    if self.debt_category == 2
+                    else decimal.Decimal("1.04")
                 )
             )
             denominator = health_factor_liquidation_threshold * debt_usd
@@ -213,23 +222,35 @@ class HashstackV0State(State):
         debt_token = get_symbol(event["data"][2])
         debt_face_amount = decimal.Decimal(str(int(event["data"][4], base=16)))
         borrowed_collateral_token = get_symbol(event["data"][6])
-        borrowed_collateral_face_amount = decimal.Decimal(str(int(event["data"][7], base=16)))
+        borrowed_collateral_face_amount = decimal.Decimal(
+            str(int(event["data"][7], base=16))
+        )
         debt_category = int(event["data"][10], base=16)
         # Several initial loans have different structure of 'data'.
         try:
             original_collateral_token = get_symbol(event["data"][14])
-            original_collateral_face_amount = decimal.Decimal(str(int(event["data"][17], base=16)))
+            original_collateral_face_amount = decimal.Decimal(
+                str(int(event["data"][17], base=16))
+            )
         except KeyError:
             original_collateral_token = get_symbol(event["data"][13])
-            original_collateral_face_amount = decimal.Decimal(str(int(event["data"][16], base=16)))
+            original_collateral_face_amount = decimal.Decimal(
+                str(int(event["data"][16], base=16))
+            )
 
-        self.loan_entities[loan_id] = HashstackV0LoanEntity(user=user, debt_category=debt_category)
+        self.loan_entities[loan_id] = HashstackV0LoanEntity(
+            user=user, debt_category=debt_category
+        )
         # TODO: Make it possible to initialize Portfolio with some token amount directly.
         original_collateral = Portfolio()
-        original_collateral.values[original_collateral_token] = original_collateral_face_amount
+        original_collateral.values[
+            original_collateral_token
+        ] = original_collateral_face_amount
         self.loan_entities[loan_id].original_collateral = original_collateral
         borrowed_collateral = Portfolio()
-        borrowed_collateral.values[borrowed_collateral_token] = borrowed_collateral_face_amount
+        borrowed_collateral.values[
+            borrowed_collateral_token
+        ] = borrowed_collateral_face_amount
         self.loan_entities[loan_id].borrowed_collateral = borrowed_collateral
         # TODO: Make it easier to sum 2 Portfolio instances.
         self.loan_entities[loan_id].collateral.values = {
@@ -281,9 +302,13 @@ class HashstackV0State(State):
         # https://starkscan.co/event/0x02df71b02fce15f2770533328d1e645b957ac347d96bd730466a2e087f24ee07_2.
         loan_id = int(event["data"][9], base=16)
         original_collateral_token = get_symbol(event["data"][0])
-        original_collateral_face_amount = decimal.Decimal(str(int(event["data"][3], base=16)))
+        original_collateral_face_amount = decimal.Decimal(
+            str(int(event["data"][3], base=16))
+        )
         original_collateral = Portfolio()
-        original_collateral.values[original_collateral_token] = original_collateral_face_amount
+        original_collateral.values[
+            original_collateral_token
+        ] = original_collateral_face_amount
         self.loan_entities[loan_id].original_collateral = original_collateral
         self.loan_entities[loan_id].collateral.values = {
             token: (
@@ -314,9 +339,13 @@ class HashstackV0State(State):
         # https://starkscan.co/event/0x03809ebcaad1647f2c6d5294706e0dc619317c240b5554848c454683a18b75ba_5.
         loan_id = int(event["data"][9], base=16)
         original_collateral_token = get_symbol(event["data"][0])
-        original_collateral_face_amount = decimal.Decimal(str(int(event["data"][3], base=16)))
+        original_collateral_face_amount = decimal.Decimal(
+            str(int(event["data"][3], base=16))
+        )
         original_collateral = Portfolio()
-        original_collateral.values[original_collateral_token] = original_collateral_face_amount
+        original_collateral.values[
+            original_collateral_token
+        ] = original_collateral_face_amount
         #  add additional info block and timestamp
         self.loan_entities[loan_id].extra_info.block = event["block_number"]
         self.loan_entities[loan_id].extra_info.timestamp = event["timestamp"]
@@ -349,7 +378,10 @@ class HashstackV0State(State):
         user = event["data"][1]
         # TODO: Is this assert needed?
         try:
-            if self.loan_entities.get(loan_id) and self.loan_entities[loan_id].user != user:
+            if (
+                self.loan_entities.get(loan_id)
+                and self.loan_entities[loan_id].user != user
+            ):
                 logging.error(
                     "In block number = {}, loan was withdrawn, but the user is different from the one in the loan entity.".format(
                         event["block_number"]
@@ -365,11 +397,15 @@ class HashstackV0State(State):
         debt_token = get_symbol(event["data"][2])
         debt_face_amount = decimal.Decimal(str(int(event["data"][4], base=16)))
         borrowed_collateral_token = get_symbol(event["data"][6])
-        borrowed_collateral_face_amount = decimal.Decimal(str(int(event["data"][7], base=16)))
+        borrowed_collateral_face_amount = decimal.Decimal(
+            str(int(event["data"][7], base=16))
+        )
         debt_category = int(event["data"][10], base=16)
 
         borrowed_collateral = Portfolio()
-        borrowed_collateral.values[borrowed_collateral_token] = borrowed_collateral_face_amount
+        borrowed_collateral.values[
+            borrowed_collateral_token
+        ] = borrowed_collateral_face_amount
         self.loan_entities[loan_id].borrowed_collateral = borrowed_collateral
         self.loan_entities[loan_id].collateral.values = {
             token: (
@@ -408,13 +444,17 @@ class HashstackV0State(State):
         # This prevents repaid loans to appear as not repaid.
         debt_face_amount = decimal.Decimal("0")
         borrowed_collateral_token = get_symbol(event["data"][6])
-        borrowed_collateral_face_amount = decimal.Decimal(str(int(event["data"][7], base=16)))
+        borrowed_collateral_face_amount = decimal.Decimal(
+            str(int(event["data"][7], base=16))
+        )
         # Based on the documentation, it seems that it's only possible to repay the whole amount.
         assert borrowed_collateral_face_amount == decimal.Decimal("0")
         debt_category = int(event["data"][10], base=16)
 
         borrowed_collateral = Portfolio()
-        borrowed_collateral.values[borrowed_collateral_token] = borrowed_collateral_face_amount
+        borrowed_collateral.values[
+            borrowed_collateral_token
+        ] = borrowed_collateral_face_amount
         # add additional info block and timestamp
         self.loan_entities[loan_id].extra_info.block = event["block_number"]
         self.loan_entities[loan_id].extra_info.timestamp = event["timestamp"]
@@ -454,7 +494,10 @@ class HashstackV0State(State):
         # https://starkscan.co/event/0x00ad0b6b00ce68a1d7f5b79cd550d7f4a15b1708b632b88985a4f6faeb42d5b1_7.
         old_loan_id = int(event["data"][0], base=16)
         old_user = event["data"][1]
-        if self.loan_entities.get(old_loan_id) and self.loan_entities[old_loan_id].user != old_user:
+        if (
+            self.loan_entities.get(old_loan_id)
+            and self.loan_entities[old_loan_id].user != old_user
+        ):
             logging.error(
                 "In block number = {}, loan was swapped, but the user is different from the one in the loan entity.".format(
                     event["block_number"]
@@ -471,13 +514,15 @@ class HashstackV0State(State):
         new_debt_token = get_symbol(event["data"][16])
         new_debt_face_amount = decimal.Decimal(str(int(event["data"][18], base=16)))
         new_borrowed_collateral_token = get_symbol(event["data"][20])
-        new_borrowed_collateral_face_amount = decimal.Decimal(str(int(event["data"][21], base=16)))
+        new_borrowed_collateral_face_amount = decimal.Decimal(
+            str(int(event["data"][21], base=16))
+        )
         new_debt_category = int(event["data"][24], base=16)
 
         new_borrowed_collateral = Portfolio()
-        new_borrowed_collateral.values[new_borrowed_collateral_token] = (
-            new_borrowed_collateral_face_amount
-        )
+        new_borrowed_collateral.values[
+            new_borrowed_collateral_token
+        ] = new_borrowed_collateral_face_amount
         # add additional info block and timestamp
         self.loan_entities[new_loan_id].extra_info.block = event["block_number"]
         self.loan_entities[new_loan_id].extra_info.timestamp = event["timestamp"]
@@ -524,9 +569,13 @@ class HashstackV0State(State):
         # https://starkscan.co/event/0x050db0ed93d7abbfb152e16608d4cf4dbe0b686b134f890dd0ad8418b203c580_2.
         loan_id = int(event["data"][11], base=16)
         original_collateral_token = get_symbol(event["data"][0])
-        original_collateral_face_amount = decimal.Decimal(str(int(event["data"][3], base=16)))
+        original_collateral_face_amount = decimal.Decimal(
+            str(int(event["data"][3], base=16))
+        )
         original_collateral = Portfolio()
-        original_collateral.values[original_collateral_token] = original_collateral_face_amount
+        original_collateral.values[
+            original_collateral_token
+        ] = original_collateral_face_amount
         try:
             self.loan_entities[loan_id].original_collateral = original_collateral
             self.loan_entities[loan_id].collateral.values = {
@@ -537,7 +586,9 @@ class HashstackV0State(State):
                 for token in TOKEN_SETTINGS
             }
         except TypeError as exc:
-            logging.getLogger("ErrorHandler").info(f"TypeErrorHandler: {exc}: {loan_id=}")
+            logging.getLogger("ErrorHandler").info(
+                f"TypeErrorHandler: {exc}: {loan_id=}"
+            )
             return
         # add additional info block and timestamp
         self.loan_entities[loan_id].extra_info.block = event["block_number"]
@@ -566,14 +617,18 @@ class HashstackV0State(State):
         # This prevents liquidated loans to appear as not repaid.
         debt_face_amount = decimal.Decimal("0")
         borrowed_collateral_token = get_symbol(event["data"][6])
-        borrowed_collateral_face_amount = decimal.Decimal(str(int(event["data"][7], base=16)))
+        borrowed_collateral_face_amount = decimal.Decimal(
+            str(int(event["data"][7], base=16))
+        )
         # Based on the documentation, it seems that it's only possible to
         # liquidate the whole amount.
         assert borrowed_collateral_face_amount == decimal.Decimal("0")
         debt_category = int(event["data"][10], base=16)
 
         borrowed_collateral = Portfolio()
-        borrowed_collateral.values[borrowed_collateral_token] = borrowed_collateral_face_amount
+        borrowed_collateral.values[
+            borrowed_collateral_token
+        ] = borrowed_collateral_face_amount
         # add additional info block and timestamp
         self.loan_entities[loan_id].extra_info.block = event["block_number"]
         self.loan_entities[loan_id].extra_info.timestamp = event["timestamp"]
@@ -650,7 +705,9 @@ class HashstackV0State(State):
                 continue
 
             # Find out how much of the `debt_token` will be liquidated.
-            max_liquidated_amount += loan_entity.compute_debt_to_be_liquidated(debt_usd=debt_usd)
+            max_liquidated_amount += loan_entity.compute_debt_to_be_liquidated(
+                debt_usd=debt_usd
+            )
         return max_liquidated_amount
 
     def compute_number_of_active_users(self) -> int:

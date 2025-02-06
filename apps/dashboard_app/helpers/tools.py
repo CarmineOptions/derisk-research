@@ -11,12 +11,10 @@ import requests
 from data_handler.handlers.loan_states.abstractions import State
 from shared.amms import SwapAmm
 from shared.blockchain_call import func_call
-from shared.custom_types import TokenParameters, Prices
-
+from shared.custom_types import Prices, TokenParameters
 from starknet_py.cairo.felt import decode_shortstring
 
 AMMS = ["10kSwap", "MySwap", "SithSwap", "JediSwap"]
-kSTRK = "0x045cd05ee2caaac3459b87e5e2480099d201be2f62243f839f00e10dde7f500c"
 
 
 def float_range(start: float, stop: float, step: float) -> Iterator[float]:
@@ -97,10 +95,8 @@ def get_prices(token_decimals: dict[str, int]) -> dict[str, float]:
     tokens_info = response.json()
 
     # Create a map of token addresses to token information, applying add_leading_zeros conditionally
-    # TODO: Add kSTRK token later
-    # FIXME: Remove `if` condition once kSTRK token will be added
     token_info_map = {
-        add_leading_zeros(token["address"]): token for token in tokens_info if add_leading_zeros(token["address"]) != kSTRK
+        add_leading_zeros(token["address"]): token for token in tokens_info
     }
 
     prices = {}
