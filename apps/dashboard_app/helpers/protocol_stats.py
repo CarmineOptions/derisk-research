@@ -10,11 +10,18 @@ import numpy as np
 import pandas as pd
 from data_handler.handlers import blockchain_call
 from shared.constants import TOKEN_SETTINGS
-from shared.state import State
 from shared.custom_types import Prices
+from shared.state import State
 
-from dashboard_app.helpers.loans_table import get_protocol, get_supply_function_call_parameters
-from dashboard_app.helpers.tools import add_leading_zeros, get_addresses, get_underlying_address
+from dashboard_app.helpers.loans_table import (
+    get_protocol,
+    get_supply_function_call_parameters,
+)
+from dashboard_app.helpers.tools import (
+    add_leading_zeros,
+    get_addresses,
+    get_underlying_address,
+)
 
 
 def get_general_stats(
@@ -109,6 +116,7 @@ def get_supply_stats(
                 "wstETH supply": token_supplies.get("wstETH", default_value),
                 "LORDS supply": token_supplies.get("LORDS", default_value),
                 "STRK supply": token_supplies.get("STRK", default_value),
+                "kSTRK supply": token_supplies.get("kSTRK", default_value),
             }
         )
     df = pd.DataFrame(data)
@@ -182,6 +190,7 @@ def get_collateral_stats(
                 "wstETH collateral": token_collaterals["wstETH"],
                 "LORDS collateral": token_collaterals["LORDS"],
                 "STRK collateral": token_collaterals["STRK"],
+                "kSTRK collateral": token_collaterals["kSTRK"],
             }
         )
     return pd.DataFrame(data)
@@ -241,6 +250,7 @@ def get_debt_stats(
                 "wstETH debt": token_debts["wstETH"],
                 "LORDS debt": token_debts["LORDS"],
                 "STRK debt": token_debts["STRK"],
+                "kSTRK debt": token_debts["kSTRK"],
             }
         )
     data = pd.DataFrame(data)
@@ -283,7 +293,7 @@ def get_utilization_stats(
     total_utilization = total_utilization.replace([np.inf, -np.inf], 0).fillna(0)
     data["Total utilization"] = total_utilization.round(4)
 
-    tokens = ["eth", "wbtc", "usdc", "dai", "usdt", "wsteth", "lords", "strk"]
+    tokens = ["eth", "wbtc", "usdc", "dai", "usdt", "wsteth", "lords", "strk", "kstrk"]
 
     for token in tokens:
         debt_col = f"{token} debt"

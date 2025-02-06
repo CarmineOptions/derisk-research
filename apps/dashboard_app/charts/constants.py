@@ -9,6 +9,7 @@ SUPPLY_STATS_TOKEN_SYMBOLS_MAPPING = {
     "wsteth": "wstETH",
     "lords": "LORDS",
     "strk": "STRK",
+    "kstrk": "kSTRK",
 }
 
 
