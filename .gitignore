@@ -2,6 +2,8 @@ __pycache__
 .ipynb_checkpoints
 .vscode
 .env
+.venv
+shell.nix
 storage_credentials.json
 env/
 .venv
