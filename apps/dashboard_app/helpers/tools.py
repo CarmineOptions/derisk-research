@@ -98,6 +98,7 @@ def get_prices(token_decimals: dict[str, int]) -> dict[str, float]:
 
     # Create a map of token addresses to token information, applying add_leading_zeros conditionally
     # TODO: Add kSTRK token later
+    # FIXME: Remove `if` condition once kSTRK token will be added
     token_info_map = {
         add_leading_zeros(token["address"]): token for token in tokens_info if add_leading_zeros(token["address"]) != kSTRK
     }
