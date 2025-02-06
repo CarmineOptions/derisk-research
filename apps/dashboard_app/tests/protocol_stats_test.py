@@ -295,7 +295,9 @@ def test_get_utilization_stats():
             "Total supply (USD)": [4000],
             **{
                 f"{token} supply": [
-                    1000 if token in ["USDC", "DAI", "USDT", "LORDS", "STRK"] else 1
+                    1000
+                    if token in ["USDC", "DAI", "USDT", "LORDS", "STRK", "kSTRK"]
+                    else 1
                 ]
                 for token in [
                     "ETH",
@@ -306,6 +308,7 @@ def test_get_utilization_stats():
                     "wstETH",
                     "LORDS",
                     "STRK",
+                    "kSTRK",
                 ]
             },
         }
@@ -316,7 +319,9 @@ def test_get_utilization_stats():
             "Protocol": ["zkLend"],
             **{
                 f"{token} debt": [
-                    500 if token in ["USDC", "DAI", "USDT", "LORDS", "STRK"] else 0.5
+                    500
+                    if token in ["USDC", "DAI", "USDT", "LORDS", "STRK", "kSTRK"]
+                    else 0.5
                 ]
                 for token in [
                     "ETH",
@@ -327,6 +332,7 @@ def test_get_utilization_stats():
                     "wstETH",
                     "LORDS",
                     "STRK",
+                    "kSTRK",
                 ]
             },
         }
@@ -371,6 +377,7 @@ def test_get_utilization_stats_division_by_zero():
                     "wstETH",
                     "LORDS",
                     "STRK",
+                    "kSTRK",
                 ]
             },
         }
@@ -390,6 +397,7 @@ def test_get_utilization_stats_division_by_zero():
                     "wstETH",
                     "LORDS",
                     "STRK",
+                    "kSTRK",
                 ]
             },
         }
