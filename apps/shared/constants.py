@@ -54,6 +54,11 @@ TOKEN_SETTINGS: dict[str, TokenSettings] = {
         decimal_factor=Decimal("1e18"),
         address="0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d",
     ),
+    "kSTRK": TokenSettings(
+        symbol="kSTRK",
+        decimal_factor=Decimal("1e18"),
+        address="0x045cd05ee2caaac3459b87e5e2480099d201be2f62243f839f00e10dde7f500c",
+    ),
 }
 POOL_MAPPING: dict[str, dict[str, Union[List, str]]] = {
     "ETH_USDC": {
@@ -194,6 +199,7 @@ class ProtocolIDs(Enum):
         :return: list of values
         """
         return [choice.value for choice in cls]
+
 
 # FIXME Uncomment when DAI is added correct address
 PAIRS: list[str] = [

@@ -63,6 +63,11 @@ TOKEN_SETTINGS: dict[str, TokenSettings] = {
         decimal_factor=1e18,
         address="0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d",
     ),
+    "kSTRK": TokenSettings(
+        symbol="kSTRK",
+        decimal_factor=1e18,
+        address="0x045cd05ee2caaac3459b87e5e2480099d201be2f62243f839f00e10dde7f500c",
+    ),
 }
 
 
@@ -98,4 +103,5 @@ UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES = {
     "USDT": "0x068f5c6a61780768455de69077e07e89787839bf8166decfbf92b645209c0fb8",
     "DAI": "0x00da114221cb83fa859dbdb4c44beeaa0bb37c7537ad5ae66fe5e0efd20e6eb3",
     "DAI V2": "0x05574eb6b8789a91466f902c380d978e472db68170ff82a5b650b95a58ddf4ad",
+    "kSTRK": "0x045cd05ee2caaac3459b87e5e2480099d201be2f62243f839f00e10dde7f500c",
 }
