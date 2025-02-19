@@ -7,13 +7,13 @@ networks:
 services:
   backend:
     build:
-      context: ../apps
+      context: ../../apps
       dockerfile: data_handler/Dockerfile
     restart: always
     volumes:
-      - ../apps/:/app
+      - ../../apps/:/app
     env_file:
-      - ../apps/data_handler/.env
+      - ../../apps/data_handler/.env
     expose:
       - "8000"
     networks:
@@ -26,7 +26,7 @@ services:
     environment:
       - PYTHONPATH=/app
     volumes:
-      - ../apps/:/app
+      - ../../apps/:/app
     depends_on:
       - redis
     networks:
@@ -34,13 +34,13 @@ services:
 
   celery_beat:
     build:
-      context: ../apps/data_handler/nginx
+      context: ../../apps/data_handler/nginx
       dockerfile: Dockerfile
     command: celery -A celery_app.celery_conf beat --loglevel=INFO
     environment:
       - PYTHONPATH=/app
     volumes:
-      - ../apps:/app
+      - ../../apps:/app
     depends_on:
       - redis
     networks:
@@ -67,7 +67,7 @@ services:
       - "80:80"
     volumes:
       - ./nginx:/etc/nginx/user_conf.d:ro
-      - ../apps/data_handler/nginx:/app
+      - ../../apps/data_handler/nginx:/app
     depends_on:
       - backend
     networks:
