@@ -20,7 +20,7 @@ services:
       - data_handler_network
   celery:
     build:
-      context: ../apps
+      context: ../../apps
       dockerfile: data_handler/Dockerfile
     command: celery -A data_handler.celery_app.celery_conf worker --loglevel=INFO
     environment:
@@ -61,7 +61,7 @@ services:
     image: nginx
     container_name: nginx
     build:
-      context: ../apps/data_handler/nginx
+      context: ../../apps/data_handler/nginx
       dockerfile: Dockerfile
     ports:
       - "80:80"

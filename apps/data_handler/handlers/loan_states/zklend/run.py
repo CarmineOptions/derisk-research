@@ -142,8 +142,9 @@ class ZkLendLoanStateComputation(LoanStateComputationBase):
         """
         Runs the loan state computation for the specific protocol.
         """
-        max_retries = 5
+        max_retries = 10000
         retry = 0
+        self.last_block = 48668  # FIXME change it after first run on the server
         zklend_protocol_address = self.PROTOCOL_ADDRESSES
 
         logger.info(f"Default last block: {self.last_block}")
