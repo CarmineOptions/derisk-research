@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, AsyncMock
 from dashboard_app.helpers.load_data import DashboardDataHandler
 
 @pytest.fixture
@@ -8,32 +8,47 @@ def mock_data_connector():
     with patch("dashboard_app.helpers.load_data.DataConnector") as MockConnector:
         connector = MockConnector
         # Mocking fetch_data calls with dummy data
-        connector.fetch_data.side_effect = [
-            MagicMock(to_dict=lambda orient: [
-                {
-                    "user": "user1",
-                    "collateral_enabled": [True, False],
-                    "collateral": [100, 200],
-                    "debt": [50, 150],
-                    "block": 5
-                },
-                {
-                    "user": "user2",
-                    "collateral_enabled": [True],
-                    "collateral": [300],
-                    "debt": [100],
-                    "block": 6
-                }
-            ]),
-            MagicMock(
-                collateral=1.5,
-                debt=2.0
-            ),
-        ]
+
+        def fetch_data_side_effect(query):
+            if query == connector.ZKLEND_SQL_QUERY:
+                return MagicMock(to_dict=lambda orient: [
+                    {
+                        "user": "user1",
+                        "collateral_enabled": [True, False],
+                        "collateral": [100, 200],
+                        "debt": [50, 150],
+                        "block": 5
+                    },
+                    {
+                        "user": "user2",
+                        "collateral_enabled": [True],
+                        "collateral": [300],
+                        "debt": [100],
+                        "block": 6
+                    }
+                ])
+            elif query == connector.ZKLEND_INTEREST_RATE_SQL_QUERY:
+                return MagicMock(
+                    collateral=1.5,
+                    debt=2.0
+                )
+            else:
+                raise ValueError(f"Unexpected query: {query}")
+
+        connector.fetch_data.side_effect = fetch_data_side_effect
         yield connector
 
 @pytest.fixture
-def handler(mock_data_connector):
+def mock_zklend_state():
+    """Fixture to mock the ZkLendState."""
+    with patch("dashboard_app.helpers.load_data.ZkLendState") as MockZkLendState:
+        state = MockZkLendState.return_value
+        state.load_entities = MagicMock()
+        state.collect_token_parameters = AsyncMock() 
+        yield state
+
+@pytest.fixture
+def handler(mock_data_connector, mock_zklend_state):
     """Fixture to initialize DashboardDataHandler."""
     with patch("dashboard_app.helpers.load_data.DataConnector", return_value=mock_data_connector):
         handler = DashboardDataHandler()
