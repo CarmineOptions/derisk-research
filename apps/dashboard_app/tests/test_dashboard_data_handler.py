@@ -115,7 +115,9 @@ def test_set_prices(handler):
 
 @patch("dashboard_app.helpers.protocol_stats.add_leading_zeros", return_value="token1")
 @patch("dashboard_app.helpers.load_data.get_loans_table_data")
-def test_load_data_success(mock_get_loans_table_data, mock_add_leading_zeros, handler):
+def test_load_data_success(
+    mock_get_loans_table_data, mock_add_leading_zeros, handler, capfd
+):
     """Test for successful data loading in load_data method."""
     mock_get_loans_table_data.return_value = DataFrame(
         [
@@ -145,18 +147,22 @@ def test_load_data_success(mock_get_loans_table_data, mock_add_leading_zeros, ha
     )
     handler._collect_token_parameters = MagicMock()
     handler._set_underlying_addresses_to_decimals = MagicMock()
-    handler._get_loan_stats = MagicMock(return_value={"loan_data": "test"})
-    handler._get_general_stats = MagicMock(return_value={"general_stats": "test"})
-    handler._get_collateral_stats = MagicMock(return_value={"collateral_stats": "test"})
-    handler._get_debt_stats = MagicMock(return_value={"debt_stats": "test"})
-    handler._get_utilization_stats = MagicMock(
-        return_value={"utilization_stats": "test"}
+
+    handler._get_collateral_stats = MagicMock(
+        return_value=DataFrame([{"collateral_stats": "test"}])
+    )
+    handler._get_debt_stats = MagicMock(
+        return_value=DataFrame([{"debt_stats": "test"}])
     )
 
     result = handler.load_data()
     assert len(result) == 6
-    handler._collect_token_parameters.assert_called_once()
-    handler._set_underlying_addresses_to_decimals.assert_called_once()
+    assert result[0] == handler.zklend_state
+    assert result[1].to_dict(orient="records")[0].get("protocol") == "zkLend"
+    assert result[2].to_dict(orient="records")[0].get("protocol") == "zkLend"
+    assert result[3].to_dict(orient="records")[0].get("collateral_stats") == "test"
+    assert result[4].to_dict(orient="records")[0].get("debt_stats") == "test"
+    assert result[5].to_dict(orient="records")[0].get("Protocol") == "zkLend"
 
 
 def test_load_data_missing_data(handler):
