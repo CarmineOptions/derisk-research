@@ -374,8 +374,14 @@ def get_user_history(user_id: str, df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: A DataFrame showing the history of deposits, collateral, and debt.
     """
-    user_df = df[df["User"] == user_id][["Collateral (USD)", "Debt (USD)"]].copy()
-    user_df.rename(columns={"Collateral (USD)": "Collateral", "Debt (USD)": "Debt"}, inplace=True)
-    user_df.insert(0, "Transaction", user_df.index + 1)
-    return user_df
+    try:
+        user_df = df[df["User"] == user_id][
+            ["Collateral (USD)", "Debt (USD)"]]
+            .copy()
+        user_df.rename(columns={"Collateral (USD)": "Collateral", "Debt (USD)": "Debt"}, inplace=True)
+        user_df.insert(0, "Transaction", user_df.index + 1)
+        return user_df
+    except KeyError:
+        print(f"User ID {user_id} not found in the DataFrame.")
+        return pd.DataFrame()
 
