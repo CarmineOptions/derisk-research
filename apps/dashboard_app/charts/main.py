@@ -1,6 +1,7 @@
 """
 This module defines the Dashboard class for rendering a DeRisk dashboard using Streamlit.
 """
+
 import numpy as np
 import pandas as pd
 import plotly
@@ -11,6 +12,7 @@ from shared.helpers import (
     extract_token_addresses,
     fetch_token_symbols_from_set_of_loan_addresses,
     update_loan_data_with_symbols,
+    fetch_user_data
 )
 
 from helpers.settings import (
@@ -25,6 +27,8 @@ from .main_chart_figure import (
     get_bar_chart_figures,
     get_main_chart_figure,
     get_specific_loan_usd_amounts,
+    get_user_history,
+    display_user_history_chart
 )
 from .utils import (
     get_protocol_data_mappings,
@@ -33,6 +37,7 @@ from .utils import (
     transform_loans_data,
     transform_main_chart_data,
 )
+ 
 
 
 class Dashboard:
@@ -385,6 +390,13 @@ class Dashboard:
                     figure = self._plot_chart(token, "supply")
                     st.plotly_chart(figure, True)
 
+    def get_user_history(self, wallet_id):
+        """
+        Fetch and return the history for a specific user.
+        """
+            user_data = fetch_user_data(wallet_id)
+                return user_data
+
         # TODO: add last update functionality
 
     def _plot_chart(self, token: str, stats_type: str) -> plotly.express.data:
@@ -427,3 +439,6 @@ class Dashboard:
         self.load_top_loans_chart()
         self.load_detail_loan_chart()
         self.load_comparison_lending_protocols_chart()
+        self.get_user_history("0x1234567890123456789012345678901234567890")
+        
+

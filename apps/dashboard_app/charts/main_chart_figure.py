@@ -385,4 +385,23 @@ def get_user_history(user_id: str, df: pd.DataFrame) -> pd.DataFrame:
         print(f"User ID {user_id} not found in the DataFrame.")
         return pd.DataFrame()
     
+def display_user_history_chart(self):
+        """
+        Display a chart showing the history of a specific user.
+        """
+        st.subheader("User History Chart")
+
+        wallet_id = st.text_input("Enter Wallet ID", "")
+
+        if wallet_id:
+            user_history = self.get_user_history(wallet_id)
+
+            if user_history.empty:
+                st.warning("No data found for this wallet ID.")
+            else:
+                fig = px.line(user_history, x='timestamp', y='balance', title=f'Balance History for Wallet {wallet_id}')
+                fig.update_layout(xaxis_title="Date", yaxis_title="Balance")
+                st.plotly_chart(fig)
+
+                
 
