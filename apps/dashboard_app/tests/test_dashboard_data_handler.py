@@ -53,11 +53,21 @@ def mock_zklend_state():
         state = MockZkLendState.return_value
         state.load_entities = MagicMock()
         state.collect_token_parameters = AsyncMock()
+        state.PROTOCOL_NAME = "zkLend"
+        state.get_protocol_name = "zkLend"
         yield state
 
 
 @pytest.fixture
-def handler(mock_data_connector, mock_zklend_state):
+def mock_get_prices():
+    """Fixture to mock the get_prices function."""
+    with patch("dashboard_app.helpers.load_data.get_prices") as MockGetPrices:
+        MockGetPrices.return_value = {"token1": 10, "token2": 20}
+        yield MockGetPrices
+
+
+@pytest.fixture
+def handler(mock_data_connector, mock_zklend_state, mock_get_prices):
     """Fixture to initialize DashboardDataHandler."""
     with patch(
         "dashboard_app.helpers.load_data.DataConnector",
@@ -70,6 +80,7 @@ def handler(mock_data_connector, mock_zklend_state):
 def test_init_dashboard_data_handler(handler):
     """Test to ensure all attributes were set during DashboardDataHandler init."""
     assert handler.zklend_state is not None
+    assert handler.zklend_state.get_protocol_name == "zkLend"
     assert handler.zklend_state.last_block_number == ZKLEND_DATA["block"].max()
     assert (
         handler.zklend_state.interest_rate_models.collateral
@@ -83,8 +94,8 @@ def test_init_dashboard_data_handler(handler):
     assert handler.states == [handler.zklend_state]
 
 
-@patch("dashboard_app.helpers.load_data.DataConnector")
 @patch("dashboard_app.helpers.load_data.ZkLendState")
+@patch("dashboard_app.helpers.load_data.DataConnector")
 def test_init_dashboard_went_sideways(mock_data_connector, mock_zklend_state):
     """Test to ensure the DashboardDataHandler init handles exceptions."""
     mock_data_connector.side_effect = Exception("DataConnector failed")
@@ -96,16 +107,46 @@ def test_init_dashboard_went_sideways(mock_data_connector, mock_zklend_state):
         handler = DashboardDataHandler()
 
 
-@patch("dashboard_app.helpers.load_data.get_prices")
-def test_load_data_success(mock_get_prices, handler):
+def test_set_prices(handler):
+    """Test for setting prices in set_prices method."""
+    handler._set_prices()
+    assert handler.prices == {"token1": 10, "token2": 20}
+
+
+@patch("dashboard_app.helpers.protocol_stats.add_leading_zeros", return_value="token1")
+@patch("dashboard_app.helpers.load_data.get_loans_table_data")
+def test_load_data_success(mock_get_loans_table_data, mock_add_leading_zeros, handler):
     """Test for successful data loading in load_data method."""
-    mock_get_prices.return_value = {"token1": 10, "token2": 20}
+    mock_get_loans_table_data.return_value = DataFrame(
+        [
+            {
+                "User": "user1",
+                "Protocol": "zkLend",
+                "Collateral (USD)": 1000,
+                "Risk-adjusted collateral (USD)": 900,
+                "Debt (USD)": 500,
+                "Health factor": 2.0,
+                "Standardized health factor": 1.8,
+                "Collateral": "100 ETH",
+                "Debt": "50 DAI",
+            },
+            {
+                "User": "user2",
+                "Protocol": "zkLend",
+                "Collateral (USD)": 2000,
+                "Risk-adjusted collateral (USD)": 1800,
+                "Debt (USD)": 1000,
+                "Health factor": 2.0,
+                "Standardized health factor": 1.8,
+                "Collateral": "200 ETH",
+                "Debt": "100 DAI",
+            },
+        ]
+    )
     handler._collect_token_parameters = MagicMock()
     handler._set_underlying_addresses_to_decimals = MagicMock()
-    handler._set_prices = MagicMock()
     handler._get_loan_stats = MagicMock(return_value={"loan_data": "test"})
     handler._get_general_stats = MagicMock(return_value={"general_stats": "test"})
-    handler._get_supply_stats = MagicMock(return_value={"supply_stats": "test"})
     handler._get_collateral_stats = MagicMock(return_value={"collateral_stats": "test"})
     handler._get_debt_stats = MagicMock(return_value={"debt_stats": "test"})
     handler._get_utilization_stats = MagicMock(
@@ -116,7 +157,6 @@ def test_load_data_success(mock_get_prices, handler):
     assert len(result) == 6
     handler._collect_token_parameters.assert_called_once()
     handler._set_underlying_addresses_to_decimals.assert_called_once()
-    handler._set_prices.assert_called_once()
 
 
 def test_load_data_missing_data(handler):
