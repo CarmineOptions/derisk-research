@@ -361,3 +361,21 @@ def get_specific_loan_usd_amounts(
         )
         debt_usd_amounts = pd.concat([debt_usd_amounts, debt_usd_amount_symbol])
     return collateral_usd_amounts, debt_usd_amounts
+
+
+def get_user_history(user_id: str, df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Fetches all changes in deposit, collateral, and debt for a given user.
+
+    Args:
+        user_id (str): The user ID to filter the data.
+        df (pd.DataFrame): The DataFrame containing loan data.
+
+    Returns:
+        pd.DataFrame: A DataFrame showing the history of deposits, collateral, and debt.
+    """
+    user_df = df[df["User"] == user_id][["Collateral (USD)", "Debt (USD)"]].copy()
+    user_df.rename(columns={"Collateral (USD)": "Collateral", "Debt (USD)": "Debt"}, inplace=True)
+    user_df.insert(0, "Transaction", user_df.index + 1)
+    return user_df
+
