@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 from dashboard_app.helpers.ekubo import EkuboLiquidity
 
 @pytest.fixture
-def sample_data(mock_data_connector):
+def sample_data():
     """Fixture to initialize sample Dataframe."""
     return pd.DataFrame(
         {
