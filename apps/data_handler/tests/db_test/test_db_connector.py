@@ -4,7 +4,6 @@ This module contains the tests for the DBConnector.
 
 import pytest
 from data_handler.db.models import (
-    HashtackCollateralDebt,
     InterestRate,
     LoanState,
     OrderBookModel,
@@ -53,24 +52,6 @@ def sample_batch_loan_states():
     ]
     return batch_loan_states
 
-
-@pytest.fixture(scope="function")
-def sample_hashstack_loan_state():
-    """
-    Sample hashstack loan state for testing.
-    :param mock_db_connector: Mock DBConnector
-    :return: Sample hashstack loan state
-    """
-    return HashtackCollateralDebt(
-        user_id="test_user",
-        loan_id=1,
-        collateral={"ETH": 100.0},
-        debt={"USDC": 1000.0},
-        original_collateral={"ETH": 120.0},
-        borrowed_collateral={"ETH": 20.0},
-        debt_category="test_category",
-        version=1,
-    )
 
 
 @pytest.fixture(scope="function")
