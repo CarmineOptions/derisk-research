@@ -2,8 +2,7 @@
 Celery configuration for scheduling periodic tasks.
 """
 
-# run_loan_states_computation_for_hashtack_v0,;
-# run_loan_states_computation_for_hashtack_v1,; run_loan_states_computation_for_nostra_alpha,;
+
 # run_loan_states_computation_for_nostra_mainnet,; run_loan_states_computation_for_zklend,;
 # run_liquidable_debt_computation_for_nostra_alpha,;
 # run_liquidable_debt_computation_for_nostra_mainnet,;
@@ -36,13 +35,6 @@ app = Celery(
 CRONTAB_TIME = os.environ.get("CRONTAB_TIME", "5")
 
 app.conf.beat_schedule = {
-    # f'run_loan_states_computation_for_hashtack_v0_every_{CRONTAB_TIME}_mins': {
-    #     'task': 'run_loan_states_computation_for_hashtack_v0',
-    #     'schedule': crontab(minute=f'*/{CRONTAB_TIME}'),
-    # },
-    # f'run_loan_states_computation_for_hashtack_v1_every_{CRONTAB_TIME}_mins': {
-    #     'task': 'run_loan_states_computation_for_hashtack_v1',
-    #     'schedule': crontab(minute=f'*/{CRONTAB_TIME}'),
     # },
     # f'run_loan_states_computation_for_zklend_every_{CRONTAB_TIME}_mins': {
     #     'task': 'run_loan_states_computation_for_zklend',
@@ -81,7 +73,7 @@ app.conf.beat_schedule = {
 from data_handler.celery_app.order_books_tasks import ekubo_order_book
 from data_handler.celery_app.tasks import run_liquidable_debt_computation_for_zklend
 
-# run_loan_states_computation_for_hashtack_v0,; run_loan_states_computation_for_hashtack_v1,;
+
 # run_loan_states_computation_for_nostra_alpha,; run_loan_states_computation_for_nostra_mainnet,;
 # run_loan_states_computation_for_zklend,; run_liquidable_debt_computation_for_nostra_alpha,;
 # run_liquidable_debt_computation_for_nostra_mainnet,;

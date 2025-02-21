@@ -11,7 +11,6 @@ from typing import List, Optional, Type, TypeVar
 from data_handler.db.database import SQLALCHEMY_DATABASE_URL
 from data_handler.db.models import (
     Base,
-    HashtackCollateralDebt,
     InterestRate,
     LoanState,
     OrderBookModel,
@@ -192,23 +191,6 @@ class DBConnector:
                 query = query.filter(model.timestamp <= end_datetime)
 
             return query.all()
-        finally:
-            db.close()
-
-    def get_last_hashstack_loan_state(self, user_id: str) -> HashtackCollateralDebt:
-        """
-        Retrieves the last loan state for a given user_id.
-        :param user_id: str - The user ID to filter by.
-        :return: HashtackCollateralDebt | None
-        """
-        db = self.Session()
-        try:
-            return (
-                db.query(HashtackCollateralDebt)
-                .filter(HashtackCollateralDebt.user_id == user_id)
-                .order_by(HashtackCollateralDebt.loan_id.desc())
-                .first()
-            )
         finally:
             db.close()
 
@@ -496,26 +478,6 @@ class InitializerDBConnector:
         finally:
             session.close()
 
-    def get_hashtack_by_loan_ids(
-        self, loan_ids: List[str], version: int
-    ) -> List[HashtackCollateralDebt]:
-        """
-        Retrieve HashtackCollateralDebt records by loan_ids.
-        :param loan_ids: A list of user IDs to filter by.
-        :param version: The version of the hashtack.
-        :return: A list of HashtackCollateralDebt objects.
-        """
-        session = self.Session()
-        try:
-            return (
-                session.query(HashtackCollateralDebt)
-                .filter(HashtackCollateralDebt.loan_id.in_(loan_ids))
-                .filter(HashtackCollateralDebt.version == version)
-                .all()
-            )
-        finally:
-            session.close()
-
     @staticmethod
     def _convert_decimal_to_float(data: dict | None) -> dict | None:
         """
@@ -571,73 +533,6 @@ class InitializerDBConnector:
             session.commit()
         finally:
             session.close()
-
-    def save_debt_category(
-        self,
-        user_id: str,
-        loan_id: str,
-        debt_category: str,
-        collateral: dict,
-        debt: dict,
-        original_collateral: dict,
-        borrowed_collateral: dict,
-        version: int,
-    ) -> None:
-        """
-        Update the debt category for a given user_id.
-        :param user_id: The user ID to update.
-        :param loan_id: The loan ID to update.
-        :param debt_category: The new debt category.
-        :param collateral: The new collateral data.
-        :param debt: The new debt data.
-        :param original_collateral: The new original collateral data.
-        :param borrowed_collateral: The new borrowed collateral data.
-        :param version: The version of the hashtack.
-        :return: None
-        """
-        session = self.Session()
-        # convert Decimal to float for JSON serialization
-        collateral = self._convert_decimal_to_float(collateral)
-        debt = self._convert_decimal_to_float(debt)
-        original_collateral = self._convert_decimal_to_float(original_collateral)
-        borrowed_collateral = self._convert_decimal_to_float(borrowed_collateral)
-
-        try:
-            record = (
-                session.query(HashtackCollateralDebt).filter_by(loan_id=loan_id).first()
-            )
-            logger.info(f"Going to save loan_id {loan_id}")
-            # if debt category is the same, update the record
-            if record and record.debt_category == debt_category:
-                return
-            # if record exists, and debt category is different, update the record
-            elif record and record.debt_category != debt_category:
-                record.loan_id = loan_id
-                record.debt_category = debt_category
-                record.collateral = collateral
-                record.debt = debt
-                record.original_collateral = original_collateral
-                record.borrowed_collateral = borrowed_collateral
-            else:
-                # Create new record if not yet created for this user
-                new_record = HashtackCollateralDebt(
-                    user_id=user_id,
-                    loan_id=loan_id,
-                    # collateral
-                    collateral=collateral,
-                    original_collateral=original_collateral,
-                    # debt
-                    debt=debt,
-                    borrowed_collateral=borrowed_collateral,
-                    debt_category=debt_category,
-                    version=version,
-                )
-                session.add(new_record)
-            session.commit()
-            logger.info(f"Saved debt category for loan_id {loan_id}")
-        finally:
-            session.close()
-
 
 class ZkLendEventDBConnector(DBConnector):
     """
