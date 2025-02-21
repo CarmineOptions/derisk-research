@@ -12,6 +12,7 @@ from shared.amms import SwapAmm
 from shared.custom_types import Prices
 from shared.state import State
 
+from constants import CommonValues
 from helpers.settings import TOKEN_SETTINGS
 from helpers.tools import (
     get_collateral_token_range,
@@ -361,3 +362,27 @@ def get_specific_loan_usd_amounts(
         )
         debt_usd_amounts = pd.concat([debt_usd_amounts, debt_usd_amount_symbol])
     return collateral_usd_amounts, debt_usd_amounts
+
+
+def get_user_history(user_id: str, df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Fetches all changes in deposit, collateral, and debt for a given user.
+
+    Args:
+        user_id (str): The user ID to filter the data.
+        df (pd.DataFrame): The DataFrame containing loan data.
+
+    Returns:
+        pd.DataFrame: A DataFrame showing the history of deposits, collateral, and debt.
+    """
+    try:
+        user_df = df[df[CommonValues.user.value] == user_id][
+            [CommonValues.collateral_usd.value, CommonValues.debt_usd.value]].copy()
+        user_df.rename(columns={CommonValues.collateral_usd.value: "Collateral", CommonValues.debt_usd.value: "Debt"}, inplace=True)
+        user_df.insert(0, "Transaction", user_df.index + 1)
+        return user_df
+    except KeyError:
+        print(f"User ID {user_id} not found in the DataFrame.")
+        return pd.DataFrame()
+    
+
