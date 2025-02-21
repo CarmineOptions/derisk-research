@@ -58,35 +58,6 @@ def test_save_collateral_enabled_by_user(mock_initializer_db_connector):
     )
 
 
-def test_save_debt_category(mock_initializer_db_connector):
-    """
-    Test the save_debt_category method.
-    :param mock_initializer_db_connector: Mock InitializerDBConnector
-    :return: None
-    """
-    mock_initializer_db_connector.save_debt_category.return_value = None
-    mock_initializer_db_connector.save_debt_category(
-        user_id="test_user",
-        loan_id="test_loan",
-        debt_category="test_category",
-        collateral={"ETH": 100.0},
-        debt={"USDC": 1000.0},
-        original_collateral={"ETH": 120.0},
-        borrowed_collateral={"ETH": 20.0},
-        version=1,
-    )
-    mock_initializer_db_connector.save_debt_category.assert_called_once_with(
-        user_id="test_user",
-        loan_id="test_loan",
-        debt_category="test_category",
-        collateral={"ETH": 100.0},
-        debt={"USDC": 1000.0},
-        original_collateral={"ETH": 120.0},
-        borrowed_collateral={"ETH": 20.0},
-        version=1,
-    )
-
-
 def test_get_zklend_by_user_ids_empty_list(mock_initializer_db_connector):
     """
     Test the get_zklend_by_user_ids method with an empty list of user IDs.
