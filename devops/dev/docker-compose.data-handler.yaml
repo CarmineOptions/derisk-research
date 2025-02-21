@@ -21,6 +21,30 @@ services:
     depends_on:
       - db
 
+  celery:
+    build:
+      context: ../../apps
+      dockerfile: data_handler/Dockerfile
+    command: celery -A data_handler.celery_app.celery_conf worker --loglevel=INFO
+    environment:
+      - PYTHONPATH=/app
+    volumes:
+      - ../../apps/:/app
+    networks:
+      - data_handler_network
+
+  celery_beat:
+    build:
+      context: ../../apps/data_handler/nginx
+      dockerfile: Dockerfile
+    command: celery -A celery_app.celery_conf beat --loglevel=INFO
+    environment:
+      - PYTHONPATH=/app
+    volumes:
+      - ../../apps:/app
+    networks:
+      - data_handler_network
+
   db:
     image: postgres:16
     container_name: postgres_dev
