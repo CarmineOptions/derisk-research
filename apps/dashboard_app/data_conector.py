@@ -77,6 +77,20 @@ class DataConnector:
             if os.getenv(var) is None:
                 raise EnvironmentError(f"Environment variable {var} is not set.")
 
+    def fetch_data_from_csv(self, file_path: str) -> pd.DataFrame:
+        """
+        Fetch data from a CSV file.
+
+        :param file_path: Path to the CSV file.
+        :return: DataFrame containing the data from the CSV file.
+        """
+        try:
+            df = pd.read_csv(file_path)
+            return df
+        except Exception as e:
+            print(f"Error reading CSV file: {e}")
+            return None
+
 
 if __name__ == "__main__":
     connector = DataConnector()
