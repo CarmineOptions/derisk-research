@@ -1,7 +1,10 @@
-import pytest
-import pandas as pd
 from unittest.mock import MagicMock, patch
+
+import pandas as pd
+import pytest
+
 from dashboard_app.helpers.ekubo import EkuboLiquidity
+
 
 @pytest.fixture
 def sample_data():
@@ -15,6 +18,7 @@ def sample_data():
         }
     )
 
+
 @pytest.fixture
 def liquidity_instance(sample_data):
     """Fixture for initializing EkuboLiquidity instance."""
@@ -23,6 +27,7 @@ def liquidity_instance(sample_data):
         collateral_token="0x0000000000000000000000000000000000000001",
         debt_token="0x0000000000000000000000000000000000000002",
     )
+
 
 @patch("requests.get")
 def test_fetch_liquidity_bids(mock_get, liquidity_instance):
@@ -38,6 +43,7 @@ def test_fetch_liquidity_bids(mock_get, liquidity_instance):
     assert result["prices"] == (1.0, 1.1, 1.2)
     assert result["quantities"] == (50.0, 40.0, 30.0)
 
+
 @patch("requests.get")
 def test_fetch_liquidity_asks(mock_get, liquidity_instance):
     """Test fetch_liquidity() correctly parses API response for asks."""
@@ -51,6 +57,7 @@ def test_fetch_liquidity_asks(mock_get, liquidity_instance):
     assert result["type"] == "asks"
     assert result["prices"] == (1.0, 1.1, 1.2)
     assert result["quantities"] == (20.0, 15.0, 10.0)
+
 
 def test_apply_liquidity_to_dataframe(liquidity_instance):
     """Test apply_liquidity_to_dataframe updates DataFrame correctly."""
@@ -66,17 +73,32 @@ def test_apply_liquidity_to_dataframe(liquidity_instance):
     assert "debt_token_supply" in updated_df.columns
     assert updated_df["debt_token_supply"].iloc[0] >= 100  # Supply should increase
 
+
 def test_remove_leading_zeros():
     """Test _remove_leading_zeros correctly removes extra zeros."""
-    assert EkuboLiquidity._remove_leading_zeros("0x0000000000000000000000000000000000001234") == "0x1234"
-    assert EkuboLiquidity._remove_leading_zeros("0x000000000000000000000000000000000000abcd") == "0xabcd"
+    assert (
+        EkuboLiquidity._remove_leading_zeros(
+            "0x0000000000000000000000000000000000001234"
+        )
+        == "0x1234"
+    )
+    assert (
+        EkuboLiquidity._remove_leading_zeros(
+            "0x000000000000000000000000000000000000abcd"
+        )
+        == "0xabcd"
+    )
+
 
 def test_get_available_liquidity(liquidity_instance):
     """Test _get_available_liquidity retrieves correct sum of liquidity."""
     data = pd.DataFrame({"price": [1.0, 1.1, 1.2], "quantity": [50.0, 40.0, 30.0]})
-    result = liquidity_instance._get_available_liquidity(data, price=1.05, price_diff=0.1, bids=True)
-    
+    result = liquidity_instance._get_available_liquidity(
+        data, price=1.05, price_diff=0.1, bids=True
+    )
+
     assert result == 50.0  # Only one price in range [0.95, 1.05]
+
 
 @patch("requests.get")
 def test_fetch_liquidity_fails(mock_get, liquidity_instance):

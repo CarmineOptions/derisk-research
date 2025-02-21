@@ -118,18 +118,26 @@ class EkuboLiquidity:
 
                 if data["type"] in liquidity:
                     try:
-                        data["prices"], data["quantities"] = zip(*liquidity[data["type"]])
-                        return {"type": data["type"], "prices": data["prices"], "quantities": data["quantities"]}
+                        data["prices"], data["quantities"] = zip(
+                            *liquidity[data["type"]]
+                        )
+                        return {
+                            "type": data["type"],
+                            "prices": data["prices"],
+                            "quantities": data["quantities"],
+                        }
                     except ValueError:
                         logging.warning("Invalid response format, retrying...")
-                
-            logging.warning(f"API request failed (attempt {attempt + 1}/{max_retries}), retrying in {retry_delay} seconds...")
+
+            logging.warning(
+                f"API request failed (attempt {attempt + 1}/{max_retries}), retrying in {retry_delay} seconds..."
+            )
             time.sleep(retry_delay)
             attempt += 1
 
         logging.error("Max retries reached. Could not fetch liquidity.")
         return None
-    
+
     def _get_available_liquidity(
         self, data: pandas.DataFrame, price: float, price_diff: float, bids: bool
     ) -> float:
