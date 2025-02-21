@@ -25,8 +25,8 @@ def test_get_user_history(data_connector):
     user_id = '0x04aa93bc6f2d76e90474cc82914c219bcdcfb91511225e08b6a284a62e8ac6e1'
     expected_result = pd.DataFrame({
         'Transaction': [1]
-        'collateral': [54.685892],
-        'debt': [11.343674]
+        CommonValues.collateral_usd.value: [54.685892],
+        CommonValues.debt_usd.value:: [11.343674]
     })
 
     result = get_user_history(data_connector, user_id)
