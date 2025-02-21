@@ -1,8 +1,30 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from pandas import DataFrame
 
 from dashboard_app.helpers.load_data import DashboardDataHandler
+
+ZKLEND_DATA = DataFrame(
+    [
+        {
+            "user": "user1",
+            "collateral_enabled": [True, False],
+            "collateral": [100, 200],
+            "debt": [50, 150],
+            "block": 5,
+        },
+        {
+            "user": "user2",
+            "collateral_enabled": [True],
+            "collateral": [300],
+            "debt": [100],
+            "block": 6,
+        },
+    ]
+)
+
+ZKLEND_INTEREST_RATE = DataFrame({"collateral": [1.5], "debt": [2.0]})
 
 
 @pytest.fixture
@@ -14,26 +36,9 @@ def mock_data_connector():
         # Mocking fetch_data calls with dummy data
         def fetch_data_side_effect(query):
             if query == connector.ZKLEND_SQL_QUERY:
-                return MagicMock(
-                    to_dict=lambda orient: [
-                        {
-                            "user": "user1",
-                            "collateral_enabled": [True, False],
-                            "collateral": [100, 200],
-                            "debt": [50, 150],
-                            "block": 5,
-                        },
-                        {
-                            "user": "user2",
-                            "collateral_enabled": [True],
-                            "collateral": [300],
-                            "debt": [100],
-                            "block": 6,
-                        },
-                    ]
-                )
+                return ZKLEND_DATA
             elif query == connector.ZKLEND_INTEREST_RATE_SQL_QUERY:
-                return MagicMock(collateral=1.5, debt=2.0)
+                return ZKLEND_INTEREST_RATE
             else:
                 raise ValueError(f"Unexpected query: {query}")
 
@@ -62,15 +67,38 @@ def handler(mock_data_connector, mock_zklend_state):
         yield handler
 
 
-# Positive Scenario: Test Initialization
 def test_init_dashboard_data_handler(handler):
+    """Test to ensure all attributes were set during DashboardDataHandler init."""
     assert handler.zklend_state is not None
+    assert handler.zklend_state.last_block_number == ZKLEND_DATA["block"].max()
+    assert (
+        handler.zklend_state.interest_rate_models.collateral
+        == ZKLEND_INTEREST_RATE["collateral"].iloc[0]
+    )
+    assert (
+        handler.zklend_state.interest_rate_models.debt
+        == ZKLEND_INTEREST_RATE["debt"].iloc[0]
+    )
+    assert handler.prices is None
     assert handler.states == [handler.zklend_state]
 
 
-# Positive Scenario: Test Successful Data Loading
+@patch("dashboard_app.helpers.load_data.DataConnector")
+@patch("dashboard_app.helpers.load_data.ZkLendState")
+def test_init_dashboard_went_sideways(mock_data_connector, mock_zklend_state):
+    """Test to ensure the DashboardDataHandler init handles exceptions."""
+    mock_data_connector.side_effect = Exception("DataConnector failed")
+    with pytest.raises(Exception, match="DataConnector failed"):
+        handler = DashboardDataHandler()
+    mock_data_connector.side_effect = None
+    mock_zklend_state.side_effect = Exception("ZkLendState failed")
+    with pytest.raises(Exception, match="ZkLendState failed"):
+        handler = DashboardDataHandler()
+
+
 @patch("dashboard_app.helpers.load_data.get_prices")
 def test_load_data_success(mock_get_prices, handler):
+    """Test for successful data loading in load_data method."""
     mock_get_prices.return_value = {"token1": 10, "token2": 20}
     handler._collect_token_parameters = MagicMock()
     handler._set_underlying_addresses_to_decimals = MagicMock()
@@ -91,7 +119,6 @@ def test_load_data_success(mock_get_prices, handler):
     handler._set_prices.assert_called_once()
 
 
-# Negative Scenario: Missing or Invalid Data
 def test_load_data_missing_data(handler):
     """Test for handling missing data in load_data method."""
     handler._get_loan_stats = MagicMock(
@@ -107,9 +134,9 @@ def test_load_data_missing_data(handler):
         handler.load_data()
 
 
-# Negative Scenario: Invalid Prices
 @patch("dashboard_app.helpers.load_data.get_prices")
 def test_load_data_invalid_prices(mock_get_prices, handler):
+    """Test for handling invalid prices in load_data method."""
     mock_get_prices.side_effect = Exception("Price fetch error")
     with pytest.raises(Exception, match="Price fetch error"):
         handler._set_prices()
