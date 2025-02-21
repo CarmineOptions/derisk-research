@@ -218,19 +218,6 @@ def test_get_loans(mock_db_connector, sample_batch_loan_states):
     assert result[2].user == "user2"
 
 
-def test_get_last_hashstack_loan_state(mock_db_connector, sample_hashstack_loan_state):
-    """
-    Test the get_last_hashstack_loan_state method.
-    :param mock_db_connector: Mock DBConnector
-    :param sample_hashstack_loan_state: Sample hashstack loan state
-    :return: None
-    """
-    mock_db_connector.get_last_hashstack_loan_state.return_value = (sample_hashstack_loan_state)
-    result = mock_db_connector.get_last_hashstack_loan_state("test_user")
-    assert result.user_id == "test_user"
-    assert result.loan_id == 1
-    assert result.collateral == {"ETH": 100.0}
-    assert result.debt == {"USDC": 1000.0}
 
 
 def test_get_interest_rate_by_block(mock_db_connector, sample_interest_rate):
