@@ -12,7 +12,6 @@ from shared.helpers import (
     extract_token_addresses,
     fetch_token_symbols_from_set_of_loan_addresses,
     update_loan_data_with_symbols,
-    fetch_user_data
 )
 
 from helpers.settings import (
@@ -27,8 +26,7 @@ from .main_chart_figure import (
     get_bar_chart_figures,
     get_main_chart_figure,
     get_specific_loan_usd_amounts,
-    get_user_history,
-    display_user_history_chart
+    get_user_history
 )
 from .utils import (
     get_protocol_data_mappings,
@@ -394,7 +392,7 @@ class Dashboard:
         """
         Fetch and return the history for a specific user.
         """
-        user_data = fetch_user_data(wallet_id)
+        user_data = get_user_history(wallet_id)
         return user_data
 
         # TODO: add last update functionality
