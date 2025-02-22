@@ -26,8 +26,8 @@ class TestBaseDBLiquidableDebtDataHandler:
         """
         Test that AVAILABLE_PROTOCOLS contains all protocol names from LendingProtocolNames.
         """
-        with patch("data_handler.handlers.liquidable_debt.values.LendingProtocolNames", ["Hashstack_v0", "Hashstack_v1", "Nostra_alpha", "Nostra_mainnet", "zkLend"]):
-            assert BaseDBLiquidableDebtDataHandler.AVAILABLE_PROTOCOLS == ["Hashstack_v0", "Hashstack_v1", "Nostra_alpha", "Nostra_mainnet", "zkLend"]
+        with patch("data_handler.handlers.liquidable_debt.values.LendingProtocolNames", ["Nostra_alpha", "Nostra_mainnet", "zkLend"]):
+            assert BaseDBLiquidableDebtDataHandler.AVAILABLE_PROTOCOLS == ["Nostra_alpha", "Nostra_mainnet", "zkLend"]
     
     def test_get_prices_range_valid_token(self):
         """
