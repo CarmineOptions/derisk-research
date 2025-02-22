@@ -394,8 +394,8 @@ class Dashboard:
         """
         Fetch and return the history for a specific user.
         """
-            user_data = fetch_user_data(wallet_id)
-                return user_data
+        user_data = fetch_user_data(wallet_id)
+        return user_data
 
         # TODO: add last update functionality
 
@@ -439,6 +439,7 @@ class Dashboard:
         self.load_top_loans_chart()
         self.load_detail_loan_chart()
         self.load_comparison_lending_protocols_chart()
-        self.get_user_history("0x1234567890123456789012345678901234567890")
+        self.get_user_history()
+        
         
 

@@ -4,7 +4,8 @@ This module includes functions to generate financial charts using token price an
 
 import math
 from decimal import Decimal
-
+import streamlit as st
+import plotly.express as px
 import pandas as pd
 import plotly.express
 import plotly.graph_objs
