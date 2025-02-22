@@ -388,12 +388,21 @@ class Dashboard:
                     figure = self._plot_chart(token, "supply")
                     st.plotly_chart(figure, True)
 
-    def get_user_history(self, wallet_id):
-        """
-        Fetch and return the history for a specific user.
-        """
-        user_data = get_user_history(wallet_id)
-        return user_data
+    def get_user_history(self, wallet_id):  
+        """  
+        Fetch and return the transaction history for a specific user.  
+        """  
+        user_data = get_user_history(wallet_id)  
+        if user_data is None or user_data.empty:  
+            st.error("No data found for this user.")  
+            return None  
+
+        user_data.columns = [CommonValues.protocol.value, CommonValues.total_usd.value]  
+        user_data = user_data.sort_values(CommonValues.total_usd.value, ascending=False)  
+        user_data.reset_index(drop=True, inplace=True)  
+        
+        st.dataframe(user_data)  
+        return user_data  
 
         # TODO: add last update functionality
 
