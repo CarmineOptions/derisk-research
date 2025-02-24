@@ -100,6 +100,7 @@ class MockState:
         collateral = {"token1": MockToken("0xabc", "COLLATERAL", "0xabc")}
         debt = {"token2": MockToken("0xdef", "DEBT", "0xdef")}
     token_parameters = TokenParams()
+    
     def compute_liquidable_debt_at_price(self, *args, **kwargs):
         return 10
 
