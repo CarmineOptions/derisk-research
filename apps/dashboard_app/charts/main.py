@@ -386,6 +386,44 @@ class Dashboard:
                     st.plotly_chart(figure, True)
 
         # TODO: add last update functionality
+        
+    def load_leaderboard(self):
+        """
+        Display a leaderboard of the top 5 biggest collateral and debt per token.
+        """
+        st.header("Leaderboard: Top 5 Collateral & Debt per Token")
+        
+        if self.collateral_stats.empty or self.debt_stats.empty:
+            st.warning("No data available for leaderboard.")
+            return
+        
+        top_collateral = (
+            self.collateral_stats.groupby("token")["amount_usd"]
+            .sum()
+            .nlargest(5)
+            .reset_index()
+        )
+        top_collateral["type"] = "Collateral"
+        
+        top_debt = (
+            self.debt_stats.groupby("token")["amount_usd"]
+            .sum()
+            .nlargest(5)
+            .reset_index()
+        )
+        top_debt["type"] = "Debt"
+        
+        leaderboard_df = pd.concat([top_collateral, top_debt])
+        
+        def highlight_values(row):
+            color = "green" if row["type"] == "Collateral" else "red"
+            return [f'background-color: {color}; color: white' for _ in row]
+        
+        st.dataframe(
+            leaderboard_df.style.apply(highlight_values, axis=1),
+            hide_index=True,
+            use_container_width=True,
+        )
 
     def _plot_chart(self, token: str, stats_type: str) -> plotly.express.data:
         """
@@ -427,3 +465,4 @@ class Dashboard:
         self.load_top_loans_chart()
         self.load_detail_loan_chart()
         self.load_comparison_lending_protocols_chart()
+        self.load_leaderboard()
