@@ -6,7 +6,7 @@ There are several components in this repository, each with its own purpose and f
 - [`web_app`](./apps/web_app/README.md) - Main web application interface
 - [`legacy_app`](./apps/legacy_app/README.md) - Legacy application functionality
 - [`dashboard_app`](./apps/dashboard_app/README.md) - Analytics dashboard
-- [`shared`](./apps/shared/README.md) - Common code shared between the components
+- [`shared`](./derisk-research/blob/master/README.md) - Common code shared between the components
 
 ## Quick Start Guide
 
