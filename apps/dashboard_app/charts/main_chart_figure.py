@@ -4,8 +4,8 @@ This module includes functions to generate financial charts using token price an
 
 import math
 from decimal import Decimal
-
 import pandas as pd
+import streamlit as st  
 import plotly.express
 import plotly.graph_objs
 from shared.amms import SwapAmm
@@ -385,4 +385,28 @@ def get_user_history(user_id: str, df: pd.DataFrame) -> pd.DataFrame:
         print(f"User ID {user_id} not found in the DataFrame.")
         return pd.DataFrame()
     
+def display_user_history_chart(df: pd.DataFrame):  
+    """  
+    Displays a chart based on the user's wallet ID input to show their transaction history.  
+
+    Args:  
+        df (pd.DataFrame): The DataFrame containing all transactions.  
+    """  
+    st.subheader("Input Wallet ID to View History")  
+
+    wallet_id = st.text_input("Enter Wallet ID:")  
+
+    if wallet_id:  
+        user_history_data = get_user_history(wallet_id, df)   
+        
+        if not user_history_data.empty:  
+            st.dataframe(user_history_data)  
+
+            st.subheader(f"Collateral and Debt History for Wallet ID: {wallet_id}")  
+            chart_data = user_history_data.set_index("Transaction")[["Collateral", "Debt"]]  
+            st.line_chart(chart_data)  
+        else:  
+            st.error("No data found for this wallet ID.") 
+
+                
 
