@@ -14,16 +14,16 @@ from data_handler.handlers.loan_states.abstractions import State
 from shared.amms import SwapAmm
 from shared.constants import PAIRS
 
-from helpers.ekubo import EkuboLiquidity
-from helpers.loans_table import get_loans_table_data
-from helpers.settings import (
+from dashboard_app.helpers.ekubo import EkuboLiquidity
+from dashboard_app.helpers.loans_table import get_loans_table_data
+from dashboard_app.helpers.settings import (
     COLLATERAL_TOKENS,
     DEBT_TOKENS,
     STABLECOIN_BUNDLE_NAME,
     TOKEN_SETTINGS,
     UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES,
 )
-from helpers.tools import get_main_chart_data, get_prices
+from dashboard_app.helpers.tools import get_main_chart_data, get_prices
 
 logger = logging.getLogger(__name__)
 
@@ -308,7 +308,10 @@ def transform_main_chart_data(
 
 
 def infer_protocol_name(input_protocol: str, valid_protocols: list[str]) -> str:
-    """Find the closest matching protocol name from a list of valid protocols using fuzzy matching.
+    """
+    Find the closest matching protocol name from a list of valid protocols using fuzzy matching.
+    Handles typos, partial matches, and case insensitivity.
+    Returns the input as-is if no match is found.
 
     Args:
         input_protocol (str): The protocol name input by the user.
@@ -317,7 +320,16 @@ def infer_protocol_name(input_protocol: str, valid_protocols: list[str]) -> str:
     Returns:
         str: The closest matching protocol name if found, otherwise returns the input protocol.
     """
+    if input_protocol is None:
+        return None
+    if not input_protocol:
+        return input_protocol
+
+    input_protocol_lower = input_protocol.lower()
+    valid_protocols_lower = [protocol.lower() for protocol in valid_protocols]
+    
     closest_match = difflib.get_close_matches(
-        input_protocol, valid_protocols, n=1, cutoff=0.6
+        input_protocol_lower, valid_protocols_lower, n=1, cutoff=0.6
     )
+
     return closest_match and closest_match[0] or input_protocol
