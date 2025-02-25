@@ -49,7 +49,7 @@ class MockState(State):
 
     def __init__(self, protocol_name):
         """Initialize the mock state with a protocol name and mock loan entities."""
-        super().__init__(loan_entity_class=MockLoanEntity)  # ✅ FIXED: Explicitly pass class
+        super().__init__(loan_entity_class=MockLoanEntity)
         self.protocol_name = protocol_name
         self.loan_entities = {"User1": MockLoanEntity()}
         self.token_parameters = MagicMock()
@@ -88,7 +88,7 @@ def mock_prices_fixture():
     return Prices({"ETH": 2000})
 
 
-def test_get_loans_table_data(mock_prices_fixture):  # ✅ FIXED: Renamed function parameter
+def test_get_loans_table_data(mock_prices_fixture):
     """Test loans table data generation."""
     state = MockState("zkLend")
     loan_data_frame = get_loans_table_data(state, mock_prices_fixture)
