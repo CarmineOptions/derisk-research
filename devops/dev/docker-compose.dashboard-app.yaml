@@ -1,4 +1,20 @@
+version: '3.8'
+
 services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   streamlit:
     build:
       context: ../../apps
@@ -7,3 +23,18 @@ services:
       - "8501:8501"
     env_file:
       - ../../apps/dashboard_app/.env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_HOST: ${DB_HOST}
+      POSTGRES_PORT: ${DB_PORT}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ../../apps/dashboard_app:/app
+    entrypoint: /app/.entrypoint.sh
+
+volumes:
+  postgres_data:

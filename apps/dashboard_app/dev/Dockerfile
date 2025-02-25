@@ -1,5 +1,9 @@
 FROM python:3.10
 
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 RUN pip install poetry
@@ -11,5 +15,6 @@ RUN touch ./__init__.py
 COPY dashboard_app/ .
 COPY data_handler/ ./data_handler/
 COPY shared/ ./shared/
+ENTRYPOINT ["../.entrypoint.sh"]
 
-CMD ["streamlit", "run", "dashboard.py"]
+# Copy the requirements file and install Python dependencies
