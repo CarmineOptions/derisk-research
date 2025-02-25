@@ -1,4 +1,5 @@
 """Settings for the Nostra mainnet."""
+
 # Source: https://docs.nostra.finance/lend/deployed-contracts/lend-mainnet#core-contracts.
 NOSTRA_MAINNET_INTEREST_RATE_MODEL_ADDRESS: str = (
     "0x059a943ca214c10234b9a3b61c558ac20c005127d183b86a99a8f3c60a08b4ff"
@@ -66,6 +67,11 @@ NOSTRA_MAINNET_TOKEN_ADDRESSES: list[str] = [
     # '0x065bde349f553cf4bdd873e54cd48317eda0542764ebe5ba46984cedd940a5e4',  # iDAI V2
     # '0x0184dd6328115c2d5f038792e427f3d81d9552e40dd675e013ccbf74ba50b979',  # nDAI V2
     "0x06726ec97bae4e28efa8993a8e0853bd4bad0bd71de44c23a1cd651b026b00e7",  # dDAI V2
+    # '0x006fd4a9efd0c884e0b29506169dd2fcad6b284d5bdbd46ede424abc26d71164',  # iEKUBO
+    "0x02360bd006d42c1a17d23ebe7ae246a0764dea4ac86201884514f86754ccc7b8",  # iEKUBO-c
+    # '0x045863a5605ea7e77f2b043888a9efb1ff6e6b0fb9e62790ff987b2e084ca1f6',  # nEKUBO
+    "0x06b1063a4d5c32fef3486bf29d1719eb09481b52d31f7d86a50c64b0b8d5defb",  # nEKUBO-c
+    "0x073fa792a8ad45303db3651c34176dc419bee98bfe45791ab12f884201a90ae2",  # dEKUBO
 ]
 
 NOSTRA_MAINNET_CDP_MANAGER_ADDRESS: str = (
@@ -81,132 +87,126 @@ NOSTRA_MAINNET_DEFERRED_BATCH_CALL_ADAPTER_ADDRESS: str = (
 # Keys are tuples of event types and names, values are names of the
 # respective methods that process the given event.
 NOSTRA_MAINNET_EVENTS_TO_METHODS = {
-    ("collateral", "Transfer"):
-    "process_collateral_transfer_event",
+    ("collateral", "Transfer"): "process_collateral_transfer_event",
     (
         "collateral",
         "openzeppelin::token::erc20_v070::erc20::ERC20::Transfer",
-    ):
-    "process_collateral_transfer_event",
+    ): "process_collateral_transfer_event",
     (
         "collateral",
         "openzeppelin::token::erc20::erc20::ERC20Component::Transfer",
-    ):
-    "process_collateral_transfer_event",
+    ): "process_collateral_transfer_event",
     (
         "collateral",
         "nstr::openzeppelin::token::erc20_v070::erc20::ERC20Starkgate::Transfer",
-    ):
-    "process_collateral_transfer_event",
-    ("collateral", "Mint"):
-    "process_collateral_mint_event",
+    ): "process_collateral_transfer_event",
+    ("collateral", "Mint"): "process_collateral_mint_event",
     (
         "collateral",
         "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Mint",
-    ):
-    "process_collateral_mint_event",
-    ("collateral", "Burn"):
-    "process_collateral_burn_event",
+    ): "process_collateral_mint_event",
+    ("collateral", "Burn"): "process_collateral_burn_event",
     (
         "collateral",
         "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Burn",
-    ):
-    "process_collateral_burn_event",
-    ("debt", "Transfer"):
-    "process_debt_transfer_event",
+    ): "process_collateral_burn_event",
+    ("debt", "Transfer"): "process_debt_transfer_event",
     (
         "debt",
         "openzeppelin::token::erc20_v070::erc20::ERC20::Transfer",
-    ):
-    "process_debt_transfer_event",
+    ): "process_debt_transfer_event",
     (
         "debt",
         "openzeppelin::token::erc20::erc20::ERC20Component::Transfer",
-    ):
-    "process_debt_transfer_event",
+    ): "process_debt_transfer_event",
     (
         "debt",
         "nstr::openzeppelin::token::erc20_v070::erc20::ERC20Starkgate::Transfer",
-    ):
-    "process_debt_transfer_event",
-    ("debt", "Mint"):
-    "process_debt_mint_event",
+    ): "process_debt_transfer_event",
+    ("debt", "Mint"): "process_debt_mint_event",
     (
         "debt",
         "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Mint",
-    ):
-    "process_debt_mint_event",
-    ("debt", "Burn"):
-    "process_debt_burn_event",
+    ): "process_debt_mint_event",
+    ("debt", "Burn"): "process_debt_burn_event",
     (
         "debt",
         "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Burn",
-    ):
-    "process_debt_burn_event",
+    ): "process_debt_burn_event",
+    (
+        "interest_bearing_collateral",
+        "Mint",
+    ): "process_interest_bearing_collateral_mint_event",
+    (
+        "interest_bearing_collateral",
+        "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Mint",
+    ): "process_interest_bearing_collateral_mint_event",
+    (
+        "interest_bearing_collateral",
+        "Burn",
+    ): "process_interest_bearing_collateral_burn_event",
+    (
+        "interest_bearing_collateral",
+        "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Burn",
+    ): "process_interest_bearing_collateral_burn_event",
+    (
+        "non_interest_bearing_collateral",
+        "Mint",
+    ): "process_non_interest_bearing_collateral_mint_event",
+    (
+        "non_interest_bearing_collateral",
+        "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Mint",
+    ): "process_non_interest_bearing_collateral_mint_event",
+    (
+        "non_interest_bearing_collateral",
+        "Burn",
+    ): "process_non_interest_bearing_collateral_burn_event",
+    (
+        "non_interest_bearing_collateral",
+        "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Burn",
+    ): "process_non_interest_bearing_collateral_burn_event",
 }
 
 # Keys are event names, values denote the order in which the given events should be processed.
 NOSTRA_MAINNET_EVENTS_TO_ORDER: dict[str, str] = {
-    "InterestStateUpdated":
-    0,
+    "InterestStateUpdated": 0,
     "nostra::lending::interest_rate_model::interest_rate_model::"
-    "InterestRateModel::InterestStateUpdated":
-    1,
-    "Transfer":
-    2,
-    "openzeppelin::token::erc20_v070::erc20::ERC20::Transfer":
-    3,
-    "openzeppelin::token::erc20::erc20::ERC20Component::Transfer":
-    4,
-    "nstr::openzeppelin::token::erc20_v070::erc20::ERC20Starkgate::Transfer":
-    5,
-    "Burn":
-    6,
-    "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Burn":
-    7,
-    "Mint":
-    8,
-    "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Mint":
-    9,
+    "InterestRateModel::InterestStateUpdated": 1,
+    "Transfer": 2,
+    "openzeppelin::token::erc20_v070::erc20::ERC20::Transfer": 3,
+    "openzeppelin::token::erc20::erc20::ERC20Component::Transfer": 4,
+    "nstr::openzeppelin::token::erc20_v070::erc20::ERC20Starkgate::Transfer": 5,
+    "Burn": 6,
+    "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Burn": 7,
+    "Mint": 8,
+    "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Mint": 9,
 }
 
 NOSTRA_MAINNET_ADDRESSES_TO_EVENTS: dict[str, str] = {
-    "0x044debfe17e4d9a5a1e226dabaf286e72c9cc36abbe71c5b847e669da4503893":
-    "non_interest_bearing_collateral",
-    "0x05f296e1b9f4cf1ab452c218e72e02a8713cee98921dad2d3b5706235e128ee4":
-    "non_interest_bearing_collateral",
-    "0x0514bd7ee8c97d4286bd481c54aa0793e43edbfb7e1ab9784c4b30469dcf9313":
-    "non_interest_bearing_collateral",
-    "0x005c4676bcb21454659479b3cd0129884d914df9c9b922c1c649696d2e058d70":
-    "non_interest_bearing_collateral",
-    "0x036b68238f3a90639d062669fdec08c4d0bdd09826b1b6d24ef49de6d8141eaa":
-    "non_interest_bearing_collateral",
-    "0x05eb6de9c7461b3270d029f00046c8a10d27d4f4a4c931a4ea9769c72ef4edbb":
-    "non_interest_bearing_collateral",
-    "0x02530a305dd3d92aad5cf97e373a3d07577f6c859337fb0444b9e851ee4a2dd4":
-    "non_interest_bearing_collateral",
-    "0x040f5a6b7a6d3c472c12ca31ae6250b462c6d35bbdae17bd52f6c6ca065e30cf":
-    "non_interest_bearing_collateral",
-    "0x0142af5b6c97f02cac9c91be1ea9895d855c5842825cb2180673796e54d73dc5":
-    "non_interest_bearing_collateral",
-    "0x057146f6409deb4c9fa12866915dd952aa07c1eb2752e451d7f3b042086bdeb8":
-    "interest_bearing_collateral",
-    "0x05dcd26c25d9d8fd9fc860038dcb6e4d835e524eb8a85213a8cda5b7fff845f6":
-    "interest_bearing_collateral",
-    "0x0453c4c996f1047d9370f824d68145bd5e7ce12d00437140ad02181e1d11dc83":
-    "interest_bearing_collateral",
-    "0x04f18ffc850cdfa223a530d7246d3c6fc12a5969e0aa5d4a88f470f5fe6c46e9":
-    "interest_bearing_collateral",
-    "0x05b7d301fa769274f20e89222169c0fad4d846c366440afc160aafadd6f88f0c":
-    "interest_bearing_collateral",
-    "0x009377fdde350e01e0397820ea83ed3b4f05df30bfb8cf8055d62cafa1b2106a":
-    "interest_bearing_collateral",
-    "0x0739760bce37f89b6c1e6b1198bb8dc7166b8cf21509032894f912c9d5de9cbd":
-    "interest_bearing_collateral",
-    "0x07c2e1e733f28daa23e78be3a4f6c724c0ab06af65f6a95b5e0545215f1abc1b":
-    "interest_bearing_collateral",
-    "0x067a34ff63ec38d0ccb2817c6d3f01e8b0c4792c77845feb43571092dcf5ebb5":
-    "interest_bearing_collateral",
+    "0x044debfe17e4d9a5a1e226dabaf286e72c9cc36abbe71c5b847e669da4503893": "non_interest_bearing_collateral",
+    "0x05f296e1b9f4cf1ab452c218e72e02a8713cee98921dad2d3b5706235e128ee4": "non_interest_bearing_collateral",
+    "0x0514bd7ee8c97d4286bd481c54aa0793e43edbfb7e1ab9784c4b30469dcf9313": "non_interest_bearing_collateral",
+    "0x005c4676bcb21454659479b3cd0129884d914df9c9b922c1c649696d2e058d70": "non_interest_bearing_collateral",
+    "0x036b68238f3a90639d062669fdec08c4d0bdd09826b1b6d24ef49de6d8141eaa": "non_interest_bearing_collateral",
+    "0x05eb6de9c7461b3270d029f00046c8a10d27d4f4a4c931a4ea9769c72ef4edbb": "non_interest_bearing_collateral",
+    "0x02530a305dd3d92aad5cf97e373a3d07577f6c859337fb0444b9e851ee4a2dd4": "non_interest_bearing_collateral",
+    "0x040f5a6b7a6d3c472c12ca31ae6250b462c6d35bbdae17bd52f6c6ca065e30cf": "non_interest_bearing_collateral",
+    "0x0142af5b6c97f02cac9c91be1ea9895d855c5842825cb2180673796e54d73dc5": "non_interest_bearing_collateral",
+    "0x07d717fb27c9856ea10068d864465a2a8f9f669f4f78013967de06149c09b9af": "non_interest_bearing_collateral",
+    "0x06f8ad459c712873993e9ffb9013a469248343c3d361e4d91a8cac6f98575834": "non_interest_bearing_collateral",
+    "0x06b1063a4d5c32fef3486bf29d1719eb09481b52d31f7d86a50c64b0b8d5defb": "non_interest_bearing_collateral",
+    "0x057146f6409deb4c9fa12866915dd952aa07c1eb2752e451d7f3b042086bdeb8": "interest_bearing_collateral",
+    "0x05dcd26c25d9d8fd9fc860038dcb6e4d835e524eb8a85213a8cda5b7fff845f6": "interest_bearing_collateral",
+    "0x0453c4c996f1047d9370f824d68145bd5e7ce12d00437140ad02181e1d11dc83": "interest_bearing_collateral",
+    "0x04f18ffc850cdfa223a530d7246d3c6fc12a5969e0aa5d4a88f470f5fe6c46e9": "interest_bearing_collateral",
+    "0x05b7d301fa769274f20e89222169c0fad4d846c366440afc160aafadd6f88f0c": "interest_bearing_collateral",
+    "0x009377fdde350e01e0397820ea83ed3b4f05df30bfb8cf8055d62cafa1b2106a": "interest_bearing_collateral",
+    "0x0739760bce37f89b6c1e6b1198bb8dc7166b8cf21509032894f912c9d5de9cbd": "interest_bearing_collateral",
+    "0x07c2e1e733f28daa23e78be3a4f6c724c0ab06af65f6a95b5e0545215f1abc1b": "interest_bearing_collateral",
+    "0x067a34ff63ec38d0ccb2817c6d3f01e8b0c4792c77845feb43571092dcf5ebb5": "interest_bearing_collateral",
+    "0x02a3a9d7bcecc6d3121e3b6180b73c7e8f4c5f81c35a90c8dd457a70a842b723": "interest_bearing_collateral",
+    "0x046ab56ec0c6a6d42384251c97e9331aa75eb693e05ed8823e2df4de5713e9a4": "interest_bearing_collateral",
+    "0x02360bd006d42c1a17d23ebe7ae246a0764dea4ac86201884514f86754ccc7b8": "interest_bearing_collateral",
     "0x00ba3037d968790ac486f70acaa9a1cab10cf5843bb85c986624b4d0e5a82e74": "debt",
     "0x063d69ae657bd2f40337c39bf35a870ac27ddf91e6623c2f52529db4c1619a51": "debt",
     "0x024e9b0d6bc79e111e6872bb1ada2a874c25712cf08dfc5bcf0de008a7cca55f": "debt",
@@ -216,4 +216,8 @@ NOSTRA_MAINNET_ADDRESSES_TO_EVENTS: dict[str, str] = {
     "0x035778d24792bbebcf7651146896df5f787641af9e2a3db06480a637fbc9fff8": "debt",
     "0x001258eae3eae5002125bebf062d611a772e8aea3a1879b64a19f363ebd00947": "debt",
     "0x0292be6baee291a148006db984f200dbdb34b12fb2136c70bfe88649c12d934b": "debt",
+    "0x04b036839a8769c04144cc47415c64b083a2b26e4a7daa53c07f6042a0d35792": "debt",
+    "0x03e0576565c1b51fcac3b402eb002447f21e97abb5da7011c0a2e0b465136814": "debt",
+    "0x06726ec97bae4e28efa8993a8e0853bd4bad0bd71de44c23a1cd651b026b00e7": "debt",
+    "0x073fa792a8ad45303db3651c34176dc419bee98bfe45791ab12f884201a90ae2": "debt",
 }
