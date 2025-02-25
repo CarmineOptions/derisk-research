@@ -246,8 +246,8 @@ class LoanStateComputationBase(ABC):
         """
         Sets the interest rate for the zkLend protocol.
 
-        :param instance_state: The zkLend|HashtackV0|HashtackV1 state object.
-        :type instance_state: zkLend|HashtackV0|HashtackV1
+        :param instance_state: The zkLend state object.
+        :type instance_state: zkLend
         :param protocol_type: The protocol type.
         :type protocol_type: str
         :param block: block_number

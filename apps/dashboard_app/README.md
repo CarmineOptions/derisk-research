@@ -9,20 +9,6 @@ Interactive dashboard application for visualizing and analyzing DeRisk data.
 - Poetry
 - Docker 
 
-## Setup
-
-### Local Development
-
-1. Install dependencies:
-```bash
-./setup.sh
-```
-
-2. Run the dashboard:
-```bash
-poetry run python dashboard.py
-```
-
 ### Docker Setup
 
 1. Build the image:

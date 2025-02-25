@@ -12,3 +12,6 @@ test_data_handler:
 
 test_shared:
 	pytest apps/shared
+
+test_dashboard_app:
+	cd apps/dashboard_app && poetry run pytest

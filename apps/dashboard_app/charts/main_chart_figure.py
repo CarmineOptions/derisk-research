@@ -12,7 +12,7 @@ from shared.amms import SwapAmm
 from shared.custom_types import Prices
 from shared.state import State
 
-from constants import CommonValues
+from .constants import CommonValues
 from helpers.settings import TOKEN_SETTINGS
 from helpers.tools import (
     get_collateral_token_range,
