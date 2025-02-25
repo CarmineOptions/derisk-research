@@ -306,12 +306,8 @@ def transform_main_chart_data(
 
     return main_chart_data
 
-
 def infer_protocol_name(input_protocol: str, valid_protocols: list[str]) -> str:
-    """
-    Find the closest matching protocol name from a list of valid protocols using fuzzy matching.
-    Handles typos, partial matches, and case insensitivity.
-    Returns the input as-is if no match is found.
+    """Find the closest matching protocol name from a list of valid protocols using fuzzy matching.
 
     Args:
         input_protocol (str): The protocol name input by the user.
@@ -320,16 +316,7 @@ def infer_protocol_name(input_protocol: str, valid_protocols: list[str]) -> str:
     Returns:
         str: The closest matching protocol name if found, otherwise returns the input protocol.
     """
-    if input_protocol is None:
-        return None
-    if not input_protocol:
-        return input_protocol
-
-    input_protocol_lower = input_protocol.lower()
-    valid_protocols_lower = [protocol.lower() for protocol in valid_protocols]
-    
     closest_match = difflib.get_close_matches(
-        input_protocol_lower, valid_protocols_lower, n=1, cutoff=0.6
+        input_protocol, valid_protocols, n=1, cutoff=0.6
     )
-
     return closest_match and closest_match[0] or input_protocol

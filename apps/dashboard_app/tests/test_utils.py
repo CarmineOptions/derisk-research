@@ -67,8 +67,7 @@ def test_transform_main_chart_data_with_empty_data(sample_protocol_data, caplog)
     ("protocol1", ["protocol1", "protocol2", "protocol3"], "protocol1"),
     ("protocl1", ["protocol1", "protocol2", "protocol3"], "protocol1"),  
     ("proto1", ["protocol1", "protocol2", "protocol3"], "protocol1"),   
-    ("unknown", ["protocol1", "protocol2", "protocol3"], "unknown"),   
-    ("PROTOCOL1", ["protocol1", "protocol2", "protocol3"], "protocol1"),
+    ("unknown", ["protocol1", "protocol2", "protocol3"], "unknown"),  
 ])
 def test_infer_protocol_name(input_protocol, valid_protocols, expected):
     """Tests if infer_protocol_name correctly matches input to valid protocol names."""
@@ -89,11 +88,3 @@ def test_infer_protocol_name_with_very_similar_names():
     result = infer_protocol_name(input_protocol, valid_protocols)
     assert result == "protocol_v2"
 
-@pytest.mark.parametrize("input_protocol, valid_protocols, expected", [
-    (None, ["protocol1", "protocol2"], None),
-    ("", ["protocol1", "protocol2"], ""),
-])
-def test_infer_protocol_name_with_edge_cases(input_protocol, valid_protocols, expected):
-    """Tests infer_protocol_name with edge cases like None or empty string."""
-    result = infer_protocol_name(input_protocol, valid_protocols)
-    assert result == expected
