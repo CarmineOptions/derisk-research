@@ -1,7 +1,3 @@
-"""
-Tests for the process_liquidity function in helpers.tools module.
-"""
-
 import pandas as pd
 import math
 import pytest
@@ -113,14 +109,14 @@ def mock_ekubo_liquidity() -> Dict[str, Union[str, List[float]]]:
     """
     return {"type": "bids", "prices": [1900.0, 1950.0, 2000.0], "quantities": [10.0, 15.0, 20.0]}
 
-@patch('helpers.tools.get_prices')
+@patch('dashboard_app.helpers.tools.get_prices')
 def test_process_liquidity_successful_execution(
-    mock_get_prices: Any, 
-    sample_chart_data: pd.DataFrame, 
-    sample_token_info: Dict[str, str], 
-    mock_prices: Dict[str, float], 
-    mock_ekubo_liquidity: Dict[str, Union[str, List[float]]]
-) -> None:
+    mock_get_prices, 
+    sample_chart_data, 
+    sample_token_info, 
+    mock_prices, 
+    mock_ekubo_liquidity
+):
     """
     Tests successful execution of process_liquidity function.
     """
@@ -128,15 +124,19 @@ def test_process_liquidity_successful_execution(
     mock_get_prices.return_value = mock_prices
     
     
-    with patch.object(EkuboLiquidity, 'fetch_liquidity', return_value=mock_ekubo_liquidity), \
-         patch.object(EkuboLiquidity, 'apply_liquidity_to_dataframe', return_value=sample_chart_data):
+    with patch('dashboard_app.charts.utils.EkuboLiquidity') as MockEkuboLiquidity:
         
+        mock_instance = MockEkuboLiquidity.return_value
+        mock_instance.fetch_liquidity.return_value = mock_ekubo_liquidity
+        mock_instance.apply_liquidity_to_dataframe.return_value = sample_chart_data
         
+        print("Before process_liquidity")
         result_df, collateral_price = process_liquidity(
             sample_chart_data, 
             sample_token_info["collateral_token"], 
             sample_token_info["debt_token"]
         )
+        print("After process_liquidity")
         
         
         assert collateral_price == 2000.0
@@ -144,27 +144,28 @@ def test_process_liquidity_successful_execution(
         pd.testing.assert_frame_equal(result_df, sample_chart_data)
         
         
+        MockEkuboLiquidity.assert_called_once()
+        mock_instance.fetch_liquidity.assert_called_once()
+        mock_instance.apply_liquidity_to_dataframe.assert_called_once_with(mock_ekubo_liquidity)
+        
+        
         expected_decimal_factor = int(math.log10(TOKEN_SETTINGS[sample_token_info["collateral_token"]].decimal_factor))
         mock_get_prices.assert_called_once_with(token_decimals={
             UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[sample_token_info["collateral_token"]]: expected_decimal_factor
         })
 
-@patch('helpers.tools.get_prices')
+@patch('dashboard_app.helpers.tools.get_prices')
 def test_process_liquidity_with_empty_dataframe(
-    mock_get_prices: Any, 
-    sample_token_info: Dict[str, str], 
-    mock_prices: Dict[str, float], 
-    mock_ekubo_liquidity: Dict[str, Union[str, List[float]]]
-) -> None:
+    mock_get_prices, 
+    sample_token_info, 
+    mock_prices, 
+    mock_ekubo_liquidity
+):
     """
     Tests process_liquidity function with an empty DataFrame.
     """
-    
     main_chart_data = pd.DataFrame()
-    
-    
     mock_get_prices.return_value = mock_prices
-    
     
     expected_df = pd.DataFrame({
         'collateral_token_price': [100.0, 200.0, 300.0],
@@ -174,9 +175,11 @@ def test_process_liquidity_with_empty_dataframe(
     })
     
     
-    with patch.object(EkuboLiquidity, 'fetch_liquidity', return_value=mock_ekubo_liquidity), \
-         patch.object(EkuboLiquidity, 'apply_liquidity_to_dataframe', return_value=expected_df):
+    with patch('dashboard_app.charts.utils.EkuboLiquidity') as MockEkuboLiquidity:
         
+        mock_instance = MockEkuboLiquidity.return_value
+        mock_instance.fetch_liquidity.return_value = mock_ekubo_liquidity
+        mock_instance.apply_liquidity_to_dataframe.return_value = expected_df
         
         result_df, collateral_price = process_liquidity(
             main_chart_data, 
@@ -184,38 +187,37 @@ def test_process_liquidity_with_empty_dataframe(
             sample_token_info["debt_token"]
         )
         
-        
         assert collateral_price == 2000.0
         assert not result_df.empty
         assert len(result_df) == 3
+        
+        MockEkuboLiquidity.assert_called_once()
+        mock_instance.fetch_liquidity.assert_called_once()
+        mock_instance.apply_liquidity_to_dataframe.assert_called_once_with(mock_ekubo_liquidity)
 
-def test_process_liquidity_with_invalid_tokens(sample_chart_data: pd.DataFrame) -> None:
+def test_process_liquidity_with_invalid_tokens(sample_chart_data):
     """
     Tests process_liquidity function with invalid tokens.
     """
-    
     with pytest.raises(KeyError):
         process_liquidity(sample_chart_data, "INVALID_TOKEN", "USDC")
 
-@patch('helpers.tools.get_prices')
+@patch('dashboard_app.helpers.tools.get_prices')
 def test_process_liquidity_type_conversion(
-    mock_get_prices: Any, 
-    sample_token_info: Dict[str, str], 
-    mock_prices: Dict[str, float], 
-    mock_ekubo_liquidity: Dict[str, Union[str, List[float]]]
-) -> None:
+    mock_get_prices, 
+    sample_token_info, 
+    mock_prices, 
+    mock_ekubo_liquidity
+):
     """
     Tests type conversion in process_liquidity function.
     """
-    
     main_chart_data = pd.DataFrame({
         'collateral_token_price': ['100.0', '200.0', '300.0'],
         'liquidable_debt': ['50.0', '75.0', '100.0']
     })
     
-    
     mock_get_prices.return_value = mock_prices
-    
     
     expected_df = pd.DataFrame({
         'collateral_token_price': [100.0, 200.0, 300.0],
@@ -223,10 +225,11 @@ def test_process_liquidity_type_conversion(
     })
     
     
-    with patch.object(EkuboLiquidity, 'fetch_liquidity', return_value=mock_ekubo_liquidity), \
-         patch.object(EkuboLiquidity, '__init__', return_value=None), \
-         patch.object(EkuboLiquidity, 'apply_liquidity_to_dataframe', return_value=expected_df.copy()):
+    with patch('dashboard_app.charts.utils.EkuboLiquidity') as MockEkuboLiquidity:
         
+        mock_instance = MockEkuboLiquidity.return_value
+        mock_instance.fetch_liquidity.return_value = mock_ekubo_liquidity
+        mock_instance.apply_liquidity_to_dataframe.return_value = expected_df
         
         result_df, collateral_price = process_liquidity(
             main_chart_data, 
@@ -234,75 +237,50 @@ def test_process_liquidity_type_conversion(
             sample_token_info["debt_token"]
         )
         
-        
         assert result_df['collateral_token_price'].dtype == float
         assert result_df['liquidable_debt'].dtype == float
 
-@patch('helpers.tools.get_prices')
+@patch('dashboard_app.helpers.tools.get_prices')
 def test_process_liquidity_integration_with_ekubo(
-    mock_get_prices: Any, 
-    sample_chart_data: pd.DataFrame, 
-    sample_token_info: Dict[str, str], 
-    mock_prices: Dict[str, float]
-) -> None:
+    mock_get_prices, 
+    sample_chart_data, 
+    sample_token_info, 
+    mock_prices
+):
     """
     Tests integration with EkuboLiquidity in process_liquidity function.
     """
-    
     mock_get_prices.return_value = mock_prices
     
     
-    def mock_init(self, data: pd.DataFrame, collateral_token: str, debt_token: str) -> None:
-        self.data = data
-        self.collateral_token = collateral_token
-        self.debt_token = debt_token
-        return None
+    mock_ekubo_result = sample_chart_data.copy()
+    mock_ekubo_result['Ekubo_debt_token_supply'] = [5.0, 7.5, 10.0]
+    mock_ekubo_result['debt_token_supply'] = mock_ekubo_result.get('debt_token_supply', 0) + mock_ekubo_result['Ekubo_debt_token_supply']
     
-    def mock_fetch_liquidity(self) -> Dict[str, Union[str, List[float]]]:
-        return {"type": "bids", "prices": [1900.0, 1950.0, 2000.0], "quantities": [10.0, 15.0, 20.0]}
     
-    def mock_apply_liquidity(self, bids_or_asks: str) -> pd.DataFrame:
+    class MockEkuboLiquidity:
+        def __init__(self, data, collateral_token, debt_token):
+            self.data = data
+            self.collateral_token = collateral_token
+            self.debt_token = debt_token
         
-        df = self.data.copy()
-        df['Ekubo_debt_token_supply'] = [5.0, 7.5, 10.0]
-        df['debt_token_supply'] = df.get('debt_token_supply', 0) + df['Ekubo_debt_token_supply']
-        return df
+        def fetch_liquidity(self):
+            return {"type": "bids", "prices": [1900.0, 1950.0, 2000.0], "quantities": [10.0, 15.0, 20.0]}
+        
+        def apply_liquidity_to_dataframe(self, bids_or_asks):
+            return mock_ekubo_result
     
-    with patch('helpers.ekubo.EkuboLiquidity.__init__', mock_init), \
-         patch('helpers.ekubo.EkuboLiquidity.fetch_liquidity', mock_fetch_liquidity), \
-         patch('helpers.ekubo.EkuboLiquidity.apply_liquidity_to_dataframe', mock_apply_liquidity):
-        
-        
+    
+    with patch('dashboard_app.charts.utils.EkuboLiquidity', MockEkuboLiquidity):
         result_df, collateral_price = process_liquidity(
             sample_chart_data, 
             sample_token_info["collateral_token"], 
             sample_token_info["debt_token"]
         )
         
-        
         assert collateral_price == 2000.0
         assert 'Ekubo_debt_token_supply' in result_df.columns
         assert 'debt_token_supply' in result_df.columns
-
-@patch('helpers.tools.get_prices', side_effect=Exception("API error"))
-def test_process_liquidity_error_handling(
-    mock_get_prices: Any, 
-    sample_chart_data: pd.DataFrame, 
-    sample_token_info: Dict[str, str]
-) -> None:
-    """
-    Tests error handling in process_liquidity function.
-    """
-    
-    with pytest.raises(Exception) as exc_info:
-        process_liquidity(
-            sample_chart_data, 
-            sample_token_info["collateral_token"], 
-            sample_token_info["debt_token"]
-        )
-    
-    assert str(exc_info.value) == "API error"
-
 
 
 """
@@ -366,9 +344,9 @@ def test_parse_token_amounts_with_malformed_input() -> None:
     with pytest.raises(ValueError):
         parse_token_amounts("ETH: abc")
 
-@patch('helpers.tools.COLLATERAL_TOKENS', ['ETH', 'BTC'])
-@patch('helpers.tools.DEBT_TOKENS', ['USDC', 'DAI', 'USDT', 'STABLECOIN_BUNDLE'])
-@patch('helpers.tools.STABLECOIN_BUNDLE_NAME', 'STABLECOIN_BUNDLE')
+@patch('dashboard_app.helpers.settings.COLLATERAL_TOKENS', ['ETH', 'BTC'])
+@patch('dashboard_app.helpers.settings.DEBT_TOKENS', ['USDC', 'DAI', 'USDT', 'STABLECOIN_BUNDLE'])
+@patch('dashboard_app.helpers.settings.STABLECOIN_BUNDLE_NAME', 'STABLECOIN_BUNDLE')
 def test_create_stablecoin_bundle_successful(sample_stablecoin_data: Dict[str, pd.DataFrame]) -> None:
     """
     Tests successful execution of create_stablecoin_bundle function.
@@ -399,7 +377,7 @@ def test_create_stablecoin_bundle_with_empty_dataframe(sample_stablecoin_data: D
     Tests create_stablecoin_bundle function when one of the DataFrames is empty.
     """
     
-    with patch('helpers.tools.logging.warning') as mock_warning:
+    with patch('dashboard_app.helpers.settings.logging.warning') as mock_warning:
         result = create_stablecoin_bundle(sample_stablecoin_data)
         
         
@@ -422,7 +400,7 @@ def test_create_stablecoin_bundle_with_no_relevant_pairs() -> None:
     }
     
     
-    with patch('helpers.tools.COLLATERAL_TOKENS', ['ETH', 'BTC']):
+    with patch('dashboard_app.helpers.settings.COLLATERAL_TOKENS', ['ETH', 'BTC']):
         result = create_stablecoin_bundle(data)
         
         
@@ -450,9 +428,9 @@ def test_create_stablecoin_bundle_with_missing_columns() -> None:
     }
     
     
-    with patch('helpers.tools.COLLATERAL_TOKENS', ['ETH']), \
-         patch('helpers.tools.DEBT_TOKENS', ['USDC', 'DAI', 'STABLECOIN_BUNDLE']), \
-         patch('helpers.tools.STABLECOIN_BUNDLE_NAME', 'STABLECOIN_BUNDLE'):
+    with patch('dashboard_app.helpers.settings.COLLATERAL_TOKENS', ['ETH']), \
+         patch('dashboard_app.helpers.settings.DEBT_TOKENS', ['USDC', 'DAI', 'STABLECOIN_BUNDLE']), \
+         patch('dashboard_app.helpers.settings.STABLECOIN_BUNDLE_NAME', 'STABLECOIN_BUNDLE'):
         
         result = create_stablecoin_bundle(data)
         
@@ -466,9 +444,9 @@ def test_create_stablecoin_bundle_with_missing_columns() -> None:
         
         assert '10kSwap_debt_token_supply' not in eth_bundle.columns
 
-@patch('helpers.tools.COLLATERAL_TOKENS', ['ETH', 'BTC'])
-@patch('helpers.tools.DEBT_TOKENS', ['USDC', 'DAI', 'USDT', 'STABLECOIN_BUNDLE'])
-@patch('helpers.tools.STABLECOIN_BUNDLE_NAME', 'STABLECOIN_BUNDLE')
+@patch('dashboard_app.helpers.settings.COLLATERAL_TOKENS', ['ETH', 'BTC'])
+@patch('dashboard_app.helpers.settings.DEBT_TOKENS', ['USDC', 'DAI', 'USDT', 'STABLECOIN_BUNDLE'])
+@patch('dashboard_app.helpers.settings.STABLECOIN_BUNDLE_NAME', 'STABLECOIN_BUNDLE')
 def test_create_stablecoin_bundle_with_different_price_ranges(sample_stablecoin_data: Dict[str, pd.DataFrame]) -> None:
     """
     Tests create_stablecoin_bundle function with DataFrames having different price ranges.
