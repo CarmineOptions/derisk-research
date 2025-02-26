@@ -8,6 +8,7 @@ from typing import Set
 # TODO remove it when all protocols with interest rate models will be available
 class AvailableProtocolID(Enum):
     """class docstring"""
+
     # nostra protocols
     NOSTRA_ALPHA: str = "Nostra_alpha"
     NOSTRA_MAINNET: str = "Nostra_mainnet"
@@ -21,7 +22,9 @@ class ProtocolAddresses:
     This class contains the addresses of the contracts that are used
     """
 
-    ZKLEND_MARKET_ADDRESSES: str = "0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05"
+    ZKLEND_MARKET_ADDRESSES: str = (
+        "0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05"
+    )
     NOSTRA_ALPHA_ADDRESSES: Set[str] = field(
         default_factory=lambda: {
             "0x0553cea5d1dc0e0157ffcd36a51a0ced717efdadd5ef1b4644352bb45bd35453",
@@ -53,6 +56,10 @@ class ProtocolAddresses:
             # "0x0507eb06dd372cb5885d3aaf18b980c41cd3cd4691cfd3a820339a6c0cec2674",
             # "0x026c5994c2462770bbf940552c5824fb0e0920e2a8a5ce1180042da1b3e489db",
             # "0x078a40c85846e3303bf7982289ca7def68297d4b609d5f588208ac553cff3a18",
+            # "0x01325caf7c91ee415b8df721fb952fa88486a0fc250063eafddd5d3c67867ce7",
+            # "0x02589fc11f60f21af6a1dda3aeb7a44305c552928af122f2834d1c3b1a7aa626",
+            # "0x065bde349f553cf4bdd873e54cd48317eda0542764ebe5ba46984cedd940a5e4",
+            # "0x006fd4a9efd0c884e0b29506169dd2fcad6b284d5bdbd46ede424abc26d71164",
             "0x044debfe17e4d9a5a1e226dabaf286e72c9cc36abbe71c5b847e669da4503893",
             "0x05f296e1b9f4cf1ab452c218e72e02a8713cee98921dad2d3b5706235e128ee4",
             "0x0514bd7ee8c97d4286bd481c54aa0793e43edbfb7e1ab9784c4b30469dcf9313",
@@ -62,6 +69,9 @@ class ProtocolAddresses:
             "0x02530a305dd3d92aad5cf97e373a3d07577f6c859337fb0444b9e851ee4a2dd4",
             "0x040f5a6b7a6d3c472c12ca31ae6250b462c6d35bbdae17bd52f6c6ca065e30cf",
             "0x0142af5b6c97f02cac9c91be1ea9895d855c5842825cb2180673796e54d73dc5",
+            "0x07d717fb27c9856ea10068d864465a2a8f9f669f4f78013967de06149c09b9af",
+            "0x06f8ad459c712873993e9ffb9013a469248343c3d361e4d91a8cac6f98575834",
+            "0x06b1063a4d5c32fef3486bf29d1719eb09481b52d31f7d86a50c64b0b8d5defb",
             "0x057146f6409deb4c9fa12866915dd952aa07c1eb2752e451d7f3b042086bdeb8",
             "0x05dcd26c25d9d8fd9fc860038dcb6e4d835e524eb8a85213a8cda5b7fff845f6",
             "0x0453c4c996f1047d9370f824d68145bd5e7ce12d00437140ad02181e1d11dc83",
@@ -71,6 +81,9 @@ class ProtocolAddresses:
             "0x0739760bce37f89b6c1e6b1198bb8dc7166b8cf21509032894f912c9d5de9cbd",
             "0x07c2e1e733f28daa23e78be3a4f6c724c0ab06af65f6a95b5e0545215f1abc1b",
             "0x067a34ff63ec38d0ccb2817c6d3f01e8b0c4792c77845feb43571092dcf5ebb5",
+            "0x02a3a9d7bcecc6d3121e3b6180b73c7e8f4c5f81c35a90c8dd457a70a842b723",
+            "0x046ab56ec0c6a6d42384251c97e9331aa75eb693e05ed8823e2df4de5713e9a4",
+            "0x02360bd006d42c1a17d23ebe7ae246a0764dea4ac86201884514f86754ccc7b8",
             "0x00ba3037d968790ac486f70acaa9a1cab10cf5843bb85c986624b4d0e5a82e74",
             "0x063d69ae657bd2f40337c39bf35a870ac27ddf91e6623c2f52529db4c1619a51",
             "0x024e9b0d6bc79e111e6872bb1ada2a874c25712cf08dfc5bcf0de008a7cca55f",
@@ -80,19 +93,19 @@ class ProtocolAddresses:
             "0x035778d24792bbebcf7651146896df5f787641af9e2a3db06480a637fbc9fff8",
             "0x001258eae3eae5002125bebf062d611a772e8aea3a1879b64a19f363ebd00947",
             "0x0292be6baee291a148006db984f200dbdb34b12fb2136c70bfe88649c12d934b",
+            "0x04b036839a8769c04144cc47415c64b083a2b26e4a7daa53c07f6042a0d35792",
+            "0x03e0576565c1b51fcac3b402eb002447f21e97abb5da7011c0a2e0b465136814",
+            "0x06726ec97bae4e28efa8993a8e0853bd4bad0bd71de44c23a1cd651b026b00e7",
+            "0x073fa792a8ad45303db3651c34176dc419bee98bfe45791ab12f884201a90ae2",
         }
     )
 
 
 NOSTRA_EVENTS_MAPPING = {
-    "Mint":
-    "process_debt_mint_event",
-    "Burn":
-    "process_debt_burn_event",
-    "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Burn":
-    "process_debt_burn_event",
-    "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Mint":
-    "process_debt_mint_event",
+    "Mint": "process_debt_mint_event",
+    "Burn": "process_debt_burn_event",
+    "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Burn": "process_debt_burn_event",
+    "nostra::core::tokenization::lib::nostra_token::NostraTokenComponent::Mint": "process_debt_mint_event",
 }
 
 FIRST_RUNNING_MAPPING = {
@@ -123,6 +136,9 @@ FIRST_RUNNING_MAPPING = {
     "0x02530a305dd3d92aad5cf97e373a3d07577f6c859337fb0444b9e851ee4a2dd4": 548354,
     "0x040f5a6b7a6d3c472c12ca31ae6250b462c6d35bbdae17bd52f6c6ca065e30cf": 548438,
     "0x0142af5b6c97f02cac9c91be1ea9895d855c5842825cb2180673796e54d73dc5": 165330,
+    "0x07d717fb27c9856ea10068d864465a2a8f9f669f4f78013967de06149c09b9af": 0,
+    "0x06f8ad459c712873993e9ffb9013a469248343c3d361e4d91a8cac6f98575834": 0,
+    "0x06b1063a4d5c32fef3486bf29d1719eb09481b52d31f7d86a50c64b0b8d5defb": 0,
     "0x057146f6409deb4c9fa12866915dd952aa07c1eb2752e451d7f3b042086bdeb8": 165330,
     "0x05dcd26c25d9d8fd9fc860038dcb6e4d835e524eb8a85213a8cda5b7fff845f6": 168358,
     "0x0453c4c996f1047d9370f824d68145bd5e7ce12d00437140ad02181e1d11dc83": 168365,
@@ -130,6 +146,11 @@ FIRST_RUNNING_MAPPING = {
     "0x05b7d301fa769274f20e89222169c0fad4d846c366440afc160aafadd6f88f0c": 166443,
     "0x009377fdde350e01e0397820ea83ed3b4f05df30bfb8cf8055d62cafa1b2106a": 548418,
     "0x0739760bce37f89b6c1e6b1198bb8dc7166b8cf21509032894f912c9d5de9cbd": 548364,
+    "0x07c2e1e733f28daa23e78be3a4f6c724c0ab06af65f6a95b5e0545215f1abc1b": 0,
+    "0x067a34ff63ec38d0ccb2817c6d3f01e8b0c4792c77845feb43571092dcf5ebb5": 0,
+    "0x02a3a9d7bcecc6d3121e3b6180b73c7e8f4c5f81c35a90c8dd457a70a842b723": 0,
+    "0x046ab56ec0c6a6d42384251c97e9331aa75eb693e05ed8823e2df4de5713e9a4": 0,
+    "0x02360bd006d42c1a17d23ebe7ae246a0764dea4ac86201884514f86754ccc7b8": 0,
     "0x024e9b0d6bc79e111e6872bb1ada2a874c25712cf08dfc5bcf0de008a7cca55f": 168364,
     "0x066037c083c33330a8460a65e4748ceec275bbf5f28aa71b686cbc0010e12597": 166354,
     "0x0491480f21299223b9ce770f23a2c383437f9fbf57abc2ac952e9af8cdb12c97": 166442,
@@ -137,6 +158,12 @@ FIRST_RUNNING_MAPPING = {
     "0x035778d24792bbebcf7651146896df5f787641af9e2a3db06480a637fbc9fff8": 548359,
     "0x001258eae3eae5002125bebf062d611a772e8aea3a1879b64a19f363ebd00947": 548440,
     "0x0292be6baee291a148006db984f200dbdb34b12fb2136c70bfe88649c12d934b": 168364,
+    "0x00ba3037d968790ac486f70acaa9a1cab10cf5843bb85c986624b4d0e5a82e74": 0,
+    "0x063d69ae657bd2f40337c39bf35a870ac27ddf91e6623c2f52529db4c1619a51": 0,
+    "0x04b036839a8769c04144cc47415c64b083a2b26e4a7daa53c07f6042a0d35792": 0,
+    "0x03e0576565c1b51fcac3b402eb002447f21e97abb5da7011c0a2e0b465136814": 0,
+    "0x06726ec97bae4e28efa8993a8e0853bd4bad0bd71de44c23a1cd651b026b00e7": 0,
+    "0x073fa792a8ad45303db3651c34176dc419bee98bfe45791ab12f884201a90ae2": 0,
 }
 
 TOKEN_MAPPING = {

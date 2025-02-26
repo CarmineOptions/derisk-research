@@ -91,8 +91,9 @@ class NostraDataParser:
             face_amount=event_data[1],
         )
 
+    @classmethod
     def parse_interest_bearing_collateral_mint_event(
-        self, event_data: list[Any]
+        cls, event_data: list[Any]
     ) -> BearingCollateralMintEventData:
         """
         Parses the BearingCollateralMint event data into a human-readable format using the BearingCollateralMintEventData serializer.
@@ -113,8 +114,9 @@ class NostraDataParser:
             amount=event_data[1],
         )
 
+    @classmethod
     def parse_interest_bearing_collateral_burn_event(
-        self, event_data: list[Any]
+        cls, event_data: list[Any]
     ) -> BearingCollateralBurnEventData:
         """
         Parses the BearingCollateralMint event data into a human-readable format using the BearingCollateralMintEventData serializer.
@@ -135,7 +137,8 @@ class NostraDataParser:
             amount=event_data[1],
         )
 
-    def parse_debt_transfer_event(self, event_data: List[Any]) -> DebtTransferEventData:
+    @classmethod
+    def parse_debt_transfer_event(cls, event_data: List[Any]) -> DebtTransferEventData:
         """
         Parses the debt transfer event data into a human-readable format using the
         DebtBurnEventData serializer.

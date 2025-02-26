@@ -12,20 +12,23 @@ from data_handler.handler_tools.nostra_mainnet_settings import (
     NOSTRA_MAINNET_INTEREST_RATE_MODEL_ADDRESS,
     NOSTRA_MAINNET_TOKEN_ADDRESSES,
 )
-from data_handler.handlers.helpers import blockchain_call, get_addresses, get_symbol
+from data_handler.handlers.helpers import (
+    blockchain_call,
+    get_addresses,
+    get_async_symbol,
+)
 from data_handler.handlers.loan_states.nostra_alpha.events import (
     NostraAlphaLoanEntity,
     NostraAlphaState,
 )
-
 from shared.constants import ProtocolIDs
-from shared.helpers import add_leading_zeros
-from shared.starknet_client import StarknetClient
 from shared.custom_types import InterestRateModels, Prices, TokenParameters
 from shared.custom_types.nostra import (
     NostraDebtTokenParameters,
     NostraMainnetCollateralTokenParameters,
 )
+from shared.helpers import add_leading_zeros
+from shared.starknet_client import StarknetClient
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +60,7 @@ class NostraMainnetLoanEntity(NostraAlphaLoanEntity):
         risk_adjusted_debt_usd: float | None = None,
     ) -> float:
         """
-        Computes the amount of debt that can be liquidated given the 
+        Computes the amount of debt that can be liquidated given the
         current state of the loan entity.
         :param collateral_token_addresses: Collateral token addresses.
         :param debt_token_addresses:  Debt token addresses.
@@ -89,26 +92,30 @@ class NostraMainnetLoanEntity(NostraAlphaLoanEntity):
         # See an example of a liquidation here:
         # https://docs.nostra.finance/lend/liquidations/an-example-of-liquidation.
         numerator = (
-            risk_adjusted_collateral_usd - risk_adjusted_debt_usd * self.TARGET_HEALTH_FACTOR
+            risk_adjusted_collateral_usd
+            - risk_adjusted_debt_usd * self.TARGET_HEALTH_FACTOR
         )
         # TODO: figure out what to do when there's multiple collateral token addresses
         collateral_token_address = collateral_token_addresses[0]
         # TODO: figure out what to do when there's multiple collateral token addresses
         debt_token_address = debt_token_addresses[0]
         denominator = (
-            collateral_token_parameters[collateral_token_address].collateral_factor *
-            (1 + self.LIQUIDATION_BONUS) -
-            (1 / debt_token_parameters[debt_token_address].debt_factor) * self.TARGET_HEALTH_FACTOR
+            collateral_token_parameters[collateral_token_address].collateral_factor
+            * (1 + self.LIQUIDATION_BONUS)
+            - (1 / debt_token_parameters[debt_token_address].debt_factor)
+            * self.TARGET_HEALTH_FACTOR
         )
         max_debt_to_be_liquidated = numerator / denominator
         # The liquidator can't liquidate more debt than what is available.
-        debt_to_be_liquidated = min(float(self.debt[debt_token_address]), max_debt_to_be_liquidated)
+        debt_to_be_liquidated = min(
+            float(self.debt[debt_token_address]), max_debt_to_be_liquidated
+        )
         return debt_to_be_liquidated
 
 
 class NostraMainnetState(NostraAlphaState):
     """
-    A class that describes the state of all Nostra Mainnet 
+    A class that describes the state of all Nostra Mainnet
     loan entities. All methods for correct processing of every
     relevant event are implemented in `.nostra_alpha.NostraAlphaState`.
     """
@@ -117,7 +124,9 @@ class NostraMainnetState(NostraAlphaState):
     TOKEN_ADDRESSES: list[str] = NOSTRA_MAINNET_TOKEN_ADDRESSES
     INTEREST_RATE_MODEL_ADDRESS: str = NOSTRA_MAINNET_INTEREST_RATE_MODEL_ADDRESS
     CDP_MANAGER_ADDRESS: str = NOSTRA_MAINNET_CDP_MANAGER_ADDRESS
-    DEFERRED_BATCH_CALL_ADAPTER_ADDRESS: str = (NOSTRA_MAINNET_DEFERRED_BATCH_CALL_ADAPTER_ADDRESS)
+    DEFERRED_BATCH_CALL_ADAPTER_ADDRESS: str = (
+        NOSTRA_MAINNET_DEFERRED_BATCH_CALL_ADAPTER_ADDRESS
+    )
 
     EVENTS_TO_METHODS: dict[str, str] = NOSTRA_MAINNET_EVENTS_TO_METHODS
 
@@ -143,8 +152,10 @@ class NostraMainnetState(NostraAlphaState):
             )
             decimals = int(decimals[0])
 
-            token_symbol = await get_symbol(token_address=token_address)
-            event, is_interest_bearing = self._infer_token_type(token_symbol=token_symbol)
+            token_symbol = await get_async_symbol(token_address=token_address)
+            event, is_interest_bearing = self._infer_token_type(
+                token_symbol=token_symbol
+            )
             self.token_addresses_to_events[token_address] = event
 
             underlying_token_address = await stark_client.func_call(
@@ -152,9 +163,12 @@ class NostraMainnetState(NostraAlphaState):
                 selector="underlyingAsset",
                 calldata=[],
             )
-            underlying_token_address = add_leading_zeros(hex(underlying_token_address[0]))
-            underlying_token_symbol = await get_symbol(token_address=underlying_token_address)
-
+            underlying_token_address = add_leading_zeros(
+                hex(underlying_token_address[0])
+            )
+            underlying_token_symbol = await get_async_symbol(
+                token_address=underlying_token_address
+            )
             if event == "collateral":
                 try:
                     # The order of the arguments is: `index`, `collateral_factor`, ``,
@@ -207,22 +221,27 @@ class NostraMainnetState(NostraAlphaState):
                 )
             getattr(self.token_parameters, event)[token_address] = token_parameters
 
-        # Create the mapping between 
+        # Create the mapping between
         # the debt token addresses and the respective interest bearing collateral token
         # addresses.
         for debt_token_parameters in self.token_parameters.debt.values():
             interest_bearing_collateral_token_addresses = [
                 collateral_token_parameters.address
-                for collateral_token_parameters in self.token_parameters.collateral.values() if (
-                    collateral_token_parameters.is_interest_bearing and collateral_token_parameters.
-                    underlying_address == debt_token_parameters.underlying_address
+                for collateral_token_parameters in self.token_parameters.collateral.values()
+                if (
+                    collateral_token_parameters.is_interest_bearing
+                    and collateral_token_parameters.underlying_address
+                    == debt_token_parameters.underlying_address
                 )
             ]
             # TODO: check DAI V2
             if interest_bearing_collateral_token_addresses:
                 assert len(interest_bearing_collateral_token_addresses) == 1
                 self.debt_token_addresses_to_interest_bearing_collateral_token_addresses[
-                    debt_token_parameters.address] = interest_bearing_collateral_token_addresses[0]
+                    debt_token_parameters.address
+                ] = interest_bearing_collateral_token_addresses[
+                    0
+                ]
 
     def process_interest_rate_model_event(self, event: pd.Series) -> None:
         """
@@ -230,27 +249,34 @@ class NostraMainnetState(NostraAlphaState):
         :param event: Event data.
         """
         if event["keys"] == [self.INTEREST_STATE_UPDATED_KEY]:
-            # The order of the values in the `data` column is: 
+            # The order of the values in the `data` column is:
             # `debtToken`, `lendingRate`, ``, `borrowRate`, ``,
             # `lendIndex`, ``, `borrowIndex`, ``.
             # Example:
             # https://starkscan.co/event/0x0735fc1d2fdd75ec049af40073a09ffc948c45467752d3123eb2b8c1d3f46edb_7.
             debt_token = add_leading_zeros(event["data"][0])
-            collateral_interest_rate_index = Decimal(str(int(event["data"][5], base=16))
-                                                     ) / Decimal("1e18")
-            debt_interest_rate_index = Decimal(str(int(event["data"][7], base=16))
-                                               ) / Decimal("1e18")
-        elif (len(event["keys"]) == 2 and event["keys"][0] == self.INTEREST_STATE_UPDATED_KEY):
-            # The order of the values in the `data` column is: `lendingRate`, 
+            collateral_interest_rate_index = Decimal(
+                str(int(event["data"][5], base=16))
+            ) / Decimal("1e18")
+            debt_interest_rate_index = Decimal(
+                str(int(event["data"][7], base=16))
+            ) / Decimal("1e18")
+        elif (
+            len(event["keys"]) == 2
+            and event["keys"][0] == self.INTEREST_STATE_UPDATED_KEY
+        ):
+            # The order of the values in the `data` column is: `lendingRate`,
             # ``, `borrowingRate`, ``, `lendingIndex`,
             # ``, `borrowingIndex`, ``.
             # Example:
             # https://starkscan.co/event/0x046d972ab22bd443534b32fdeabb1e4751ae6fa92610e9e2d4833764367d08f8_10.
             debt_token = add_leading_zeros(event["keys"][1])
-            collateral_interest_rate_index = Decimal(str(int(event["data"][4], base=16))
-                                                     ) / Decimal("1e18")
-            debt_interest_rate_index = Decimal(str(int(event["data"][6], base=16))
-                                               ) / Decimal("1e18")
+            collateral_interest_rate_index = Decimal(
+                str(int(event["data"][4], base=16))
+            ) / Decimal("1e18")
+            debt_interest_rate_index = Decimal(
+                str(int(event["data"][6], base=16))
+            ) / Decimal("1e18")
         else:
             raise ValueError("Event = {} has an unexpected structure.".format(event))
         collateral_token = self.debt_token_addresses_to_interest_bearing_collateral_token_addresses.get(
@@ -258,9 +284,9 @@ class NostraMainnetState(NostraAlphaState):
         )
         # The indices are saved under the respective collateral or debt token address.
         if collateral_token:
-            self.interest_rate_models.collateral[collateral_token] = (
-                collateral_interest_rate_index
-            )
+            self.interest_rate_models.collateral[
+                collateral_token
+            ] = collateral_interest_rate_index
         self.interest_rate_models.debt[debt_token] = debt_interest_rate_index
 
     def process_collateral_transfer_event(self, event: pd.Series) -> None:
@@ -269,7 +295,7 @@ class NostraMainnetState(NostraAlphaState):
         :param event: Event data.
         """
         if event["keys"] == [self.TRANSFER_KEY]:
-            # The order of the values in the `data` column is: `sender`, 
+            # The order of the values in the `data` column is: `sender`,
             # `recipient`, `value`, ``. Alternatively,
             # `from_`, `to`, `value`, ``.
             # Example:
@@ -292,13 +318,16 @@ class NostraMainnetState(NostraAlphaState):
 
         token = add_leading_zeros(event["from_address"])
         if sender != self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
-            self.loan_entities[sender].collateral.increase_value(token=token, value=-raw_amount)
+            self.loan_entities[sender].collateral.increase_value(
+                token=token, value=-raw_amount
+            )
         if recipient != self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
-            self.loan_entities[recipient].collateral.increase_value(token=token, value=raw_amount)
+            self.loan_entities[recipient].collateral.increase_value(
+                token=token, value=raw_amount
+            )
         if self.verbose_user in {sender, recipient}:
             logger.info(
-                "In block number = {}, collateral of raw amount = {} of token = {} was transferred from user = {} to user = {}."
-                .format(
+                "In block number = {}, collateral of raw amount = {} of token = {} was transferred from user = {} to user = {}.".format(
                     event["block_number"],
                     raw_amount,
                     token,
@@ -334,11 +363,12 @@ class NostraMainnetState(NostraAlphaState):
             raw_amount = face_amount / self.interest_rate_models.collateral[token]
         else:
             raw_amount = face_amount
-        self.loan_entities[user].collateral.increase_value(token=token, value=raw_amount)
+        self.loan_entities[user].collateral.increase_value(
+            token=token, value=raw_amount
+        )
         if user == self.verbose_user:
             logger.info(
-                "In block number = {}, collateral of raw amount = {} of token = {} was added.".
-                format(
+                "In block number = {}, collateral of raw amount = {} of token = {} was added.".format(
                     event["block_number"],
                     raw_amount,
                     token,
@@ -373,11 +403,12 @@ class NostraMainnetState(NostraAlphaState):
             raw_amount = face_amount / self.interest_rate_models.collateral[token]
         else:
             raw_amount = face_amount
-        self.loan_entities[user].collateral.increase_value(token=token, value=-raw_amount)
+        self.loan_entities[user].collateral.increase_value(
+            token=token, value=-raw_amount
+        )
         if user == self.verbose_user:
             logger.info(
-                "In block number = {}, collateral of raw amount = {} of token = {} was withdrawn.".
-                format(
+                "In block number = {}, collateral of raw amount = {} of token = {} was withdrawn.".format(
                     event["block_number"],
                     raw_amount,
                     token,
@@ -390,7 +421,7 @@ class NostraMainnetState(NostraAlphaState):
         :param event: Event data.
         """
         if event["keys"] == [self.TRANSFER_KEY]:
-            # The order of the values in the `data` column is: `sender`, 
+            # The order of the values in the `data` column is: `sender`,
             # `recipient`, `value`, ``. Alternatively,
             # `from_`, `to`, `value`, ``.
             # Example:
@@ -412,15 +443,18 @@ class NostraMainnetState(NostraAlphaState):
 
         token = add_leading_zeros(event["from_address"])
         if sender != self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
-            self.loan_entities[sender].debt.increase_value(token=token, value=-raw_amount)
+            self.loan_entities[sender].debt.increase_value(
+                token=token, value=-raw_amount
+            )
 
         if recipient != self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
-            self.loan_entities[recipient].debt.increase_value(token=token, value=raw_amount)
+            self.loan_entities[recipient].debt.increase_value(
+                token=token, value=raw_amount
+            )
 
         if self.verbose_user in {sender, recipient}:
             logger.info(
-                "In block number = {}, debt of raw amount = {} of token = {} was transferred from user = {} to user = {}."
-                .format(
+                "In block number = {}, debt of raw amount = {} of token = {} was transferred from user = {} to user = {}.".format(
                     event["block_number"],
                     raw_amount,
                     token,
@@ -512,7 +546,7 @@ class NostraMainnetState(NostraAlphaState):
         debt_token_underlying_address: str,
     ) -> float:
         """
-        Computes the maximum amount of debt that can be 
+        Computes the maximum amount of debt that can be
         liquidated given the current state of the loan entities.
         :param prices: Prices of all tokens.
         :param collateral_token_underlying_address: Collateral token underlying address.
@@ -530,13 +564,17 @@ class NostraMainnetState(NostraAlphaState):
                 for token, token_amount in loan_entity.collateral.items()
                 if token_amount > Decimal("0")
             }
-            if (not collateral_token_underlying_address in collateral_token_underlying_addresses):
+            if (
+                not collateral_token_underlying_address
+                in collateral_token_underlying_addresses
+            ):
                 continue
 
             # Filter out entities where the debt token of interest is borowed.
             debt_token_underlying_addresses = {
                 self.token_parameters.debt[token].underlying_address
-                for token, token_amount in loan_entity.debt.items() if token_amount > Decimal("0")
+                for token, token_amount in loan_entity.debt.items()
+                if token_amount > Decimal("0")
             }
             if debt_token_underlying_address not in debt_token_underlying_addresses:
                 continue
@@ -589,3 +627,185 @@ class NostraMainnetState(NostraAlphaState):
                 risk_adjusted_debt_usd=risk_adjusted_debt_usd,
             )
         return max_liquidated_amount
+
+    def process_interest_bearing_collateral_mint_event(self, event: pd.Series) -> None:
+        """Process event adding interest-bearing collateral to a loan."""
+        if event["keys"] == [self.MINT_KEY]:
+            # The order of the values in the `data` column is: `user`, `amount`, ``.
+            user = add_leading_zeros(event["data"][0])
+            face_amount = Decimal(str(int(event["data"][1], base=16)))
+        elif len(event["keys"]) == 2 and event["keys"][0] == self.MINT_KEY:
+            user = add_leading_zeros(event["keys"][1])
+            face_amount = Decimal(str(int(event["data"][0], base=16)))
+        else:
+            raise ValueError("Event = {} has an unexpected structure.".format(event))
+
+        if user == self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
+            return
+
+        token = add_leading_zeros(event["from_address"])
+        raw_amount = face_amount / self.interest_rate_models.collateral[token]
+
+        self.loan_entities[user].interest_bearing_collateral.increase_value(
+            token=token, value=raw_amount
+        )
+        self.loan_entities[user].collateral.values = {
+            token: (
+                self.loan_entities[user].non_interest_bearing_collateral.get(
+                    token, Decimal("0")
+                )
+                + self.loan_entities[user].interest_bearing_collateral.get(
+                    token, Decimal("0")
+                )
+            )
+            for token in self.token_parameters.collateral.keys()
+        }
+        self.loan_entities[user].extra_info.block = event["block_number"]
+        self.loan_entities[user].extra_info.timestamp = event["timestamp"]
+
+        if user == self.verbose_user:
+            logger.info(
+                "In block number = {}, interest-bearing collateral of raw amount = {} of token = {} was added.".format(
+                    event["block_number"],
+                    raw_amount,
+                    token,
+                )
+            )
+
+    def process_interest_bearing_collateral_burn_event(self, event: pd.Series) -> None:
+        """Handle withdrawal of interest-bearing collateral from a loan."""
+        # The order of the values in the `data` column is: `user`, `amount`, ``.
+        # Example:
+        # https://starkscan.co/event/0x0106494005bbab6f01e7779760891eb9ae20e01b905afdb16111f7cf3a28a53e_1.
+        if event["keys"] == [self.BURN_KEY]:
+            user = add_leading_zeros(event["data"][0])
+            face_amount = Decimal(str(int(event["data"][1], base=16)))
+        elif len(event["keys"]) == 2 and event["keys"][0] == self.BURN_KEY:
+            user = add_leading_zeros(event["keys"][1])
+            face_amount = Decimal(str(int(event["data"][0], base=16)))
+        else:
+            raise ValueError("Event = {} has an unexpected structure.".format(event))
+
+        if user == self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
+            return
+
+        token = add_leading_zeros(event["from_address"])
+        raw_amount = face_amount / self.interest_rate_models.collateral[token]
+
+        self.loan_entities[user].interest_bearing_collateral.increase_value(
+            token=token, value=-raw_amount
+        )
+        self.loan_entities[user].collateral.values = {
+            token: (
+                self.loan_entities[user].non_interest_bearing_collateral.get(
+                    token, Decimal("0")
+                )
+                + self.loan_entities[user].interest_bearing_collateral.get(
+                    token, Decimal("0")
+                )
+            )
+            for token in self.token_parameters.collateral.keys()
+        }
+        self.loan_entities[user].extra_info.block = event["block_number"]
+        self.loan_entities[user].extra_info.timestamp = event["timestamp"]
+
+        if user == self.verbose_user:
+            logger.info(
+                "In block number = {}, interest-bearing collateral of raw amount = {} of token = {} was withdrawn.".format(
+                    event["block_number"],
+                    raw_amount,
+                    token,
+                )
+            )
+
+    def process_non_interest_bearing_collateral_mint_event(
+        self, event: pd.Series
+    ) -> None:
+        """Process event adding non-interest-bearing collateral to a loan."""
+        if event["keys"] == [self.MINT_KEY]:
+            # The order of the values in the `data` column is: `user`, `amount`, ``.
+            user = add_leading_zeros(event["data"][0])
+            face_amount = Decimal(str(int(event["data"][1], base=16)))
+        elif len(event["keys"]) == 2 and event["keys"][0] == self.MINT_KEY:
+            user = add_leading_zeros(event["keys"][1])
+            face_amount = Decimal(str(int(event["data"][0], base=16)))
+        else:
+            raise ValueError("Event = {} has an unexpected structure.".format(event))
+
+        if user == self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
+            return
+
+        token = add_leading_zeros(event["from_address"])
+        raw_amount = face_amount
+
+        self.loan_entities[user].non_interest_bearing_collateral.increase_value(
+            token=token, value=raw_amount
+        )
+        self.loan_entities[user].collateral.values = {
+            token: (
+                self.loan_entities[user].non_interest_bearing_collateral.get(
+                    token, Decimal("0")
+                )
+                + self.loan_entities[user].interest_bearing_collateral.get(
+                    token, Decimal("0")
+                )
+            )
+            for token in self.token_parameters.collateral.keys()
+        }
+        self.loan_entities[user].extra_info.block = event["block_number"]
+        self.loan_entities[user].extra_info.timestamp = event["timestamp"]
+
+        if user == self.verbose_user:
+            logger.info(
+                "In block number = {}, non-interest-bearing collateral of raw amount = {} of token = {} was added.".format(
+                    event["block_number"],
+                    raw_amount,
+                    token,
+                )
+            )
+
+    def process_non_interest_bearing_collateral_burn_event(
+        self, event: pd.Series
+    ) -> None:
+        """Handle withdrawal of non-interest-bearing collateral from a loan."""
+        # The order of the values in the `data` column is: `user`, `amount`, ``.
+        if event["keys"] == [self.BURN_KEY]:
+            user = add_leading_zeros(event["data"][0])
+            face_amount = Decimal(str(int(event["data"][1], base=16)))
+        elif len(event["keys"]) == 2 and event["keys"][0] == self.BURN_KEY:
+            user = add_leading_zeros(event["keys"][1])
+            face_amount = Decimal(str(int(event["data"][0], base=16)))
+        else:
+            raise ValueError("Event = {} has an unexpected structure.".format(event))
+
+        if user == self.DEFERRED_BATCH_CALL_ADAPTER_ADDRESS:
+            return
+
+        token = add_leading_zeros(event["from_address"])
+        raw_amount = face_amount
+
+        self.loan_entities[user].non_interest_bearing_collateral.increase_value(
+            token=token, value=-raw_amount
+        )
+        self.loan_entities[user].collateral.values = {
+            token: (
+                self.loan_entities[user].non_interest_bearing_collateral.get(
+                    token, Decimal("0")
+                )
+                + self.loan_entities[user].interest_bearing_collateral.get(
+                    token, Decimal("0")
+                )
+            )
+            for token in self.token_parameters.collateral.keys()
+        }
+        self.loan_entities[user].extra_info.block = event["block_number"]
+        self.loan_entities[user].extra_info.timestamp = event["timestamp"]
+
+        if user == self.verbose_user:
+            logger.info(
+                "In block number = {}, non-interest-bearing collateral of raw amount = {} of token = {} was withdrawn.".format(
+                    event["block_number"],
+                    raw_amount,
+                    token,
+                )
+            )
