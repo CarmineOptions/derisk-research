@@ -2,7 +2,14 @@
 import pandas as pd
 import math
 import pytest
-from typing import Dict, Any, Tuple, Optional, DefaultDict, List, Union
+
+import logging
+
+from dashboard_app.charts.utils import (
+    transform_main_chart_data,
+    infer_protocol_name
+)
+from typing import Dict, List, Union
 from unittest.mock import patch
 from dashboard_app.helpers.settings import (
     UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES,
@@ -499,14 +506,6 @@ def test_create_stablecoin_bundle_with_different_price_ranges(
 
     assert len(eth_bundle) == 0
 
-import pytest
-import pandas as pd
-import logging
-
-from dashboard_app.charts.utils import (
-    transform_main_chart_data,
-    infer_protocol_name
-)
 
 @pytest.fixture
 def sample_protocol_data():
