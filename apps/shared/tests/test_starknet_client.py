@@ -18,7 +18,7 @@ class TestStarknetClient:
     @pytest.fixture(autouse=True)
     def setup(self):
         """Setup test environment with mocked Network"""
-        self.network_patcher = patch('starknet_py.net.networks.Network')
+        self.network_patcher = patch('shared.starknet_client.FullNodeClient')
         self.mock_network_class = self.network_patcher.start()
         self.mock_network = Mock()
         self.mock_network.call_contract = AsyncMock()
