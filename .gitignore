@@ -5,3 +5,4 @@ __pycache__
 storage_credentials.json
 env/
 .venv
+.env.dev
