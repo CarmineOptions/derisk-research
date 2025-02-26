@@ -1,7 +1,7 @@
 """
 This module includes functions to generate financial charts using token price and liquidity data.
 """
-
+from collections import defaultdict
 import math
 from decimal import Decimal
 import pandas as pd
@@ -408,6 +408,7 @@ def display_user_history_chart(df: pd.DataFrame):
         else:  
             st.error("No data found for this wallet ID.") 
 
+<<<<<<< HEAD
 def get_total_debt_amount(debt_df: pd.DataFrame) -> pd.DataFrame:
     """
     Computes the total debt amount per token from the provided DataFrame.
@@ -436,3 +437,42 @@ def get_total_debt_amount(debt_df: pd.DataFrame) -> pd.DataFrame:
 
     result_df = pd.DataFrame(list(total_debt.items()), columns=["token", "total_debt"])
     return result_df
+=======
+                
+def get_total_deposit_amount(df: pd.DataFrame) -> dict:
+    """
+    A dataframe with a "Collateral" column containing deposit amount in the format:
+    "TOKEN: amount, TOKEN: amount, ...".
+    This function sums up the deposit amounts per token across all rows.
+    Args: Pandas DataFrame with a "Collateral" column.
+    Returns: A dictionary containing the total deposit amount per token.
+    """
+    totals = defaultdict(float)
+
+    #Iterate over each row in the DataFrame
+    for _, row in df.iterrows():
+        collateral = row.get("Collateral", "")
+        # Skip empty or missing collateral entries
+        if pd.isna(collateral) or not collateral.strip():
+            continue
+
+        # Split the collateral string by comma to separate token entries
+        tokens = collateral.split(',')
+        for token_entry in tokens:
+            token_entry = token_entry.strip()
+            if not token_entry or ":" not in token_entry:
+                continue
+
+            # Split token and its amount
+            token, amount_str = token_entry.split(":", 1)
+            token = token.strip()
+            try:
+                amount = float(amount_str.strip())
+            except ValueError:
+                # Skip or handle the case where conversion fails
+                continue
+
+            totals[token] += amount
+    
+    return dict(totals)
+>>>>>>> 1756c94 (token_amount function)
