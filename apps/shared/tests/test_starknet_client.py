@@ -4,7 +4,6 @@ from unittest.mock import AsyncMock, Mock, patch
 
 from starknet_py.hash.selector import get_selector_from_name
 from starknet_py.net.client_models import Call
-from starknet_py.net.networks import Network
 
 from shared.starknet_client import StarknetClient
 
@@ -19,7 +18,7 @@ class TestStarknetClient:
     @pytest.fixture(autouse=True)
     def setup(self):
         """Setup test environment with mocked Network"""
-        self.network_patcher = patch('shared.starknet_client.Network')
+        self.network_patcher = patch('starknet_py.net.networks.Network')
         self.mock_network_class = self.network_patcher.start()
         self.mock_network = Mock()
         self.mock_network.call_contract = AsyncMock()
