@@ -15,7 +15,6 @@ from data_handler.handler_tools.nostra_mainnet_settings import (
 )
 from data_handler.handlers.loan_states.abstractions import LoanStateComputationBase
 from data_handler.handlers.loan_states.nostra_mainnet.events import NostraMainnetState
-
 from shared.constants import ProtocolIDs
 
 logger = logging.getLogger(__name__)
@@ -30,7 +29,7 @@ class NostraMainnetStateComputation(LoanStateComputationBase):
     PROTOCOL_ADDRESSES = ProtocolAddresses().NOSTRA_MAINNET_ADDRESSES
     INTEREST_RATES_KEYS = ["InterestStateUpdated"]
     EVENTS_METHODS_MAPPING = NOSTRA_MAINNET_EVENTS_TO_METHODS
-    ADDRESSES_TO_EVENTS = (NOSTRA_MAINNET_ADDRESSES_TO_EVENTS, )
+    ADDRESSES_TO_EVENTS = NOSTRA_MAINNET_ADDRESSES_TO_EVENTS
 
     EVENTS_MAPPING = NOSTRA_EVENTS_MAPPING
 
@@ -90,11 +89,13 @@ class NostraMainnetStateComputation(LoanStateComputationBase):
         :return: pd.DataFrame
         """
         nostra_mainnet_state = NostraMainnetState()
-        events_with_interest_rate = (list(self.EVENTS_MAPPING.keys()) + self.INTEREST_RATES_KEYS)
+        events_with_interest_rate = (
+            list(self.EVENTS_MAPPING.keys()) + self.INTEREST_RATES_KEYS
+        )
 
         # Init DataFrame
         df = pd.DataFrame(data)
-        df_filtered = df[df["key_name"].isin(events_with_interest_rate)]
+        df_filtered = df[df["key_name"].isin(events_with_interest_rate)].copy()
 
         # Map 'key_name' to its corresponding order from the dict
         df_filtered["sort_order"] = df_filtered["key_name"].map(
@@ -107,6 +108,47 @@ class NostraMainnetStateComputation(LoanStateComputationBase):
             self.process_event(nostra_mainnet_state, None, row)
 
         result_df = self.get_result_df(nostra_mainnet_state.loan_entities)
+        return result_df
+
+    def get_result_df(self, loan_entities: dict) -> pd.DataFrame:
+        """
+        Creates a DataFrame with the loan state based on the loan entities.
+        :param loan_entities: dictionary of loan entities
+        :return: dataframe with loan state
+        """
+        users = list(loan_entities.keys())
+        entities = [loan_entities[user] for user in users]
+
+        collateral_data = []
+        for loan in entities:
+            try:
+                # Use .items() directly if values is not a dict
+                if isinstance(loan.collateral.values, dict):
+                    items = loan.collateral.values.items()
+                else:
+                    items = loan.collateral.items()
+
+                collateral_dict = {token: float(amount) for token, amount in items}
+                collateral_data.append(collateral_dict)
+            except Exception as e:
+                logger.error(f"Error processing collateral: {e}", exc_info=True)
+                collateral_data.append({})
+
+        result_dict = {
+            "protocol": [self.PROTOCOL_TYPE] * len(users),
+            "user": users,
+            "collateral": collateral_data,
+            "block": [getattr(entity.extra_info, "block", None) for entity in entities],
+            "timestamp": [
+                getattr(entity.extra_info, "timestamp", None) for entity in entities
+            ],
+            "debt": [
+                {token: float(amount) for token, amount in loan.debt.items()}
+                for loan in entities
+            ],
+        }
+
+        result_df = pd.DataFrame(result_dict)
         return result_df
 
     def run(self) -> None:

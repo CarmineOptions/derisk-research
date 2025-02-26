@@ -5,7 +5,7 @@ from typing import Any, List, Optional, Union
 
 from starknet_py.hash.selector import get_selector_from_name
 from starknet_py.net.client_models import Call
-from starknet_py.net.networks import Network
+from starknet_py.net.full_node_client import FullNodeClient
 
 
 class StarknetClient:
@@ -19,9 +19,10 @@ class StarknetClient:
         Initialize StarknetClient with network URL.
 
         Args:
-            network_url (str): The URL of the Starknet network to connect to
+            node_url (str): The URL of the Starknet network to connect to
         """
-        self.network = Network(node_url)
+        self.node_url = node_url
+        self.client = FullNodeClient(node_url=self.node_url)
 
     async def func_call(
         self, addr: int, selector: str, calldata: List[int], retries: int = 1
@@ -46,7 +47,13 @@ class StarknetClient:
 
         for attempt in range(retries + 1):
             try:
-                return await self.network.call_contract(call)
+                response = await self.client.call_contract(call, block_hash="latest")
+                if hasattr(response, "result"):
+                    return response.result
+                elif isinstance(response, list):
+                    return response
+                else:
+                    raise ValueError(f"Unexpected response type: {type(response)}")
             except Exception as e:
                 if attempt == retries:
                     raise e
