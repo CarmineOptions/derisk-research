@@ -89,7 +89,7 @@ class EkuboLiquidity:
 
         return self.data
 
-    def fetch_liquidity(self, bids: bool = True) -> dict[str, str | list[float]]:
+    def fetch_liquidity(self, bids: bool = True) -> dict[str, str | list[float]] | None:
         """
         Fetching liquidity from API endpoint and structuring data to comfortable format.
         Returns dictionary with the following struct:
@@ -101,33 +101,42 @@ class EkuboLiquidity:
         :param bids: bool = True
         :return: dict[str, str | list[float]]
         """
+        max_retries = 5
+        retry_delay = 5 if not bids else 300
 
-        params = self.params_for_bids
-        if not bids:
-            params = self.params_for_asks
+        params = self.params_for_bids if bids else self.params_for_asks
+        attempt = 0
+
+        while attempt < max_retries:
+            response = requests.get(self.URL, params=params)
+
+            if response.ok:
+                liquidity = response.json()
+                data = {
+                    "type": "bids" if bids else "asks",
+                }
+
+                if data["type"] in liquidity:
+                    try:
+                        data["prices"], data["quantities"] = zip(
+                            *liquidity[data["type"]]
+                        )
+                        return {
+                            "type": data["type"],
+                            "prices": data["prices"],
+                            "quantities": data["quantities"],
+                        }
+                    except ValueError:
+                        logging.warning("Invalid response format, retrying...")
+
             logging.warning(
-                "Using collateral token as base token and debt token as quote token."
+                f"API request failed (attempt {attempt + 1}/{max_retries}), retrying in {retry_delay} seconds..."
             )
+            time.sleep(retry_delay)
+            attempt += 1
 
-        response = requests.get(self.URL, params=params)
-
-        if response.ok:
-            liquidity = response.json()
-            data = {
-                "type": "bids" if bids else "asks",
-            }
-            try:
-                data["prices"], data["quantities"] = zip(*liquidity[data["type"]])
-            except ValueError:
-                time.sleep(300 if bids else 5)
-                self.fetch_liquidity(bids=True)
-            else:
-                return data
-        else:
-            time.sleep(300 if bids else 5)
-            self.fetch_liquidity(
-                bids=False if bids else True,
-            )
+        logging.error("Max retries reached. Could not fetch liquidity.")
+        return None
 
     def _get_available_liquidity(
         self, data: pandas.DataFrame, price: float, price_diff: float, bids: bool

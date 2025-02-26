@@ -1,6 +1,7 @@
 """
 This module defines the Dashboard class for rendering a DeRisk dashboard using Streamlit.
 """
+
 import numpy as np
 import pandas as pd
 import plotly
@@ -25,6 +26,7 @@ from .main_chart_figure import (
     get_bar_chart_figures,
     get_main_chart_figure,
     get_specific_loan_usd_amounts,
+    get_user_history
 )
 from .utils import (
     get_protocol_data_mappings,
@@ -33,6 +35,7 @@ from .utils import (
     transform_loans_data,
     transform_main_chart_data,
 )
+ 
 
 
 class Dashboard:
@@ -385,7 +388,61 @@ class Dashboard:
                     figure = self._plot_chart(token, "supply")
                     st.plotly_chart(figure, True)
 
+    def get_user_history(self, wallet_id):  
+        """  
+        Fetch and return the transaction history for a specific user.  
+        """  
+        user_data = get_user_history(wallet_id)  
+        if user_data is None or user_data.empty:  
+            st.error("No data found for this user.")  
+            return None  
+
+        user_data.columns = [CommonValues.protocol.value, CommonValues.total_usd.value]  
+        user_data = user_data.sort_values(CommonValues.total_usd.value, ascending=False)  
+        user_data.reset_index(drop=True, inplace=True)  
+        
+        st.dataframe(user_data)  
+        return user_data  
+
         # TODO: add last update functionality
+        
+    def load_leaderboard(self):
+        """
+        Display a leaderboard of the top 5 biggest collateral and debt per token.
+        """
+        st.header("Leaderboard: Top 5 Collateral & Debt per Token")
+        
+        if self.collateral_stats.empty or self.debt_stats.empty:
+            st.warning("No data available for leaderboard.")
+            return
+        
+        top_collateral = (
+            self.collateral_stats.groupby("token")["amount_usd"]
+            .sum()
+            .nlargest(5)
+            .reset_index()
+        )
+        top_collateral["type"] = "Collateral"
+        
+        top_debt = (
+            self.debt_stats.groupby("token")["amount_usd"]
+            .sum()
+            .nlargest(5)
+            .reset_index()
+        )
+        top_debt["type"] = "Debt"
+        
+        leaderboard_df = pd.concat([top_collateral, top_debt])
+        
+        def highlight_values(row):
+            color = "green" if row["type"] == "Collateral" else "red"
+            return [f'background-color: {color}; color: white' for _ in row]
+        
+        st.dataframe(
+            leaderboard_df.style.apply(highlight_values, axis=1),
+            hide_index=True,
+            use_container_width=True,
+        )
 
     def _plot_chart(self, token: str, stats_type: str) -> plotly.express.data:
         """
@@ -427,3 +484,5 @@ class Dashboard:
         self.load_top_loans_chart()
         self.load_detail_loan_chart()
         self.load_comparison_lending_protocols_chart()
+        self.get_user_history()
+        self.load_leaderboard()
