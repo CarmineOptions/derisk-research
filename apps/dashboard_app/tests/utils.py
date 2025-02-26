@@ -3,45 +3,10 @@ Tests for charts utils functions in dashboard_app.
 """
 
 # pylint: disable=wrong-import-position, too-few-public-methods
-
-import sys
-from types import ModuleType
-
-# Create a dummy 'streamlit' module if it doesn't exist.
-if "streamlit" not in sys.modules:
-    dummy_st = ModuleType("streamlit")
-    dummy_st.subheader = lambda *args, **kwargs: None
-    sys.modules["streamlit"] = dummy_st
-
-# Create dummy 'google' modules if they don't exist.
-if "google" not in sys.modules:
-    dummy_google = ModuleType("google")
-    dummy_cloud = ModuleType("google.cloud")
-    dummy_storage = ModuleType("google.cloud.storage")
-    dummy_storage.Client = lambda *args, **kwargs: None
-    dummy_cloud.storage = dummy_storage
-    dummy_google.cloud = dummy_cloud
-    sys.modules["google"] = dummy_google
-    sys.modules["google.cloud"] = dummy_cloud
-    sys.modules["google.cloud.storage"] = dummy_storage
-
-# Create dummy 'starknet_py' modules if they don't exist.
-if "starknet_py" not in sys.modules:
-    dummy_starknet_py = ModuleType("starknet_py")
-    dummy_cairo = ModuleType("starknet_py.cairo")
-    dummy_felt = ModuleType("starknet_py.cairo.felt")
-    # Add a dummy attribute required by the code.
-    dummy_felt.felt = None
-    dummy_cairo.felt = dummy_felt
-    dummy_starknet_py.cairo = dummy_cairo
-    sys.modules["starknet_py"] = dummy_starknet_py
-    sys.modules["starknet_py.cairo"] = dummy_cairo
-    sys.modules["starknet_py.cairo.felt"] = dummy_felt
-
 import pandas as pd
 import pytest
 
-from apps.dashboard_app.charts.utils import (
+from dashboard_app.charts.utils import (
     get_data,
     get_protocol_data_mappings,
     transform_loans_data,
