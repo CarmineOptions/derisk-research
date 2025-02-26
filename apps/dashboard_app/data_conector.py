@@ -70,7 +70,10 @@ class DataConnector:
         while True:
             # Use the original query if it already contains LIMIT and OFFSET
             if "LIMIT" not in query.upper() and "OFFSET" not in query.upper():
-                paginated_query = f"{query}{'' if query.strip().endswith(';') else ';'.replace(';', '')} LIMIT {batch_size} OFFSET {offset}"
+                clean_query = query.strip()
+                if clean_query.endswith(";"):
+                    clean_query = clean_query[:-1]
+                paginated_query = f"{clean_query} LIMIT {batch_size} OFFSET {offset}"
             else:
                 paginated_query = query
 
@@ -91,10 +94,10 @@ class DataConnector:
                 print(f"Error executing batch query: {e}")
                 break
 
-            if not all_data:
-                return pd.DataFrame()
+        if not all_data:
+            return pd.DataFrame()
 
-            return pd.concat(all_data, ignore_index=True)
+        return pd.concat(all_data, ignore_index=True)
 
     def fetch_protocol_last_block_number(self, protocol: str) -> int:
         """

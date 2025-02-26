@@ -43,6 +43,7 @@ def mock_data_connector():
                 raise ValueError(f"Unexpected query: {query}")
 
         connector.fetch_data.side_effect = fetch_data_side_effect
+        connector.fetch_protocol_last_block_number.return_value = 6
         yield connector
 
 
@@ -81,7 +82,11 @@ def test_init_dashboard_data_handler(handler):
     """Test to ensure all attributes were set during DashboardDataHandler init."""
     assert handler.zklend_state is not None
     assert handler.zklend_state.get_protocol_name == "zkLend"
-    assert handler.zklend_state.last_block_number == ZKLEND_DATA["block"].max()
+    assert handler.zklend_state.last_block_number is not None
+    assert (
+        handler.zklend_state.last_block_number
+        == handler.data_connector.fetch_protocol_last_block_number("zkLend")
+    )
     assert (
         handler.zklend_state.interest_rate_models.collateral
         == ZKLEND_INTEREST_RATE["collateral"].iloc[0]
