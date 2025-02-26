@@ -30,12 +30,12 @@ class TestStarknetClient:
         """Test client initialization"""
         # Test default URL
         StarknetClient()
-        self.mock_network_class.assert_called_with("https://starknet-mainnet.public.blastapi.io")
+        self.mock_network_class.assert_called_with(node_url="https://starknet-mainnet.public.blastapi.io")
         
         # Test custom URL
         self.mock_network_class.reset_mock()
         StarknetClient(TEST_NODE_URL)
-        self.mock_network_class.assert_called_with(TEST_NODE_URL)
+        self.mock_network_class.assert_called_with(node_url=TEST_NODE_URL)
 
     @pytest.mark.asyncio
     async def test_func_call(self):
@@ -54,7 +54,7 @@ class TestStarknetClient:
             selector=get_selector_from_name("test_function"),
             calldata=[1, 2, 3]
         )
-        self.mock_network.call_contract.assert_called_with(expected_call)
+        self.mock_network.call_contract.assert_called_with(expected_call, block_hash='latest')
         assert result == [100]
 
     @pytest.mark.asyncio
