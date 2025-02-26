@@ -54,21 +54,38 @@ class DashboardDataHandler:
         logger.info("Initializing ZkLend state.")
         zklend_state = ZkLendState()
         start = monotonic()
-        zklend_data = self.data_connector.fetch_data(
-            self.data_connector.ZKLEND_SQL_QUERY
+
+        try:
+            zklend_data = self.data_connector.fetch_data(
+                self.data_connector.ZKLEND_SQL_QUERY
+            )
+
+            # Process the data
+            if not zklend_data.empty:
+                zklend_data_dict = zklend_data.to_dict(orient="records")
+                for loan_state in zklend_data_dict:
+                    user_loan_state = zklend_state.loan_entities[loan_state["user"]]
+                    user_loan_state.collateral_enabled.values = loan_state[
+                        "collateral_enabled"
+                    ]
+                    user_loan_state.collateral.values = loan_state["collateral"]
+                    user_loan_state.debt.values = loan_state["debt"]
+
+                logger.info(f"Processed {len(zklend_data)} records total")
+            else:
+                logger.warning("No ZkLend data was found")
+
+        except Exception as e:
+            logger.error(f"Error processing ZkLend data: {e}")
+
+        zklend_state.last_block_number = (
+            self.data_connector.fetch_protocol_last_block_number("zkLend")
         )
+
         zklend_interest_rate_data = self.data_connector.fetch_data(
             self.data_connector.ZKLEND_INTEREST_RATE_SQL_QUERY
         )
 
-        zklend_data_dict = zklend_data.to_dict(orient="records")
-        for loan_state in zklend_data_dict:
-            user_loan_state = zklend_state.loan_entities[loan_state["user"]]
-            user_loan_state.collateral_enabled.values = loan_state["collateral_enabled"]
-            user_loan_state.collateral.values = loan_state["collateral"]
-            user_loan_state.debt.values = loan_state["debt"]
-
-        zklend_state.last_block_number = zklend_data["block"].max()
         zklend_state.interest_rate_models.collateral = zklend_interest_rate_data[
             "collateral"
         ].iloc[0]

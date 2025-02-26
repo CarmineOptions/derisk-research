@@ -56,16 +56,64 @@ class DataConnector:
         )
         self.engine = sqlalchemy.create_engine(self.db_url)
 
-    def fetch_data(self, query: str) -> pd.DataFrame:
+    def fetch_data(self, query: str, batch_size: int = 1000) -> pd.DataFrame:
         """
         Fetch data from the database using a SQL query.
 
         :param query: SQL query to execute.
+        :param batch_size: Number of records to fetch per batch. If None, fetches all data at once.
         :return: DataFrame containing the query results
         """
+        all_data = []
+        offset = 0
+
+        while True:
+            # Use the original query if it already contains LIMIT and OFFSET
+            if "LIMIT" not in query.upper() and "OFFSET" not in query.upper():
+                paginated_query = f"{query}{'' if query.strip().endswith(';') else ';'.replace(';', '')} LIMIT {batch_size} OFFSET {offset}"
+            else:
+                paginated_query = query
+
+            try:
+                with self.engine.connect() as connection:
+                    batch = pd.read_sql(paginated_query, connection)
+
+                if batch.empty:
+                    break
+
+                all_data.append(batch)
+                offset += batch_size
+
+                if len(batch) < batch_size:
+                    break
+
+            except Exception as e:
+                print(f"Error executing batch query: {e}")
+                break
+
+            if not all_data:
+                return pd.DataFrame()
+
+            return pd.concat(all_data, ignore_index=True)
+
+    def fetch_protocol_last_block_number(self, protocol: str) -> int:
+        """
+        Fetch the last block number for a specific protocol.
+
+        :param protocol: Protocol identifier (e.g., 'zkLend').
+        :return: Last block number as an integer.
+        """
+        query = f"""
+            SELECT MAX(block) as last_block
+            FROM loan_state 
+            WHERE protocol_id = '{protocol}';
+        """
+
         with self.engine.connect() as connection:
-            df = pd.read_sql(query, connection)
-        return df
+            result = pd.read_sql(query, connection)
+            if not result.empty and not pd.isna(result["last_block"].iloc[0]):
+                return int(result["last_block"].iloc[0])
+            return 0
 
     def _check_env_variables(self) -> None:
         """
