@@ -7,3 +7,5 @@ shell.nix
 storage_credentials.json
 env/
 .venv
+.idea/
+.DS_Store
