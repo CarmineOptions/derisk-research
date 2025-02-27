@@ -9,8 +9,8 @@ from data_handler.db.crud import DBConnector
 from data_handler.db.models import InterestRate, LoanState
 from data_handler.handler_tools.api_connector import DeRiskAPIConnector
 from shared.constants import ProtocolIDs
-from shared.state import State
 from shared.custom_types import InterestRateModels
+from shared.state import State
 
 logger = logging.getLogger(__name__)
 
@@ -182,29 +182,35 @@ class LoanStateComputationBase(ABC):
         :param loan_entities: dictionary of loan entities
         :return: dataframe with loan state
         """
-        # Create a DataFrame with the loan state
-        loan_entities_values = loan_entities.values()
-        if hasattr(loan_entities_values, "update_deposit"):
-            for loan_entity in loan_entities_values:
-                loan_entity.update_deposit()
+        users = list(loan_entities.keys())
+        entities = [loan_entities[user] for user in users]
+
+        collateral_data = []
+        for loan in entities:
+            try:
+                # Use .items() directly if values is not a dict
+                if isinstance(loan.collateral.values, dict):
+                    items = loan.collateral.values.items()
+                else:
+                    items = loan.collateral.items()
+
+                collateral_dict = {token: float(amount) for token, amount in items}
+                collateral_data.append(collateral_dict)
+            except Exception as e:
+                logger.error(f"Error processing collateral: {e}", exc_info=True)
+                collateral_data.append({})
 
         result_dict = {
-            "protocol": [self.PROTOCOL_TYPE for _ in loan_entities_values],
-            "user": [loan_entity.user for loan_entity in loan_entities_values],
-            "collateral": [
-                {
-                    token: float(amount)
-                    for token, amount in loan.collateral.values.items()
-                }
-                for loan in loan_entities_values
-            ],
-            "block": [entity.extra_info.block for entity in loan_entities_values],
+            "protocol": [self.PROTOCOL_TYPE] * len(users),
+            "user": users,
+            "collateral": collateral_data,
+            "block": [getattr(entity.extra_info, "block", None) for entity in entities],
             "timestamp": [
-                entity.extra_info.timestamp for entity in loan_entities_values
+                getattr(entity.extra_info, "timestamp", None) for entity in entities
             ],
             "debt": [
-                {token: float(amount) for token, amount in loan.debt.values.items()}
-                for loan in loan_entities_values
+                {token: float(amount) for token, amount in loan.debt.items()}
+                for loan in entities
             ],
         }
         result_df = pd.DataFrame(result_dict)
