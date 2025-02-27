@@ -408,7 +408,6 @@ def display_user_history_chart(df: pd.DataFrame):
         else:  
             st.error("No data found for this wallet ID.") 
 
-<<<<<<< HEAD
 def get_total_debt_amount(debt_df: pd.DataFrame) -> pd.DataFrame:
     """
     Computes the total debt amount per token from the provided DataFrame.
@@ -437,8 +436,7 @@ def get_total_debt_amount(debt_df: pd.DataFrame) -> pd.DataFrame:
 
     result_df = pd.DataFrame(list(total_debt.items()), columns=["token", "total_debt"])
     return result_df
-=======
-                
+
 def get_total_deposit_amount(df: pd.DataFrame) -> dict:
     """
     A dataframe with a "Collateral" column containing deposit amount in the format:
@@ -451,7 +449,7 @@ def get_total_deposit_amount(df: pd.DataFrame) -> dict:
 
     for _, row in df.iterrows():
         collateral = row.get("Collateral", "")
-
+        
         if pd.isna(collateral) or not collateral.strip():
             continue
 
@@ -466,10 +464,9 @@ def get_total_deposit_amount(df: pd.DataFrame) -> dict:
             try:
                 amount = float(amount_str.strip())
             except ValueError:
-               
+
                 continue
 
             totals[token] += amount
-    
+
     return dict(totals)
->>>>>>> 1756c94 (token_amount function)
