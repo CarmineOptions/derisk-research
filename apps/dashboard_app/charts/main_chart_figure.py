@@ -449,27 +449,24 @@ def get_total_deposit_amount(df: pd.DataFrame) -> dict:
     """
     totals = defaultdict(float)
 
-    #Iterate over each row in the DataFrame
     for _, row in df.iterrows():
         collateral = row.get("Collateral", "")
-        # Skip empty or missing collateral entries
+
         if pd.isna(collateral) or not collateral.strip():
             continue
 
-        # Split the collateral string by comma to separate token entries
         tokens = collateral.split(',')
         for token_entry in tokens:
             token_entry = token_entry.strip()
             if not token_entry or ":" not in token_entry:
                 continue
 
-            # Split token and its amount
             token, amount_str = token_entry.split(":", 1)
             token = token.strip()
             try:
                 amount = float(amount_str.strip())
             except ValueError:
-                # Skip or handle the case where conversion fails
+               
                 continue
 
             totals[token] += amount
