@@ -438,7 +438,3 @@ def get_total_collateral_amount(df: pd.DataFrame) -> pd.DataFrame:
 # Read the mock data from data.csv
 mock_data = pd.read_csv('data.csv')
 
-# Test the function with mock data
-result = get_total_collateral_amount(mock_data)
-print("Total collateral amount per token address:")
-print(result)
