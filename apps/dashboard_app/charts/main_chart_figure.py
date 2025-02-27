@@ -438,3 +438,4 @@ def get_total_collateral_amount(df: pd.DataFrame) -> pd.DataFrame:
 # Read the mock data from data.csv
 mock_data = pd.read_csv('data.csv')
 
+
