@@ -33,8 +33,11 @@ def mock_data_connector():
     with patch("dashboard_app.helpers.load_data.DataConnector") as MockConnector:
         connector = MockConnector
 
+        connector.fetch_protocol_first_block_number.return_value = 1
+        connector.fetch_protocol_last_block_number.return_value = 6
+
         # Mocking fetch_data calls with dummy data
-        def fetch_data_side_effect(query):
+        def fetch_data_side_effect(query, **kwargs):
             if query == connector.ZKLEND_SQL_QUERY:
                 return ZKLEND_DATA
             elif query == connector.ZKLEND_INTEREST_RATE_SQL_QUERY:
@@ -43,7 +46,7 @@ def mock_data_connector():
                 raise ValueError(f"Unexpected query: {query}")
 
         connector.fetch_data.side_effect = fetch_data_side_effect
-        connector.fetch_protocol_last_block_number.return_value = 6
+
         yield connector
 
 

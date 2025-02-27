@@ -53,35 +53,58 @@ class DashboardDataHandler:
         """
         logger.info("Initializing ZkLend state.")
         zklend_state = ZkLendState()
+        self._fetch_and_process_zklend_data(zklend_state)
+        self._set_zklend_interest_rates(zklend_state)
+        return zklend_state
+
+    def _fetch_and_process_zklend_data(self, zklend_state):
+        PROTOCOL_ZKLEND = "zkLend"
+        BATCH_SIZE = 1000
         start = monotonic()
 
         try:
-            zklend_data = self.data_connector.fetch_data(
-                self.data_connector.ZKLEND_SQL_QUERY
+            first_block = self.data_connector.fetch_protocol_first_block_number(
+                PROTOCOL_ZKLEND
+            )
+            last_block = self.data_connector.fetch_protocol_last_block_number(
+                PROTOCOL_ZKLEND
             )
 
-            # Process the data
-            if not zklend_data.empty:
-                zklend_data_dict = zklend_data.to_dict(orient="records")
-                for loan_state in zklend_data_dict:
-                    user_loan_state = zklend_state.loan_entities[loan_state["user"]]
-                    user_loan_state.collateral_enabled.values = loan_state[
-                        "collateral_enabled"
-                    ]
-                    user_loan_state.collateral.values = loan_state["collateral"]
-                    user_loan_state.debt.values = loan_state["debt"]
+            current_block = first_block
+            while current_block <= last_block:
+                end_block = min(current_block + BATCH_SIZE - 1, last_block)
+                batch = self.data_connector.fetch_data(
+                    self.data_connector.ZKLEND_SQL_QUERY,
+                    protocol=PROTOCOL_ZKLEND,
+                    batch_size=BATCH_SIZE,
+                    start_block=current_block,
+                    end_block=end_block,
+                )
 
-                logger.info(f"Processed {len(zklend_data)} records total")
-            else:
-                logger.warning("No ZkLend data was found")
+                if not batch.empty:
+                    zklend_data_dict = batch.to_dict(orient="records")
+                    for loan_state in zklend_data_dict:
+                        user_loan_state = zklend_state.loan_entities[loan_state["user"]]
+                        user_loan_state.collateral_enabled.values = loan_state[
+                            "collateral_enabled"
+                        ]
+                        user_loan_state.collateral.values = loan_state["collateral"]
+                        user_loan_state.debt.values = loan_state["debt"]
+                    logger.info(
+                        f"Processed {len(batch)} records for blocks {current_block} to {end_block}"
+                    )
+                current_block = end_block + 1
+
+            logger.info(f"Processed total of {last_block - first_block + 1} blocks")
 
         except Exception as e:
             logger.error(f"Error processing ZkLend data: {e}")
+            raise
 
-        zklend_state.last_block_number = (
-            self.data_connector.fetch_protocol_last_block_number("zkLend")
-        )
+        zklend_state.last_block_number = last_block
+        logger.info("Initialized ZkLend state in %.2fs", monotonic() - start)
 
+    def _set_zklend_interest_rates(self, zklend_state):
         zklend_interest_rate_data = self.data_connector.fetch_data(
             self.data_connector.ZKLEND_INTEREST_RATE_SQL_QUERY
         )
@@ -92,9 +115,6 @@ class DashboardDataHandler:
         zklend_state.interest_rate_models.debt = zklend_interest_rate_data["debt"].iloc[
             0
         ]
-        logger.info("Initialized ZkLend state in %.2fs", monotonic() - start)
-
-        return zklend_state
 
     def _set_prices(self) -> None:
         """
