@@ -110,47 +110,6 @@ class NostraMainnetStateComputation(LoanStateComputationBase):
         result_df = self.get_result_df(nostra_mainnet_state.loan_entities)
         return result_df
 
-    def get_result_df(self, loan_entities: dict) -> pd.DataFrame:
-        """
-        Creates a DataFrame with the loan state based on the loan entities.
-        :param loan_entities: dictionary of loan entities
-        :return: dataframe with loan state
-        """
-        users = list(loan_entities.keys())
-        entities = [loan_entities[user] for user in users]
-
-        collateral_data = []
-        for loan in entities:
-            try:
-                # Use .items() directly if values is not a dict
-                if isinstance(loan.collateral.values, dict):
-                    items = loan.collateral.values.items()
-                else:
-                    items = loan.collateral.items()
-
-                collateral_dict = {token: float(amount) for token, amount in items}
-                collateral_data.append(collateral_dict)
-            except Exception as e:
-                logger.error(f"Error processing collateral: {e}", exc_info=True)
-                collateral_data.append({})
-
-        result_dict = {
-            "protocol": [self.PROTOCOL_TYPE] * len(users),
-            "user": users,
-            "collateral": collateral_data,
-            "block": [getattr(entity.extra_info, "block", None) for entity in entities],
-            "timestamp": [
-                getattr(entity.extra_info, "timestamp", None) for entity in entities
-            ],
-            "debt": [
-                {token: float(amount) for token, amount in loan.debt.items()}
-                for loan in entities
-            ],
-        }
-
-        result_df = pd.DataFrame(result_dict)
-        return result_df
-
     def run(self) -> None:
         """
         Runs the loan state computation for the specific protocol.

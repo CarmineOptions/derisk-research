@@ -14,7 +14,6 @@ from data_handler.handler_tools.nostra_alpha_settings import (
 )
 from data_handler.handlers.loan_states.abstractions import LoanStateComputationBase
 from data_handler.handlers.loan_states.nostra_alpha.events import NostraAlphaState
-
 from shared.constants import ProtocolIDs
 
 logger = logging.getLogger(__name__)
@@ -39,7 +38,9 @@ class NostraAlphaStateComputation(LoanStateComputationBase):
     EVENTS_METHODS_MAPPING = NOSTRA_ALPHA_EVENTS_TO_METHODS
     ADDRESSES_TO_EVENTS = NOSTRA_ALPHA_ADDRESSES_TO_EVENTS
 
-    def process_interest_rate_event(self, nostra_state: NostraAlphaState, event: pd.Series) -> None:
+    def process_interest_rate_event(
+        self, nostra_state: NostraAlphaState, event: pd.Series
+    ) -> None:
         """
         Processes an interest rate event.
 
@@ -63,11 +64,13 @@ class NostraAlphaStateComputation(LoanStateComputationBase):
         """
         nostra_alpha_state = NostraAlphaState()
 
-        events_with_interest_rate = (list(self.EVENTS_MAPPING.keys()) + self.INTEREST_RATES_KEYS)
+        events_with_interest_rate = (
+            list(self.EVENTS_MAPPING.keys()) + self.INTEREST_RATES_KEYS
+        )
 
         # Init DataFrame
         df = pd.DataFrame(data)
-        df_filtered = df[df["key_name"].isin(events_with_interest_rate)]
+        df_filtered = df[df["key_name"].isin(events_with_interest_rate)].copy()
         # Map 'key_name' to its corresponding order from the dict
         df_filtered["sort_order"] = df_filtered["key_name"].map(
             lambda x: NOSTRA_ALPHA_EVENTS_TO_ORDER.get(x, float("inf"))
