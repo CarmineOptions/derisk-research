@@ -408,5 +408,37 @@ def display_user_history_chart(df: pd.DataFrame):
         else:  
             st.error("No data found for this wallet ID.") 
 
-                
+def get_total_collateral_amount(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculate the total collateral amount for each token address.
 
+    This function processes the 'collateral' column of the input DataFrame,
+    expanding it into separate columns for each token address, and then
+    sums up the total collateral amount for each address.
+
+    Args:
+        df (pd.DataFrame): A DataFrame containing a 'collateral' column
+                           with dictionary-like strings or dictionaries.
+
+    Returns:
+        pd.DataFrame: A DataFrame with columns 'address' and 'total_amount',
+                      showing the total collateral amount for each token address.
+    """
+    df['collateral'] = df['collateral'].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else x)
+    
+    df_expanded = df['collateral'].apply(pd.Series)
+    
+    totals = df_expanded.sum()
+    
+    result = totals.reset_index()
+    result.columns = ['address', 'total_amount']
+    
+    return result
+
+# Read the mock data from data.csv
+mock_data = pd.read_csv('data.csv')
+
+# Test the function with mock data
+result = get_total_collateral_amount(mock_data)
+print("Total collateral amount per token address:")
+print(result)
