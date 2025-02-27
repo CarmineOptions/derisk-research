@@ -1,5 +1,9 @@
 version: '3.8'
 
+networks:
+  dashboard_app_network:
+    driver: bridge
+
 services:
   db:
     image: postgres:16
@@ -7,6 +11,8 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
+    env_file:
+      - ../../apps/dashboard_app/.env.dev
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -14,15 +20,16 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+        - dashboard_app_network
 
   streamlit:
     build:
-      context: ../../apps
-      dockerfile: dashboard_app/dev/Dockerfile
+      context: ../../apps/dashboard_app
     ports:
       - "8501:8501"
     env_file:
-      - ../../apps/dashboard_app/.env
+      - ../../apps/dashboard_app/.env.dev
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -35,6 +42,8 @@ services:
     volumes:
       - ../../apps/dashboard_app:/app
     entrypoint: /app/.entrypoint.sh
+    networks:
+      - dashboard_app_network
 
 volumes:
   postgres_data:
