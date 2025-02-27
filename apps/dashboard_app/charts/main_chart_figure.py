@@ -408,5 +408,31 @@ def display_user_history_chart(df: pd.DataFrame):
         else:  
             st.error("No data found for this wallet ID.") 
 
-                
+def get_total_debt_amount(debt_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Computes the total debt amount per token from the provided DataFrame.
+    
+    The function assumes that the DataFrame contains (according to the data.csv):
+    - A column representing token identifiers (e.g., 'Token' or 'Asset').
+    - A 'Debt (USD)' column containing numerical debt values.
+    
+    It groups the data by token and sums the debt amounts accordingly.
+    
+    Args:
+        debt_df (pd.DataFrame): DataFrame containing debt data with at least:
+            - A column for token identifiers.
+            - A 'Debt (USD)' column for debt values.
+    """
+    total_debt = {}
 
+    for _, row in debt_df.iterrows():
+        debt_entry = row.get("Debt")
+        if isinstance(debt_entry, dict):
+            for token, amount in debt_entry.items():
+                total_debt[token] = total_debt.get(token, 0) + amount
+        else:
+            # If the 'Debt' field is not a dict, skip this row or handle accordingly.
+            continue
+
+    result_df = pd.DataFrame(list(total_debt.items()), columns=["token", "total_debt"])
+    return result_df
