@@ -145,9 +145,15 @@ def sample_interest_rate_model_event_data() -> Dict[str, Any]:
         "from_address": "0x08c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05",
         "keys": ["0x33db1d611576200c90997bde1f948502469d333e65e87045c250e6efd2e42c7"],
         "data": [
-            "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd",  # debt_token
-            "0x2386f26fc10000",  # lending_index
-            "0x2386f26fc10000",  # borrow_index
+            "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd",  # debt_token (0)
+            "0x308201d5c5409",  # lending_rate (1)
+            "0x0",  # (2)
+            "0x171019022a4ccb",  # borrow_rate (3)
+            "0x0",  # (4)
+            "0xde7cce9f071c53d",  # lending_index (5)
+            "0x0",  # (6)
+            "0xdfe7cada85cc95e",  # borrow_index (7)
+            "0x0",  # (8)
         ],
         "timestamp": 1712278700,
         "key_name": "InterestRateModel",
@@ -354,8 +360,8 @@ def test_save_interest_rate_model_event(
 
     expected_parsed_data = InterestRateModelEventData(
         debt_token=sample_interest_rate_model_event_data["data"][0],
-        lending_index=sample_interest_rate_model_event_data["data"][1],
-        borrow_index=sample_interest_rate_model_event_data["data"][2],
+        lending_index=sample_interest_rate_model_event_data["data"][5],
+        borrow_index=sample_interest_rate_model_event_data["data"][7],
     )
 
     transformer.fetch_and_transform_events(

@@ -11,5 +11,5 @@ COPY legacy_app/src legacy_app/src
 COPY legacy_app/app.py .
 COPY legacy_app/update_data.py .
 
-CMD ["streamlit", "run", "app.py"]
+CMD ["streamlit", "run", "dashboard.py"]
 

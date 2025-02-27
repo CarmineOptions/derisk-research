@@ -15,7 +15,6 @@ from data_handler.handler_tools.nostra_mainnet_settings import (
 )
 from data_handler.handlers.loan_states.abstractions import LoanStateComputationBase
 from data_handler.handlers.loan_states.nostra_mainnet.events import NostraMainnetState
-
 from shared.constants import ProtocolIDs
 
 logger = logging.getLogger(__name__)
@@ -30,7 +29,7 @@ class NostraMainnetStateComputation(LoanStateComputationBase):
     PROTOCOL_ADDRESSES = ProtocolAddresses().NOSTRA_MAINNET_ADDRESSES
     INTEREST_RATES_KEYS = ["InterestStateUpdated"]
     EVENTS_METHODS_MAPPING = NOSTRA_MAINNET_EVENTS_TO_METHODS
-    ADDRESSES_TO_EVENTS = (NOSTRA_MAINNET_ADDRESSES_TO_EVENTS, )
+    ADDRESSES_TO_EVENTS = NOSTRA_MAINNET_ADDRESSES_TO_EVENTS
 
     EVENTS_MAPPING = NOSTRA_EVENTS_MAPPING
 
@@ -90,11 +89,13 @@ class NostraMainnetStateComputation(LoanStateComputationBase):
         :return: pd.DataFrame
         """
         nostra_mainnet_state = NostraMainnetState()
-        events_with_interest_rate = (list(self.EVENTS_MAPPING.keys()) + self.INTEREST_RATES_KEYS)
+        events_with_interest_rate = (
+            list(self.EVENTS_MAPPING.keys()) + self.INTEREST_RATES_KEYS
+        )
 
         # Init DataFrame
         df = pd.DataFrame(data)
-        df_filtered = df[df["key_name"].isin(events_with_interest_rate)]
+        df_filtered = df[df["key_name"].isin(events_with_interest_rate)].copy()
 
         # Map 'key_name' to its corresponding order from the dict
         df_filtered["sort_order"] = df_filtered["key_name"].map(

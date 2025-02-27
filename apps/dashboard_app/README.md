@@ -12,11 +12,17 @@ Interactive dashboard application for visualizing and analyzing DeRisk data.
 ### Docker Setup
 
 1. Build the image:
-
-
+```
+docker-compose -f devops/dev/docker-compose.dashboard-app.yaml build
+```
 2. Run the container:
-
+```
+docker-compose -f devops/dev/docker-compose.dashboard-app.yaml up
+```
 3. stop container:
+```
+docker-compose -f devops/dev/docker-compose.dashboard-app.yaml down
+```
 
 ## Key Features
 
