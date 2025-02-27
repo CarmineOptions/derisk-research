@@ -2,7 +2,6 @@
 
 set -e  # Exit immediately if any command fails
 
-# Wait for the database to be ready
 # Import data from dump file
 if [ -f ./derisk_dump_part_aa.sql ]; then
   echo "Importing data from derisk_dump_part_aa.sql..."
@@ -28,6 +27,6 @@ else
   done
 fi
 
-## Start Streamlit
-#echo "Starting Streamlit application..."
-#streamlit run dashboard.py --server.port=8501 --server.address=0.0.0.0
+# Start Streamlit
+echo "Starting Streamlit application..."
+streamlit run dashboard.py --server.port=8501 --server.address=0.0.0.0
