@@ -6,8 +6,6 @@ from time import monotonic
 
 # from data_handler.handlers.loan_states.nostra_mainnet.run import NostraMainnetStateComputation
 from data_handler.handlers.liquidable_debt.protocols import (
-    hashstack_v0,
-    hashstack_v1,
     nostra_alpha,
     nostra_mainnet,
     zklend,
