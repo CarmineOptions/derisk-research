@@ -262,7 +262,21 @@ class Dashboard:
                 .iloc[:20],
                 use_container_width=True,
                 )
+
     def display_box(self):
+        """
+        Displays a box plot for collateral, debt, and deposit amounts.
+
+        This method retrieves total amounts for collateral, debt, and deposit 
+        from the class's data attributes, then visualizes them using a box plot.
+
+        The box plot uses:
+        - Green for Collateral
+        - Red for Debt
+        - Red for Deposit
+
+        The plot is displayed using Streamlit.
+        """
         collateral_df = get_total_amount_by_field(self.collateral_stats, 'collateral')
         debt_df = get_total_amount_by_field(self.debt_stats, 'debt')
         deposit_df = get_total_amount_by_field(self.supply_stats, 'deposit')
