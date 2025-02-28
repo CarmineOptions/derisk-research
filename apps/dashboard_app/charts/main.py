@@ -6,6 +6,8 @@ import numpy as np
 import pandas as pd
 import plotly
 import streamlit as st
+import matplotlib.pyplot as plt
+import seaborn as sns
 from data_handler.handlers.loan_states.abstractions import State
 from shared.helpers import (
     add_leading_zeros,
@@ -21,12 +23,15 @@ from helpers.settings import (
     TOKEN_SETTINGS,
 )
 
+
+
 from .constants import ChartsHeaders, CommonValues
 from .main_chart_figure import (
     get_bar_chart_figures,
     get_main_chart_figure,
     get_specific_loan_usd_amounts,
-    get_user_history
+    get_user_history,
+    get_total_amount_by_field
 )
 from .utils import (
     get_protocol_data_mappings,
@@ -119,7 +124,7 @@ class Dashboard:
                 st.warning(
                     "⚠️ You are selecting the same token for both collateral and debt."
                 )
-
+    
     def load_main_chart(self):
         """
         Generates a chart that visualizes liquidable debt against available supply.
@@ -257,6 +262,38 @@ class Dashboard:
                 .iloc[:20],
                 use_container_width=True,
                 )
+
+    def display_box(self):
+        """
+        Displays a box plot for collateral, debt, and deposit amounts.
+
+        This method retrieves total amounts for collateral, debt, and deposit 
+        from the class's data attributes, then visualizes them using a box plot.
+
+        The box plot uses:
+        - Green for Collateral
+        - Red for Debt
+        - Red for Deposit
+
+        The plot is displayed using Streamlit.
+        """
+        collateral_df = get_total_amount_by_field(self.collateral_stats, 'collateral')
+        debt_df = get_total_amount_by_field(self.debt_stats, 'debt')
+        deposit_df = get_total_amount_by_field(self.supply_stats, 'deposit')
+        
+        boxplot_data = pd.DataFrame({
+            "Collateral": collateral_df["total_amount"],
+            "Debt": debt_df["total_amount"],
+            "Deposit": deposit_df["total_amount"]
+        })
+        
+        fig, ax = plt.subplots(figsize=(8, 5))
+        sns.boxplot(data=boxplot_data, palette={"Collateral": "green", "Debt": "red", "Deposit": "red"})
+
+        ax.set_ylabel("Total Amount")
+        ax.set_title("Box Plot of Collateral, Debt, and Deposit")
+
+        st.pyplot(fig)
 
     def load_detail_loan_chart(self):
         """
