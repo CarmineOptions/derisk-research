@@ -2,13 +2,17 @@
 This is module connects to a PostgreSQL database and fetches data. 
 """
 
+import logging
 import os
+from typing import List, Optional
 
 import pandas as pd
 import sqlalchemy
 from dotenv import load_dotenv
 
 load_dotenv()
+
+logger = logging.getLogger(__name__)
 
 
 class DataConnector:
@@ -46,7 +50,7 @@ class DataConnector:
 
     def __init__(self):
         """
-        Initialize the DataHandler with database connection details.
+        Initialize the DataConnector with database connection details.
         """
         self._check_env_variables()
         self.db_url = (
@@ -56,16 +60,129 @@ class DataConnector:
         )
         self.engine = sqlalchemy.create_engine(self.db_url)
 
-    def fetch_data(self, query: str) -> pd.DataFrame:
+    def fetch_data(
+        self,
+        query: str,
+        protocol: Optional[str] = None,
+        batch_size: int = 1000,
+        start_block: Optional[int] = None,
+        end_block: Optional[int] = None,
+    ) -> pd.DataFrame:
         """
-        Fetch data from the database using a SQL query.
+        Fetch data from the database using a SQL query with block-based pagination.
 
         :param query: SQL query to execute.
+        :param batch_size: Number of blocks to process in each batch
+        :param start_block: Starting block number for filtering (optional)
+        :param end_block: Ending block number for filtering (optional)
+        :param protocol: Protocol identifier for determining block range (optional)
         :return: DataFrame containing the query results
         """
+        # If protocol is provided and block range is not, determine block range automatically
+        if protocol:
+            if start_block is None:
+                start_block = self.fetch_protocol_first_block_number(protocol)
+            if end_block is None:
+                end_block = self.fetch_protocol_last_block_number(protocol)
+
+        # Ensure we have valid block range
+        if start_block is None or end_block is None:
+            logger.warning(
+                "No block range provided and no protocol specified to determine range"
+            )
+            # Execute the query without any block-based pagination
+            try:
+                with self.engine.connect() as connection:
+                    return pd.read_sql(query, connection)
+            except sqlalchemy.exc.SQLAlchemyError as e:
+                logger.error(f"Database error: {e}")
+                raise DatabaseConnectionError(f"Failed to execute query: {str(e)}")
+
+        all_data = []
+        clean_query = query.strip()
+        if clean_query.endswith(";"):
+            clean_query = clean_query[:-1]
+
+        # Check if query already contains block filters
+        if "block >= " in clean_query or "block <= " in clean_query:
+            logger.warning("Query already contains block filters, using as-is")
+            with self.engine.connect() as connection:
+                return pd.read_sql(query, connection)
+
+        for current_start in range(start_block, end_block + 1, batch_size):
+            current_end = min(current_start + batch_size - 1, end_block)
+
+            # Check if query contains WHERE clause to determine how to add block filtering
+            if "WHERE" in clean_query.upper():
+                block_query = f"{clean_query} AND block >= {current_start} AND block <= {current_end};"
+            else:
+                block_query = sqlalchemy.text(
+                    f"{clean_query} WHERE block >= :start_block AND block <= :end_block"
+                )
+
+            try:
+                with self.engine.connect() as connection:
+                    batch = pd.read_sql(
+                        block_query,
+                        connection,
+                        params={"start_block": current_start, "end_block": current_end},
+                    )
+
+                if not batch.empty:
+                    all_data.append(batch)
+                else:
+                    logger.info(
+                        f"No records found in block range {current_start}-{current_end}"
+                    )
+
+            except sqlalchemy.exc.SQLAlchemyError as e:
+                logger.error(f"Database error: {e}")
+                raise DatabaseConnectionError(f"Failed to execute query: {str(e)}")
+
+        if not all_data:
+            return pd.DataFrame()
+
+        return pd.concat(all_data, ignore_index=True)
+
+    def fetch_protocol_first_block_number(self, protocol: str) -> int:
+        """
+        Fetch the first block number for a specific protocol.
+
+        :param protocol: Protocol identifier (e.g., 'zkLend').
+        :return: First block number
+        """
+        query = """
+            SELECT MIN(block) as first_block
+            FROM loan_state 
+            WHERE protocol_id = :protocol;
+        """
         with self.engine.connect() as connection:
-            df = pd.read_sql(query, connection)
-        return df
+            result = pd.read_sql(
+                sqlalchemy.text(query), connection, params={"protocol": protocol}
+            )
+            if not result.empty and not pd.isna(result["first_block"].iloc[0]):
+                return int(result["first_block"].iloc[0])
+            return 0
+
+    def fetch_protocol_last_block_number(self, protocol: str) -> int:
+        """
+        Fetch the last block number for a specific protocol.
+
+        :param protocol: Protocol identifier (e.g., 'zkLend').
+        :return: Last block number as an integer.
+        """
+        query = """
+            SELECT MAX(block) as last_block
+            FROM loan_state 
+            WHERE protocol_id = :protocol;
+        """
+        with self.engine.connect() as connection:
+            result = pd.read_sql(
+                sqlalchemy.text(query), connection, params={"protocol": protocol}
+            )
+            if not result.empty and not pd.isna(result["last_block"].iloc[0]):
+                return int(result["last_block"].iloc[0])
+            return 0
 
     def _check_env_variables(self) -> None:
         """
@@ -88,11 +205,11 @@ class DataConnector:
             df = pd.read_csv(file_path)
             return df
         except Exception as e:
-            print(f"Error reading CSV file: {e}")
+            logger.error(f"Error reading CSV file: {e}")
             return None
 
 
 if __name__ == "__main__":
     connector = DataConnector()
-    df = connector.fetch_data("loan_state", "zkLend")
+    df = connector.fetch_data(DataConnector.ZKLEND_SQL_QUERY, "zkLend")
     print(df)
