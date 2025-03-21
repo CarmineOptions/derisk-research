@@ -18,17 +18,17 @@ RUN apt-get update \
 # Install Poetry
 RUN curl -sSL https://install.python-poetry.org | python3 -
 
-WORKDIR /app
+WORKDIR /src
 
 # Copy all files
-COPY . /app/
+COPY . /src/
 
 # Install poetry dependencies
 RUN poetry config virtualenvs.create false \
     && poetry install --no-interaction --no-root
 
-RUN chmod +x /app/scripts/entrypoint.sh
+RUN chmod +x /src/entrypoint.sh
 
-ENTRYPOINT ["bash", "/app/scripts/entrypoint.sh"]
+ENTRYPOINT ["bash", "/src/entrypoint.sh"]
 
 EXPOSE 8000

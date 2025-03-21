@@ -7,3 +7,15 @@ services:
       - "8501:8501"
     env_file:
       - ../../apps/dashboard_app/.env
+
+  backend:
+    build: 
+      context: ../../apps/dashboard_app
+      dockerfile: dev/app.Dockerfile
+    restart: always
+    volumes:
+      - .:/src
+    env_file:
+      - ../../apps/dashboard_app/.env
+    ports:
+      - "8000:8000"
