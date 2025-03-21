@@ -1,15 +1,15 @@
-FROM python:3.10
+FROM python:3.12
+
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 RUN pip install poetry
-COPY legacy_app/pyproject.toml legacy_app/poetry.lock* ./
+COPY pyproject.toml poetry.lock* ./
 RUN poetry config virtualenvs.create false \
-  && poetry install --no-interaction --no-ansi
+  && poetry install --no-interaction --no-ansi --no-root
 
-COPY legacy_app/src legacy_app/src
-COPY legacy_app/app.py .
-COPY legacy_app/update_data.py .
-
-CMD ["streamlit", "run", "app.py"]
-
+COPY . .
+ENTRYPOINT ["../.entrypoint.sh"]

@@ -1,6 +1,6 @@
 name: DashBoard App CI Workflow
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   run_tests:

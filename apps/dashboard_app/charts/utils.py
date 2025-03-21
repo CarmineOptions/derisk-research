@@ -14,16 +14,16 @@ from data_handler.handlers.loan_states.abstractions import State
 from shared.amms import SwapAmm
 from shared.constants import PAIRS
 
-from helpers.ekubo import EkuboLiquidity
-from helpers.loans_table import get_loans_table_data
-from helpers.settings import (
+from dashboard_app.helpers.ekubo import EkuboLiquidity
+from dashboard_app.helpers.loans_table import get_loans_table_data
+from dashboard_app.helpers.settings import (
     COLLATERAL_TOKENS,
     DEBT_TOKENS,
     STABLECOIN_BUNDLE_NAME,
     TOKEN_SETTINGS,
     UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES,
 )
-from helpers.tools import get_main_chart_data, get_prices
+from dashboard_app.helpers.tools import get_main_chart_data, get_prices
 
 logger = logging.getLogger(__name__)
 
@@ -305,7 +305,6 @@ def transform_main_chart_data(
             ] = protocol_main_chart_data["liquidable_debt_at_interval"]
 
     return main_chart_data
-
 
 def infer_protocol_name(input_protocol: str, valid_protocols: list[str]) -> str:
     """Find the closest matching protocol name from a list of valid protocols using fuzzy matching.

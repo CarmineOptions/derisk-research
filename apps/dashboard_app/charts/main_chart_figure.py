@@ -1,7 +1,7 @@
 """
 This module includes functions to generate financial charts using token price and liquidity data.
 """
-
+import ast
 import math
 from decimal import Decimal
 import pandas as pd
@@ -408,5 +408,31 @@ def display_user_history_chart(df: pd.DataFrame):
         else:  
             st.error("No data found for this wallet ID.") 
 
-                
 
+def get_total_amount_by_field(df: pd.DataFrame, field_name: str) -> pd.DataFrame:
+    """
+    Calculate the total collateral amount for each token address.
+
+    This function processes the 'collateral' column of the input DataFrame,
+    expanding it into separate columns for each token address, and then
+    sums up the total collateral amount for each address.
+
+    Args:
+        df (pd.DataFrame): A DataFrame containing a 'collateral' column
+                           with dictionary-like strings or dictionaries.
+        field_name (str): The name of the column containing the collateral data.
+
+    Returns:
+        pd.DataFrame: A DataFrame with columns 'address' and 'total_amount',
+                      showing the total collateral amount for each token address.
+    """
+    df[field_name] = df[field_name].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else x)
+
+    df_expanded = df[field_name].apply(pd.Series)
+
+    totals = df_expanded.sum()
+
+    result = totals.reset_index()
+    result.columns = ['address', 'total_amount']
+
+    return result
