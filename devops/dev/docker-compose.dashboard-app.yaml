@@ -48,7 +48,7 @@ services:
   backend:
     build: 
       context: ../../apps/dashboard_app
-      dockerfile: dev/app.Dockerfile
+      dockerfile: app.Dockerfile
     restart: always
     volumes:
       - .:/src

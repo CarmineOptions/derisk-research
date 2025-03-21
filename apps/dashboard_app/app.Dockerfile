@@ -21,14 +21,12 @@ RUN curl -sSL https://install.python-poetry.org | python3 -
 WORKDIR /src
 
 # Copy all files
-COPY . /src/
+COPY . .
 
 # Install poetry dependencies
 RUN poetry config virtualenvs.create false \
     && poetry install --no-interaction --no-root
 
-RUN chmod +x /src/entrypoint.sh
-
-ENTRYPOINT ["bash", "/src/entrypoint.sh"]
+ENTRYPOINT ["bash", "../entrypoint.sh"]
 
 EXPOSE 8000
