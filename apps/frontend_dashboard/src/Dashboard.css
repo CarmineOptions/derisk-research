@@ -1,0 +1,59 @@
+/* src/Dashboard.css */
+div {
+    text-align: center;
+    padding: 20px;
+  }
+  
+  .wallet-button-container {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .wallet-button {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    width: 200px;
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: black;
+    color: white;
+  }
+  
+  .wallet-button:hover {
+    background-color: white;
+    color: black;
+  }
+  
+  .dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: black;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+  }
+  
+  .dropdown button {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    border: none;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+  }
+  
+  pre {
+    text-align: left;
+    background: black;
+    padding: 10px;
+    border-radius: 5px;
+    max-width: 500px;
+    margin: 20px auto;
+  }
