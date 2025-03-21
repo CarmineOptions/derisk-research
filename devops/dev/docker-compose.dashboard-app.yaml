@@ -45,5 +45,19 @@ services:
     networks:
       - dashboard_app_network
 
+  backend:
+    build: 
+      context: ../../apps/dashboard_app
+      dockerfile: app.Dockerfile
+    restart: always
+    volumes:
+      - .:/src
+    env_file:
+      - ../../apps/dashboard_app/.env
+    ports:
+      - "8000:8000"
+    networks:
+      - dashboard_app_network
+
 volumes:
   postgres_data:
