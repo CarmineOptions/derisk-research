@@ -26,8 +26,8 @@ class DBConnectorAsync:
     - delete_object: Deletes an object from the database.
     """
 
-    # In future change db_url fetching logic by implementing a dedicated method
-    # in app.core.config Settings class
+    # TODO: change db_url fetching logic by implementing a dedicated method
+    #  in app.core.config Settings class
     def __init__(self, db_url: str):
         """
         Initializes a new database connection and session factory for async ORM operations.
