@@ -24,6 +24,7 @@ HEALTH_RATIO_MAX = 10
 @create_notification_router.callback_query(F.data == "create_subscription")
 async def start_form(callback: types.CallbackQuery, state: FSMContext):
     """Initiates the notification creation form by asking for the wallet ID."""
+    # TODO fix this code after completion of transfer
     return callback.message.edit_text(
         "Subscription is temporarily unavailable",
     )
