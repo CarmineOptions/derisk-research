@@ -53,7 +53,7 @@ services:
     volumes:
       - .:/src
     env_file:
-      - ../../apps/dashboard_app/.env
+      - ../../apps/dashboard_app/.env.dev
     ports:
       - "8000:8000"
     networks:
