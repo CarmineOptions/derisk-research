@@ -4,12 +4,12 @@ This is module connects to a PostgreSQL database and fetches data.
 
 import logging
 import os
-import asyncio
-from typing import List, Optional
+from typing import Optional
 
 import pandas as pd
 import sqlalchemy
 from dotenv import load_dotenv
+from shared.exceptions.db import DatabaseConnectionError
 
 load_dotenv()
 
