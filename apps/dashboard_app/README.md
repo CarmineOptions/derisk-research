@@ -52,6 +52,18 @@ data = connector.get_data()
 
 This project uses Alembic for database migrations.
 
+### Database Configuration
+
+Database connection settings are loaded from environment variables. Make sure the following variables are set:
+
+- `DB_USER`: Database username
+- `DB_PASSWORD`: Database password
+- `DB_HOST`: Database host
+- `DB_PORT`: Database port
+- `DB_NAME`: Database name
+
+You can set these variables in a `.env` file in the project root directory.
+
 ### Apply Migrations
 
 To apply all pending migrations:
