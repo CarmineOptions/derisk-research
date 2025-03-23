@@ -7,16 +7,12 @@ networks:
 services:
   db:
     image: postgres:16
-    environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
     env_file:
       - ../../apps/dashboard_app/.env.dev
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -28,20 +24,11 @@ services:
       context: ../../apps/dashboard_app
     ports:
       - "8501:8501"
-    env_file:
-      - ../../apps/dashboard_app/.env.dev
-    environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_HOST: ${DB_HOST}
-      POSTGRES_PORT: ${DB_PORT}
     depends_on:
       db:
         condition: service_healthy
     volumes:
       - ../../apps/dashboard_app:/app
-    entrypoint: /app/.entrypoint.sh
     networks:
       - dashboard_app_network
 
@@ -51,7 +38,7 @@ services:
       dockerfile: app.Dockerfile
     restart: always
     volumes:
-      - .:/src
+      - ../../apps/dashboard_app/:/src
     env_file:
       - ../../apps/dashboard_app/.env.dev
     ports:
