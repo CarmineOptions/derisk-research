@@ -16,15 +16,6 @@ _HEADERS = {
 }
 
 
-def test_create_subscription_to_notifications_get_http_method() -> None:
-    response = client.get(
-        url="http://127.0.0.1/liquidation-watcher",
-        headers=_HEADERS,
-    )
-
-    assert response.status_code == status.HTTP_200_OK
-
-
 # def test_create_subscription_to_notifications_with_valid_data(
 #     mock_database_session,
 # ) -> None:

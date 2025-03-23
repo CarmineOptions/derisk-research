@@ -5,7 +5,6 @@ from database.database import Base, engine, get_database
 from database.models import NotificationData
 from database.schemas import NotificationForm
 from fastapi import Depends, FastAPI, Request, status
-from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
@@ -34,27 +33,6 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 connector = DBConnector()
 templates = Jinja2Templates(directory="templates")
-
-
-@app.get(
-    path="/liquidation-watcher",
-    description=CreateSubscriptionValues.create_subscription_description_message,
-    response_class=HTMLResponse,
-)
-async def create_subscription(request: Request):
-    """
-    Returns a subscription for notifications form
-    :param request: Request
-    :return: templates.TemplateResponse
-    """
-    logger.info(f"User with {get_client_ip(request)} IP is accessing the page")
-    return templates.TemplateResponse(
-        request=request,
-        name="notification.html",
-        context={
-            "protocol_ids": [item.value for item in ProtocolIDs],
-        },
-    )
 
 
 @app.post(

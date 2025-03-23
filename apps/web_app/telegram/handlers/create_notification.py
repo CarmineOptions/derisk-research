@@ -24,11 +24,15 @@ HEALTH_RATIO_MAX = 10
 @create_notification_router.callback_query(F.data == "create_subscription")
 async def start_form(callback: types.CallbackQuery, state: FSMContext):
     """Initiates the notification creation form by asking for the wallet ID."""
-    await state.set_state(NotificationFormStates.wallet_id)
     return callback.message.edit_text(
-        "Please enter your wallet ID:",
-        reply_markup=kb.cancel_form(),
+        "Subscription is temporarily unavailable",
     )
+
+    # await state.set_state(NotificationFormStates.wallet_id)
+    # return callback.message.edit_text(
+    #     "Please enter your wallet ID:",
+    #     reply_markup=kb.cancel_form(),
+    # )
 
 
 @create_notification_router.message(NotificationFormStates.wallet_id)
