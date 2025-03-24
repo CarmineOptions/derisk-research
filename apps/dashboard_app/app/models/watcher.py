@@ -1,30 +1,35 @@
-from base import Base
+from .base import Base
+from sqlalchemy import String, DateTime, ForeignKey, Boolean, Float
+from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy_utils import IPAddressType
+from datetime import datetime
+from sqlalchemy_utils.types.choice import ChoiceType
+from enum import Enum
+
+class ProtocolIDs(Enum):
+    HASHSTACK: str = "Hashstack"
+    NOSTRA_ALPHA: str = "Nostra_alpha"
+    NOSTRA_MAINNET: str = "Nostra_mainnet"
+    ZKLEND: str = "zkLend"
 
 class NotificationData(Base):
     __tablename__ = "notification"
 
-    created_at = Column(DateTime, default=datetime.now())
-    email = Column(String, index=True, nullable=True)
-    wallet_id = Column(String, nullable=False)
-    telegram_id = Column(String, unique=False, nullable=False)
-    ip_address = Column(IPAddressType, nullable=True)
-    health_ratio_level = Column(Float, nullable=False)
-    protocol_id = Column(ChoiceType(ProtocolIDs, impl=String()), nullable=False)
-
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+    email: Mapped[str | None] = mapped_column(String, index=True, nullable=True)
+    wallet_id: Mapped[str] = mapped_column(String, nullable=False)
+    telegram_id: Mapped[str] = mapped_column(String, nullable=False)
+    ip_address: Mapped[str | None] = mapped_column(IPAddressType, nullable=True)
+    health_ratio_level: Mapped[float] = mapped_column(Float, nullable=False)
+    protocol_id: Mapped[ProtocolIDs] = mapped_column(
+        ChoiceType(ProtocolIDs, impl=String()),
+        nullable=False
+    )
 
 class TelegramLog(Base):
-    """
-    Represents a log entry for Telegram notifications.
-
-    :ivar sent_at: The timestamp indicating when the message was sent.
-    :ivar notification_data_id: The UUID identifying the notification data associated with this log entry.
-    :ivar is_succesfully: A boolean indicating whether the message was sent successfully or not.
-    :ivar message: The content of the send message being logged.
-    """
-
     __tablename__ = "telegram_log"
 
-    sent_at = Column(DateTime, default=datetime.now(), nullable=False)
-    notification_data_id = Column(ForeignKey(NotificationData.id), nullable=False)
-    is_succesfully = Column(Boolean, nullable=False)
-    message = Column(String, server_default="", default="", nullable=False)
+    sent_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, nullable=False)
+    notification_data_id: Mapped[str] = mapped_column(ForeignKey(NotificationData.id), nullable=False)
+    is_succesfully: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    message: Mapped[str] = mapped_column(String, server_default="", default="", nullable=False)
