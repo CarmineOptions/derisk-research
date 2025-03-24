@@ -1,12 +1,12 @@
 """
 Testing module for the WatcherMixin class.
 """
+
 from unittest.mock import MagicMock, patch
 
 import pytest
 from sqlalchemy import Float, String
-from sqlalchemy.orm import Mapped, Session
-from sqlalchemy.testing.schema import mapped_column
+from sqlalchemy.orm import Mapped, Session, mapped_column
 
 from app.models.base import Base
 from app.utils.values import CreateSubscriptionValues
