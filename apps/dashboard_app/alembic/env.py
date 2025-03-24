@@ -3,12 +3,10 @@ import os
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, pool
-from sqlalchemy.ext.declarative import declarative_base
+from app.models.base import Base
 
 from alembic import context
 
-# Create declarative base for models
-Base = declarative_base()
 
 # Load environment variables
 from dotenv import load_dotenv
@@ -36,7 +34,7 @@ if config.config_file_name is not None:
 
 # Import models to add them to the metadata
 # This will need to be updated when actual models are added
-import app.models
+from app.models.watcher import TelegramLog, NotificationData
 
 # add your model's MetaData object here
 # for 'autogenerate' support
