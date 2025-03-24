@@ -2,9 +2,9 @@ from typing import Type
 
 from sqlalchemy.orm import Session
 
-from app.crud.base import ModelType
-from app.models.base import Base
-from app.utils.values import CreateSubscriptionValues, NotificationValidationValues
+from ..crud.base import ModelType
+from ..models.base import Base
+from ..utils.values import CreateSubscriptionValues, NotificationValidationValues
 
 
 class WatcherMixin:
