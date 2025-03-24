@@ -23,7 +23,6 @@ class WatcherMixin:
         :param obj: Base = None
         :return: bool
         """
-
         return (
             db.query(model).filter(getattr(model, attr) == getattr(obj, attr)).first()
             is not None
@@ -55,8 +54,6 @@ class WatcherMixin:
             return {
                 "health_ratio_level": CreateSubscriptionValues.health_ratio_level_validation_message
             }
-
-        return None
 
     @staticmethod
     def validate_fields(
