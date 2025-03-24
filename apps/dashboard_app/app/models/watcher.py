@@ -1,4 +1,17 @@
 from base import Base
+from sqlalchemy import Column, String, DateTime, ForeignKey, Boolean, Float
+from sqlalchemy_utils import IPAddressType
+from datetime import datetime
+from sqlalchemy_utils.types.choice import ChoiceType
+from enum import Enum
+
+
+class ProtocolIDs(Enum):
+    HASHSTACK: str = "Hashstack"
+    NOSTRA_ALPHA: str = "Nostra_alpha"
+    NOSTRA_MAINNET: str = "Nostra_mainnet"
+    ZKLEND: str = "zkLend"
+
 
 class NotificationData(Base):
     __tablename__ = "notification"

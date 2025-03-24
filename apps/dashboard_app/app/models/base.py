@@ -1,4 +1,8 @@
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy import Column, MetaData
+from uuid import uuid4, UUID
+from sqlalchemy.orm import Mapped
+
 
 class Base(DeclarativeBase):
     """
