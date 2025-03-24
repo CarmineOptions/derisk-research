@@ -2,8 +2,8 @@ import { connect, disconnect, getSelectedConnectorWallet } from 'starknetkit';
 import { InjectedConnector } from 'starknetkit/injected';
 
 // Token addresses (you can add more as needed)
-const ETH_ADDRESS = '0x...'; 
-const USDC_ADDRESS = '0x...'; 
+const ETH_ADDRESS = '0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7';
+const USDC_ADDRESS = '0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8';
 
 // Get available wallet connectors (ArgentX, Braavos)
 export const getConnectors = () =>
@@ -17,6 +17,24 @@ export const getConnectors = () =>
           options: { id: localStorage.getItem('starknetLastConnectedWallet') },
         }),
       ];
+
+// Check for an existing wallet connection or connect a new one
+export const getWallet = async () => {
+  try {
+    const connectedWallet = await getSelectedConnectorWallet();
+    if (connectedWallet && connectedWallet.isConnected) {
+      console.log('Found existing wallet:', connectedWallet.selectedAddress);
+      return connectedWallet;
+    }
+
+    // If no wallet is connected, prompt to connect
+    console.log('No wallet found. Attempting to connect...');
+    return await connectWallet();
+  } catch (error) {
+    console.error('Error getting wallet:', error.message);
+    throw error;
+  }
+};
 
 // Connect to wallet
 export const connectWallet = async () => {
@@ -67,7 +85,7 @@ export const getTokenBalance = async (wallet, walletAddress, tokenAddress) => {
 // Fetch all token balances and return as JSON
 export const getTokenBalances = async (walletAddress) => {
   try {
-    const wallet = await connectWallet();
+    const wallet = await getWallet();
     const balances = {
       ETH: await getTokenBalance(wallet, walletAddress, ETH_ADDRESS),
       USDC: await getTokenBalance(wallet, walletAddress, USDC_ADDRESS),

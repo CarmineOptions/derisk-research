@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { connectWallet, getTokenBalances, disconnectWallet } from '../service/wallet';
+import React, { useState, useEffect } from 'react';
+import { connectWallet, getWallet, getTokenBalances, disconnectWallet } from '../service/wallet';
 import '../Dashboard.css';
 
 function Dashboard() {
@@ -7,7 +7,27 @@ function Dashboard() {
   const [balances, setBalances] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  
+  // Load wallet on page reload
+  useEffect(() => {
+    const loadWallet = async () => {
+      try {
+        const wallet = await getWallet();
+        if (wallet && wallet.isConnected) {
+          const address = wallet.selectedAddress;
+          setWalletAddress(address);
+
+          const balanceData = await getTokenBalances(address);
+          setBalances(balanceData);
+          console.log('Balances loaded on page reload:', balanceData);
+        }
+      } catch (error) {
+        console.error('Failed to load wallet on page reload:', error);
+      }
+    };
+
+    loadWallet();
+  }, []);
+
   const truncateAddress = (address) => {
     if (!address) return '';
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -57,9 +77,7 @@ function Dashboard() {
           </div>
         )}
       </div>
-      {balances && (
-        <pre>{JSON.stringify(balances, null, 2)}</pre>
-      )}
+      {balances && <pre>{JSON.stringify(balances, null, 2)}</pre>}
     </div>
   );
 }
