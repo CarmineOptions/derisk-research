@@ -1,3 +1,6 @@
+"""
+Testing module for the WatcherMixin class.
+"""
 from unittest.mock import MagicMock, patch
 
 import pytest
