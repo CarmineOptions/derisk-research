@@ -71,13 +71,13 @@ def test_validate_health_ratio(health_ratio, expected):
         # Test when there are no unique fields.
         # health_ratio_level is valid (0 <= 10.0 <= 10.0)
         (True, (), 5.0, {}),
-        # Test when there is one unique field which test object contain,and it already exists in DB.
+        # Test when there is one unique field which test object contains, and its value already exists in DB.
         # health_ratio_level is valid (0 <= 5.0 <= 10.0)
         (True, ("test_attr"), 5.0, {"test_attr": "Current test attr is already taken"}),
-        # Test when there is one unique field which test object contain, but it doesn't exist in DB yet.
+        # Test when there is one unique field which test object contains, but its value doesn't exist in DB yet.
         # health_ratio_level is valid (0 <= 10.0 <= 10.0)
         (False, ("test_attr"), 10.0, {}),
-        # Test when there is one unique field which test object contain, but it doesn't exist in DB yet.
+        # Test when there is one unique field which test object contains, but its value doesn't exist in DB yet.
         # health_ratio_level is invalid (10.0 <= 11.0)
         (
             False,
@@ -85,7 +85,7 @@ def test_validate_health_ratio(health_ratio, expected):
             11.0,
             {"health_ratio_level": "Your health ratio level must be between 0 and 10"},
         ),
-        # Test when there is one unique field which test object contain, and it already exists in DB.
+        # Test when there is one unique field which test object contains, and its value already exists in DB.
         # health_ratio_level is invalid (10.0 <= 11.0)
         (
             True,
