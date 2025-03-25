@@ -27,7 +27,6 @@ export const getWallet = async () => {
       return connectedWallet;
     }
 
-    // Attempt to silently reconnect with 'neverAsk'
     console.log('No wallet found. Attempting to silently reconnect...');
     const { wallet } = await connect({
       connectors: getConnectors(),
