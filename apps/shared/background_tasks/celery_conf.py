@@ -22,9 +22,10 @@ app = Celery(
 
 app.conf.beat_schedule = {
     "check-health-ratio-level-changes": {
-        "task": "check_health_ratio_level_changes",
+        "task": "apps.shared.background_tasks.tasks.check_health_ratio_level_changes",
         "schedule": CHECK_DATA_CHANGES_PERIOD,
     },
 }
 
-from .tasks import check_health_ratio_level_changes
+# Import the task from the updated location
+from apps.shared.background_tasks.tasks import check_health_ratio_level_changes
