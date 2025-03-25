@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 
 from loguru import logger
 
-import api
+from app.api import watcher
 
 
 @asynccontextmanager
@@ -35,12 +35,14 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator:
 
 # Initialize FastAPI app
 app = FastAPI(lifespan=lifespan, root_path="/api")
-app.mount("/static", StaticFiles(directory="static"), name="static")
-app.include_router(api.watcher.router)
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+app.include_router(watcher.router)
 
 
 @app.middleware("http")
-async def log_requests(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
+async def log_requests(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
     """
     Middleware to log HTTP requests and responses.
     """
