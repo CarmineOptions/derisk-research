@@ -18,7 +18,7 @@ export const getConnectors = () =>
         }),
       ];
 
-// Check for an existing wallet connection or connect a new one
+// Check for an existing wallet connection without prompting
 export const getWallet = async () => {
   try {
     const connectedWallet = await getSelectedConnectorWallet();
@@ -27,21 +27,40 @@ export const getWallet = async () => {
       return connectedWallet;
     }
 
-    // If no wallet is connected, prompt to connect
-    console.log('No wallet found. Attempting to connect...');
-    return await connectWallet();
+    // Attempt to silently reconnect with 'neverAsk'
+    console.log('No wallet found. Attempting to silently reconnect...');
+    const { wallet } = await connect({
+      connectors: getConnectors(),
+      modalMode: 'neverAsk',
+      modalTheme: 'dark',
+    });
+
+    if (!wallet) {
+      console.log('No wallet to silently reconnect. Waiting for user to connect manually...');
+      return null;
+    }
+
+    await wallet.enable();
+
+    if (wallet.isConnected) {
+      console.log('Silently reconnected wallet:', wallet.selectedAddress);
+      return wallet;
+    } else {
+      console.log('No wallet connected. Waiting for user to connect manually...');
+      return null;
+    }
   } catch (error) {
     console.error('Error getting wallet:', error.message);
     throw error;
   }
 };
 
-// Connect to wallet
-export const connectWallet = async () => {
+// Connect to wallet with configurable modal mode
+export const connectWallet = async (modalMode = 'alwaysAsk') => {
   try {
     const { wallet } = await connect({
       connectors: getConnectors(),
-      modalMode: 'alwaysAsk',
+      modalMode,
       modalTheme: 'dark',
     });
 
@@ -86,6 +105,9 @@ export const getTokenBalance = async (wallet, walletAddress, tokenAddress) => {
 export const getTokenBalances = async (walletAddress) => {
   try {
     const wallet = await getWallet();
+    if (!wallet) {
+      throw new Error('No wallet connected. Please connect a wallet first.');
+    }
     const balances = {
       ETH: await getTokenBalance(wallet, walletAddress, ETH_ADDRESS),
       USDC: await getTokenBalance(wallet, walletAddress, USDC_ADDRESS),

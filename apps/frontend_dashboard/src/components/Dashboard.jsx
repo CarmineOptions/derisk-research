@@ -40,7 +40,8 @@ function Dashboard() {
     }
 
     try {
-      const wallet = await connectWallet();
+      // Use 'alwaysAsk' to prompt the user when they manually click the button
+      const wallet = await connectWallet('alwaysAsk');
       const address = wallet.selectedAddress;
       setWalletAddress(address);
 
