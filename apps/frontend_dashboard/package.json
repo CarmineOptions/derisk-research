@@ -20,15 +20,9 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
-<<<<<<< HEAD
-    "@tanstack/react-router-devtools": "^1.114.27",
-    "@tanstack/router-cli": "^1.114.27",
-    "@tanstack/router-plugin": "^1.114.27",
-=======
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
     "@testing-library/user-event": "^14.6.1",
->>>>>>> add850f1267c0f0ea10a1ac29216336be42be891
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^4.3.4",
