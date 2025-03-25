@@ -18,12 +18,20 @@ services:
       retries: 5
     networks:
         - dashboard_app_network
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "password"
+      POSTGRES_DB: "postgres"
+      DB_HOST: "db"
+      DB_PORT: "5432"
 
   streamlit:
     build:
       context: ../../apps/dashboard_app
     ports:
       - "8501:8501"
+    env_file:
+      - ../../apps/dashboard_app/.env.dev
     depends_on:
       db:
         condition: service_healthy
@@ -31,6 +39,12 @@ services:
       - ../../apps/dashboard_app:/app
     networks:
       - dashboard_app_network
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "password"
+      POSTGRES_DB: "postgres"
+      DB_HOST: "db"
+      DB_PORT: "5432"
 
   backend:
     build: 
