@@ -7,7 +7,7 @@ import logging
 from charts.main import Dashboard
 from helpers.load_data import DashboardDataHandler
 from streamlit_autorefresh import st_autorefresh
-from data_handler.celery_app.celery_conf import CRONTAB_TIME
+from apps.shared.celery_conf import CRONTAB_TIME
 
 ONE_MINUTE_IN_MILISECONDS = 60000
 REFRESH_TIME = ONE_MINUTE_IN_MILISECONDS * int(CRONTAB_TIME)

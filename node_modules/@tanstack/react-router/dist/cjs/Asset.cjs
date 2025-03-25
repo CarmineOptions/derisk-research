@@ -1,0 +1,41 @@
+"use strict";
+Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
+const jsxRuntime = require("react/jsx-runtime");
+function Asset({ tag, attrs, children }) {
+  switch (tag) {
+    case "title":
+      return /* @__PURE__ */ jsxRuntime.jsx("title", { ...attrs, suppressHydrationWarning: true, children });
+    case "meta":
+      return /* @__PURE__ */ jsxRuntime.jsx("meta", { ...attrs, suppressHydrationWarning: true });
+    case "link":
+      return /* @__PURE__ */ jsxRuntime.jsx("link", { ...attrs, suppressHydrationWarning: true });
+    case "style":
+      return /* @__PURE__ */ jsxRuntime.jsx(
+        "style",
+        {
+          ...attrs,
+          dangerouslySetInnerHTML: { __html: children }
+        }
+      );
+    case "script":
+      if (attrs && attrs.src) {
+        return /* @__PURE__ */ jsxRuntime.jsx("script", { ...attrs, suppressHydrationWarning: true });
+      }
+      if (typeof children === "string")
+        return /* @__PURE__ */ jsxRuntime.jsx(
+          "script",
+          {
+            ...attrs,
+            dangerouslySetInnerHTML: {
+              __html: children
+            },
+            suppressHydrationWarning: true
+          }
+        );
+      return null;
+    default:
+      return null;
+  }
+}
+exports.Asset = Asset;
+//# sourceMappingURL=Asset.cjs.map

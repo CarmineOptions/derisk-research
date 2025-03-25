@@ -30,6 +30,11 @@ pydantic = "^2.9.2"
 pytest = "^8.3.3"
 python-dotenv = "^1.0.1"
 streamlit-autorefresh = "^1.0.1"
+fastapi = "^0.115.11"
+pydantic-settings = "^2.8.1"
+uvicorn = "^0.34.0"
+loguru = "^0.7.3"
+alembic = "^1.15.1"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.8.0"
