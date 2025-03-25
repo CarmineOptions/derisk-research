@@ -9,7 +9,7 @@ from database.crud import DBConnector, validate_fields
 from database.database import get_database
 from database.models import NotificationData
 from database.schemas import NotificationForm
-from telegram import get_subscription_link
+# from telegram import get_subscription_link    #FIXME
 from utils.fucntools import get_client_ip
 from utils.values import (
     CreateSubscriptionValues,
@@ -100,7 +100,7 @@ async def subscribe_to_notification(
 
     subscription_id = connector.write_to_db(obj=subscription)
 
-    activation_link = await get_subscription_link(ident=subscription_id)
+    # activation_link = await get_subscription_link(ident=subscription_id)  #FIXME
     logger.info(f"Activation link for user with {get_client_ip(request)} IP is sent")
 
     logger.info(f"User with {get_client_ip(request)} IP submitted successfully")

@@ -35,78 +35,78 @@ connector = DBConnector()
 templates = Jinja2Templates(directory="templates")
 
 
-# @app.post(
-#     path="/liquidation-watcher",
-#     description=CreateSubscriptionValues.create_subscription_description_message,
-# )
-# async def subscribe_to_notification(
-#     request: Request,
-#     data: NotificationForm = Depends(NotificationForm.as_form),
-#     db: Session = Depends(get_database),
-# ):
-#     """
-#     Creates a new subscription for notifications
-#     :param request: Request
-#     :param data: NotificationForm
-#     :param db: Session
-#     :return: dict
-#     """
+@app.post(
+    path="/liquidation-watcher",
+    description=CreateSubscriptionValues.create_subscription_description_message,
+)
+async def subscribe_to_notification(
+    request: Request,
+    data: NotificationForm = Depends(NotificationForm.as_form),
+    db: Session = Depends(get_database),
+):
+    """
+    Creates a new subscription for notifications
+    :param request: Request
+    :param data: NotificationForm
+    :param db: Session
+    :return: dict
+    """
 
-#     data.ip_address = get_client_ip(request)
+    data.ip_address = get_client_ip(request)
 
-#     if not all(
-#         [
-#             value
-#             for key, value in data.model_dump().items()
-#             if key in NotificationValidationValues.validation_fields
-#         ]
-#     ):
-#         logger.error(
-#             f"User with {get_client_ip(request)} IP submits with a lack of all required fields"
-#         )
-#         return templates.TemplateResponse(
-#             request=request,
-#             name="notification.html",
-#             context={
-#                 "status_code": status.HTTP_400_BAD_REQUEST,
-#                 "messages": [
-#                     CreateSubscriptionValues.create_subscription_exception_message
-#                 ],
-#                 "message_type": "error",
-#                 "protocol_ids": [item.value for item in ProtocolIDs],
-#             },
-#         )
+    if not all(
+        [
+            value
+            for key, value in data.model_dump().items()
+            if key in NotificationValidationValues.validation_fields
+        ]
+    ):
+        logger.error(
+            f"User with {get_client_ip(request)} IP submits with a lack of all required fields"
+        )
+        return templates.TemplateResponse(
+            request=request,
+            name="notification.html",
+            context={
+                "status_code": status.HTTP_400_BAD_REQUEST,
+                "messages": [
+                    CreateSubscriptionValues.create_subscription_exception_message
+                ],
+                "message_type": "error",
+                "protocol_ids": [item.value for item in ProtocolIDs],
+            },
+        )
 
-#     subscription = NotificationData(**data.model_dump())
-#     validation_errors = validate_fields(db=db, obj=subscription, model=NotificationData)
+    subscription = NotificationData(**data.model_dump())
+    validation_errors = validate_fields(db=db, obj=subscription, model=NotificationData)
 
-#     if validation_errors:
-#         logger.error(f"User with {get_client_ip(request)} IP submits with invalid data")
-#         return templates.TemplateResponse(
-#             request=request,
-#             name="notification.html",
-#             context={
-#                 "status_code": status.HTTP_400_BAD_REQUEST,
-#                 "messages": list(validation_errors.values()),
-#                 "message_type": "error",
-#                 "protocol_ids": [item.value for item in ProtocolIDs],
-#             },
-#         )
+    if validation_errors:
+        logger.error(f"User with {get_client_ip(request)} IP submits with invalid data")
+        return templates.TemplateResponse(
+            request=request,
+            name="notification.html",
+            context={
+                "status_code": status.HTTP_400_BAD_REQUEST,
+                "messages": list(validation_errors.values()),
+                "message_type": "error",
+                "protocol_ids": [item.value for item in ProtocolIDs],
+            },
+        )
 
-#     subscription_id = connector.write_to_db(obj=subscription)
+    subscription_id = connector.write_to_db(obj=subscription)
 
-#     activation_link = await get_subscription_link(ident=subscription_id)
-#     logger.info(f"Activation link for user with {get_client_ip(request)} IP is sent")
+    activation_link = await get_subscription_link(ident=subscription_id)
+    logger.info(f"Activation link for user with {get_client_ip(request)} IP is sent")
 
-#     logger.info(f"User with {get_client_ip(request)} IP submitted successfully")
-#     return templates.TemplateResponse(
-#         request=request,
-#         name="notification.html",
-#         context={
-#             "status_code": status.HTTP_201_CREATED,
-#             "messages": [CreateSubscriptionValues.create_subscription_success_message],
-#             "message_type": "success",
-#             "activation_link": activation_link,
-#             "protocol_ids": [item.value for item in ProtocolIDs],
-#         },
-#     )
+    logger.info(f"User with {get_client_ip(request)} IP submitted successfully")
+    return templates.TemplateResponse(
+        request=request,
+        name="notification.html",
+        context={
+            "status_code": status.HTTP_201_CREATED,
+            "messages": [CreateSubscriptionValues.create_subscription_success_message],
+            "message_type": "success",
+            "activation_link": activation_link,
+            "protocol_ids": [item.value for item in ProtocolIDs],
+        },
+    )
