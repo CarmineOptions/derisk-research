@@ -3,7 +3,7 @@
 
 import logging
 
-from data_handler.celery_app.celery_conf import app
+from apps.shared.celery_conf import app
 from data_handler.db.crud import DBConnector
 from data_handler.db.models import OrderBookModel
 from data_handler.handlers.order_books.constants import TOKEN_MAPPING
