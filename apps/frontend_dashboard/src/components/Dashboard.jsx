@@ -27,6 +27,11 @@ function Dashboard() {
           const balanceData = await getTokenBalances(address);
           setBalances(balanceData);
           console.log('Balances loaded on page reload:', balanceData);
+        } else if (savedAddress) {
+          // If no wallet is connected but we have a saved address, fetch balances
+          const balanceData = await getTokenBalances(savedAddress);
+          setBalances(balanceData);
+          console.log('Balances loaded from saved address:', balanceData);
         }
       } catch (error) {
         console.error('Failed to load wallet on page reload:', error);

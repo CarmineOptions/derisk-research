@@ -1,5 +1,6 @@
 import { connect, disconnect, getSelectedConnectorWallet } from 'starknetkit';
 import { InjectedConnector } from 'starknetkit/injected';
+import { Provider } from 'starknet';
 
 // Token addresses (you can add more as needed)
 const ETH_ADDRESS = '0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7';
@@ -84,7 +85,10 @@ export const connectWallet = async (modalMode = 'alwaysAsk') => {
 // Fetch token balance for a given token address
 export const getTokenBalance = async (wallet, walletAddress, tokenAddress) => {
   try {
-    const response = await wallet.provider.callContract({
+    // Use the wallet provider if available, otherwise create a new provider
+    const provider = wallet?.provider || new Provider({ sequencer: { network: 'mainnet-alpha' } });
+
+    const response = await provider.callContract({
       contractAddress: tokenAddress,
       entrypoint: 'balanceOf',
       calldata: [walletAddress],
@@ -104,9 +108,6 @@ export const getTokenBalance = async (wallet, walletAddress, tokenAddress) => {
 export const getTokenBalances = async (walletAddress) => {
   try {
     const wallet = await getWallet();
-    if (!wallet) {
-      throw new Error('No wallet connected. Please connect a wallet first.');
-    }
     const balances = {
       ETH: await getTokenBalance(wallet, walletAddress, ETH_ADDRESS),
       USDC: await getTokenBalance(wallet, walletAddress, USDC_ADDRESS),
