@@ -11,10 +11,18 @@ function Dashboard() {
   useEffect(() => {
     const loadWallet = async () => {
       try {
+        // Check localStorage for a saved wallet address
+        const savedAddress = localStorage.getItem('walletAddress');
+        if (savedAddress) {
+          setWalletAddress(savedAddress);
+        }
+
         const wallet = await getWallet();
         if (wallet && wallet.isConnected) {
           const address = wallet.selectedAddress;
           setWalletAddress(address);
+          // Save the wallet address to localStorage
+          localStorage.setItem('walletAddress', address);
 
           const balanceData = await getTokenBalances(address);
           setBalances(balanceData);
@@ -40,9 +48,12 @@ function Dashboard() {
     }
 
     try {
+      // Use 'alwaysAsk' to prompt the user when they manually click the button
       const wallet = await connectWallet('alwaysAsk');
       const address = wallet.selectedAddress;
       setWalletAddress(address);
+      // Save the wallet address to localStorage
+      localStorage.setItem('walletAddress', address);
 
       const balanceData = await getTokenBalances(address);
       setBalances(balanceData);
@@ -58,6 +69,8 @@ function Dashboard() {
       setWalletAddress(null);
       setBalances(null);
       setIsDropdownOpen(false);
+      // Clear the wallet address from localStorage
+      localStorage.removeItem('walletAddress');
       console.log('Disconnected successfully');
     } catch (error) {
       console.error('Failed to disconnect wallet:', error);
