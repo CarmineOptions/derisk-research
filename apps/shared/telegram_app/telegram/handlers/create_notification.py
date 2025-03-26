@@ -2,7 +2,7 @@ from aiogram import F, Router, types
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
-from apps.web_app.database.models import NotificationData
+from apps.dashboard_app.app.models.watcher import NotificationData
 from telegram.crud import TelegramCrud
 from .utils import kb
 
