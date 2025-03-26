@@ -1,6 +1,12 @@
+import sys
+import os
+path = os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd())))
+sys.path.append(path)
+sys.path.append((f'{path}/apps/web_app'))
+
 from aiogram import Router, types
 from aiogram.filters import Command, CommandObject, CommandStart
-from database.models import NotificationData
+from apps.web_app.database.models import NotificationData
 from telegram.crud import TelegramCrud
 
 from .utils import kb

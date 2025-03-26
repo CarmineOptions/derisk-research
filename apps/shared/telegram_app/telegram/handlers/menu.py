@@ -1,5 +1,5 @@
 from aiogram import F, Router, types
-from database.models import NotificationData
+from apps.web_app.database.models import NotificationData
 from telegram.crud import TelegramCrud
 
 from .utils import kb

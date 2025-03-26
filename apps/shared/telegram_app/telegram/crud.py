@@ -1,8 +1,8 @@
 from typing import Sequence
 from uuid import UUID
 
-from database.crud import ModelType
-from database.models import Base, NotificationData
+from apps.web_app.database.crud import ModelType
+from apps.web_app.database.models import Base, NotificationData
 from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 from telegram.config import DATABASE_URL
