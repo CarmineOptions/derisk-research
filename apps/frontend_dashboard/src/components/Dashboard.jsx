@@ -5,36 +5,32 @@ import '../Dashboard.css';
 function Dashboard() {
   const [walletAddress, setWalletAddress] = useState(null);
   const [balances, setBalances] = useState(null);
+  const [network, setNetwork] = useState(null);
+  const [error, setError] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   // Load wallet on page reload
   useEffect(() => {
     const loadWallet = async () => {
       try {
-        // Check localStorage for a saved wallet address
-        const savedAddress = localStorage.getItem('walletAddress');
-        if (savedAddress) {
-          setWalletAddress(savedAddress);
-        }
-
+        setError(null); // Clear any previous errors
         const wallet = await getWallet();
         if (wallet && wallet.isConnected) {
           const address = wallet.selectedAddress;
           setWalletAddress(address);
-          // Save the wallet address to localStorage
-          localStorage.setItem('walletAddress', address);
 
-          const balanceData = await getTokenBalances(address);
-          setBalances(balanceData);
-          console.log('Balances loaded on page reload:', balanceData);
-        } else if (savedAddress) {
-          // If no wallet is connected but we have a saved address, fetch balances
-          const balanceData = await getTokenBalances(savedAddress);
-          setBalances(balanceData);
-          console.log('Balances loaded from saved address:', balanceData);
+          const { balances, network } = await getTokenBalances(address);
+          setBalances(balances);
+          setNetwork(network);
+          console.log(`Balances loaded on page reload (${network}):`, balances);
         }
       } catch (error) {
         console.error('Failed to load wallet on page reload:', error);
+        if (error.message.includes('Contract not found')) {
+          setError(`Failed to fetch balances: Token contract not found on ${network === 'mainnet' ? 'Mainnet' : 'Sepolia Testnet'}. Please ensure the token addresses are correct for this network.`);
+        } else {
+          setError(`Failed to fetch balances: ${error.message}`);
+        }
       }
     };
 
@@ -53,18 +49,22 @@ function Dashboard() {
     }
 
     try {
-      // Use 'alwaysAsk' to prompt the user when they manually click the button
+      setError(null);
       const wallet = await connectWallet('alwaysAsk');
       const address = wallet.selectedAddress;
       setWalletAddress(address);
-      // Save the wallet address to localStorage
-      localStorage.setItem('walletAddress', address);
 
-      const balanceData = await getTokenBalances(address);
-      setBalances(balanceData);
-      console.log('Balances:', balanceData);
+      const { balances, network } = await getTokenBalances(address);
+      setBalances(balances);
+      setNetwork(network);
+      console.log(`Balances (${network}):`, balances);
     } catch (error) {
       console.error('Failed to connect wallet or fetch balances:', error);
+      if (error.message.includes('Contract not found')) {
+        setError(`Failed to fetch balances: Token contract not found on ${network === 'mainnet' ? 'Mainnet' : 'Sepolia Testnet'}. Please ensure the token addresses are correct for this network.`);
+      } else {
+        setError(`Failed to fetch balances: ${error.message}`);
+      }
     }
   };
 
@@ -73,12 +73,13 @@ function Dashboard() {
       await disconnectWallet();
       setWalletAddress(null);
       setBalances(null);
+      setNetwork(null);
+      setError(null);
       setIsDropdownOpen(false);
-      // Clear the wallet address from localStorage
-      localStorage.removeItem('walletAddress');
       console.log('Disconnected successfully');
     } catch (error) {
       console.error('Failed to disconnect wallet:', error);
+      setError('Failed to disconnect wallet. Please try again.');
     }
   };
 
@@ -95,7 +96,13 @@ function Dashboard() {
           </div>
         )}
       </div>
-      {balances && <pre>{JSON.stringify(balances, null, 2)}</pre>}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {balances && (
+        <div>
+          <h2>Balances on {network === 'mainnet' ? 'Mainnet' : 'Sepolia Testnet'}</h2>
+          <pre>{JSON.stringify(balances, null, 2)}</pre>
+        </div>
+      )}
     </div>
   );
 }
