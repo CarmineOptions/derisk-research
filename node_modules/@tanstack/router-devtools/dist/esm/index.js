@@ -1,9 +1,0 @@
-import { TanStackRouterDevtoolsInProd, TanStackRouterDevtoolsPanelInProd } from "@tanstack/react-router-devtools";
-console.warn(
-  "[@tanstack/router-devtools] This package has moved to @tanstack/react-router-devtools. Please switch to the new package at your earliest convenience, as this package will be dropped in the next major version release."
-);
-export {
-  TanStackRouterDevtoolsInProd as TanStackRouterDevtools,
-  TanStackRouterDevtoolsPanelInProd as TanStackRouterDevtoolsPanel
-};
-//# sourceMappingURL=index.js.map
