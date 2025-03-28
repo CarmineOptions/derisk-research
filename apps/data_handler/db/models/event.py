@@ -12,8 +12,8 @@ from sqlalchemy_utils.types.choice import ChoiceType
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from data_handler.db.models.base import Base
-from shared.constants import ProtocolIDs
+from apps.data_handler.db.models.base import Base
+from apps.shared.constants import ProtocolIDs
 
 
 class EventBaseModel(Base):

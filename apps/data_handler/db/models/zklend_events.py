@@ -1,7 +1,7 @@
 """ This module contains the SQLAlchemy models for the zkLend events. """
 from decimal import Decimal
 
-from data_handler.db.models.event import EventBaseModel
+from apps.data_handler.db.models.event import EventBaseModel
 from sqlalchemy import Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column
 

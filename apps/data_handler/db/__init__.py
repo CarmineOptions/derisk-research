@@ -6,4 +6,4 @@ It imports:
 - `Base`: The declarative base class for SQLAlchemy models.
 """
 
-from data_handler.db.database import SQLALCHEMY_DATABASE_URL, Base
+from apps.data_handler.db.database import SQLALCHEMY_DATABASE_URL, Base

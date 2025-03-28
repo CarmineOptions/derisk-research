@@ -1,5 +1,5 @@
 """ This module contains API connectors for Haiko and Blast APIs. """
-from data_handler.handlers.order_books.abstractions import AbstractionAPIConnector
+from apps.data_handler.handlers.order_books.abstractions import AbstractionAPIConnector
 
 
 class HaikoAPIConnector(AbstractionAPIConnector):

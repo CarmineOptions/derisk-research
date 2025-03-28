@@ -4,23 +4,23 @@ and fetching Uniswap V2 order book data."""
 import logging
 from time import monotonic
 
-# from data_handler.handlers.loan_states.nostra_mainnet.run import NostraMainnetStateComputation
-from data_handler.handlers.liquidable_debt.protocols import (
+# from apps.data_handler.handlers.loan_states.nostra_mainnet.run import NostraMainnetStateComputation
+from apps.data_handler.handlers.liquidable_debt.protocols import (
     nostra_alpha,
     nostra_mainnet,
     zklend,
 )
 
-# from data_handler.handlers.loan_states.zklend.run import ZkLendLoanStateComputation
-from data_handler.handlers.loan_states.nostra_alpha.run import (
+# from apps.data_handler.handlers.loan_states.zklend.run import ZkLendLoanStateComputation
+from apps.data_handler.handlers.loan_states.nostra_alpha.run import (
     NostraAlphaStateComputation,
 )
-from data_handler.handlers.order_books.constants import TOKEN_MAPPING
-from data_handler.handlers.order_books.ekubo.api_connector import EkuboAPIConnector
-from data_handler.handlers.order_books.uniswap_v2.main import UniswapV2OrderBook
+from apps.data_handler.handlers.order_books.constants import TOKEN_MAPPING
+from apps.data_handler.handlers.order_books.ekubo.api_connector import EkuboAPIConnector
+from apps.data_handler.handlers.order_books.uniswap_v2.main import UniswapV2OrderBook
 
-from data_handler.db.crud import DBConnector
-from data_handler.db.models import OrderBookModel
+from apps.data_handler.db.crud import DBConnector
+from apps.data_handler.db.models import OrderBookModel
 
 from apps.shared.celery_conf import app
 

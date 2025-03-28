@@ -6,13 +6,13 @@ from unittest.mock import MagicMock
 import pytest
 import pandas as pd
 
-from dashboard_app.helpers.loans_table import (
+from apps.dashboard_app.helpers.loans_table import (
     get_protocol,
     get_loans_table_data,
     get_supply_function_call_parameters,
 )
-from shared.state import State
-from shared.custom_types import Prices
+from apps.shared.state import State
+from apps.shared.custom_types import Prices
 
 
 class MockLoanEntity:

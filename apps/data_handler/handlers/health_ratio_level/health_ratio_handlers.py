@@ -4,34 +4,34 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Type
 
-from data_handler.handlers.liquidable_debt.utils import Prices
-from data_handler.handlers.liquidable_debt.values import (
+from apps.data_handler.handlers.liquidable_debt.utils import Prices
+from apps.data_handler.handlers.liquidable_debt.values import (
     HEALTH_FACTOR_FIELD_NAME,
     TIMESTAMP_FIELD_NAME,
     USER_FIELD_NAME,
 )
-from data_handler.handlers.loan_states.nostra_alpha.events import (
+from apps.data_handler.handlers.loan_states.nostra_alpha.events import (
     NostraAlphaLoanEntity,
     NostraAlphaState,
 )
-from data_handler.handlers.loan_states.nostra_mainnet.events import (
+from apps.data_handler.handlers.loan_states.nostra_mainnet.events import (
     NostraMainnetLoanEntity,
     NostraMainnetState,
 )
-from data_handler.handlers.loan_states.zklend.events import (
+from apps.data_handler.handlers.loan_states.zklend.events import (
     ZkLendLoanEntity,
     ZkLendState,
 )
 
-from data_handler.db.crud import DBConnector
-from shared.constants import ProtocolIDs
-from shared.state import LoanEntity, State
-from shared.custom_types import TokenValues
+from apps.data_handler.db.crud import DBConnector
+from apps.shared.constants import ProtocolIDs
+from apps.shared.state import LoanEntity, State
+from apps.shared.custom_types import TokenValues
 
 
 class BaseHealthRatioHandler:
     """
-    A base handler class that collects data from data_handler.db,
+    A base handler class that collects data from apps.data_handler.db,
     computes health_ratio level and stores it in the database.
     """
 
@@ -86,7 +86,7 @@ class BaseHealthRatioHandler:
 
 class ZkLendHealthRatioHandler(BaseHealthRatioHandler):
     """
-    A zkLend handler that collects data from data_handler.db,
+    A zkLend handler that collects data from apps.data_handler.db,
     computes health_ratio level and stores it in the database.
 
     :cvar CONNECTOR: A DB connection object.
@@ -145,7 +145,7 @@ class ZkLendHealthRatioHandler(BaseHealthRatioHandler):
 
 class NostrAlphaHealthRatioHandler(BaseHealthRatioHandler):
     """
-    A Nostra Alha handler that collects data from data_handler.db,
+    A Nostra Alha handler that collects data from apps.data_handler.db,
     computes health_ratio level and stores it in the database.
     """
 
@@ -202,7 +202,7 @@ class NostrAlphaHealthRatioHandler(BaseHealthRatioHandler):
 
 class NostrMainnetHealthRatioHandler(BaseHealthRatioHandler):
     """
-    A Nostra Mainnet handler that collects data from data_handler.db,
+    A Nostra Mainnet handler that collects data from apps.data_handler.db,
     computes health_ratio level and stores it in the database.
     """
 

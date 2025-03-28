@@ -7,9 +7,9 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
-from shared.state import State
+from apps.shared.state import State
 
-from dashboard_app.helpers.protocol_stats import (
+from apps.dashboard_app.helpers.protocol_stats import (
     get_collateral_stats,
     get_debt_stats,
     get_general_stats,
@@ -99,7 +99,7 @@ def mock_state(token_addresses):
     state.interest_rate_models.debt = interest_rates.copy()
 
     with patch(
-        "dashboard_app.helpers.protocol_stats.get_protocol", return_value="zkLend"
+        "apps.dashboard_app.helpers.protocol_stats.get_protocol", return_value="zkLend"
     ):
         yield state
 
@@ -139,7 +139,7 @@ def patch_token_settings(mock_token_settings):
     Patches the TOKEN_SETTINGS dictionary.
     """
     with patch(
-        "dashboard_app.helpers.protocol_stats.TOKEN_SETTINGS", mock_token_settings
+        "apps.dashboard_app.helpers.protocol_stats.TOKEN_SETTINGS", mock_token_settings
     ):
         yield
 
@@ -174,9 +174,9 @@ def test_get_general_stats_invalid_loan_stats(mock_state):
         get_general_stats([mock_state], {"InvalidProtocol": pd.DataFrame()})
 
 
-@patch("dashboard_app.helpers.protocol_stats.get_protocol")
-@patch("dashboard_app.helpers.protocol_stats.get_supply_function_call_parameters")
-@patch("dashboard_app.helpers.protocol_stats.asyncio.run")
+@patch("apps.dashboard_app.helpers.protocol_stats.get_protocol")
+@patch("apps.dashboard_app.helpers.protocol_stats.get_supply_function_call_parameters")
+@patch("apps.dashboard_app.helpers.protocol_stats.asyncio.run")
 def test_get_supply_stats(
     mock_run,
     mock_get_params,
@@ -204,9 +204,9 @@ def test_get_supply_stats(
     assert "kSTRK supply" in result.columns
 
 
-@patch("dashboard_app.helpers.protocol_stats.get_protocol")
-@patch("dashboard_app.helpers.protocol_stats.get_supply_function_call_parameters")
-@patch("dashboard_app.helpers.protocol_stats.asyncio.run")
+@patch("apps.dashboard_app.helpers.protocol_stats.get_protocol")
+@patch("apps.dashboard_app.helpers.protocol_stats.get_supply_function_call_parameters")
+@patch("apps.dashboard_app.helpers.protocol_stats.asyncio.run")
 def test_get_supply_stats_blockchain_error(
     mock_run,
     mock_get_params,
@@ -226,7 +226,7 @@ def test_get_supply_stats_blockchain_error(
         get_supply_stats([mock_state], mock_prices)
 
 
-@patch("dashboard_app.helpers.protocol_stats.get_protocol")
+@patch("apps.dashboard_app.helpers.protocol_stats.get_protocol")
 def test_get_collateral_stats(mock_get_protocol, mock_state, token_addresses):
     """
     Tests the get_collateral_stats function.
@@ -245,14 +245,14 @@ def test_get_collateral_stats_invalid_protocol(mock_state):
     Tests the get_collateral_stats function with an invalid protocol.
     """
     with patch(
-        "dashboard_app.helpers.protocol_stats.get_protocol"
+        "apps.dashboard_app.helpers.protocol_stats.get_protocol"
     ) as mock_get_protocol:
         mock_get_protocol.return_value = "InvalidProtocol"
         with pytest.raises(ValueError):
             get_collateral_stats([mock_state])
 
 
-@patch("dashboard_app.helpers.protocol_stats.get_protocol")
+@patch("apps.dashboard_app.helpers.protocol_stats.get_protocol")
 def test_get_debt_stats(mock_get_protocol, mock_state, token_addresses):
     """
     Tests the get_debt_stats function.
@@ -271,7 +271,7 @@ def test_get_debt_stats_invalid_protocol(mock_state):
     Tests the get_debt_stats function with an invalid protocol.
     """
     with patch(
-        "dashboard_app.helpers.protocol_stats.get_protocol"
+        "apps.dashboard_app.helpers.protocol_stats.get_protocol"
     ) as mock_get_protocol:
         mock_get_protocol.return_value = "InvalidProtocol"
         with pytest.raises(ValueError):

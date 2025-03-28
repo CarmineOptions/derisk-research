@@ -1,10 +1,10 @@
 """ SQLAlchemy models for the liquidable debt and health ratio level tables. """
-from data_handler.handlers.liquidable_debt.values import LendingProtocolNames
+from apps.data_handler.handlers.liquidable_debt.values import LendingProtocolNames
 from sqlalchemy import DECIMAL, BigInteger, Column, String
 from sqlalchemy_utils.types.choice import ChoiceType
 
-from data_handler.db.models.base import Base
-from shared.constants import ProtocolIDs
+from apps.data_handler.db.models.base import Base
+from apps.shared.constants import ProtocolIDs
 
 
 class LiquidableDebt(Base):

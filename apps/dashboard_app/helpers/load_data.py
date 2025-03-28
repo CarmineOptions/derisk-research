@@ -8,19 +8,19 @@ import math
 from collections import defaultdict
 from time import monotonic
 
-from data_handler.handlers.loan_states.zklend.events import ZkLendState
-from shared.constants import TOKEN_SETTINGS
+from apps.data_handler.handlers.loan_states.zklend.events import ZkLendState
+from apps.shared.constants import TOKEN_SETTINGS
 
-from dashboard_app.data_conector import DataConnector
-from dashboard_app.helpers.loans_table import get_loans_table_data, get_protocol
-from dashboard_app.helpers.protocol_stats import (
+from apps.dashboard_app.data_conector import DataConnector
+from apps.dashboard_app.helpers.loans_table import get_loans_table_data, get_protocol
+from apps.dashboard_app.helpers.protocol_stats import (
     get_collateral_stats,
     get_debt_stats,
     get_general_stats,
     get_supply_stats,
     get_utilization_stats,
 )
-from dashboard_app.helpers.tools import add_leading_zeros, get_prices
+from apps.dashboard_app.helpers.tools import add_leading_zeros, get_prices
 
 logger = logging.getLogger(__name__)
 

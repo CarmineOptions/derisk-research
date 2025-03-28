@@ -6,8 +6,8 @@ import logging
 from datetime import datetime
 
 from apps.shared.celery_conf import app
-from data_handler.handlers.events.nostra.transform_events import NostraTransformer
-from data_handler.handlers.events.zklend.transform_events import ZklendTransformer
+from apps.data_handler.handlers.events.nostra.transform_events import NostraTransformer
+from apps.data_handler.handlers.events.zklend.transform_events import ZklendTransformer
 
 logger = logging.getLogger(__name__)
 

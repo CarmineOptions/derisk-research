@@ -4,7 +4,7 @@ from decimal import Decimal
 from sqlalchemy import Column, Integer, String, UniqueConstraint
 from sqlalchemy.types import JSON
 
-from data_handler.db.models.base import Base, BaseState
+from apps.data_handler.db.models.base import Base, BaseState
 
 
 class LoanState(BaseState):

@@ -2,7 +2,7 @@ from uuid import uuid4, UUID
 
 import pytest
 
-from shared.error_handler.notifications import ErrorHandlerBot
+from apps.shared.error_handler.notifications import ErrorHandlerBot
 
 
 class TestErrorHandlerBot:
@@ -87,7 +87,7 @@ class TestErrorHandlerBot:
     # Test Message Validation
     def test_message_format_validation(self, error_handler):
         """Test various message format validations"""
-        from shared.error_handler.notifications import Message
+        from apps.shared.error_handler.notifications import Message
         # Define a valid Message instance
         valid_message = Message(text="Valid message", is_sent=False)
 

@@ -317,7 +317,7 @@ class TokenValues:
         # TODO: Only one parameter should be specified..
         init_value: Decimal = Decimal("0"),
     ) -> None:
-        from shared.constants import TOKEN_SETTINGS
+        from apps.shared.constants import TOKEN_SETTINGS
 
         if values:
             # Nostra Mainnet can contain different tokens that aren't mentioned in `TOKEN_SETTINGS`

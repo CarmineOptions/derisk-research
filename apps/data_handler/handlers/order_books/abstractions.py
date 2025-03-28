@@ -5,7 +5,7 @@ from decimal import Decimal
 
 import requests
 
-from data_handler.db.schemas import OrderBookResponseModel
+from apps.data_handler.db.schemas import OrderBookResponseModel
 
 from .constants import TOKEN_MAPPING, TokenConfig
 

@@ -5,8 +5,8 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
-from data_handler.handlers.loan_states.zklend.events import ZkLendState
-from shared.custom_types import Portfolio, ZkLendCollateralEnabled
+from apps.data_handler.handlers.loan_states.zklend.events import ZkLendState
+from apps.shared.custom_types import Portfolio, ZkLendCollateralEnabled
 
 
 @pytest.fixture
@@ -38,7 +38,7 @@ def mock_portfolio():
 def zklend_state(mock_db_connector):
     """Create a ZkLendState instance with mocked dependencies."""
     with patch(
-        "data_handler.handlers.loan_states.zklend.events.InitializerDBConnector"
+        "apps.data_handler.handlers.loan_states.zklend.events.InitializerDBConnector"
     ) as mock_db_class, patch("sqlalchemy.orm.declarative_base") as mock_base:
 
         mock_metadata = MagicMock()
@@ -87,7 +87,7 @@ class TestZkLendState:
         mock_parsed_data.face_amount = int(1e18)
 
         with patch(
-            "data_handler.handler_tools.data_parser.zklend.ZklendDataParser.parse_deposit_event",
+            "apps.data_handler.handler_tools.data_parser.zklend.ZklendDataParser.parse_deposit_event",
             return_value=mock_parsed_data,
         ):
             user = mock_parsed_data.user
@@ -118,7 +118,7 @@ class TestZkLendState:
         mock_parsed_data.amount = int(1e18)
 
         with patch(
-            "data_handler.handlers.loan_states.zklend.events.ZklendDataParser.parse_withdrawal_event",
+            "apps.data_handler.handlers.loan_states.zklend.events.ZklendDataParser.parse_withdrawal_event",
             return_value=mock_parsed_data,
         ):
             user = mock_parsed_data.user
@@ -144,7 +144,7 @@ class TestZkLendState:
         mock_parsed_data.raw_amount = decimal.Decimal("1.0")
 
         with patch(
-            "data_handler.handler_tools.data_parser.zklend.ZklendDataParser.parse_borrowing_event",
+            "apps.data_handler.handler_tools.data_parser.zklend.ZklendDataParser.parse_borrowing_event",
             return_value=mock_parsed_data,
         ):
             user = mock_parsed_data.user
@@ -172,7 +172,7 @@ class TestZkLendState:
         mock_parsed_data.collateral_amount = int(1e18)
 
         with patch(
-            "data_handler.handler_tools.data_parser.zklend.ZklendDataParser.parse_liquidation_event",
+            "apps.data_handler.handler_tools.data_parser.zklend.ZklendDataParser.parse_liquidation_event",
             return_value=mock_parsed_data,
         ):
             user = mock_parsed_data.user

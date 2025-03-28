@@ -4,8 +4,8 @@ Token settings for Nostra Alpha, including collateral, debt factors, and liquida
 import dataclasses
 import decimal
 
-from shared.constants import TOKEN_SETTINGS
-from shared.custom_types import TokenSettings
+from apps.shared.constants import TOKEN_SETTINGS
+from apps.shared.custom_types import TokenSettings
 
 
 @dataclasses.dataclass

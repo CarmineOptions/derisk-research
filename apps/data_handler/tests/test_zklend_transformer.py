@@ -4,12 +4,12 @@ Test the zklend transformer
 
 import pytest
 from typing import Dict, Any
-from shared.constants import ProtocolIDs
+from apps.shared.constants import ProtocolIDs
 from unittest.mock import MagicMock, patch
-from data_handler.handlers.events.zklend.transform_events import ZklendTransformer
-from data_handler.handler_tools.data_parser.zklend import ZklendDataParser
+from apps.data_handler.handlers.events.zklend.transform_events import ZklendTransformer
+from apps.data_handler.handler_tools.data_parser.zklend import ZklendDataParser
 
-from data_handler.handler_tools.data_parser.serializers import (
+from apps.data_handler.handler_tools.data_parser.serializers import (
     AccumulatorsSyncEventData,
     LiquidationEventData,
     WithdrawalEventData,
@@ -25,8 +25,8 @@ def transformer():
     """
     Fixture to create a ZklendTransformer instance with mocked dependencies.
     """
-    with patch('data_handler.handlers.events.zklend.transform_events.DeRiskAPIConnector') as mock_api, \
-         patch('data_handler.handlers.events.zklend.transform_events.ZkLendEventDBConnector') as mock_db:
+    with patch('apps.data_handler.handlers.events.zklend.transform_events.DeRiskAPIConnector') as mock_api, \
+         patch('apps.data_handler.handlers.events.zklend.transform_events.ZkLendEventDBConnector') as mock_db:
         
         # Configure mock DB
         mock_db_instance = mock_db.return_value

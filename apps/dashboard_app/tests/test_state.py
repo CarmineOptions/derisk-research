@@ -1,5 +1,5 @@
 import pytest
-from shared.state import State
+from apps.shared.state import State
 
 
 class MockLoanEntity:
@@ -35,7 +35,7 @@ def test_protocol_names(protocol_name):
 
 def test_get_protocol_helper():
     """Test the get_protocol helper function"""
-    from dashboard_app.helpers.loans_table import get_protocol
+    from apps.dashboard_app.helpers.loans_table import get_protocol
     
     mock_state = MockState()
     mock_state.PROTOCOL_NAME = "Test Protocol"

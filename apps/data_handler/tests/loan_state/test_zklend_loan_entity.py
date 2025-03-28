@@ -9,9 +9,9 @@ Tests cover normal operations, edge cases, and error conditions using mock objec
 import pytest
 import decimal
 from unittest.mock import MagicMock, patch
-from shared.custom_types import InterestRateModels, Portfolio, Prices, TokenParameters
-from data_handler.handlers.loan_states.zklend.events import ZkLendLoanEntity
-from shared.loan_entity import LoanEntity
+from apps.shared.custom_types import InterestRateModels, Portfolio, Prices, TokenParameters
+from apps.data_handler.handlers.loan_states.zklend.events import ZkLendLoanEntity
+from apps.shared.loan_entity import LoanEntity
 
 @pytest.fixture
 def zklend_loan_entity():

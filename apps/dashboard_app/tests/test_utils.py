@@ -5,19 +5,19 @@ import pytest
 
 import logging
 
-from dashboard_app.charts.utils import (
+from apps.dashboard_app.charts.utils import (
     transform_main_chart_data,
     infer_protocol_name
 )
 from typing import Dict, List, Union
 from unittest.mock import patch
-from dashboard_app.helpers.settings import (
+from apps.dashboard_app.helpers.settings import (
     UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES,
     STABLECOIN_BUNDLE_NAME,
 )
-from dashboard_app.helpers.ekubo import EkuboLiquidity
+from apps.dashboard_app.helpers.ekubo import EkuboLiquidity
 from collections import defaultdict
-from dashboard_app.charts.utils import (
+from apps.dashboard_app.charts.utils import (
     parse_token_amounts,
     create_stablecoin_bundle,
     process_liquidity,
@@ -144,8 +144,8 @@ def test_process_liquidity_successful_execution(
     Tests successful execution of process_liquidity function.
     """
 
-    with patch("dashboard_app.helpers.tools.get_prices", side_effect=mock_prices):
-        with patch("dashboard_app.charts.utils.EkuboLiquidity") as MockEkuboLiquidity:
+    with patch("apps.dashboard_app.helpers.tools.get_prices", side_effect=mock_prices):
+        with patch("apps.dashboard_app.charts.utils.EkuboLiquidity") as MockEkuboLiquidity:
 
             mock_instance = MockEkuboLiquidity.return_value
             mock_instance.fetch_liquidity.return_value = mock_ekubo_liquidity
@@ -167,7 +167,7 @@ def test_process_liquidity_successful_execution(
             )
 
 
-@patch("dashboard_app.helpers.tools.get_prices")
+@patch("apps.dashboard_app.helpers.tools.get_prices")
 def test_process_liquidity_with_empty_dataframe(
     mock_get_prices, sample_token_info, mock_prices, mock_ekubo_liquidity
 ):
@@ -186,7 +186,7 @@ def test_process_liquidity_with_empty_dataframe(
         }
     )
 
-    with patch("dashboard_app.charts.utils.EkuboLiquidity") as MockEkuboLiquidity:
+    with patch("apps.dashboard_app.charts.utils.EkuboLiquidity") as MockEkuboLiquidity:
 
         mock_instance = MockEkuboLiquidity.return_value
         mock_instance.fetch_liquidity.return_value = mock_ekubo_liquidity
@@ -216,7 +216,7 @@ def test_process_liquidity_with_invalid_tokens(sample_chart_data):
         process_liquidity(sample_chart_data, "INVALID_TOKEN", "USDC")
 
 
-@patch("dashboard_app.helpers.tools.get_prices")
+@patch("apps.dashboard_app.helpers.tools.get_prices")
 def test_process_liquidity_type_conversion(
     mock_get_prices, sample_token_info, mock_prices, mock_ekubo_liquidity
 ):
@@ -239,7 +239,7 @@ def test_process_liquidity_type_conversion(
         }
     )
 
-    with patch("dashboard_app.charts.utils.EkuboLiquidity") as MockEkuboLiquidity:
+    with patch("apps.dashboard_app.charts.utils.EkuboLiquidity") as MockEkuboLiquidity:
 
         mock_instance = MockEkuboLiquidity.return_value
         mock_instance.fetch_liquidity.return_value = mock_ekubo_liquidity
@@ -255,7 +255,7 @@ def test_process_liquidity_type_conversion(
         assert result_df["liquidable_debt"].dtype == float
 
 
-@patch("dashboard_app.helpers.tools.get_prices")
+@patch("apps.dashboard_app.helpers.tools.get_prices")
 def test_process_liquidity_integration_with_ekubo(
     mock_get_prices, sample_chart_data, sample_token_info, mock_prices
 ):
@@ -287,7 +287,7 @@ def test_process_liquidity_integration_with_ekubo(
         def apply_liquidity_to_dataframe(self, bids_or_asks):
             return mock_ekubo_result
 
-    with patch("dashboard_app.charts.utils.EkuboLiquidity", MockEkuboLiquidity):
+    with patch("apps.dashboard_app.charts.utils.EkuboLiquidity", MockEkuboLiquidity):
         result_df, collateral_price = process_liquidity(
             sample_chart_data,
             sample_token_info["collateral_token"],
@@ -368,12 +368,12 @@ def test_parse_token_amounts_with_malformed_input() -> None:
         parse_token_amounts("ETH: abc")
 
 
-@patch("dashboard_app.helpers.settings.COLLATERAL_TOKENS", ["ETH", "WBTC"])
+@patch("apps.dashboard_app.helpers.settings.COLLATERAL_TOKENS", ["ETH", "WBTC"])
 @patch(
-    "dashboard_app.helpers.settings.DEBT_TOKENS",
+    "apps.dashboard_app.helpers.settings.DEBT_TOKENS",
     ["USDC", "DAI", "USDT", "STABLECOIN_BUNDLE"],
 )
-@patch("dashboard_app.helpers.settings.STABLECOIN_BUNDLE_NAME", "STABLECOIN_BUNDLE")
+@patch("apps.dashboard_app.helpers.settings.STABLECOIN_BUNDLE_NAME", "STABLECOIN_BUNDLE")
 def test_create_stablecoin_bundle_successful(
     sample_stablecoin_data: Dict[str, pd.DataFrame]
 ) -> None:
@@ -427,7 +427,7 @@ def test_create_stablecoin_bundle_with_no_relevant_pairs() -> None:
         )
     }
 
-    with patch("dashboard_app.helpers.settings.COLLATERAL_TOKENS", ["ETH", "WBTC"]):
+    with patch("apps.dashboard_app.helpers.settings.COLLATERAL_TOKENS", ["ETH", "WBTC"]):
         result = create_stablecoin_bundle(data)
 
         assert result[f"ETH-{STABLECOIN_BUNDLE_NAME}"] is None
@@ -455,11 +455,11 @@ def test_create_stablecoin_bundle_with_missing_columns() -> None:
         ),
     }
 
-    with patch("dashboard_app.helpers.settings.COLLATERAL_TOKENS", ["ETH"]), patch(
-        "dashboard_app.helpers.settings.DEBT_TOKENS",
+    with patch("apps.dashboard_app.helpers.settings.COLLATERAL_TOKENS", ["ETH"]), patch(
+        "apps.dashboard_app.helpers.settings.DEBT_TOKENS",
         ["USDC", "DAI", "STABLECOIN_BUNDLE"],
     ), patch(
-        "dashboard_app.helpers.settings.STABLECOIN_BUNDLE_NAME", "STABLECOIN_BUNDLE"
+        "apps.dashboard_app.helpers.settings.STABLECOIN_BUNDLE_NAME", "STABLECOIN_BUNDLE"
     ):
 
         with pytest.raises(KeyError):
@@ -473,12 +473,12 @@ def test_create_stablecoin_bundle_with_missing_columns() -> None:
             assert "10kSwap_debt_token_supply" not in eth_bundle.columns
 
 
-@patch("dashboard_app.helpers.settings.COLLATERAL_TOKENS", ["ETH", "WBTC"])
+@patch("apps.dashboard_app.helpers.settings.COLLATERAL_TOKENS", ["ETH", "WBTC"])
 @patch(
-    "dashboard_app.helpers.settings.DEBT_TOKENS",
+    "apps.dashboard_app.helpers.settings.DEBT_TOKENS",
     ["USDC", "DAI", "USDT", "STABLECOIN_BUNDLE"],
 )
-@patch("dashboard_app.helpers.settings.STABLECOIN_BUNDLE_NAME", "STABLECOIN_BUNDLE")
+@patch("apps.dashboard_app.helpers.settings.STABLECOIN_BUNDLE_NAME", "STABLECOIN_BUNDLE")
 def test_create_stablecoin_bundle_with_different_price_ranges(
     sample_stablecoin_data: Dict[str, pd.DataFrame]
 ) -> None:

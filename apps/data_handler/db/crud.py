@@ -8,15 +8,15 @@ import logging
 import uuid
 from typing import List, Optional, Type, TypeVar
 
-from data_handler.db.database import SQLALCHEMY_DATABASE_URL
-from data_handler.db.models import (
+from apps.data_handler.db.database import SQLALCHEMY_DATABASE_URL
+from apps.data_handler.db.models import (
     Base,
     InterestRate,
     LoanState,
     OrderBookModel,
     ZkLendCollateralDebt,
 )
-from data_handler.db.models.nostra_events import (
+from apps.data_handler.db.models.nostra_events import (
     BearingCollateralBurnEventModel,
     BearingCollateralMintEventModel,
     DebtBurnEventModel,
@@ -26,7 +26,7 @@ from data_handler.db.models.nostra_events import (
     NonInterestBearingCollateralBurnEventModel,
     NonInterestBearingCollateralMintEventModel,
 )
-from data_handler.db.models.zklend_events import (
+from apps.data_handler.db.models.zklend_events import (
     AccumulatorsSyncEventModel,
     BorrowingEventModel,
     CollateralEnabledDisabledEventModel,
@@ -35,7 +35,7 @@ from data_handler.db.models.zklend_events import (
     RepaymentEventModel,
     WithdrawalEventModel,
 )
-from shared.constants import ProtocolIDs
+from apps.shared.constants import ProtocolIDs
 from sqlalchemy import Subquery, and_, create_engine, desc, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import SQLAlchemyError

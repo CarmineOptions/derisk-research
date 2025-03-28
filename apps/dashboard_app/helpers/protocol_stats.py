@@ -8,16 +8,16 @@ from decimal import Decimal
 
 import numpy as np
 import pandas as pd
-from data_handler.handlers import blockchain_call
-from shared.constants import TOKEN_SETTINGS
-from shared.custom_types import Prices
-from shared.state import State
+from apps.data_handler.handlers import blockchain_call
+from apps.shared.constants import TOKEN_SETTINGS
+from apps.shared.custom_types import Prices
+from apps.shared.state import State
 
-from dashboard_app.helpers.loans_table import (
+from apps.dashboard_app.helpers.loans_table import (
     get_protocol,
     get_supply_function_call_parameters,
 )
-from dashboard_app.helpers.tools import (
+from apps.dashboard_app.helpers.tools import (
     add_leading_zeros,
     get_addresses,
     get_underlying_address,

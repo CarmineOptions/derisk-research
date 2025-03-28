@@ -4,7 +4,7 @@ to impact the price by a specified ratio on various DEX platforms.
 """
 from decimal import Decimal
 
-from data_handler.db.crud import DBConnector
+from apps.data_handler.db.crud import DBConnector
 
 
 class OrderBookProcessor:

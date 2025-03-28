@@ -3,14 +3,14 @@ Test the debt handler
 """
 
 import pytest
-from data_handler.handlers.liquidable_debt.debt_handlers import BaseDBLiquidableDebtDataHandler
+from apps.data_handler.handlers.liquidable_debt.debt_handlers import BaseDBLiquidableDebtDataHandler
 from decimal import Decimal
 from unittest.mock import Mock, patch, AsyncMock, MagicMock
-from data_handler.tests.conftest import mock_db_connector
-from data_handler.handlers.helpers import get_collateral_token_range, get_range
-from shared.state import State
-from shared.loan_entity import LoanEntity
-from data_handler.db.models.loan_states import LoanState
+from apps.data_handler.tests.conftest import mock_db_connector
+from apps.data_handler.handlers.helpers import get_collateral_token_range, get_range
+from apps.shared.state import State
+from apps.shared.loan_entity import LoanEntity
+from apps.data_handler.db.models.loan_states import LoanState
 
 
 class TestBaseDBLiquidableDebtDataHandler:
@@ -26,15 +26,15 @@ class TestBaseDBLiquidableDebtDataHandler:
         """
         Test that AVAILABLE_PROTOCOLS contains all protocol names from LendingProtocolNames.
         """
-        with patch("data_handler.handlers.liquidable_debt.values.LendingProtocolNames", ["Nostra_alpha", "Nostra_mainnet", "zkLend"]):
+        with patch("apps.data_handler.handlers.liquidable_debt.values.LendingProtocolNames", ["Nostra_alpha", "Nostra_mainnet", "zkLend"]):
             assert BaseDBLiquidableDebtDataHandler.AVAILABLE_PROTOCOLS == ["Nostra_alpha", "Nostra_mainnet", "zkLend"]
     
     def test_get_prices_range_valid_token(self):
         """
         Test get_prices_range when the token is in the token pairs list.
         """
-        with patch("data_handler.handlers.settings.TOKEN_PAIRS", {"ETH": ("USDC", "USDT", "DAI")}):
-            with patch("data_handler.handlers.helpers.get_collateral_token_range"):
+        with patch("apps.data_handler.handlers.settings.TOKEN_PAIRS", {"ETH": ("USDC", "USDT", "DAI")}):
+            with patch("apps.data_handler.handlers.helpers.get_collateral_token_range"):
                 result = self.handler.get_prices_range("ETH", Decimal("100"))
                 print(result)
                 assert result == get_collateral_token_range("ETH", Decimal("100"))
@@ -43,8 +43,8 @@ class TestBaseDBLiquidableDebtDataHandler:
         """
         Test get_prices_range when the token is not in the token pairs list.
         """
-        with patch("data_handler.handlers.settings.TOKEN_PAIRS", {"BTC": "ETH"}):
-            with patch("data_handler.handlers.helpers.get_range"):
+        with patch("apps.data_handler.handlers.settings.TOKEN_PAIRS", {"BTC": "ETH"}):
+            with patch("apps.data_handler.handlers.helpers.get_range"):
                 result = self.handler.get_prices_range("LTC", Decimal("100"))
                 print(result)
                 assert result == get_range(Decimal("0"), Decimal("130"), Decimal("1"))
@@ -53,7 +53,7 @@ class TestBaseDBLiquidableDebtDataHandler:
         """
         Test fetch_data retrieves the correct loan data and interest rate models from the DB.
         """
-        with patch("data_handler.db.crud.DBConnector") as MockDBConnector:
+        with patch("apps.data_handler.db.crud.DBConnector") as MockDBConnector:
             protocol_name = "ProtocolA"
 
             # Mock DB return values

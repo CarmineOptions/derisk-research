@@ -4,12 +4,12 @@ from unittest.mock import Mock, patch, MagicMock
 
 import pandas as pd
 import pytest
-from data_handler.handlers.order_books.ekubo.main import EkuboOrderBook
+from apps.data_handler.handlers.order_books.ekubo.main import EkuboOrderBook
 
 @pytest.fixture
 def mock_connector():
     """Create a mock EkuboAPIConnector."""
-    with patch('data_handler.handlers.order_books.ekubo.main.EkuboAPIConnector') as mock:
+    with patch('apps.data_handler.handlers.order_books.ekubo.main.EkuboAPIConnector') as mock:
         connector = mock.return_value
         connector.get_pair_price.return_value = {"price": "1.5"}
         connector.get_pools.return_value = [{

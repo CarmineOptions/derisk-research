@@ -1,7 +1,7 @@
 from collections import defaultdict
 from dataclasses import dataclass
 
-from shared.custom_types import BaseTokenParameters
+from apps.shared.custom_types import BaseTokenParameters
 
 
 class ZkLendCollateralEnabled(defaultdict):

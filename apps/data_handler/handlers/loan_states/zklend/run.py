@@ -3,12 +3,12 @@ import logging
 from time import monotonic
 
 import pandas as pd
-from data_handler.handler_tools.constants import ProtocolAddresses
-from data_handler.handlers.loan_states.abstractions import LoanStateComputationBase
-from data_handler.handlers.loan_states.zklend.events import ZkLendState
-from data_handler.handlers.loan_states.zklend.utils import ZkLendInitializer
-from shared.constants import ProtocolIDs
-from shared.state import State
+from apps.data_handler.handler_tools.constants import ProtocolAddresses
+from apps.data_handler.handlers.loan_states.abstractions import LoanStateComputationBase
+from apps.data_handler.handlers.loan_states.zklend.events import ZkLendState
+from apps.data_handler.handlers.loan_states.zklend.utils import ZkLendInitializer
+from apps.shared.constants import ProtocolIDs
+from apps.shared.state import State
 
 logger = logging.getLogger(__name__)
 

@@ -8,8 +8,8 @@ import plotly
 import streamlit as st
 import matplotlib.pyplot as plt
 import seaborn as sns
-from data_handler.handlers.loan_states.abstractions import State
-from shared.helpers import (
+from apps.data_handler.handlers.loan_states.abstractions import State
+from apps.shared.helpers import (
     add_leading_zeros,
     extract_token_addresses,
     fetch_token_symbols_from_set_of_loan_addresses,

@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 networks:
   data_handler_network:
@@ -44,7 +44,7 @@ services:
     build:
       context: ../../apps
       dockerfile: data_handler/Dockerfile
-    command: celery -A data_handler.celery_app.celery_conf worker --loglevel=INFO
+    command: celery -A apps.data_handler.celery_app.celery_conf worker --loglevel=INFO
     environment:
       - PYTHONPATH=/app
     volumes:

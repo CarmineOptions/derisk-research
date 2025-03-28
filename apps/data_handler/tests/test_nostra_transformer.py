@@ -6,7 +6,7 @@ from typing import Any, Dict
 from unittest.mock import MagicMock, patch
 
 import pytest
-from data_handler.handler_tools.data_parser.serializers.nostra import (
+from apps.data_handler.handler_tools.data_parser.serializers.nostra import (
     BearingCollateralBurnEventData,
     BearingCollateralMintEventData,
     DebtBurnEventData,
@@ -16,8 +16,8 @@ from data_handler.handler_tools.data_parser.serializers.nostra import (
     NonInterestBearingCollateralBurnEventData,
     NonInterestBearingCollateralMintEventData,
 )
-from data_handler.handlers.events.nostra.transform_events import NostraTransformer
-from shared.constants import ProtocolIDs
+from apps.data_handler.handlers.events.nostra.transform_events import NostraTransformer
+from apps.shared.constants import ProtocolIDs
 
 
 @pytest.fixture(scope="function")

@@ -3,8 +3,8 @@ from decimal import Decimal
 
 import pandas as pd
 
-from data_handler.db.crud import InitializerDBConnector
-from data_handler.db.models import ZkLendCollateralDebt
+from apps.data_handler.db.crud import InitializerDBConnector
+from apps.data_handler.db.models import ZkLendCollateralDebt
 
 
 class ZkLendInitializer:

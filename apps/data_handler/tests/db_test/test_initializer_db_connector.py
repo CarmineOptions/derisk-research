@@ -1,6 +1,6 @@
 """ This module contains tests for the InitializerDBConnector class. """
 import pytest
-from data_handler.db.models import ZkLendCollateralDebt
+from apps.data_handler.db.models import ZkLendCollateralDebt
 from sqlalchemy.exc import SQLAlchemyError
 
 

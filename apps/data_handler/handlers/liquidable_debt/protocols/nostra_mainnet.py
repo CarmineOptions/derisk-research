@@ -1,20 +1,20 @@
 """ This script is used to compute the liquidable debt for the Nostra Mainnet protocol. """
-from data_handler.handlers.liquidable_debt.debt_handlers import (
+from apps.data_handler.handlers.liquidable_debt.debt_handlers import (
     NostraMainnetDBLiquidableDebtDataHandler,
 )
-from data_handler.handlers.liquidable_debt.values import (
+from apps.data_handler.handlers.liquidable_debt.values import (
     COLLATERAL_FIELD_NAME,
     DEBT_FIELD_NAME,
     LIQUIDABLE_DEBT_FIELD_NAME,
     PRICE_FIELD_NAME,
 )
-from data_handler.handlers.loan_states.nostra_mainnet.events import (
+from apps.data_handler.handlers.loan_states.nostra_mainnet.events import (
     NostraMainnetLoanEntity,
     NostraMainnetState,
 )
 
-from data_handler.db.models import LiquidableDebt
-from shared.constants import ProtocolIDs
+from apps.data_handler.db.models import LiquidableDebt
+from apps.shared.constants import ProtocolIDs
 
 
 def run() -> None:

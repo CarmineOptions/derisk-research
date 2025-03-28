@@ -3,10 +3,10 @@ This module organizes and handles the loan data in a tabular manner.
 """
 
 import pandas as pd
-from data_handler.handlers.loan_states.nostra_alpha.events import NostraAlphaState
-from data_handler.handlers.loan_states.nostra_mainnet.events import NostraMainnetState
-from shared.state import State
-from shared.custom_types import Prices
+from apps.data_handler.handlers.loan_states.nostra_alpha.events import NostraAlphaState
+from apps.data_handler.handlers.loan_states.nostra_mainnet.events import NostraMainnetState
+from apps.shared.state import State
+from apps.shared.custom_types import Prices
 
 
 def get_protocol(state: State) -> str:

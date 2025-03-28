@@ -4,10 +4,10 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Dict, List, Optional
 
-from shared.blockchain_call import balance_of, func_call, get_myswap_pool
-from shared.constants import POOL_MAPPING, TOKEN_SETTINGS
-from shared.helpers import add_leading_zeros
-from shared.custom_types import TokenSettings, TokenValues
+from apps.shared.blockchain_call import balance_of, func_call, get_myswap_pool
+from apps.shared.constants import POOL_MAPPING, TOKEN_SETTINGS
+from apps.shared.helpers import add_leading_zeros
+from apps.shared.custom_types import TokenSettings, TokenValues
 
 
 class Pair:

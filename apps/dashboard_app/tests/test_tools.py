@@ -1,6 +1,6 @@
 import pytest
 import pandas as pd
-from dashboard_app.helpers.tools import (
+from apps.dashboard_app.helpers.tools import (
     get_collateral_token_range,
     get_symbol,
     get_prices,
@@ -91,7 +91,7 @@ def test_get_prices():
 async def test_get_symbol():
     """Tests if get_symbol correctly retrieves the symbol for a given address."""
     mock_func_call = AsyncMock(return_value=["TOKEN"])
-    with patch("dashboard_app.helpers.tools.func_call", mock_func_call):
+    with patch("apps.dashboard_app.helpers.tools.func_call", mock_func_call):
         result = await get_symbol("0x123") 
         assert result == "TOKEN"
 

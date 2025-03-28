@@ -4,12 +4,12 @@
 import logging
 
 from apps.shared.celery_conf import app
-from data_handler.db.crud import DBConnector
-from data_handler.db.models import OrderBookModel
-from data_handler.handlers.order_books.constants import TOKEN_MAPPING
-from data_handler.handlers.order_books.ekubo.api_connector import EkuboAPIConnector
-from data_handler.handlers.order_books.ekubo.main import EkuboOrderBook
-from data_handler.handlers.order_books.haiko.main import HaikoOrderBook
+from apps.data_handler.db.crud import DBConnector
+from apps.data_handler.db.models import OrderBookModel
+from apps.data_handler.handlers.order_books.constants import TOKEN_MAPPING
+from apps.data_handler.handlers.order_books.ekubo.api_connector import EkuboAPIConnector
+from apps.data_handler.handlers.order_books.ekubo.main import EkuboOrderBook
+from apps.data_handler.handlers.order_books.haiko.main import HaikoOrderBook
 
 logger = logging.getLogger(__name__)
 connector = DBConnector()

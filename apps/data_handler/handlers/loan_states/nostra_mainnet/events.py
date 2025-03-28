@@ -5,30 +5,30 @@ from decimal import Decimal
 
 import pandas as pd
 import starknet_py
-from data_handler.handler_tools.nostra_mainnet_settings import (
+from apps.data_handler.handler_tools.nostra_mainnet_settings import (
     NOSTRA_MAINNET_CDP_MANAGER_ADDRESS,
     NOSTRA_MAINNET_DEFERRED_BATCH_CALL_ADAPTER_ADDRESS,
     NOSTRA_MAINNET_EVENTS_TO_METHODS,
     NOSTRA_MAINNET_INTEREST_RATE_MODEL_ADDRESS,
     NOSTRA_MAINNET_TOKEN_ADDRESSES,
 )
-from data_handler.handlers.helpers import (
+from apps.data_handler.handlers.helpers import (
     blockchain_call,
     get_addresses,
     get_async_symbol,
 )
-from data_handler.handlers.loan_states.nostra_alpha.events import (
+from apps.data_handler.handlers.loan_states.nostra_alpha.events import (
     NostraAlphaLoanEntity,
     NostraAlphaState,
 )
-from shared.constants import ProtocolIDs
-from shared.custom_types import InterestRateModels, Prices, TokenParameters
-from shared.custom_types.nostra import (
+from apps.shared.constants import ProtocolIDs
+from apps.shared.custom_types import InterestRateModels, Prices, TokenParameters
+from apps.shared.custom_types.nostra import (
     NostraDebtTokenParameters,
     NostraMainnetCollateralTokenParameters,
 )
-from shared.helpers import add_leading_zeros
-from shared.starknet_client import StarknetClient
+from apps.shared.helpers import add_leading_zeros
+from apps.shared.starknet_client import StarknetClient
 
 logger = logging.getLogger(__name__)
 

@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from pandas import DataFrame
 
-from dashboard_app.helpers.load_data import DashboardDataHandler
+from apps.dashboard_app.helpers.load_data import DashboardDataHandler
 
 ZKLEND_DATA = DataFrame(
     [
@@ -30,7 +30,7 @@ ZKLEND_INTEREST_RATE = DataFrame({"collateral": [1.5], "debt": [2.0]})
 @pytest.fixture
 def mock_data_connector():
     """Fixture to mock the DataConnector."""
-    with patch("dashboard_app.helpers.load_data.DataConnector") as MockConnector:
+    with patch("apps.dashboard_app.helpers.load_data.DataConnector") as MockConnector:
         connector = MockConnector
 
         connector.fetch_protocol_first_block_number.return_value = 1
@@ -53,7 +53,7 @@ def mock_data_connector():
 @pytest.fixture
 def mock_zklend_state():
     """Fixture to mock the ZkLendState."""
-    with patch("dashboard_app.helpers.load_data.ZkLendState") as MockZkLendState:
+    with patch("apps.dashboard_app.helpers.load_data.ZkLendState") as MockZkLendState:
         state = MockZkLendState.return_value
         state.load_entities = MagicMock()
         state.collect_token_parameters = AsyncMock()
@@ -65,7 +65,7 @@ def mock_zklend_state():
 @pytest.fixture
 def mock_get_prices():
     """Fixture to mock the get_prices function."""
-    with patch("dashboard_app.helpers.load_data.get_prices") as MockGetPrices:
+    with patch("apps.dashboard_app.helpers.load_data.get_prices") as MockGetPrices:
         MockGetPrices.return_value = {"token1": 10, "token2": 20}
         yield MockGetPrices
 
@@ -74,7 +74,7 @@ def mock_get_prices():
 def handler(mock_data_connector, mock_zklend_state, mock_get_prices):
     """Fixture to initialize DashboardDataHandler."""
     with patch(
-        "dashboard_app.helpers.load_data.DataConnector",
+        "apps.dashboard_app.helpers.load_data.DataConnector",
         return_value=mock_data_connector,
     ):
         handler = DashboardDataHandler()
@@ -102,8 +102,8 @@ def test_init_dashboard_data_handler(handler):
     assert handler.states == [handler.zklend_state]
 
 
-@patch("dashboard_app.helpers.load_data.ZkLendState")
-@patch("dashboard_app.helpers.load_data.DataConnector")
+@patch("apps.dashboard_app.helpers.load_data.ZkLendState")
+@patch("apps.dashboard_app.helpers.load_data.DataConnector")
 def test_init_dashboard_went_sideways(mock_data_connector, mock_zklend_state):
     """Test to ensure the DashboardDataHandler init handles exceptions."""
     mock_data_connector.side_effect = Exception("DataConnector failed")
@@ -121,8 +121,8 @@ def test_set_prices(handler):
     assert handler.prices == {"token1": 10, "token2": 20}
 
 
-@patch("dashboard_app.helpers.protocol_stats.add_leading_zeros", return_value="token1")
-@patch("dashboard_app.helpers.load_data.get_loans_table_data")
+@patch("apps.dashboard_app.helpers.protocol_stats.add_leading_zeros", return_value="token1")
+@patch("apps.dashboard_app.helpers.load_data.get_loans_table_data")
 def test_load_data_success(
     mock_get_loans_table_data, mock_add_leading_zeros, handler, capfd
 ):
@@ -188,7 +188,7 @@ def test_load_data_missing_data(handler):
         handler.load_data()
 
 
-@patch("dashboard_app.helpers.load_data.get_prices")
+@patch("apps.dashboard_app.helpers.load_data.get_prices")
 def test_load_data_invalid_prices(mock_get_prices, handler):
     """Test for handling invalid prices in load_data method."""
     mock_get_prices.side_effect = Exception("Price fetch error")

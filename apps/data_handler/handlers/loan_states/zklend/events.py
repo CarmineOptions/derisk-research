@@ -19,22 +19,22 @@ from decimal import Decimal
 from typing import Optional
 
 import pandas as pd
-from data_handler.db.crud import InitializerDBConnector
-from data_handler.handler_tools.data_parser.zklend import ZklendDataParser
-from data_handler.handlers.helpers import get_async_symbol
-from data_handler.handlers.loan_states.zklend.settings import (
+from apps.data_handler.db.crud import InitializerDBConnector
+from apps.data_handler.handler_tools.data_parser.zklend import ZklendDataParser
+from apps.data_handler.handlers.helpers import get_async_symbol
+from apps.data_handler.handlers.loan_states.zklend.settings import (
     ZKLEND_SPECIFIC_TOKEN_SETTINGS,
 )
-from data_handler.handlers.settings import TokenSettings
-from shared.helpers import add_leading_zeros
-from shared.loan_entity import LoanEntity
-from shared.state import State
+from apps.data_handler.handlers.settings import TokenSettings
+from apps.shared.helpers import add_leading_zeros
+from apps.shared.loan_entity import LoanEntity
+from apps.shared.state import State
 
 logger = logging.getLogger(__name__)
 
-from data_handler.handlers import blockchain_call
-from shared.constants import ProtocolIDs
-from shared.custom_types import (
+from apps.data_handler.handlers import blockchain_call
+from apps.shared.constants import ProtocolIDs
+from apps.shared.custom_types import (
     InterestRateModels,
     Portfolio,
     Prices,

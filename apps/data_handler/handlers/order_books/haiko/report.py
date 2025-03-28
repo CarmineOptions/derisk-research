@@ -4,8 +4,8 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
-from data_handler.handlers.order_books.constants import TOKEN_MAPPING
-from data_handler.handlers.order_books.haiko.main import HaikoOrderBook
+from apps.data_handler.handlers.order_books.constants import TOKEN_MAPPING
+from apps.data_handler.handlers.order_books.haiko.main import HaikoOrderBook
 
 
 def filter_logs(logs_path: Path) -> None:

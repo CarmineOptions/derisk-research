@@ -3,18 +3,18 @@ import logging
 from time import monotonic
 
 import pandas as pd
-from data_handler.handler_tools.constants import (
+from apps.data_handler.handler_tools.constants import (
     NOSTRA_EVENTS_MAPPING,
     ProtocolAddresses,
 )
-from data_handler.handler_tools.nostra_alpha_settings import (
+from apps.data_handler.handler_tools.nostra_alpha_settings import (
     NOSTRA_ALPHA_ADDRESSES_TO_EVENTS,
     NOSTRA_ALPHA_EVENTS_TO_METHODS,
     NOSTRA_ALPHA_INTEREST_RATE_MODEL_ADDRESS,
 )
-from data_handler.handlers.loan_states.abstractions import LoanStateComputationBase
-from data_handler.handlers.loan_states.nostra_alpha.events import NostraAlphaState
-from shared.constants import ProtocolIDs
+from apps.data_handler.handlers.loan_states.abstractions import LoanStateComputationBase
+from apps.data_handler.handlers.loan_states.nostra_alpha.events import NostraAlphaState
+from apps.shared.constants import ProtocolIDs
 
 logger = logging.getLogger(__name__)
 NOSTRA_ALPHA_EVENTS_TO_ORDER: dict[str, str] = {

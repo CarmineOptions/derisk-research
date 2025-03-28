@@ -4,7 +4,7 @@ from typing import Dict, Set
 
 import pandas as pd
 import starknet_py
-from data_handler.handlers.blockchain_call import func_call
+from apps.data_handler.handlers.blockchain_call import func_call
 from starknet_py.net.client_errors import ClientError
 
 from .constants import GS_BUCKET_NAME, NULL_CHAR, PAIRS, UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES

@@ -13,7 +13,7 @@ from alembic import op
 from sqlalchemy.engine.reflection import Inspector
 from sqlalchemy_utils.types.choice import ChoiceType
 
-from shared.constants import ProtocolIDs
+from apps.shared.constants import ProtocolIDs
 
 # revision identifiers, used by Alembic.
 revision: str = "509baf9251f2"

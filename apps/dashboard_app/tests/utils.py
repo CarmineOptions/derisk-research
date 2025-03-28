@@ -1,12 +1,12 @@
 """
-Tests for charts utils functions in dashboard_app.
+Tests for charts utils functions in apps.dashboard_app.
 """
 
 # pylint: disable=wrong-import-position, too-few-public-methods
 import pandas as pd
 import pytest
 
-from dashboard_app.charts.utils import (
+from apps.dashboard_app.charts.utils import (
     get_data,
     get_protocol_data_mappings,
     transform_loans_data,

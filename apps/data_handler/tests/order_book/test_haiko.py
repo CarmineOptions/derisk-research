@@ -2,7 +2,7 @@ import pytest
 from decimal import Decimal
 from unittest.mock import patch
 
-from data_handler.handlers.order_books.haiko.main import HaikoOrderBook
+from apps.data_handler.handlers.order_books.haiko.main import HaikoOrderBook
 
 
 class TestHaikoOrderBook:
@@ -27,7 +27,7 @@ class TestHaikoOrderBook:
         ):
             HaikoOrderBook("0xinvalid1", "0xinvalid2")
 
-    @patch("data_handler.handlers.order_books.haiko.main.HaikoOrderBook")
+    @patch("apps.data_handler.handlers.order_books.haiko.main.HaikoOrderBook")
     def test_usd_price_retrieval(self, mock_connector):
         """Test USD price retrieval functionality"""
 
@@ -53,8 +53,8 @@ class TestHaikoOrderBook:
         assert price > 0
 
     @pytest.mark.skip("Need to fix this test")
-    @patch("data_handler.handlers.order_books.haiko.main.HaikoAPIConnector")
-    @patch("data_handler.handlers.order_books.haiko.main.HaikoBlastAPIConnector")
+    @patch("apps.data_handler.handlers.order_books.haiko.main.HaikoAPIConnector")
+    @patch("apps.data_handler.handlers.order_books.haiko.main.HaikoBlastAPIConnector")
     def test_fetch_price_and_liquidity(
         self, mock_blast_connector, mock_haiko_connector
     ):

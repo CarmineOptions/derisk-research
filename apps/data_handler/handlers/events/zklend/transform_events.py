@@ -4,13 +4,13 @@ which is used to transform Zklend events.
 """
 import logging
 from pydantic import BaseModel
-from data_handler.db.models.base import Base
-from data_handler.handler_tools.api_connector import DeRiskAPIConnector
+from apps.data_handler.db.models.base import Base
+from apps.data_handler.handler_tools.api_connector import DeRiskAPIConnector
 from typing import Dict, Any, Tuple, Type, Callable
-from shared.constants import ProtocolIDs
-from data_handler.handler_tools.data_parser.zklend import ZklendDataParser
+from apps.shared.constants import ProtocolIDs
+from apps.data_handler.handler_tools.data_parser.zklend import ZklendDataParser
 
-from data_handler.handler_tools.data_parser.serializers import (
+from apps.data_handler.handler_tools.data_parser.serializers import (
     AccumulatorsSyncEventData,
     LiquidationEventData,
     WithdrawalEventData,
@@ -20,8 +20,8 @@ from data_handler.handler_tools.data_parser.serializers import (
     CollateralEnabledDisabledEventData,
 )
 
-from data_handler.db.crud import ZkLendEventDBConnector
-from data_handler.handler_tools.constants import ProtocolAddresses
+from apps.data_handler.db.crud import ZkLendEventDBConnector
+from apps.data_handler.handler_tools.constants import ProtocolAddresses
 
 
 logger = logging.getLogger(__name__)

@@ -3,12 +3,12 @@ This module contains the tests for the DBConnector.
 """
 
 import pytest
-from data_handler.db.models import (
+from apps.data_handler.db.models import (
     InterestRate,
     LoanState,
     OrderBookModel,
 )
-from shared.constants import ProtocolIDs
+from apps.shared.constants import ProtocolIDs
 from sqlalchemy.exc import SQLAlchemyError
 
 

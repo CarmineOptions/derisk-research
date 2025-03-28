@@ -4,12 +4,12 @@ import pytest
 from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
-from data_handler.handlers.health_ratio_level.health_ratio_handlers import (
+from apps.data_handler.handlers.health_ratio_level.health_ratio_handlers import (
     BaseHealthRatioHandler,
 )
-from shared.state import State, LoanEntity
-from shared.custom_types import TokenValues
-from shared.constants import ProtocolIDs
+from apps.shared.state import State, LoanEntity
+from apps.shared.custom_types import TokenValues
+from apps.shared.constants import ProtocolIDs
 
 
 class MockState(State):
@@ -76,7 +76,7 @@ class TestBaseHealthRatioHandler:
     def setup(self, mock_db_connector):
         """Setup test instance"""
         with patch(
-            "data_handler.handlers.health_ratio_level.health_ratio_handlers.DBConnector"
+            "apps.data_handler.handlers.health_ratio_level.health_ratio_handlers.DBConnector"
         ) as mock_db:
             mock_db.return_value = mock_db_connector
             self.handler = BaseHealthRatioHandler(

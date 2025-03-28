@@ -53,23 +53,23 @@ with patch.dict(
     "sys.modules",
     {
         "aiogram": Mock(),
-        "shared.error_handler.notifications": Mock(BOT=mock_bot),
-        "shared.error_handler": Mock(
+        "apps.shared.error_handler.notifications": Mock(BOT=mock_bot),
+        "apps.shared.error_handler": Mock(
             BOT=mock_bot,
             MessageTemplates=mock_message_templates,
             TokenSettingsNotFound=Exception,
         ),
     },
 ):
-    from data_handler.handlers.liquidable_debt.utils import Prices
-    from shared.custom_types.base import (
+    from apps.data_handler.handlers.liquidable_debt.utils import Prices
+    from apps.shared.custom_types.base import (
         Portfolio,
         ExtraInfo,
         TokenParameters,
         InterestRateModels,
     )
-    from shared.loan_entity import LoanEntity
-    from shared.state import State
+    from apps.shared.loan_entity import LoanEntity
+    from apps.shared.state import State
 
 
 class MockLoanEntity(LoanEntity):

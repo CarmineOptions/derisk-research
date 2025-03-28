@@ -7,9 +7,9 @@ import logging
 from decimal import Decimal
 from typing import Any, Callable, Dict, Tuple, Type
 
-from data_handler.db.crud import NostraEventDBConnector
-from data_handler.db.models.base import Base
-from data_handler.db.models.nostra_events import (
+from apps.data_handler.db.crud import NostraEventDBConnector
+from apps.data_handler.db.models.base import Base
+from apps.data_handler.db.models.nostra_events import (
     BearingCollateralBurnEventModel,
     BearingCollateralMintEventModel,
     DebtBurnEventModel,
@@ -19,10 +19,10 @@ from data_handler.db.models.nostra_events import (
     NonInterestBearingCollateralBurnEventModel,
     NonInterestBearingCollateralMintEventModel,
 )
-from data_handler.handler_tools.api_connector import DeRiskAPIConnector
-from data_handler.handler_tools.constants import ProtocolAddresses
-from data_handler.handler_tools.data_parser.nostra import NostraDataParser
-from data_handler.handler_tools.data_parser.serializers import (
+from apps.data_handler.handler_tools.api_connector import DeRiskAPIConnector
+from apps.data_handler.handler_tools.constants import ProtocolAddresses
+from apps.data_handler.handler_tools.data_parser.nostra import NostraDataParser
+from apps.data_handler.handler_tools.data_parser.serializers import (
     BearingCollateralBurnEventData,
     BearingCollateralMintEventData,
     DebtBurnEventData,
@@ -32,7 +32,7 @@ from data_handler.handler_tools.data_parser.serializers import (
     NonInterestBearingCollateralBurnEventData,
     NonInterestBearingCollateralMintEventData,
 )
-from shared.constants import ProtocolIDs
+from apps.shared.constants import ProtocolIDs
 
 logger = logging.getLogger(__name__)
 

@@ -2,13 +2,13 @@
 from decimal import Decimal
 from pathlib import Path
 
-from data_handler.handlers.order_books.abstractions import OrderBookBase
-from data_handler.handlers.order_books.constants import TOKEN_MAPPING
-from data_handler.handlers.order_books.haiko.api_connector import (
+from apps.data_handler.handlers.order_books.abstractions import OrderBookBase
+from apps.data_handler.handlers.order_books.constants import TOKEN_MAPPING
+from apps.data_handler.handlers.order_books.haiko.api_connector import (
     HaikoAPIConnector,
     HaikoBlastAPIConnector,
 )
-from data_handler.handlers.order_books.haiko.logger import get_logger
+from apps.data_handler.handlers.order_books.haiko.logger import get_logger
 
 
 class HaikoOrderBook(OrderBookBase):

@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from decimal import Decimal
 
-from shared.constants import TOKEN_SETTINGS
-from shared.custom_types import (
+from apps.shared.constants import TOKEN_SETTINGS
+from apps.shared.custom_types import (
     ExtraInfo,
     InterestRateModels,
     Portfolio,

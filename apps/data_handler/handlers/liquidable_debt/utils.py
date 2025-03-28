@@ -3,8 +3,8 @@ import time
 from decimal import Decimal
 
 import requests
-from data_handler.handlers.helpers import get_symbol
-from data_handler.handlers.settings import (
+from apps.data_handler.handlers.helpers import get_symbol
+from apps.data_handler.handlers.settings import (
     HASHSTACK_V1_ADDITIONAL_TOKEN_SETTINGS,
     JEDISWAP_POOL_SETTINGS,
     MYSWAP_POOL_SETTINGS,
@@ -15,9 +15,9 @@ from starknet_py.hash.selector import get_selector_from_name
 from starknet_py.net.client_models import Call
 from starknet_py.net.full_node_client import FullNodeClient
 
-from shared.constants import TOKEN_SETTINGS
-from shared.helpers import add_leading_zeros
-from shared.custom_types import TokenValues
+from apps.shared.constants import TOKEN_SETTINGS
+from apps.shared.helpers import add_leading_zeros
+from apps.shared.custom_types import TokenValues
 
 NET = FullNodeClient(node_url="https://starknet-mainnet.public.blastapi.io")
 

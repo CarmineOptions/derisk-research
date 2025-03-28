@@ -1,12 +1,12 @@
 from typing import Type, TypeVar
 from uuid import UUID
 
-from database.database import SQLALCHEMY_DATABASE_URL
-from database.models import Base
+from apps.web_app.database.database import SQLALCHEMY_DATABASE_URL
+from apps.web_app.database.models import Base
 from sqlalchemy import create_engine, func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, scoped_session, sessionmaker
-from utils.values import (
+from ..utils.values import (
     CURRENTLY_AVAILABLE_PROTOCOLS_IDS,
     CreateSubscriptionValues,
     NotificationValidationValues,

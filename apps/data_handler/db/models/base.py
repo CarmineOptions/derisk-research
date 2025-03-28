@@ -6,7 +6,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped
 from sqlalchemy.types import JSON
 from sqlalchemy_utils.types.choice import ChoiceType
 
-from shared.constants import ProtocolIDs
+from apps.shared.constants import ProtocolIDs
 
 
 class Base(DeclarativeBase):

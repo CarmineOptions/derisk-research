@@ -5,8 +5,8 @@ from decimal import Decimal
 from unittest.mock import MagicMock, patch
 from sqlalchemy.exc import SQLAlchemyError
 
-from data_handler.db.models import ZkLendCollateralDebt
-from data_handler.handlers.loan_states.zklend.utils import ZkLendInitializer
+from apps.data_handler.db.models import ZkLendCollateralDebt
+from apps.data_handler.handlers.loan_states.zklend.utils import ZkLendInitializer
 
 
 @pytest.fixture
@@ -72,7 +72,7 @@ def sample_loan_state():
 @pytest.fixture
 def initializer(mock_zklend_state):
     """Create ZkLendInitializer instance with mocked dependencies."""
-    with patch('data_handler.handlers.loan_states.zklend.utils.InitializerDBConnector') as mock_connector_class:
+    with patch('apps.data_handler.handlers.loan_states.zklend.utils.InitializerDBConnector') as mock_connector_class:
         mock_connector_class.return_value = MagicMock()
         instance = ZkLendInitializer(mock_zklend_state)
         return instance

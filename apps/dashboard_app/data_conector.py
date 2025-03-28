@@ -9,7 +9,7 @@ from typing import Optional
 import pandas as pd
 import sqlalchemy
 from dotenv import load_dotenv
-from shared.exceptions.db import DatabaseConnectionError
+from apps.shared.exceptions.db import DatabaseConnectionError
 
 load_dotenv()
 

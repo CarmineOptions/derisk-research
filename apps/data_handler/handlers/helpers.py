@@ -11,15 +11,15 @@ from typing import Iterator
 import google.cloud.storage
 import pandas
 import starknet_py.cairo.felt as cairo_felt_type
-from data_handler.handler_tools.constants import TOKEN_MAPPING
-from data_handler.handlers import blockchain_call
-from data_handler.handlers.settings import PAIRS
+from apps.data_handler.handler_tools.constants import TOKEN_MAPPING
+from apps.data_handler.handlers import blockchain_call
+from apps.data_handler.handlers.settings import PAIRS
 
-from data_handler.db.models import InterestRate
-from shared.constants import TOKEN_SETTINGS, ProtocolIDs
-from shared.error_handler import BOT
-from shared.error_handler.values import MessageTemplates
-from shared.custom_types import TokenValues
+from apps.data_handler.db.models import InterestRate
+from apps.shared.constants import TOKEN_SETTINGS, ProtocolIDs
+from apps.shared.error_handler import BOT
+from apps.shared.error_handler.values import MessageTemplates
+from apps.shared.custom_types import TokenValues
 
 GS_BUCKET_NAME = "derisk-persistent-state"
 ERROR_LOGS = set()

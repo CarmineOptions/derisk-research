@@ -4,9 +4,9 @@ from decimal import Decimal, ROUND_FLOOR
 from unittest.mock import patch
 
 import pytest
-from data_handler.db.crud import DBConnector
-from data_handler.handlers.order_books.processing import OrderBookProcessor
-from data_handler.handlers.order_books.uniswap_v2 import main
+from apps.data_handler.db.crud import DBConnector
+from apps.data_handler.handlers.order_books.processing import OrderBookProcessor
+from apps.data_handler.handlers.order_books.uniswap_v2 import main
 
 
 @pytest.fixture
@@ -82,7 +82,7 @@ class TestUniswapV2OrderBook:
         Unit test for UniswapV2OrderBook.fetch_price_and_liquidity
         """
         with patch(
-            "data_handler.handlers.order_books.uniswap_v2.main.UniswapV2OrderBook._async_fetch_price_and_liquidity",
+            "apps.data_handler.handlers.order_books.uniswap_v2.main.UniswapV2OrderBook._async_fetch_price_and_liquidity",
         ) as mock_fetch_price_and_liquidity:
             asyncio.set_event_loop(event_loop)
             order_book.fetch_price_and_liquidity()

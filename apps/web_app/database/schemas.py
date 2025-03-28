@@ -1,7 +1,7 @@
 from fastapi import Form
 from pydantic import BaseModel, Field
 from pydantic.networks import IPvAnyAddress
-from utils.values import ProtocolIDs
+from ..utils.values import ProtocolIDs
 
 
 class NotificationForm(BaseModel):

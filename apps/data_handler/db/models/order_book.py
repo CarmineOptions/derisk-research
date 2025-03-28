@@ -3,7 +3,7 @@ an order book entry in the database. """
 from sqlalchemy import DECIMAL, BigInteger, Column, String
 from sqlalchemy.types import JSON
 
-from data_handler.db.models.base import Base
+from apps.data_handler.db.models.base import Base
 
 
 class OrderBookModel(Base):

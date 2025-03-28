@@ -1,4 +1,4 @@
-from shared.custom_types.base import (
+from apps.shared.custom_types.base import (
     BaseTokenParameters,
     CollateralAndDebtInterestRateModels,
     CollateralAndDebtTokenParameters,
@@ -10,12 +10,12 @@ from shared.custom_types.base import (
     TokenSettings,
     TokenValues,
 )
-from shared.custom_types.nostra import (
+from apps.shared.custom_types.nostra import (
     NostraAlphaCollateralTokenParameters,
     NostraDebtTokenParameters,
     NostraMainnetCollateralTokenParameters,
 )
-from shared.custom_types.zklend import (
+from apps.shared.custom_types.zklend import (
     ZkLendCollateralEnabled,
     ZkLendCollateralTokenParameters,
     ZkLendDebtTokenParameters,

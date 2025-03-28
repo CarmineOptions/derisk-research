@@ -1,5 +1,5 @@
 from fastapi import status
-from main import app
+from apps.dashboard_app.app.main import app
 from starlette.testclient import TestClient
 
 

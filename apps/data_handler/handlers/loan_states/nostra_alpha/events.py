@@ -8,8 +8,8 @@ import logging
 from typing import Optional
 
 import pandas as pd
-from data_handler.handler_tools.data_parser.nostra import NostraDataParser
-from data_handler.handler_tools.nostra_alpha_settings import (
+from apps.data_handler.handler_tools.data_parser.nostra import NostraDataParser
+from apps.data_handler.handler_tools.nostra_alpha_settings import (
     NOSTRA_ALPHA_ADDRESSES_TO_EVENTS,
     NOSTRA_ALPHA_CDP_MANAGER_ADDRESS,
     NOSTRA_ALPHA_DEFERRED_BATCH_CALL_ADAPTER_ADDRESS,
@@ -17,23 +17,23 @@ from data_handler.handler_tools.nostra_alpha_settings import (
     NOSTRA_ALPHA_INTEREST_RATE_MODEL_ADDRESS,
     NOSTRA_ALPHA_TOKEN_ADDRESSES,
 )
-from data_handler.handlers.helpers import (
+from apps.data_handler.handlers.helpers import (
     blockchain_call,
     get_addresses,
     get_async_symbol,
 )
-from data_handler.handlers.settings import TokenSettings
-from data_handler.handlers.state import NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS
-from shared.constants import ProtocolIDs
-from shared.custom_types import InterestRateModels, Portfolio, Prices, TokenParameters
-from shared.custom_types.nostra import (
+from apps.data_handler.handlers.settings import TokenSettings
+from apps.data_handler.handlers.state import NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS
+from apps.shared.constants import ProtocolIDs
+from apps.shared.custom_types import InterestRateModels, Portfolio, Prices, TokenParameters
+from apps.shared.custom_types.nostra import (
     NostraAlphaCollateralTokenParameters,
     NostraDebtTokenParameters,
 )
-from shared.helpers import add_leading_zeros
-from shared.loan_entity import LoanEntity
-from shared.starknet_client import StarknetClient
-from shared.state import State
+from apps.shared.helpers import add_leading_zeros
+from apps.shared.loan_entity import LoanEntity
+from apps.shared.starknet_client import StarknetClient
+from apps.shared.state import State
 
 LIQUIDATION_HEALTH_FACTOR_THRESHOLD = decimal.Decimal("1")
 TARGET_HEALTH_FACTOR = decimal.Decimal("1.25")

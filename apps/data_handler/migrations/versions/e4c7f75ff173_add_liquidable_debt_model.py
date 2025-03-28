@@ -11,7 +11,7 @@ from typing import Sequence, Union
 import sqlalchemy as sa
 import sqlalchemy_utils
 from alembic import op
-from data_handler.handlers.liquidable_debt.values import LendingProtocolNames
+from apps.data_handler.handlers.liquidable_debt.values import LendingProtocolNames
 
 # revision identifiers, used by Alembic.
 revision: str = "e4c7f75ff173"

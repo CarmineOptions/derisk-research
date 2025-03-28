@@ -2,8 +2,8 @@
 import decimal
 from dataclasses import dataclass
 
-from shared.constants import TOKEN_SETTINGS
-from shared.custom_types import TokenSettings
+from apps.shared.constants import TOKEN_SETTINGS
+from apps.shared.custom_types import TokenSettings
 
 
 @dataclass

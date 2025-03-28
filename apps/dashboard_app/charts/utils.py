@@ -10,20 +10,20 @@ from collections import defaultdict
 
 import pandas as pd
 import streamlit as st
-from data_handler.handlers.loan_states.abstractions import State
-from shared.amms import SwapAmm
-from shared.constants import PAIRS
+from apps.data_handler.handlers.loan_states.abstractions import State
+from apps.shared.amms import SwapAmm
+from apps.shared.constants import PAIRS
 
-from dashboard_app.helpers.ekubo import EkuboLiquidity
-from dashboard_app.helpers.loans_table import get_loans_table_data
-from dashboard_app.helpers.settings import (
+from apps.dashboard_app.helpers.ekubo import EkuboLiquidity
+from apps.dashboard_app.helpers.loans_table import get_loans_table_data
+from apps.dashboard_app.helpers.settings import (
     COLLATERAL_TOKENS,
     DEBT_TOKENS,
     STABLECOIN_BUNDLE_NAME,
     TOKEN_SETTINGS,
     UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES,
 )
-from dashboard_app.helpers.tools import get_main_chart_data, get_prices
+from apps.dashboard_app.helpers.tools import get_main_chart_data, get_prices
 
 logger = logging.getLogger(__name__)
 
