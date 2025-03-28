@@ -7,9 +7,10 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
+pytest.importorskip("shared")
 from shared.state import State
 
-from dashboard_app.helpers.protocol_stats import (
+from helpers.protocol_stats import (
     get_collateral_stats,
     get_debt_stats,
     get_general_stats,

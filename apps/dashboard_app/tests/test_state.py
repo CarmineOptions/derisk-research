@@ -1,4 +1,5 @@
 import pytest
+pytest.importorskip("shared")
 from shared.state import State
 
 
@@ -10,7 +11,7 @@ class MockLoanEntity:
 class MockState(State):
     def __init__(self):
         super().__init__(loan_entity_class=MockLoanEntity)
-    
+
     def compute_liquidable_debt_at_price(self, *args, **kwargs):
         return None
 
@@ -36,8 +37,7 @@ def test_protocol_names(protocol_name):
 def test_get_protocol_helper():
     """Test the get_protocol helper function"""
     from dashboard_app.helpers.loans_table import get_protocol
-    
+
     mock_state = MockState()
     mock_state.PROTOCOL_NAME = "Test Protocol"
     assert get_protocol(mock_state) == "Test Protocol"
-    
