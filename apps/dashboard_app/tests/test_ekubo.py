@@ -2,8 +2,8 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
-
-from dashboard_app.helpers.ekubo import EkuboLiquidity
+pytest.importorskip("helper")
+from helpers.ekubo import EkuboLiquidity
 
 
 @pytest.fixture

@@ -2,8 +2,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from pandas import DataFrame
+pytest.importorskip("data_handler")
+from helpers.load_data import DashboardDataHandler
 
-from dashboard_app.helpers.load_data import DashboardDataHandler
+
 
 ZKLEND_DATA = DataFrame(
     [

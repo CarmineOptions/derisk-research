@@ -8,9 +8,9 @@ import pytest
 from sqlalchemy import Float, String
 from sqlalchemy.orm import Mapped, Session, mapped_column
 
-from dashboard_app.app.models.base import Base
-from dashboard_app.app.utils.values import CreateSubscriptionValues
-from dashboard_app.app.utils.watcher_mixin import WatcherMixin
+from app.models.base import Base
+from app.utils.values import CreateSubscriptionValues
+from app.utils.watcher_mixin import WatcherMixin
 
 
 class MockModel(Base):

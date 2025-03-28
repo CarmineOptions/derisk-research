@@ -2,22 +2,23 @@
 import pandas as pd
 import math
 import pytest
-
+import pytest
+pytest.importorskip("data_handler")
 import logging
 
-from dashboard_app.charts.utils import (
+from charts.utils import (
     transform_main_chart_data,
     infer_protocol_name
 )
 from typing import Dict, List, Union
 from unittest.mock import patch
-from dashboard_app.helpers.settings import (
+from helpers.settings import (
     UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES,
     STABLECOIN_BUNDLE_NAME,
 )
-from dashboard_app.helpers.ekubo import EkuboLiquidity
+from helpers.ekubo import EkuboLiquidity
 from collections import defaultdict
-from dashboard_app.charts.utils import (
+from charts.utils import (
     parse_token_amounts,
     create_stablecoin_bundle,
     process_liquidity,
@@ -515,13 +516,13 @@ def sample_protocol_data():
         'liquidable_debt': [1000, 2000, 3000],
         'liquidable_debt_at_interval': [500, 1000, 1500]
     })
-    
+
     df2 = pd.DataFrame({
         'collateral_token_price': [100, 200, 300],
         'liquidable_debt': [2000, 4000, 6000],
         'liquidable_debt_at_interval': [1000, 2000, 3000]
     })
-    
+
     return {
         'protocol1': df1,
         'protocol2': df2
@@ -533,7 +534,7 @@ def test_transform_main_chart_data_with_multiple_protocols(sample_protocol_data)
     protocols = ["protocol1", "protocol2"]
 
     result = transform_main_chart_data(sample_protocol_data, current_pair, protocols)
-    
+
     assert isinstance(result, pd.DataFrame)
     assert len(result) == 3
     assert 'liquidable_debt_protocol1' in result.columns
@@ -543,7 +544,7 @@ def test_transform_main_chart_data_with_multiple_protocols(sample_protocol_data)
 
     assert result['liquidable_debt'].tolist() == [3000, 6000, 9000]
     assert result['liquidable_debt_at_interval'].tolist() == [1500, 3000, 4500]
-    
+
     assert result['liquidable_debt_protocol1'].tolist() == [1000, 2000, 3000]
     assert result['liquidable_debt_protocol2'].tolist() == [2000, 4000, 6000]
 
@@ -553,7 +554,7 @@ def test_transform_main_chart_data_with_empty_data(sample_protocol_data, caplog)
     protocols = ["protocol1", "protocol2", "protocol3"]
 
     sample_protocol_data["protocol3"] = pd.DataFrame()
-    
+
     with caplog.at_level(logging.WARNING):
         result = transform_main_chart_data(sample_protocol_data, current_pair, protocols)
 
@@ -565,9 +566,9 @@ def test_transform_main_chart_data_with_empty_data(sample_protocol_data, caplog)
 
 @pytest.mark.parametrize("input_protocol, valid_protocols, expected", [
     ("protocol1", ["protocol1", "protocol2", "protocol3"], "protocol1"),
-    ("protocl1", ["protocol1", "protocol2", "protocol3"], "protocol1"),  
-    ("proto1", ["protocol1", "protocol2", "protocol3"], "protocol1"),   
-    ("unknown", ["protocol1", "protocol2", "protocol3"], "unknown"),  
+    ("protocl1", ["protocol1", "protocol2", "protocol3"], "protocol1"),
+    ("proto1", ["protocol1", "protocol2", "protocol3"], "protocol1"),
+    ("unknown", ["protocol1", "protocol2", "protocol3"], "unknown"),
 ])
 def test_infer_protocol_name(input_protocol, valid_protocols, expected):
     """Tests if infer_protocol_name correctly matches input to valid protocol names."""
