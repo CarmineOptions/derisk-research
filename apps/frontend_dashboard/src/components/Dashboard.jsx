@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { connectWallet, getWallet, getTokenBalances, disconnectWallet } from '../service/wallet';
 import '../Dashboard.css';
 
@@ -7,13 +7,20 @@ function Dashboard() {
   const [balances, setBalances] = useState(null);
   const [network, setNetwork] = useState(null);
   const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const isMounted = useRef(false);
 
   // Load wallet on page reload
   useEffect(() => {
     const loadWallet = async () => {
+      if (isMounted.current) return;
+      isMounted.current = true;
+
+      setIsLoading(true);
+      setError(null); // Clear any previous errors
+
       try {
-        setError(null); // Clear any previous errors
         const wallet = await getWallet();
         if (wallet && wallet.isConnected) {
           const address = wallet.selectedAddress;
@@ -22,6 +29,7 @@ function Dashboard() {
           const { balances, network } = await getTokenBalances(address);
           setBalances(balances);
           setNetwork(network);
+          setError(null);
           console.log(`Balances loaded on page reload (${network}):`, balances);
         }
       } catch (error) {
@@ -31,11 +39,14 @@ function Dashboard() {
         } else {
           setError(`Failed to fetch balances: ${error.message}`);
         }
+      } finally {
+        setIsLoading(false);
+        isMounted.current = false;
       }
     };
 
     loadWallet();
-  }, []);
+  }, []); // Empty dependency array to run only on mount
 
   const truncateAddress = (address) => {
     if (!address) return '';
@@ -48,8 +59,10 @@ function Dashboard() {
       return;
     }
 
+    setIsLoading(true);
+    setError(null);
+
     try {
-      setError(null);
       const wallet = await connectWallet('alwaysAsk');
       const address = wallet.selectedAddress;
       setWalletAddress(address);
@@ -57,6 +70,7 @@ function Dashboard() {
       const { balances, network } = await getTokenBalances(address);
       setBalances(balances);
       setNetwork(network);
+      setError(null);
       console.log(`Balances (${network}):`, balances);
     } catch (error) {
       console.error('Failed to connect wallet or fetch balances:', error);
@@ -65,6 +79,8 @@ function Dashboard() {
       } else {
         setError(`Failed to fetch balances: ${error.message}`);
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -87,8 +103,8 @@ function Dashboard() {
     <div>
       <h1>Dashboard</h1>
       <div className="wallet-button-container">
-        <button onClick={handleConnectWallet} className="wallet-button">
-          {walletAddress ? truncateAddress(walletAddress) : 'Connect Wallet'}
+        <button onClick={handleConnectWallet} className="wallet-button" disabled={isLoading}>
+          {isLoading ? 'Connecting...' : walletAddress ? truncateAddress(walletAddress) : 'Connect Wallet'}
         </button>
         {isDropdownOpen && walletAddress && (
           <div className="dropdown">
@@ -97,7 +113,8 @@ function Dashboard() {
         )}
       </div>
       {error && <p style={{ color: 'red' }}>{error}</p>}
-      {balances && (
+      {isLoading && <p>Loading balances...</p>}
+      {balances && !isLoading && (
         <div>
           <h2>Balances on {network === 'mainnet' ? 'Mainnet' : 'Sepolia Testnet'}</h2>
           <pre>{JSON.stringify(balances, null, 2)}</pre>

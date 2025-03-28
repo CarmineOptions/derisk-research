@@ -1,6 +1,6 @@
 import { connect, disconnect, getSelectedConnectorWallet } from 'starknetkit';
 import { InjectedConnector } from 'starknetkit/injected';
-import { Provider } from 'starknet'; // Import Provider from starknet
+import { Provider } from 'starknet';
 
 // Token addresses for Mainnet
 const ETH_ADDRESS_MAINNET = '0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7';
@@ -8,27 +8,31 @@ const USDC_ADDRESS_MAINNET = '0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d
 
 // Token addresses for Sepolia Testnet
 const ETH_ADDRESS_TESTNET = '0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7';
-const USDC_ADDRESS_TESTNET = null; 
+const USDC_ADDRESS_TESTNET = null;
 
 // Get available wallet connectors (ArgentX, Braavos)
-export const getConnectors = () =>
-  !localStorage.getItem('starknetLastConnectedWallet')
+export const getConnectors = () => {
+  const lastConnectedWallet = localStorage.getItem('starknetLastConnectedWallet');
+  console.log('Retrieved last connected wallet from localStorage:', lastConnectedWallet);
+
+  return !lastConnectedWallet
     ? [
         new InjectedConnector({ options: { id: 'argentX' } }),
         new InjectedConnector({ options: { id: 'braavos' } }),
       ]
     : [
         new InjectedConnector({
-          options: { id: localStorage.getItem('starknetLastConnectedWallet') },
+          options: { id: lastConnectedWallet },
         }),
       ];
+};
 
 // Check for an existing wallet connection without prompting
 export const getWallet = async () => {
   try {
     const connectedWallet = await getSelectedConnectorWallet();
     if (connectedWallet && connectedWallet.isConnected) {
-      console.log('Found existing wallet:', connectedWallet.selectedAddress);
+      console.log('Found existing wallet:', connectedWallet);
       return connectedWallet;
     }
 
@@ -48,7 +52,11 @@ export const getWallet = async () => {
     await wallet.enable();
 
     if (wallet.isConnected) {
-      console.log('Silently reconnected wallet:', wallet.selectedAddress);
+      console.log('Silently reconnected wallet:', wallet);
+      if (wallet.id) {
+        localStorage.setItem('starknetLastConnectedWallet', wallet.id);
+        console.log('Stored wallet in localStorage:', wallet.id);
+      }
       return wallet;
     } else {
       console.log('No wallet connected. Waiting for user to connect manually...');
@@ -76,7 +84,11 @@ export const connectWallet = async (modalMode = 'alwaysAsk') => {
     await wallet.enable();
 
     if (wallet.isConnected) {
-      console.log('Wallet connected:', wallet.selectedAddress);
+      console.log('Wallet connected:', wallet);
+      if (wallet.id) {
+        localStorage.setItem('starknetLastConnectedWallet', wallet.id);
+        console.log('Stored wallet in localStorage:', wallet.id);
+      }
       return wallet;
     } else {
       throw new Error('Wallet connection failed');
@@ -107,7 +119,7 @@ export const getTokenBalance = async (wallet, walletAddress, tokenAddress) => {
     return readableBalance;
   } catch (error) {
     console.error(`Error fetching balance for token ${tokenAddress}:`, error.message);
-    throw error; // Throw the error to be handled by the caller
+    throw error; 
   }
 };
 
@@ -121,7 +133,7 @@ export const getTokenBalances = async (walletAddress) => {
 
     // Detect the network (mainnet or testnet)
     const chainId = await wallet.provider.getChainId();
-    const isMainnet = chainId === '0x534e5f4d41494e';
+    const isMainnet = chainId === '0x534e5f4d41494e'; // SN_MAIN (mainnet chain ID)
     const network = isMainnet ? 'mainnet' : 'sepolia';
     console.log(`Connected to network: ${network}`);
 
@@ -143,7 +155,7 @@ export const getTokenBalances = async (walletAddress) => {
     return { balances, network };
   } catch (error) {
     console.error('Error fetching token balances:', error.message);
-    throw error; 
+    throw error;
   }
 };
 
@@ -151,7 +163,8 @@ export const getTokenBalances = async (walletAddress) => {
 export const disconnectWallet = async () => {
   try {
     await disconnect();
-    console.log('Wallet disconnected');
+    localStorage.removeItem('starknetLastConnectedWallet');
+    console.log('Wallet disconnected and localStorage cleared');
   } catch (error) {
     console.error('Error disconnecting wallet:', error.message);
     throw error;
