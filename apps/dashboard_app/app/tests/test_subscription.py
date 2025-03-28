@@ -1,3 +1,7 @@
+import pytest
+
+fake_library = pytest.importorskip("main")
+
 from fastapi import status
 from main import app
 from starlette.testclient import TestClient
