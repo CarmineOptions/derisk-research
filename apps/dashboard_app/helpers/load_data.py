@@ -11,7 +11,7 @@ from time import monotonic
 from data_handler.handlers.loan_states.zklend.events import ZkLendState
 from shared.constants import TOKEN_SETTINGS
 
-from dashboard_app.data_conector import DataConnector
+from dashboard_app.data_conector import DataConnectorAsync
 from dashboard_app.helpers.loans_table import get_loans_table_data, get_protocol
 from dashboard_app.helpers.protocol_stats import (
     get_collateral_stats,
@@ -34,18 +34,28 @@ class DashboardDataHandler:
         """
         Initialize the data handler.
         """
-        self.data_connector = DataConnector()
+        self.data_connector = DataConnectorAsync()
         self.underlying_addresses_to_decimals = defaultdict(dict)
-        self.zklend_state = self._init_zklend_state()
+        self.zklend_state = None
         self.prices = None
+        self.states = []
+
+    @classmethod
+    async def create(cls):
+        """
+        Factory method to create and initialize an instance with async operations.
+        """
+        instance = cls()
+        instance.zklend_state = await instance._init_zklend_state()
         # TODO add also nostra states
-        self.states = [
-            self.zklend_state,
+        instance.states = [
+            instance.zklend_state,
             # nostra_alpha_state,
             # nostra_mainnet_state,
         ]
+        return instance
 
-    def _init_zklend_state(self) -> ZkLendState:
+    async def _init_zklend_state(self) -> ZkLendState:
         """
         Initialize ZkLend state.
         Fetch data from the database and initialize the state.
@@ -53,27 +63,27 @@ class DashboardDataHandler:
         """
         logger.info("Initializing ZkLend state.")
         zklend_state = ZkLendState()
-        self._fetch_and_process_zklend_data(zklend_state)
-        self._set_zklend_interest_rates(zklend_state)
+        await self._fetch_and_process_zklend_data(zklend_state)
+        await self._set_zklend_interest_rates(zklend_state)
         return zklend_state
 
-    def _fetch_and_process_zklend_data(self, zklend_state):
+    async def _fetch_and_process_zklend_data(self, zklend_state):
         PROTOCOL_ZKLEND = "zkLend"
         BATCH_SIZE = 1000
         start = monotonic()
 
         try:
-            first_block = self.data_connector.fetch_protocol_first_block_number(
+            first_block = await self.data_connector.fetch_protocol_first_block_number(
                 PROTOCOL_ZKLEND
             )
-            last_block = self.data_connector.fetch_protocol_last_block_number(
+            last_block = await self.data_connector.fetch_protocol_last_block_number(
                 PROTOCOL_ZKLEND
             )
 
             current_block = first_block
             while current_block <= last_block:
                 end_block = min(current_block + BATCH_SIZE - 1, last_block)
-                batch = self.data_connector.fetch_data(
+                batch = await self.data_connector.fetch_data(
                     self.data_connector.ZKLEND_SQL_QUERY,
                     protocol=PROTOCOL_ZKLEND,
                     batch_size=BATCH_SIZE,
@@ -104,8 +114,8 @@ class DashboardDataHandler:
         zklend_state.last_block_number = last_block
         logger.info("Initialized ZkLend state in %.2fs", monotonic() - start)
 
-    def _set_zklend_interest_rates(self, zklend_state):
-        zklend_interest_rate_data = self.data_connector.fetch_data(
+    async def _set_zklend_interest_rates(self, zklend_state):
+        zklend_interest_rate_data = await self.data_connector.fetch_data(
             self.data_connector.ZKLEND_INTEREST_RATE_SQL_QUERY
         )
 
