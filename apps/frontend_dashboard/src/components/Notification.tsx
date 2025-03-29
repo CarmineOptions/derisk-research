@@ -26,7 +26,7 @@ const NotificationSubscription = () => {
   };
 
   return (
-    <div className="bg-basebg min-h-screen flex flex-col">
+    <div className="bg-[#363736] min-h-screen w-full flex flex-col">
       {/* Header */}
       <header className="grid place-items-center mt-8 mb-12">
         <nav className="flex items-center justify-between h-[5.5rem] w-full lg:w-[70rem] rounded-2xl shadow-carmine px-6 py-5">
@@ -34,20 +34,20 @@ const NotificationSubscription = () => {
             <div>
               <a href="/" className="no-underline">
                 <img 
-                  src="/Carmine_logo.svg" 
+                  src="/static/Carmine_logo.svg" 
                   alt="Carmine Logo" 
                 />
               </a>
             </div>
             <div className="hidden lg:flex space-between justify-center items-center gap-6">
               <a href="#" className="hover:opacity-75">
-                <img src="/twitter.svg" alt="Twitter" />
+                <img src="/static/twitter.svg" alt="Twitter" />
               </a>
               <a href="#" className="hover:opacity-75">
-                <img src="/discord.svg" alt="Discord" />
+                <img src="/static/discord.svg" alt="Discord" />
               </a>
               <a href="#" className="hover:opacity-75">
-                <img src="/Vector.svg" alt="Vector" />
+                <img src="/static/Vector.svg" alt="Vector" />
               </a>
             </div>
           </div>
@@ -58,12 +58,12 @@ const NotificationSubscription = () => {
               <span>Connect Wallet</span>
               <span className="hidden lg:block">
                 <img
-                  src="/arrow.svg"
+                  src="/static/arrow.svg"
                   alt="Arrow"
                   className="block group-hover:hidden"
                 />
                 <img
-                  src="/barrow.svg"
+                  src="/static/barrow.svg"
                   alt="Hover Arrow"
                   className="hidden group-hover:block"
                 />
@@ -158,12 +158,12 @@ const NotificationSubscription = () => {
 
         {/* Notification Modal */}
         {message && (
-          <div className="fixed inset-0 bg-basebg/25 backdrop-blur-sm grid place-items-center z-50">
+          <div className="fixed inset-0 bg-black/25 backdrop-blur-sm grid place-items-center z-50">
             <div className={`
               w-[22rem] lg:w-[43.5rem] 
               h-[28rem] lg:h-[26.25rem] 
               lg:px-20 py-[3.75rem] 
-              bg-basebg 
+              bg-[#363736]
               rounded-lg 
               border 
               ${messageType === 'error' ? 'border-[#720000]' : 'border-[#362000]'}
