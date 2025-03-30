@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { connectWallet, getWallet, getTokenBalances, disconnectWallet } from '../service/wallet';
 import '../Dashboard.css';
+import { createFileRoute } from '@tanstack/react-router'
+
+export const Route = createFileRoute('/dashboard')({
+  component: Dashboard,
+})
 
 function Dashboard() {
   const [walletAddress, setWalletAddress] = useState(null);

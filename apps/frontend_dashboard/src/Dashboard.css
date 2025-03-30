@@ -47,6 +47,7 @@ div {
     background: none;
     text-align: left;
     cursor: pointer;
+    color: white;
   }
   
   pre {
@@ -56,4 +57,5 @@ div {
     border-radius: 5px;
     max-width: 500px;
     margin: 20px auto;
+    color: white;
   }
