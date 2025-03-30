@@ -17,7 +17,9 @@
     "@tanstack/react-router": "^1.114.27",
     "lucide-react": "^0.485.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "starknet": "^6.23.1",
+    "starknetkit": "^2.10.4"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
