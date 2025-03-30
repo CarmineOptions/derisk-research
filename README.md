@@ -101,3 +101,34 @@ For detailed documentation, see the [Dashboard App](./apps/dashboard_app/README.
 ```bash
 make test_shared
 ```
+
+## Running the dashboard frontend with Docker
+
+1. **Naviagte to frontend_dashboard directory**:
+   ```bash
+   cd apps/frontend_dashboard
+   ```
+2. **Build the Docker Image**:
+   ```bash
+   docker build -t frontend_dashboard .
+   ```
+
+   or on linux
+
+   ```bash
+   sudo docker build -t frontend_dashboard .
+   ```
+
+3. **Run the Docker Container:**:
+
+    ```bash
+    docker run -p 5173:5173 frontend_dashboard
+    ```
+
+     or on linux
+
+   ```bash
+   sudo docker run -p 5173:5173 frontend_dashboard
+   ```
+4. **Access the Application**:
+    Open your browser and navigate to `http://localhost:5173`.

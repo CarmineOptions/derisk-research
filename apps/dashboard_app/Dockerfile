@@ -12,4 +12,4 @@ RUN poetry config virtualenvs.create false \
   && poetry install --no-interaction --no-ansi --no-root
 
 COPY . .
-ENTRYPOINT ["../.entrypoint.sh"]
+ENTRYPOINT ["bash" , "/app/entrypoint.sh"]

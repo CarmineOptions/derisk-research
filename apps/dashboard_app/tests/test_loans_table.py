@@ -5,8 +5,8 @@ Unit tests for loans table functionality.
 from unittest.mock import MagicMock
 import pytest
 import pandas as pd
-
-from dashboard_app.helpers.loans_table import (
+pytest.importorskip("shared")
+from helpers.loans_table import (
     get_protocol,
     get_loans_table_data,
     get_supply_function_call_parameters,

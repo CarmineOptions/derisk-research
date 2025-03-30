@@ -1,9 +1,16 @@
-from fastapi import FastAPI, Request
 from contextlib import asynccontextmanager
+from typing import AsyncGenerator, Awaitable, Callable
+
+from fastapi import FastAPI, Request, Response
+from fastapi.staticfiles import StaticFiles
+
 from loguru import logger
 
+from app.api import watcher
+
+
 @asynccontextmanager
-async def lifespan(_app: FastAPI):
+async def lifespan(_app: FastAPI) -> AsyncGenerator:
     """
     Lifespan event handler for the FastAPI application.
     This asynchronous generator function handles the startup and shutdown events
@@ -28,10 +35,14 @@ async def lifespan(_app: FastAPI):
 
 # Initialize FastAPI app
 app = FastAPI(lifespan=lifespan, root_path="/api")
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+app.include_router(watcher.router)
 
 
 @app.middleware("http")
-async def log_requests(request: Request, call_next):
+async def log_requests(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
     """
     Middleware to log HTTP requests and responses.
     """
@@ -43,7 +54,7 @@ async def log_requests(request: Request, call_next):
 
 # Example route
 @app.get("/")
-async def read_root():
+async def read_root() -> dict[str, str]:
     """
     Basic endpoint for testing.
     """
@@ -53,7 +64,7 @@ async def read_root():
 
 # Additional route
 @app.get("/health")
-async def health_check():
+async def health_check() -> dict[str, str]:
     """
     Health check endpoint.
     """
