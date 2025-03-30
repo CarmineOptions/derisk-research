@@ -26,7 +26,7 @@ const NotificationSubscription = () => {
   };
 
   return (
-    <div className="bg-[#363736] min-h-screen w-full flex flex-col">
+    <div className="bg-[#0c0c0c] min-h-screen w-full flex flex-col">
       {/* Header */}
       <header className="grid place-items-center mt-8 mb-12">
         <nav className="flex items-center justify-between h-[5.5rem] w-full lg:w-[70rem] rounded-2xl shadow-carmine px-6 py-5">
@@ -158,12 +158,12 @@ const NotificationSubscription = () => {
 
         {/* Notification Modal */}
         {message && (
-          <div className="fixed inset-0 bg-black/25 backdrop-blur-sm grid place-items-center z-50">
+          <div className="fixed inset-0 bg-[#0c0c0c]/25 backdrop-blur-sm grid place-items-center z-50">
             <div className={`
               w-[22rem] lg:w-[43.5rem] 
               h-[28rem] lg:h-[26.25rem] 
               lg:px-20 py-[3.75rem] 
-              bg-[#363736]
+              bg-[#0c0c0c]
               rounded-lg 
               border 
               ${messageType === 'error' ? 'border-[#720000]' : 'border-[#362000]'}
