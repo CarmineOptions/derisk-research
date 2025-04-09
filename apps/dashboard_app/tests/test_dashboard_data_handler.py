@@ -32,7 +32,7 @@ ZKLEND_INTEREST_RATE = DataFrame({"collateral": [1.5], "debt": [2.0]})
 @pytest.fixture
 def mock_data_connector():
     """Fixture to mock the DataConnector."""
-    with patch("dashboard_app.helpers.load_data.DataConnector") as MockConnector:
+    with patch("dashboard_app.helpers.load_data.DataConnectorAsync") as MockConnector:
         connector = MockConnector
 
         connector.fetch_protocol_first_block_number.return_value = 1
@@ -73,24 +73,25 @@ def mock_get_prices():
 
 
 @pytest.fixture
-def handler(mock_data_connector, mock_zklend_state, mock_get_prices):
+async def handler(mock_data_connector, mock_zklend_state, mock_get_prices):
     """Fixture to initialize DashboardDataHandler."""
     with patch(
-        "dashboard_app.helpers.load_data.DataConnector",
+        "dashboard_app.helpers.load_data.DataConnectorAsync",
         return_value=mock_data_connector,
     ):
-        handler = DashboardDataHandler()
+        handler = await DashboardDataHandler.create()
         yield handler
 
 
-def test_init_dashboard_data_handler(handler):
+@pytest.mark.asyncio
+async def test_init_dashboard_data_handler(handler):
     """Test to ensure all attributes were set during DashboardDataHandler init."""
     assert handler.zklend_state is not None
     assert handler.zklend_state.get_protocol_name == "zkLend"
     assert handler.zklend_state.last_block_number is not None
     assert (
         handler.zklend_state.last_block_number
-        == handler.data_connector.fetch_protocol_last_block_number("zkLend")
+        == await handler.data_connector.fetch_protocol_last_block_number("zkLend")
     )
     assert (
         handler.zklend_state.interest_rate_models.collateral
@@ -105,16 +106,17 @@ def test_init_dashboard_data_handler(handler):
 
 
 @patch("dashboard_app.helpers.load_data.ZkLendState")
-@patch("dashboard_app.helpers.load_data.DataConnector")
-def test_init_dashboard_went_sideways(mock_data_connector, mock_zklend_state):
+@patch("dashboard_app.helpers.load_data.DataConnectorAsync")
+@pytest.mark.asyncio
+async def test_init_dashboard_went_sideways(mock_data_connector, mock_zklend_state):
     """Test to ensure the DashboardDataHandler init handles exceptions."""
     mock_data_connector.side_effect = Exception("DataConnector failed")
     with pytest.raises(Exception, match="DataConnector failed"):
-        handler = DashboardDataHandler()
+        handler = await DashboardDataHandler.create()
     mock_data_connector.side_effect = None
     mock_zklend_state.side_effect = Exception("ZkLendState failed")
     with pytest.raises(Exception, match="ZkLendState failed"):
-        handler = DashboardDataHandler()
+        handler = await DashboardDataHandler.create()
 
 
 def test_set_prices(handler):
