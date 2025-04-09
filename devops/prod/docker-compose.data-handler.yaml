@@ -21,8 +21,7 @@ services:
   celery:
     build:
       context: ../../apps
-      dockerfile: data_handler/Dockerfile
-    command: celery -A data_handler.celery_app.celery_conf worker --loglevel=INFO
+      dockerfile: data_handler/Dockerfile.celery
     volumes:
       - ../../apps/:/app
     depends_on:
