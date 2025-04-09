@@ -1,5 +1,7 @@
 FROM python:3.11
 
+ENV PYTHONPATH=/app
+
 WORKDIR /app
 
 COPY data_handler/poetry.lock data_handler/pyproject.toml /app/
@@ -11,5 +13,6 @@ RUN curl -sSL https://install.python-poetry.org | POETRY_HOME=/usr/local/ POETRY
 COPY shared /app/shared
 COPY data_handler /app/data_handler
 
+WORKDIR /app/data_handler
 
-ENTRYPOINT ["sh", "-c", "cd data_handler && celery -A celery_app.celery_conf worker --loglevel=INFO"]
+ENTRYPOINT ["celery", "-A", "celery_app.celery_conf", "worker", "--loglevel=INFO"]
