@@ -26,12 +26,13 @@ services:
       - redis
     networks:
       - data_handler_network
+    entrypoint: celery -A celery_app.celery_conf worker --loglevel=INFO
 
   celery_beat:
     build:
-      context: ../../apps/data_handler/nginx
-      dockerfile: Dockerfile
-    command: celery -A celery_app.celery_conf beat --loglevel=INFO
+      context: ../../apps
+      dockerfile: data_handler/Dockerfile.celery
+    entrypoint: celery -A celery_app.celery_conf beat --loglevel=INFO
     volumes:
       - ../../apps:/app
     depends_on:
