@@ -3,6 +3,8 @@ FROM python:3.11
 WORKDIR /app
 
 COPY data_handler/poetry.lock data_handler/pyproject.toml /app/
+COPY data_handler/entrypoint.sh /app/entrypoint.sh
+
 
 RUN curl -sSL https://install.python-poetry.org | POETRY_HOME=/usr/local/ POETRY_VERSION=1.8.3 python3 -\
     && poetry config virtualenvs.create false \
