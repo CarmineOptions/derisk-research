@@ -1,6 +1,6 @@
 FROM python:3.11
 
-WORKDIR /code
+WORKDIR /app
 
 COPY data_handler/poetry.lock data_handler/pyproject.toml /code/
 COPY data_handler/entrypoint.sh /code/entrypoint.sh
