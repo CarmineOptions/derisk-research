@@ -22,9 +22,7 @@ services:
     build:
       context: ../../apps
       dockerfile: data_handler/Dockerfile
-    command: celery -A data_handler.celery_app.celery_conf worker --loglevel=INFO
-    environment:
-      - PYTHONPATH=/app
+    command: celery -A celery_app.celery_conf worker --loglevel=INFO
     volumes:
       - ../../apps/:/app
     depends_on:
@@ -37,8 +35,6 @@ services:
       context: ../../apps/data_handler/nginx
       dockerfile: Dockerfile
     command: celery -A celery_app.celery_conf beat --loglevel=INFO
-    environment:
-      - PYTHONPATH=/app
     volumes:
       - ../../apps:/app
     depends_on:
