@@ -14,5 +14,3 @@ COPY shared /app/shared
 COPY data_handler /app/data_handler
 
 WORKDIR /app/data_handler
-
-ENTRYPOINT ["celery", "-A", "celery_app.celery_conf", "worker", "--loglevel=INFO"]
