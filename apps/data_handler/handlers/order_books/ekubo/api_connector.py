@@ -50,7 +50,10 @@ class EkuboAPIConnector(AbstractionAPIConnector):
         return cls.send_get_request(endpoint)
 
     @classmethod
-    def get_pool_liquidity(cls, key_hash: str) -> list:
+    def get_pool_liquidity(
+        cls, token0: str, token1: str, 
+        fee: str, tick_spacing: int, extension: str
+    ) -> list:
         """
         Get the liquidity delta for each tick 
         for the given pool key hash. The response includes an array
@@ -74,7 +77,7 @@ class EkuboAPIConnector(AbstractionAPIConnector):
         ]
 
         """
-        endpoint = f"/pools/{key_hash}/liquidity"
+        endpoint = f"/pools/{token0}/{token1}/{fee}/{tick_spacing}/{extension}/liquidity"
         return cls.send_get_request(endpoint)
 
     def get_list_tokens(self) -> list:
