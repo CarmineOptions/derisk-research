@@ -1,14 +1,9 @@
-from fastapi import APIRouter, Request, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from loguru import logger
 from sqlalchemy.orm import Session
 
-from loguru import logger
-
-from database.crud import DBConnector, validate_fields
-from database.database import get_database
-from database.models import NotificationData
-from database.schemas import NotificationForm
 # from telegram import get_subscription_link    #FIXME
 from utils.fucntools import get_client_ip
 from utils.values import (
@@ -16,12 +11,18 @@ from utils.values import (
     NotificationValidationValues,
     ProtocolIDs,
 )
+from web_app.database.crud import DBConnector, validate_fields
+from web_app.database.database import get_database
+from web_app.database.models import NotificationData
+from web_app.database.schemas import NotificationForm
+
 from app.utils.fucntools import get_client_ip
 from app.utils.values import CreateSubscriptionValues, ProtocolIDs
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 connector = DBConnector()
+
 
 @router.get(
     path="/liquidation-watcher",
@@ -42,6 +43,7 @@ async def create_subscription(request: Request) -> HTMLResponse:
             "protocol_ids": [item.value for item in ProtocolIDs],
         },
     )
+
 
 @router.post(
     path="/liquidation-watcher",

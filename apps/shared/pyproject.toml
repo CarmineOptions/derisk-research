@@ -3,7 +3,7 @@ name = "shared"
 version = "0.1.0"
 description = "DeRisk implementation on Starknet"
 authors = ["Mirabel <mirabelchiemezie001@gmail.com>"]
-
+package-mode = false
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.13"
@@ -64,3 +64,4 @@ strict = true
 max-line-length = 100
 extend-ignore = "E203, W503"
 exclude = [".git", "__pycache__", "build", "dist"]
+
