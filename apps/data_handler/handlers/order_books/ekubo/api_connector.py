@@ -277,5 +277,11 @@ class EkuboAPIConnector(AbstractionAPIConnector):
         :return:
         {'price': '0.9528189037', 'timestamp': '2024-05-18T10:41:37.091Z'}
         """
-        endpoint = f"/price/{base_token}/{quote_token}"
-        return self.send_get_request(endpoint)
+        endpoint = f"/price/{base_token}/{quote_token}/history?interval=60"
+        response = self.send_get_request(endpoint)
+        last_package = response["data"][-1]
+        
+        return {
+            "price": last_package["vwap"],
+            "timestamp": last_package["start"]
+        }
