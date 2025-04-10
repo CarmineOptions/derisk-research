@@ -16,5 +16,6 @@ class Settings(BaseSettings):
     active_protocols: list = Field(default_factory=lambda: ["ZkLend", "NostraMainnet", "NostraAlpha"], alias="ACTIVE_PROTOCOLS")
 
     coingecko_api_key: str = "api_key"
+    coingecko_api_url: str = "api_url"
 
 settings = Settings()
