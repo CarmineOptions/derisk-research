@@ -50,31 +50,33 @@ class EkuboAPIConnector(AbstractionAPIConnector):
         return cls.send_get_request(endpoint)
 
     @classmethod
-    def get_pool_liquidity(cls, key_hash: str) -> list:
+    def get_pool_liquidity(
+        cls, token0: str, token1: str, 
+        fee: str, tick_spacing: int, extension: str
+    ) -> list:
         """
-        Get the liquidity delta for each tick 
-        for the given pool key hash. The response includes an array
-        of objects, each containing details about the tick and the net liquidity delta difference.
+        Get the liquidity delta for each tick for the given pool.
 
-        :param key_hash: The pool key hash in hexadecimal or decimal format.
-        :type key_hash: str
-        :return: An array of objects detailing the current liquidity chart for the pool. Each object
-                 in the array includes the following:
+        :param token0: The address of the base token in the pool.
+        :param token1: The address of the quote token in the pool.
+        :param fee: The fee tier of the pool, represented in hexadecimal format.
+        :param tick_spacing: The tick spacing of the pool as an integer.
+        :param extension: Additional pool extension details in hexadecimal format.
+        :return: A list of objects detailing the current liquidity chart for the pool.
+                 Each object includes:
                  - 'tick': The tick index as an integer.
-                 - 'net_liquidity_delta_diff': The difference in net 
-                    liquidity for the tick, represented as a string.
+                 - 'net_liquidity_delta_diff': The difference in net liquidity for the tick, as a string.
         :rtype: list
 
-        Example of returned data:
+        Example:
         [
             {
                 "tick": -88719042,
                 "net_liquidity_delta_diff": "534939583228319557"
             }
         ]
-
         """
-        endpoint = f"/pools/{key_hash}/liquidity"
+        endpoint = f"/pools/{token0}/{token1}/{fee}/{tick_spacing}/{extension}/liquidity"
         return cls.send_get_request(endpoint)
 
     def get_list_tokens(self) -> list:
@@ -275,5 +277,11 @@ class EkuboAPIConnector(AbstractionAPIConnector):
         :return:
         {'price': '0.9528189037', 'timestamp': '2024-05-18T10:41:37.091Z'}
         """
-        endpoint = f"/price/{base_token}/{quote_token}"
-        return self.send_get_request(endpoint)
+        endpoint = f"/price/{base_token}/{quote_token}/history?interval=60"
+        response = self.send_get_request(endpoint)
+        last_package = response["data"][-1]
+        
+        return {
+            "price": last_package["vwap"],
+            "timestamp": last_package["start"]
+        }

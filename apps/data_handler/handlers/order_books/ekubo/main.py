@@ -42,12 +42,14 @@ class EkuboOrderBook(OrderBookBase):
         # set current price
         self.set_current_price()
         for index, row in list(pool_df.iterrows()):
-            key_hash = row["key_hash"]
             # Fetch pool liquidity data
             pool_liquidity = int(row["liquidity"])
             self.block = row["lastUpdate"]["event_id"]
 
-            liquidity_response = self.connector.get_pool_liquidity(key_hash)
+            liquidity_response = self.connector.get_pool_liquidity(
+                row["token0"], row["token1"], row["fee"],
+                row["tick_spacing"], row["extension"]
+            )
             liquidity_data = liquidity_response["data"]
             liquidity_data = sorted(liquidity_data, key=lambda x: x["tick"])
 
