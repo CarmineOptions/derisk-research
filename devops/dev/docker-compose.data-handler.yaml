@@ -15,7 +15,7 @@ services:
     env_file:
       - ../../apps/data_handler/.env.dev
     expose:
-      - "8000"
+      - "8000:8000"
     networks:
       - data_handler_network
     depends_on:

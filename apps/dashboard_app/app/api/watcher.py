@@ -5,19 +5,16 @@ from loguru import logger
 from sqlalchemy.orm import Session
 
 # from telegram import get_subscription_link    #FIXME
-from utils.fucntools import get_client_ip
-from utils.values import (
+from app.utils.fucntools import get_client_ip
+from app.utils.values import (
     CreateSubscriptionValues,
     NotificationValidationValues,
     ProtocolIDs,
 )
-from web_app.database.crud import DBConnector, validate_fields
-from web_app.database.database import get_database
-from web_app.database.models import NotificationData
-from web_app.database.schemas import NotificationForm
-
-from app.utils.fucntools import get_client_ip
-from app.utils.values import CreateSubscriptionValues, ProtocolIDs
+from database.crud import DBConnector, validate_fields
+from database.database import get_database
+from database.models import NotificationData
+from database.schemas import NotificationForm
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
