@@ -11,16 +11,31 @@ const NotificationSubscription = () => {
   // Dummy protocol IDs (would typically come from props or context)
   const protocolIds = ['Protocol 1', 'Protocol 2', 'Protocol 3'];
 
-  const handleSubmit = (e : React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Placeholder for submission logic
-    console.log('Submitting:', { walletId, healthRatioLevel, protocolId });
-    // For demonstration, simulate a success/error response
-    if (walletId && healthRatioLevel && protocolId) {
-      setMessage('Subscription created successfully');
-      setMessageType('success');
-    } else {
-      setMessage('Subscription was NOT created successfully');
+    
+    try {
+      const formData = new FormData();
+      formData.append('wallet_id', walletId);
+      formData.append('health_ratio_level', healthRatioLevel);
+      formData.append('protocol_id', protocolId);
+      
+      const response = await fetch('http://localhost:8000/api/liquidation-watcher', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (response.ok) {
+        setMessage('Subscription created successfully');
+        setMessageType('success');
+      } else {
+        const errorData = await response.json();
+        setMessage(errorData.messages?.[0] || 'Subscription failed');
+        setMessageType('error');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      setMessage('Error connecting to server');
       setMessageType('error');
     }
   };

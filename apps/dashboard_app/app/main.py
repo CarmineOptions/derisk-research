@@ -2,8 +2,8 @@ from contextlib import asynccontextmanager
 from typing import AsyncGenerator, Awaitable, Callable
 
 from fastapi import FastAPI, Request, Response
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-
 from loguru import logger
 
 from app.api import watcher
@@ -37,6 +37,14 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator:
 app = FastAPI(lifespan=lifespan, root_path="/api")
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 app.include_router(watcher.router)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.middleware("http")
