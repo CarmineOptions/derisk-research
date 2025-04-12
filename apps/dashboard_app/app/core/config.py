@@ -1,3 +1,4 @@
+from dill import settings
 from pydantic import BaseSettings, Field
 
 class Settings(BaseSettings):
@@ -12,3 +13,6 @@ class Settings(BaseSettings):
     derisk_api_url: str = Field(..., env="DERISK_API_URL") 
     network: str = Field(default="sepolia", alias="NETWORK")  
     active_protocols: list = Field(default_factory=lambda: ["ZkLend", "NostraMainnet", "NostraAlpha"], alias="ACTIVE_PROTOCOLS")
+
+
+settings = Settings()
