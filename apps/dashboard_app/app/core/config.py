@@ -1,4 +1,6 @@
+from pydantic import BaseSettings, Field
 
+class Settings(BaseSettings):
     # Database settings
     db_driver: str = "postgresql+asyncpg"
     db_name: str = Field(default="db_name", alias="POSTGRES_DB")
