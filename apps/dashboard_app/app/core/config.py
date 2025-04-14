@@ -1,5 +1,8 @@
+from pydantic import Field, BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
 from dill import settings
-from pydantic import BaseSettings, Field
+
 
 class Settings(BaseSettings):
     # Database settings
@@ -10,9 +13,11 @@ class Settings(BaseSettings):
     db_host: str = Field(default="localhost", alias="DB_HOST")
     db_port: int = 5432
 
-    derisk_api_url: str = Field(..., env="DERISK_API_URL") 
-    network: str = Field(default="sepolia", alias="NETWORK")  
+    derisk_api_url: str = Field(..., env="DERISK_API_URL")
+    network: str = Field(default="sepolia", alias="NETWORK")
     active_protocols: list = Field(default_factory=lambda: ["ZkLend", "NostraMainnet", "NostraAlpha"], alias="ACTIVE_PROTOCOLS")
 
+    coingecko_api_key: str = "api_key"
+    coingecko_api_url: str = "api_url"
 
 settings = Settings()

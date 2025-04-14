@@ -17,6 +17,7 @@ class TokenSettings:
     # https://starkscan.co/token/0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7 for ETH.
     decimal_factor: Decimal
     address: str
+    coin_id: str
 
 
 @dataclass
