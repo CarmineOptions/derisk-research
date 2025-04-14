@@ -13,8 +13,8 @@ from .constants import TOKEN_MAPPING, TokenConfig
 class OrderBookBase(ABC):
     """ Base class for order book data """
     DEX: str = None
-    MIN_PRICE_RANGE = Decimal("0.0001")
-    MAX_PRICE_RANGE = Decimal("100.0")
+    MIN_PRICE_RANGE = Decimal("0.9")
+    MAX_PRICE_RANGE = Decimal("1.1")
 
     def __init__(self, token_a: str, token_b: str):
         self.token_a = token_a
