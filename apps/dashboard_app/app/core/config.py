@@ -1,5 +1,7 @@
-from pydantic import Field
+from pydantic import Field, BaseSettings
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from dill import settings
 
 
 class Settings(BaseSettings):
