@@ -1,4 +1,5 @@
-from pydantic import Field, BaseSettings
+from functools import cached_property
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from dill import settings
@@ -20,4 +21,26 @@ class Settings(BaseSettings):
     coingecko_api_key: str = "api_key"
     coingecko_api_url: str = "api_url"
 
-settings = Settings()
+    @cached_property
+    def database_url(self) -> str:
+        """Generate a full PostgreSQL database connection URL
+        based on config settings.
+        Returns:
+        str: postgresql+asyncpg://<user>:<password>@<host>:<port>/<db_name>"""
+        required_fields = [
+            self.db_driver,
+            self.db_user,
+            self.db_password,
+            self.db_host,
+            self.db_port,
+            self.db_name
+        ]
+        if any(field in (None, "") for field in required_fields):
+            raise ValueError("Missing required database configuration fields.")
+        return (f"{self.db_driver}://{self.db_user}:{self.db_password}"
+                f"@{self.db_host}:{self.db_port}/{self.db_name}")
+
+
+if __name__ == "__main__":
+    settings = Settings()
+
