@@ -21,26 +21,35 @@ class Settings(BaseSettings):
     coingecko_api_key: str = "api_key"
     coingecko_api_url: str = "api_url"
 
-    @cached_property
+    @property
+    def _required_fields(self) -> dict[str, str]:
+        """Returns a dictionary with required fields for database_url.
+        Fields that have an alias have an alias key."""
+        return {
+            "db_driver": self.db_driver,
+            "db_port": self.db_port,
+            "POSTGRES_USER": self.db_user,
+            "POSTGRES_PASSWORD": self.db_password,
+            "DB_HOST": self.db_host,
+            "POSTGRES_DB": self.db_name,
+        }
+
+    @property
     def database_url(self) -> str:
         """Generate a full PostgreSQL database connection URL
         based on config settings.
         Returns:
         str: postgresql+asyncpg://<user>:<password>@<host>:<port>/<db_name>"""
-        required_fields = [
-            self.db_driver,
-            self.db_user,
-            self.db_password,
-            self.db_host,
-            self.db_port,
-            self.db_name
-        ]
-        if any(field in (None, "") for field in required_fields):
-            raise ValueError("Missing required database configuration fields.")
+
+        for alias, value in self._required_fields.items():
+            if value in (None, ""):
+                raise ValueError(
+                    f"Missing required environment variable: {alias}"
+                )
         return (f"{self.db_driver}://{self.db_user}:{self.db_password}"
                 f"@{self.db_host}:{self.db_port}/{self.db_name}")
 
 
-if __name__ == "__main__":
-    settings = Settings()
+
+settings = Settings()
 
