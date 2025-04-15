@@ -5,19 +5,14 @@ from sqlalchemy.orm import Session
 
 from loguru import logger
 
-from crud import DBConnectorAsync
-from db.session import get_database
-from models import NotificationData
-from schemas import NotificationForm
+from app.utils.watcher_mixin import WatcherMixin
+from app.crud import db_connector
+from app.db.session import get_db
+from app.models import NotificationData
+from app.schemas import NotificationForm
 # from telegram import get_subscription_link    #FIXME
-from utils.fucntools import get_client_ip
-from utils.values import (
-    CreateSubscriptionValues,
-    NotificationValidationValues,
-    ProtocolIDs,
-)
 from app.utils.fucntools import get_client_ip
-from app.utils.values import CreateSubscriptionValues, ProtocolIDs
+from app.utils.values import CreateSubscriptionValues, ProtocolIDs, NotificationValidationValues
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -30,7 +25,7 @@ templates = Jinja2Templates(directory="templates")
 async def subscribe_to_notification(
     request: Request,
     data: NotificationForm = Depends(NotificationForm.as_form),
-    db: Session = Depends(get_database),
+    db: Session = Depends(get_db),
 ):
     """
     Creates a new subscription for notifications
@@ -65,7 +60,7 @@ async def subscribe_to_notification(
         )
 
     subscription = NotificationData(**data.model_dump())
-    validation_errors = validate_fields(db=db, obj=subscription, model=NotificationData)
+    validation_errors = WatcherMixin.validate_fields(db=db, obj=subscription, model=NotificationData)
 
     if validation_errors:
         logger.error(f"User with {get_client_ip(request)} IP submits with invalid data")
@@ -80,7 +75,7 @@ async def subscribe_to_notification(
             },
         )
 
-    subscription_id = connector.write_to_db(obj=subscription)
+    subscription_id = db_connector.write_to_db(obj=subscription)
 
     # activation_link = await get_subscription_link(ident=subscription_id)  #FIXME
     logger.info(f"Activation link for user with {get_client_ip(request)} IP is sent")
@@ -93,7 +88,7 @@ async def subscribe_to_notification(
             "status_code": status.HTTP_201_CREATED,
             "messages": [CreateSubscriptionValues.create_subscription_success_message],
             "message_type": "success",
-            "activation_link": activation_link,
+            # "activation_link": activation_link, # FIXME unccomend once telegram is ready
             "protocol_ids": [item.value for item in ProtocolIDs],
         },
     )

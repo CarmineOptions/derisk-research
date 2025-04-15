@@ -3,6 +3,7 @@ import uuid
 from contextlib import asynccontextmanager
 from typing import AsyncIterator, Optional, Type, TypeVar
 
+from app.core.config import settings
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -156,3 +157,5 @@ class DBConnectorAsync:
         async with self.session() as db:
             await db.delete(obj)
             await db.commit()
+
+db_connector = DBConnectorAsync(settings.database_url)

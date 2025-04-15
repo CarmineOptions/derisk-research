@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     db_host: str = Field(default="localhost", alias="DB_HOST")
     db_port: int = 5432
 
-    derisk_api_url: str = Field(..., env="DERISK_API_URL")
+    derisk_api_url: str = Field(default="http://derisk-api.com", env="DERISK_API_URL")
     network: str = Field(default="sepolia", alias="NETWORK")
     active_protocols: list = Field(
         default_factory=lambda: ["ZkLend", "NostraMainnet", "NostraAlpha"],

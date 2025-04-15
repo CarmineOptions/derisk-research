@@ -8,7 +8,7 @@ from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
 
 # Ensure the DATABASE_URL uses asyncpg
-engine = create_async_engine(settings.db_url, echo=True)
+engine = create_async_engine(settings.database_url, echo=True)
 
 # Create the session factory for async sessions
 AsyncSessionLocal = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
