@@ -5,10 +5,10 @@ from sqlalchemy.orm import Session
 
 from loguru import logger
 
-from database.crud import DBConnector, validate_fields
-from database.database import get_database
-from database.models import NotificationData
-from database.schemas import NotificationForm
+from crud import DBConnectorAsync
+from db.session import get_database
+from models import NotificationData
+from schemas import NotificationForm
 # from telegram import get_subscription_link    #FIXME
 from utils.fucntools import get_client_ip
 from utils.values import (
@@ -21,27 +21,7 @@ from app.utils.values import CreateSubscriptionValues, ProtocolIDs
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
-connector = DBConnector()
 
-@router.get(
-    path="/liquidation-watcher",
-    description=CreateSubscriptionValues.create_subscription_description_message,
-    response_class=HTMLResponse,
-)
-async def create_subscription(request: Request) -> HTMLResponse:
-    """
-    Returns a subscription for notifications form
-    :param request: Request
-    :return: templates.TemplateResponse
-    """
-    logger.info(f"User with {get_client_ip(request)} IP is accessing the page")
-    return templates.TemplateResponse(
-        request=request,
-        name="notification.html",
-        context={
-            "protocol_ids": [item.value for item in ProtocolIDs],
-        },
-    )
 
 @router.post(
     path="/liquidation-watcher",
