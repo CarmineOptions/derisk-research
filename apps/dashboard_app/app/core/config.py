@@ -1,8 +1,7 @@
-from functools import cached_property
+from typing import Any
 from pydantic import Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings
 
-from dill import settings
 
 
 class Settings(BaseSettings):
@@ -16,13 +15,16 @@ class Settings(BaseSettings):
 
     derisk_api_url: str = Field(..., env="DERISK_API_URL")
     network: str = Field(default="sepolia", alias="NETWORK")
-    active_protocols: list = Field(default_factory=lambda: ["ZkLend", "NostraMainnet", "NostraAlpha"], alias="ACTIVE_PROTOCOLS")
+    active_protocols: list = Field(
+        default_factory=lambda: ["ZkLend", "NostraMainnet", "NostraAlpha"],
+        alias="ACTIVE_PROTOCOLS"
+    )
 
     coingecko_api_key: str = "api_key"
     coingecko_api_url: str = "api_url"
 
     @property
-    def _required_fields(self) -> dict[str, str]:
+    def _required_fields(self) -> dict[str, Any]:
         """Returns a dictionary with required fields for database_url.
         Fields that have an alias have an alias key."""
         return {
