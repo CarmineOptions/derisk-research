@@ -28,4 +28,4 @@ app.conf.beat_schedule = {
 }
 
 # Import the task from the updated location
-from apps.shared.background_tasks.tasks import check_health_ratio_level_changes
+from shared.background_tasks.tasks import check_health_ratio_level_changes
