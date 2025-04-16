@@ -1,13 +1,12 @@
 """ Settings for ZkLend. """
 import decimal
-from dataclasses import dataclass
+from pydantic import Extra, BaseModel
 
 from shared.constants import TOKEN_SETTINGS
 from shared.custom_types import TokenSettings
 
 
-@dataclass
-class ZkLendSpecificTokenSettings:
+class ZkLendSpecificTokenSettings(BaseModel):
     """Class for ZkLend specific token settings."""
 
     # Source: https://zklend.gitbook.io/documentation/using-zklend/technical/asset-parameters.
@@ -19,11 +18,11 @@ class ZkLendSpecificTokenSettings:
     protocol_token_address: str
 
 
-@dataclass
 class TokenSettings(ZkLendSpecificTokenSettings, TokenSettings):
     """Class for token settings."""
 
-    pass
+    class Config:
+        extra = Extra.allow
 
 
 ZKLEND_SPECIFIC_TOKEN_SETTINGS: dict[str, ZkLendSpecificTokenSettings] = {

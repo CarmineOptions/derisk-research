@@ -1,27 +1,25 @@
 from collections import defaultdict
-from dataclasses import dataclass
 from decimal import Decimal
+from pydantic import BaseModel
 from typing import Optional, Union
 
 
-@dataclass
-class ExtraInfo:
+
+class ExtraInfo(BaseModel):
     block: int
     timestamp: int
 
 
-@dataclass
-class TokenSettings:
+class TokenSettings(BaseModel):
     symbol: str
     # Source: Starkscan, e.g.
     # https://starkscan.co/token/0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7 for ETH.
     decimal_factor: Decimal
     address: str
-    coin_id: str
+    coin_id: Optional[str] = None
 
 
-@dataclass
-class BaseTokenParameters:
+class BaseTokenParameters(BaseModel):
     address: str
     decimals: int
     symbol: str

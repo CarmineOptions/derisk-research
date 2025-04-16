@@ -1,14 +1,13 @@
 """
 Token settings for Nostra Alpha, including collateral, debt factors, and liquidation fees.
 """
-import dataclasses
+from pydantic import BaseModel
 import decimal
 
 from shared.constants import TOKEN_SETTINGS
 from shared.custom_types import TokenSettings
 
 
-@dataclasses.dataclass
 class NostraAlphaSpecificTokenSettings(TokenSettings):
     """
     Settings for a Nostra Alpha token, including collateral and debt factors,
@@ -122,8 +121,7 @@ NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS: dict[str, NostraAlphaSpecificTokenSettings
 }
 
 
-@dataclasses.dataclass
-class SpecificTokenSettings:
+class SpecificTokenSettings(BaseModel):
     """
     Basic token settings with collateral and debt factors.
     """
@@ -132,7 +130,6 @@ class SpecificTokenSettings:
     debt_factor: decimal.Decimal
 
 
-@dataclasses.dataclass
 class TokenSettings(SpecificTokenSettings, TokenSettings):
     """
     Extends SpecificTokenSettings to include additional token attributes.
