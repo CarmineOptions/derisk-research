@@ -57,8 +57,8 @@ jobs:
           PGPASSWORD=postgres psql -h 127.0.0.1 -p 5433 -U postgres -c "CREATE DATABASE web_app;"
 
       - name: Run Tests for Web_App
-        working-directory: ./apps/web_app
-        run: poetry run pytest --junitxml=results.xml
+        working-directory: ./apps
+        run: poetry run --directory web_app pytest --junitxml=results.xml
 
       - name: Upload Test Results
         uses: actions/upload-artifact@v4

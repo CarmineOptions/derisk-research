@@ -41,10 +41,10 @@ jobs:
           poetry install
     
       - name: Run Tests for Data Handler
-        working-directory: ./apps/data_handler
+        working-directory: ./apps
         run: |
           echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
-          poetry run pytest
+          poetry run --directory data_handler pytest
     
       - name: Install dependencies for Shared
         working-directory: ./apps/shared
@@ -57,4 +57,4 @@ jobs:
         working-directory: ./apps/shared
         run: |
           echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
-          poetry run pytest
+          poetry run --directory shared pytest
