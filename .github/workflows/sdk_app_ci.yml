@@ -57,10 +57,11 @@ jobs:
           PGPASSWORD=postgres psql -h 127.0.0.1 -p 5433 -U postgres -c "CREATE DATABASE sdk;"
 
       - name: Run Tests for sdk
-        working-directory: ./apps/sdk
+        working-directory: ./apps
         run: |
-          echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
-          poetry run pytest --junitxml=results.xml
+          export PATH=$HOME/.local/bin:$PATH
+          export PYTHONPATH=$(pwd)
+          poetry run --directory sdk pytest --junitxml=results.xml
 
       - name: Upload Test Results
         uses: actions/upload-artifact@v4
