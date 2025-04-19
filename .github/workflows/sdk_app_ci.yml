@@ -60,6 +60,7 @@ jobs:
         working-directory: ./apps
         run: |
           echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
+          echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
           poetry run --directory sdk pytest --junitxml=results.xml
 
       - name: Upload Test Results

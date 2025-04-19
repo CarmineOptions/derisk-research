@@ -44,6 +44,7 @@ jobs:
         working-directory: ./apps
         run: |
           echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
+          echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
           poetry run --directory data_handler pytest
     
       - name: Install dependencies for Shared
@@ -54,7 +55,8 @@ jobs:
           poetry install --no-root
     
       - name: Run Tests for Shared
-        working-directory: ./apps/shared
+        working-directory: ./apps
         run: |
           echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
+          echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
           poetry run --directory shared pytest
