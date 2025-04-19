@@ -18,7 +18,6 @@ from data_handler.handler_tools.nostra_alpha_settings import (
     NOSTRA_ALPHA_TOKEN_ADDRESSES,
 )
 from data_handler.handlers.helpers import (
-    blockchain_call,
     get_addresses,
     get_async_symbol,
 )
