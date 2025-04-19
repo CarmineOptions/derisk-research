@@ -14,6 +14,8 @@ services:
       - ../../apps/:/app
     env_file:
       - ../../apps/data_handler/.env.dev
+    ports:
+      - "8000:8000"
     expose:
       - "8000"
     networks:
@@ -43,12 +45,12 @@ services:
   celery:
     build:
       context: ../../apps
-      dockerfile: data_handler/Dockerfile
-    command: celery -A data_handler.celery_app.celery_conf worker --loglevel=INFO
+      dockerfile: data_handler/Dockerfile.celery
+    # entrypoint: celery -A celery_app.celery_conf worker --loglevel=INFO
     environment:
-      - PYTHONPATH=/app
+      - PYTHONPATH=/celery
     volumes:
-      - ../../apps/:/app
+      - ../../apps/:/celery
     depends_on:
       - redis
     networks:

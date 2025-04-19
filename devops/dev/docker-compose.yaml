@@ -1,0 +1,34 @@
+version: '3.8'
+
+networks:
+  data_handler_network:
+    driver: bridge
+
+services:
+  celery:
+    build:
+      context: ../../apps
+      dockerfile: shared/Dockerfile.celery
+    # entrypoint: celery -A celery_app.celery_conf worker --loglevel=INFO
+    environment:
+      - PYTHONPATH=/celery
+    volumes:
+      - ../../apps/:/celery
+    depends_on:
+      - redis
+    networks:
+      - data_handler_network
+
+  redis:
+    image: redis:latest
+    restart: always
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - data_handler_network
+
+volumes:
+  postgres_data:
+  redis_data:
