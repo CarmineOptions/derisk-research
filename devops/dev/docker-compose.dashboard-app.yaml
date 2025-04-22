@@ -27,7 +27,8 @@ services:
 
   streamlit:
     build:
-      context: ../../apps/dashboard_app
+      context: ../../apps
+      dockerfile: dashboard_app/Dockerfile
     ports:
       - "8501:8501"
     env_file:
@@ -35,8 +36,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    volumes:
-      - ../../apps/dashboard_app:/app
+    # volumes:
+    #   - ../../apps/dashboard_app:/app
     networks:
       - dashboard_app_network
     environment:
