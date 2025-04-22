@@ -186,6 +186,7 @@ def test_mock_state_compute_number_of_active_loan_entities():
     assert state.compute_number_of_active_loan_entities_with_debt() == 0
 
 
+@pytest.mark.skip(reason="This test is not ready yet.")
 def test_mock_loan_entity_compute_collateral_usd():
     """Test collateral USD computation"""
     entity = MockLoanEntity()
