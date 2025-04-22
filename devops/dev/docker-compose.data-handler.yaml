@@ -45,7 +45,7 @@ services:
   celery:
     build:
       context: ../../apps
-      dockerfile: data_handler/Dockerfile.celery
+      dockerfile: shared/Dockerfile.celery
     # entrypoint: celery -A celery_app.celery_conf worker --loglevel=INFO
     environment:
       - PYTHONPATH=/celery
