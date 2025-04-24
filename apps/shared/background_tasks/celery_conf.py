@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Redis credentials
-REDIS_HOST = os.environ.get("REDIS_HOST", "")
+REDIS_HOST = os.environ.get("REDIS_HOST", "redis")
 REDIS_PORT = os.environ.get("REDIS_PORT", 6379)
 
 # Tasks settings
@@ -28,4 +28,4 @@ app.conf.beat_schedule = {
 }
 
 # Import the task from the updated location
-from shared.background_tasks.tasks import check_health_ratio_level_changes
+# from shared.background_tasks.tasks import check_health_ratio_level_changes

@@ -12,6 +12,7 @@ RUN curl -sSL https://install.python-poetry.org | POETRY_HOME=/usr/local/ POETRY
     && poetry config virtualenvs.create false \
     && poetry install --no-dev
 RUN pip install celery
+RUN pip install redis
 
 COPY data_handler /app/data_handler
 COPY shared /app/shared
