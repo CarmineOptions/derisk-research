@@ -33,3 +33,5 @@ class ProtocolIDs(Enum):
     NOSTRA_ALPHA = "Nostra_alpha"
     NOSTRA_MAINNET = "Nostra_mainnet"
     ZKLEND = "zkLend"
+
+HEALTH_RATIO_LEVEL_ALERT_VALUE: float = 0.1
