@@ -42,10 +42,10 @@ export const getConnectors = () => {
       ];
 };
 
-// Enhanced wallet reconnection with improved fallbacks for different wallet behaviors
+// Get wallet with a unified approach that works for both Argent and Braavos
 export const getWallet = async () => {
   try {
-    // First, check for an already connected wallet (fastest path)
+    // First check if we already have a connected wallet (fastest path)
     const connectedWallet = await getSelectedConnectorWallet();
     if (connectedWallet && connectedWallet.isConnected) {
       console.log('Found existing wallet connection:', connectedWallet);
@@ -55,76 +55,105 @@ export const getWallet = async () => {
 
     // Get stored wallet ID and address
     const lastWalletId = localStorage.getItem('starknetLastConnectedWallet');
-    const lastWalletAddress = localStorage.getItem('starknetLastConnectedAddress');
     
-    console.log('Attempting to reconnect wallet from stored state:', { id: lastWalletId, address: lastWalletAddress });
-
-    // If we don't have stored wallet info, we can't reconnect
     if (!lastWalletId) {
       console.log('No wallet information stored. Manual connection required.');
       return null;
     }
-
-    // Try silent reconnection first (works well with ArgentX)
+    
+    console.log(`Attempting to reconnect ${lastWalletId} wallet...`);
+    
+    // Unified approach that works for both wallet types
+    const connector = new InjectedConnector({ options: { id: lastWalletId } });
+    
+    // For both wallet types, first try a standard connection
     try {
-      console.log(`Attempting silent reconnection for ${lastWalletId}...`);
       const { wallet } = await connect({
-        connectors: [new InjectedConnector({ options: { id: lastWalletId } })],
-        modalMode: 'neverAsk',
+        connectors: [connector],
+        modalMode: 'onlyIfNotConnected', // Works better for both wallets
         modalTheme: 'dark',
       });
-
+      
       if (wallet && wallet.isConnected) {
-        console.log('Silent reconnection successful:', wallet);
+        console.log('Wallet reconnected successfully:', wallet);
         storeWalletState(wallet);
         return wallet;
       }
-    } catch (silentError) {
-      console.log('Silent reconnection failed:', silentError.message);
-      // Continue to fallback methods - don't throw here
-    }
-
-    // For Braavos, we need a special approach since it may not support silent reconnection
-    if (lastWalletId === 'braavos') {
-      console.log('Using Braavos-specific reconnection approach...');
       
-      // For Braavos, we'll try a different reconnection approach with a small timeout
-      // to allow the wallet extension to initialize properly
+      // If wallet exists but not connected, try to enable it
+      if (wallet) {
+        await wallet.enable();
+        if (wallet.isConnected) {
+          console.log('Wallet enabled successfully:', wallet);
+          storeWalletState(wallet);
+          return wallet;
+        }
+      }
+    } catch (error) {
+      console.log('Standard reconnection approach failed:', error.message);
+      // Continue to fallback approach
+    }
+    
+    // If we get here, standard approach failed - try wallet-specific approaches
+    if (lastWalletId === 'argentX') {
+      try {
+        // For Argent, try with neverAsk mode which worked previously
+        const { wallet } = await connect({
+          connectors: [connector],
+          modalMode: 'neverAsk',
+          modalTheme: 'dark',
+        });
+        
+        if (wallet) {
+          await wallet.enable();
+          if (wallet.isConnected) {
+            console.log('ArgentX reconnected with neverAsk mode:', wallet);
+            storeWalletState(wallet);
+            return wallet;
+          }
+        }
+      } catch (argentError) {
+        console.log('ArgentX specific reconnection failed:', argentError.message);
+      }
+    } else if (lastWalletId === 'braavos') {
+      // For Braavos, we'll use the delayed approach that worked before
       return new Promise((resolve) => {
         setTimeout(async () => {
           try {
             const { wallet } = await connect({
-              connectors: [new InjectedConnector({ options: { id: 'braavos' } })],
-              modalMode: 'onlyIfNotConnected', // This mode might work better with Braavos
+              connectors: [connector],
+              modalMode: 'onlyIfNotConnected',
               modalTheme: 'dark',
             });
             
-            if (wallet && await wallet.enable()) {
-              console.log('Braavos reconnection successful after delay:', wallet);
-              storeWalletState(wallet);
-              resolve(wallet);
-            } else {
-              console.log('Braavos reconnection failed after delay');
-              resolve(null);
+            if (wallet) {
+              await wallet.enable();
+              if (wallet.isConnected) {
+                console.log('Braavos reconnected after delay:', wallet);
+                storeWalletState(wallet);
+                resolve(wallet);
+                return;
+              }
             }
+            console.log('Braavos reconnection failed after delay');
+            resolve(null);
           } catch (err) {
             console.log('Braavos reconnection error after delay:', err.message);
             resolve(null);
           }
-        }, 500); // Small delay to allow wallet extension to initialize
+        }, 500);
       });
     }
-
-    // At this point, we couldn't reconnect silently
-    console.log('All reconnection attempts failed. Waiting for manual connection.');
+    
+    console.log('All reconnection attempts failed. Manual connection required.');
     return null;
   } catch (error) {
     console.error('Error in getWallet:', error.message);
-    return null; // Return null instead of throwing to prevent blocking UI
+    return null;
   }
 };
 
-// Connect to wallet with configurable modal mode
+// Connect to wallet (initial connection)
 export const connectWallet = async (modalMode = 'alwaysAsk') => {
   try {
     const { wallet } = await connect({

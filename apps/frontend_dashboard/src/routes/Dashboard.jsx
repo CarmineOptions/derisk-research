@@ -16,9 +16,9 @@ function Dashboard() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const reconnectAttempted = useRef(false);
 
-  // Check for cached wallet address to improve UX while reconnecting
+  
   useEffect(() => {
-    // Get the stored address from localStorage to show immediately
+    
     const cachedAddress = localStorage.getItem('starknetLastConnectedAddress');
     if (cachedAddress && !walletAddress) {
       setWalletAddress(cachedAddress);
@@ -44,7 +44,7 @@ function Dashboard() {
           setWalletAddress(address);
           console.log('Wallet reconnected successfully:', address);
 
-          // Fetch balances
+         
           try {
             const { balances, network } = await getTokenBalances(address);
             setBalances(balances);
@@ -52,7 +52,7 @@ function Dashboard() {
             console.log(`Balances loaded on page reload (${network}):`, balances);
           } catch (balanceError) {
             console.error('Failed to fetch balances:', balanceError);
-            // Don't reset the wallet connection if balance fetch fails
+            
             if (balanceError.message.includes('Contract not found')) {
               setError(`Failed to fetch balances: Token contract not found. Please ensure the token addresses are correct for this network.`);
             } else {
@@ -61,7 +61,7 @@ function Dashboard() {
           }
         } else {
           console.log('No active wallet connection detected.');
-          // Check if we have a cached address but no wallet connection
+          
           const cachedAddress = localStorage.getItem('starknetLastConnectedAddress');
           if (cachedAddress && !walletAddress) {
             console.log('Using cached address while waiting for reconnection:', cachedAddress);
