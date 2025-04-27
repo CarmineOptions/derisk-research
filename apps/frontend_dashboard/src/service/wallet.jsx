@@ -70,7 +70,7 @@ export const getWallet = async () => {
     try {
       const { wallet } = await connect({
         connectors: [connector],
-        modalMode: 'onlyIfNotConnected', // Works better for both wallets
+        modalMode: 'alwaysAsk', // Works better for both wallets
         modalTheme: 'dark',
       });
       
