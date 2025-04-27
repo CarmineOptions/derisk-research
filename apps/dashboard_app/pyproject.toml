@@ -39,10 +39,12 @@ httpx = "^0.28.1"
 asyncpg = "^0.30.0"
 python-multipart = "^0.0.20"
 seaborn = "^0.13.2"
+pytest-asyncio = "^0.26.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.8.0"
 isort = "^5.13.2"
+pytest-asyncio = "^0.26.0"
 
 [build-system]
 requires = ["poetry-core"]
