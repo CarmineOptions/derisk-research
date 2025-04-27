@@ -136,26 +136,7 @@ function Dashboard() {
     }
   };
 
-  const handleRefreshBalances = async () => {
-    if (!walletAddress) return;
-    
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const { balances, network } = await getTokenBalances(walletAddress);
-      setBalances(balances);
-      setNetwork(network);
-      setError(null);
-      console.log(`Refreshed balances (${network}):`, balances);
-    } catch (error) {
-      console.error('Failed to refresh balances:', error);
-      setError(`Failed to refresh balances: ${error.message}`);
-    } finally {
-      setIsLoading(false);
-      setIsDropdownOpen(false);
-    }
-  };
+ 
 
   return (
     <div>
@@ -166,7 +147,6 @@ function Dashboard() {
         </button>
         {isDropdownOpen && walletAddress && (
           <div className="dropdown">
-            <button onClick={handleRefreshBalances}>Refresh Balances</button>
             <button onClick={handleDisconnect}>Disconnect</button>
           </div>
         )}
