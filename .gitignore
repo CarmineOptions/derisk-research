@@ -7,6 +7,8 @@ shell.nix
 storage_credentials.json
 env/
 .venv
+.ini
+pytest.txt
 
 .env.dev
 
