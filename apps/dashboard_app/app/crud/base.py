@@ -3,7 +3,7 @@ import uuid
 from contextlib import asynccontextmanager
 from typing import AsyncIterator, Optional, Type, TypeVar
 
-from app.core.config import settings
+from ..core.config import settings
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
