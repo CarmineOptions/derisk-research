@@ -21,14 +21,16 @@ RUN curl -sSL https://install.python-poetry.org | python3 -
 
 WORKDIR /src
 
-COPY pyproject.toml poetry.lock* /src/
+COPY dashboard_app/pyproject.toml dashboard_app/poetry.lock* /src/
 
 # Install dependencies
 RUN poetry config virtualenvs.create false && \
     poetry install --no-interaction --no-root
 
-COPY alembic /src/alembic
-COPY app /src/app
+COPY dashboard_app/alembic /src/alembic
+COPY dashboard_app/app /src/app
+COPY dashboard_app/app /src/app
+COPY shared /src/app/shared
 
 EXPOSE 8000
 
