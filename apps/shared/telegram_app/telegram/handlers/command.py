@@ -6,8 +6,8 @@ sys.path.append((f'{path}/apps/web_app'))
 
 from aiogram import Router, types
 from aiogram.filters import Command, CommandObject, CommandStart
-from apps.dashboard_app.app.models.watcher  import NotificationData
-from telegram.crud import TelegramCrud
+from dashboard_app.app.models.watcher import NotificationData
+from ..crud import TelegramCrud
 
 from .utils import kb
 

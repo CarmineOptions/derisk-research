@@ -32,6 +32,7 @@ redis = "^5.0.4"
 celery = "^5.4.0"
 asyncpg = "^0.29.0"
 matplotlib = "^3.9.0"
+pydantic-settings = "^2.9.0"
 
 
 [tool.black]
