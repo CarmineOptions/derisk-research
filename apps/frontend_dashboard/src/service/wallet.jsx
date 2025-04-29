@@ -10,6 +10,21 @@ const USDC_ADDRESS_MAINNET = '0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d
 const ETH_ADDRESS_TESTNET = '0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7';
 const USDC_ADDRESS_TESTNET = null;
 
+// Store additional wallet state in localStorage
+const storeWalletState = (wallet) => {
+  if (!wallet || !wallet.id) return;
+  
+  // Store wallet ID for reconnection
+  localStorage.setItem('starknetLastConnectedWallet', wallet.id);
+  
+  // Store wallet address if available
+  if (wallet.selectedAddress) {
+    localStorage.setItem('starknetLastConnectedAddress', wallet.selectedAddress);
+  }
+  
+  console.log('Stored wallet state in localStorage:', { id: wallet.id, address: wallet.selectedAddress });
+};
+
 // Get available wallet connectors (ArgentX, Braavos)
 export const getConnectors = () => {
   const lastConnectedWallet = localStorage.getItem('starknetLastConnectedWallet');
@@ -27,48 +42,118 @@ export const getConnectors = () => {
       ];
 };
 
-// Check for an existing wallet connection without prompting
+// Get wallet with a unified approach that works for both Argent and Braavos
 export const getWallet = async () => {
   try {
+    // First check if we already have a connected wallet (fastest path)
     const connectedWallet = await getSelectedConnectorWallet();
     if (connectedWallet && connectedWallet.isConnected) {
-      console.log('Found existing wallet:', connectedWallet);
+      console.log('Found existing wallet connection:', connectedWallet);
+      storeWalletState(connectedWallet);
       return connectedWallet;
     }
 
-    // Attempt to silently reconnect with 'neverAsk'
-    console.log('No wallet found. Attempting to silently reconnect...');
-    const { wallet } = await connect({
-      connectors: getConnectors(),
-      modalMode: 'neverAsk',
-      modalTheme: 'dark',
-    });
-
-    if (!wallet) {
-      console.log('No wallet to silently reconnect. Waiting for user to connect manually...');
+    // Get stored wallet ID and address
+    const lastWalletId = localStorage.getItem('starknetLastConnectedWallet');
+    
+    if (!lastWalletId) {
+      console.log('No wallet information stored. Manual connection required.');
       return null;
     }
-
-    await wallet.enable();
-
-    if (wallet.isConnected) {
-      console.log('Silently reconnected wallet:', wallet);
-      if (wallet.id) {
-        localStorage.setItem('starknetLastConnectedWallet', wallet.id);
-        console.log('Stored wallet in localStorage:', wallet.id);
+    
+    console.log(`Attempting to reconnect ${lastWalletId} wallet...`);
+    
+    // Unified approach that works for both wallet types
+    const connector = new InjectedConnector({ options: { id: lastWalletId } });
+    
+    // For both wallet types, first try a standard connection
+    try {
+      const { wallet } = await connect({
+        connectors: [connector],
+        modalMode: 'alwaysAsk', // Works better for both wallets
+        modalTheme: 'dark',
+      });
+      
+      if (wallet && wallet.isConnected) {
+        console.log('Wallet reconnected successfully:', wallet);
+        storeWalletState(wallet);
+        return wallet;
       }
-      return wallet;
-    } else {
-      console.log('No wallet connected. Waiting for user to connect manually...');
-      return null;
+      
+      // If wallet exists but not connected, try to enable it
+      if (wallet) {
+        await wallet.enable();
+        if (wallet.isConnected) {
+          console.log('Wallet enabled successfully:', wallet);
+          storeWalletState(wallet);
+          return wallet;
+        }
+      }
+    } catch (error) {
+      console.log('Standard reconnection approach failed:', error.message);
+      // Continue to fallback approach
     }
+    
+    // If we get here, standard approach failed - try wallet-specific approaches
+    if (lastWalletId === 'argentX') {
+      try {
+        // For Argent, try with neverAsk mode which worked previously
+        const { wallet } = await connect({
+          connectors: [connector],
+          modalMode: 'neverAsk',
+          modalTheme: 'dark',
+        });
+        
+        if (wallet) {
+          await wallet.enable();
+          if (wallet.isConnected) {
+            console.log('ArgentX reconnected with neverAsk mode:', wallet);
+            storeWalletState(wallet);
+            return wallet;
+          }
+        }
+      } catch (argentError) {
+        console.log('ArgentX specific reconnection failed:', argentError.message);
+      }
+    } else if (lastWalletId === 'braavos') {
+      // For Braavos, we'll use the delayed approach that worked before
+      return new Promise((resolve) => {
+        setTimeout(async () => {
+          try {
+            const { wallet } = await connect({
+              connectors: [connector],
+              modalMode: 'onlyIfNotConnected',
+              modalTheme: 'dark',
+            });
+            
+            if (wallet) {
+              await wallet.enable();
+              if (wallet.isConnected) {
+                console.log('Braavos reconnected after delay:', wallet);
+                storeWalletState(wallet);
+                resolve(wallet);
+                return;
+              }
+            }
+            console.log('Braavos reconnection failed after delay');
+            resolve(null);
+          } catch (err) {
+            console.log('Braavos reconnection error after delay:', err.message);
+            resolve(null);
+          }
+        }, 500);
+      });
+    }
+    
+    console.log('All reconnection attempts failed. Manual connection required.');
+    return null;
   } catch (error) {
-    console.error('Error getting wallet:', error.message);
-    throw error;
+    console.error('Error in getWallet:', error.message);
+    return null;
   }
 };
 
-// Connect to wallet with configurable modal mode
+// Connect to wallet (initial connection)
 export const connectWallet = async (modalMode = 'alwaysAsk') => {
   try {
     const { wallet } = await connect({
@@ -85,10 +170,7 @@ export const connectWallet = async (modalMode = 'alwaysAsk') => {
 
     if (wallet.isConnected) {
       console.log('Wallet connected:', wallet);
-      if (wallet.id) {
-        localStorage.setItem('starknetLastConnectedWallet', wallet.id);
-        console.log('Stored wallet in localStorage:', wallet.id);
-      }
+      storeWalletState(wallet);
       return wallet;
     } else {
       throw new Error('Wallet connection failed');
@@ -164,6 +246,7 @@ export const disconnectWallet = async () => {
   try {
     await disconnect();
     localStorage.removeItem('starknetLastConnectedWallet');
+    localStorage.removeItem('starknetLastConnectedAddress');
     console.log('Wallet disconnected and localStorage cleared');
   } catch (error) {
     console.error('Error disconnecting wallet:', error.message);
