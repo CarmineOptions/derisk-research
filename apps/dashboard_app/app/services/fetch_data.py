@@ -238,6 +238,21 @@ async def get_events_by_hash():
     return trade_open, trade_close
 
 
+def filter_wallet_id(events, wallet_id):
+    """Filter the events given a wallet id
+    wallet_id: string
+        The wallet address to filter the events, given as an integer
+    :returns: list
+        A list containing the filtered events.
+    """
+    filtered_events = []
+    for event in events:
+        if event.user_address == wallet_id:
+            filtered_events.append(event)
+
+    return filtered_events
+
+
 async def get_history_by_wallet_id(wallet_id):
     """Filter the events given a wallet id
 
@@ -248,15 +263,7 @@ async def get_history_by_wallet_id(wallet_id):
     """
     trade_open, trade_close = await get_events_by_hash()
     int_wallet_id = int(wallet_id, 16)
-    filtered_trade_open = []
-    filtered_trade_close = []
-    
-    for event in trade_open:
-        if event.user_address == int_wallet_id:
-            filtered_trade_open.append(event)
-
-    for event in trade_close:
-        if event.user_address == int_wallet_id:
-            filtered_trade_close.append(event)
+    filtered_trade_open = filter_wallet_id(trade_open, int_wallet_id)
+    filtered_trade_close = filter_wallet_id(trade_close, int_wallet_id)
 
     return filtered_trade_open, filtered_trade_close
