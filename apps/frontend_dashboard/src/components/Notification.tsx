@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AlertCircle, Verified } from 'lucide-react';
 
 const NotificationSubscription = () => {
@@ -8,8 +8,16 @@ const NotificationSubscription = () => {
   const [message, setMessage] = useState<string | null>(null);
   const [messageType, setMessageType] = useState<string | null>(null);
 
-  // Dummy protocol IDs (would typically come from props or context)
-  const protocolIds = ['Protocol 1', 'Protocol 2', 'Protocol 3'];
+  // Load protocol IDs from backend
+  const [protocolIds, setProtocolIds] = useState<string[]>([]);
+  useEffect(() => {
+    fetch('/api/protocol-ids')
+      .then((res) => res.json())
+      .then((data) => setProtocolIds(data.protocol_ids || []))
+      .catch((err) => {
+        console.error('Failed to load protocol IDs', err);
+      });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
