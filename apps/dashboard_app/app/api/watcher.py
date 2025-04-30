@@ -6,9 +6,9 @@ from sqlalchemy.orm import Session
 from loguru import logger
 
 from app.utils.watcher_mixin import WatcherMixin
-from app.crud import db_connector
+from app.crud.base import db_connector
 from app.db.session import get_db
-from app.models import NotificationData
+from app.models.watcher import NotificationData
 from app.schemas import NotificationForm
 # from telegram import get_subscription_link    #FIXME
 from app.utils.fucntools import get_client_ip
