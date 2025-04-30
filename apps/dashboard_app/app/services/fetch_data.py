@@ -62,7 +62,7 @@ async def fetch_events_chunk(address, from_block, to_block, chunk_size=150) -> l
 
 
 async def fetch_events(
-    address, from_block, to_block="latest", chunk_size=150, concurrent_requests=5
+    address, from_block, to_block, chunk_size=150, concurrent_requests=5
 ) -> list:
     """
     Fetch events from the blockchain with concurrent requests for better performance.
@@ -152,7 +152,7 @@ async def process_trade_open(event: dict) -> UserTransaction:
             TIMESTAMP_FORMAT, time.localtime(block.timestamp)
         )
 
-        user_address = tx.sender_address
+        user_address = hex(tx.sender_address)
         return UserTransaction(
             user_address=user_address,
             token=token_name,
@@ -198,7 +198,7 @@ async def process_trade_close(event: dict) -> UserTransaction:
             TIMESTAMP_FORMAT, time.localtime(block.timestamp)
         )
 
-        user_address = tx.sender_address
+        user_address = hex(tx.sender_address)
         return UserTransaction(
             user_address=user_address,
             token=token_name,
@@ -220,7 +220,8 @@ async def get_events_by_hash():
     CONTRACT_ADDRESS = "0x47472e6755afc57ada9550b6a3ac93129cc4b5f98f51c73e0644d129fd208d9"  # adress of the contract that have all the events
     from_block = 1284758  # change this to the block number you want to start from
 
-    events = await fetch_events(CONTRACT_ADDRESS, from_block)
+    to_block = await client.get_block_number()
+    events = await fetch_events(CONTRACT_ADDRESS, from_block, to_block)
     trade_open = []
     trade_close = []
 
