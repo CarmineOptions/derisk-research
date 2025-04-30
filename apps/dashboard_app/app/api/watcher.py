@@ -86,3 +86,16 @@ async def subscribe_to_notification(
             "protocol_ids": [item.value for item in ProtocolIDs],
         },
     )
+
+@router.get(
+    path="/protocol-ids",
+    description="Returns a list of valid protocol IDs"
+)
+async def get_protocol_ids() -> JSONResponse:
+    """
+    Returns all protocol IDs defined in the backend.
+    """
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content={"protocol_ids": [item.value for item in ProtocolIDs]},
+    )
