@@ -1,6 +1,6 @@
-from http.client import HTTPException
+from fastapi import HTTPException
 from typing import List
-from app.services.fetch_data import get_events_by_hash
+from app.services.fetch_data import get_history_by_wallet_id
 from app.schemas.user_transaction import UserTransaction
 from fastapi import APIRouter
 from fastapi.templating import Jinja2Templates
@@ -29,12 +29,9 @@ async def get_history(wallet_id: str) -> List[UserTransaction]:
             HTTPException: Internal Server Error
     """
 
-    try:
-        open_trades, close_trades = await get_events_by_hash()
-        filter_trades = lambda trades: list(
-            filter(lambda trade: trade.user_address == wallet_id, trades)
-        )
-        return filter_trades(open_trades) + filter_trades(close_trades)
-    except Exception as e:
+    try:   
+        filtered_trade_open, filtered_trade_close = await get_history_by_wallet_id(wallet_id)       
+        return filtered_trade_open + filtered_trade_close
+    except Exception as e:      
         logger.error(e)
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
