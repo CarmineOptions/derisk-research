@@ -238,22 +238,17 @@ async def get_events_by_hash():
     return trade_open, trade_close
 
 
-def filter_wallet_id(events, wallet_id):
+def filter_wallet_id(events: list, wallet_id: int) -> list:
     """Filter the events given a wallet id
     wallet_id: string
         The wallet address to filter the events, given as an integer
     :returns: list
         A list containing the filtered events.
     """
-    filtered_events = []
-    for event in events:
-        if event.user_address == wallet_id:
-            filtered_events.append(event)
-
-    return filtered_events
+    return [event for event in events if event.user_address == wallet_id]
 
 
-async def get_history_by_wallet_id(wallet_id):
+async def get_history_by_wallet_id(wallet_id: str) -> tuple:
     """Filter the events given a wallet id
 
     wallet_id: string
