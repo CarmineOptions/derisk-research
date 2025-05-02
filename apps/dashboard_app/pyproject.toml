@@ -26,7 +26,7 @@ aiogram = "^3.12.0"
 dill = "^0.3.8"
 gcsfs = "^2024.6.1"
 pre-commit = "^3.8.0"
-pydantic = "^2.9.2"
+pydantic = {extras = ["email"], version = "^2.11.3"}
 pytest = "^8.3.3"
 python-dotenv = "^1.0.1"
 streamlit-autorefresh = "^1.0.1"

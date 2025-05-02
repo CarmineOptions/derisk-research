@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AlertCircle, Verified } from 'lucide-react';
 
 const NotificationSubscription = () => {
@@ -8,19 +8,47 @@ const NotificationSubscription = () => {
   const [message, setMessage] = useState<string | null>(null);
   const [messageType, setMessageType] = useState<string | null>(null);
 
-  // Dummy protocol IDs (would typically come from props or context)
-  const protocolIds = ['Protocol 1', 'Protocol 2', 'Protocol 3'];
+  // Load protocol IDs from backend
+  const [protocolIds, setProtocolIds] = useState<string[]>([]);
+  useEffect(() => {
+    fetch('/api/protocol-ids')
+      .then((res) => res.json())
+      .then((data) => setProtocolIds(data.protocol_ids || []))
+      .catch((err) => {
+        console.error('Failed to load protocol IDs', err);
+      });
+  }, []);
 
-  const handleSubmit = (e : React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Placeholder for submission logic
-    console.log('Submitting:', { walletId, healthRatioLevel, protocolId });
-    // For demonstration, simulate a success/error response
-    if (walletId && healthRatioLevel && protocolId) {
-      setMessage('Subscription created successfully');
-      setMessageType('success');
-    } else {
-      setMessage('Subscription was NOT created successfully');
+    setMessage(null);
+    setMessageType(null);
+    try {
+      const payload = {
+        wallet_id: walletId,
+        health_ratio_level: parseFloat(healthRatioLevel),
+        protocol_id: protocolId,
+      };
+      const response = await fetch('/api/liquidation-watcher', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const result = await response.json();
+      if (response.ok) {
+        setMessage(result.messages[0] || 'Subscription created successfully');
+        setMessageType(result.message_type || 'success');
+      } else {
+        setMessage(
+          Array.isArray(result.messages)
+            ? result.messages.join(', ')
+            : 'Failed to create subscription'
+        );
+        setMessageType(result.message_type || 'error');
+      }
+    } catch (error) {
+      console.error('Error submitting subscription:', error);
+      setMessage('Network error. Please try again.');
       setMessageType('error');
     }
   };

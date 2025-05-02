@@ -96,6 +96,43 @@ Interactive dashboard application for visualizing and analyzing DeRisk data.
 - Real-time data updates
 For detailed documentation, see the [Dashboard App](./apps/dashboard_app/README.md)
 
+### Running Locally
+
+#### Backend API (FastAPI)
+
+```bash
+cd apps/dashboard_app
+poetry install
+cp .env.dev .env  # if you have .env.dev with DB settings
+poetry run uvicorn app.main:app --reload --port 8000
+```
+
+The API will be available at http://localhost:8000/api. The notification subscription endpoint is:
+
+```http
+POST /api/liquidation-watcher
+Content-Type: application/json
+
+{
+  "wallet_id": "0x123...",
+  "health_ratio_level": 0.5,
+  "protocol_id": "Hashstack"
+}
+```
+
+#### Frontend App (React + Vite)
+
+```bash
+cd apps/frontend_dashboard
+npm install
+npm run dev
+```
+
+Navigate to http://localhost:5173 to access the subscription form.
+
+#### CORS & Proxy
+The backend is configured with CORS to allow requests from http://localhost:5173, and the Vite dev server proxies `/api` to the backend.
+
 ## Shared package (Common code shared between the components)
 1. How to run test cases for shared package, run next command in root folder:
 ```bash
