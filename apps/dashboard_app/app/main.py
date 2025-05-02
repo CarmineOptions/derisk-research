@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from loguru import logger
 
 from app.api import watcher
+from app.api import history
 
 
 @asynccontextmanager
@@ -37,6 +38,7 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator:
 app = FastAPI(lifespan=lifespan, root_path="/api")
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 app.include_router(watcher.router)
+app.include_router(history.router)
 
 
 @app.middleware("http")
