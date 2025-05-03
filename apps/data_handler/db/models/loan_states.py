@@ -1,4 +1,5 @@
-""" SQLAlchemy models for the loan_states table. """
+"""SQLAlchemy models for the loan_states table."""
+
 from decimal import Decimal
 
 from sqlalchemy import Column, Integer, String, UniqueConstraint
@@ -30,7 +31,9 @@ class InterestRate(BaseState):
 
     def get_json_deserialized(self) -> tuple[dict[str, Decimal], dict[str, Decimal]]:
         """Deserialize the JSON fields of the model from str to the Decimal type."""
-        collateral = {token_name: Decimal(value) for token_name, value in self.collateral.items()}
+        collateral = {
+            token_name: Decimal(value) for token_name, value in self.collateral.items()
+        }
         debt = {token_name: Decimal(value) for token_name, value in self.debt.items()}
         return collateral, debt
 
@@ -48,3 +51,15 @@ class ZkLendCollateralDebt(Base):
     deposit = Column(JSON, nullable=True)
     collateral_enabled = Column(JSON, nullable=False)
 
+
+class VesuCollateralDebt(Base):
+    """
+    SQLAlchemy model for table with obligation data for Vesu.
+    """
+
+    __tablename__ = "vesu_collateral_debt"
+
+    user_id = Column(String, nullable=False, index=True)
+    collateral = Column(JSON, nullable=True)
+    debt = Column(JSON, nullable=True)
+    deposit = Column(JSON, nullable=True)
