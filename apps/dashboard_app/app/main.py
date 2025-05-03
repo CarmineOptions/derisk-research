@@ -1,12 +1,15 @@
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator, Awaitable, Callable
+from typing import AsyncGenerator, Awaitable, Callable, Any
+import os
 
 from fastapi import FastAPI, Request, Response
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 
 from loguru import logger
 
 from app.api import watcher
+from app.api import history
 
 
 @asynccontextmanager
@@ -35,8 +38,18 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator:
 
 # Initialize FastAPI app
 app = FastAPI(lifespan=lifespan, root_path="/api")
+# Load allowed CORS origins from environment variable, default to Vite dev server
+origins = os.getenv("BACKEND_CORS_ORIGINS", "http://localhost:5173").split(",")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 app.include_router(watcher.router)
+app.include_router(history.router)
 
 
 @app.middleware("http")
@@ -52,21 +65,30 @@ async def log_requests(
     return response
 
 
-# Example route
-@app.get("/")
-async def read_root() -> dict[str, str]:
+# Example route: lists core features, including the new notification subscription
+@app.get("/", response_model=dict[str, Any])
+async def read_root() -> dict[str, Any]:
     """
-    Basic endpoint for testing.
+    Root endpoint detailing available features of the Dashboard API.
     """
     logger.info("Root endpoint accessed.")
-    return {"message": "Welcome to the FastAPI application!"}
+    return {
+        "message": "Welcome to the DeRisk Dashboard API",
+        "features": [
+            "Interactive data visualization",
+            "Protocol statistics monitoring",
+            "Loan portfolio analysis",
+            "Real-time data updates",
+            "Notification subscription via POST /api/liquidation-watcher",
+        ],
+    }
 
 
-# Additional route
-@app.get("/health")
-async def health_check() -> dict[str, str]:
+# Health check endpoint extended with service info
+@app.get("/health", response_model=dict[str, Any])
+async def health_check() -> dict[str, Any]:
     """
-    Health check endpoint.
+    Simple health check endpoint for liveness.
     """
     logger.info("Health check endpoint accessed.")
-    return {"status": "OK"}
+    return {"status": "OK", "service": "dashboard_app_api"}

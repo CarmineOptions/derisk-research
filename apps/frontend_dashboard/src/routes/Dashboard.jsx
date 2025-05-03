@@ -3,8 +3,7 @@ import { connectWallet, getWallet, getTokenBalances, disconnectWallet } from '..
 import '../Dashboard.css';
 import { createFileRoute } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/dashboard')({
-  component: Dashboard,
+export const Route = createFileRoute('/dashboard')({  component: Dashboard,
 })
 
 function Dashboard() {
@@ -14,39 +13,66 @@ function Dashboard() {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const isMounted = useRef(false);
+  const reconnectAttempted = useRef(false);
+
+  
+  useEffect(() => {
+    
+    const cachedAddress = localStorage.getItem('starknetLastConnectedAddress');
+    if (cachedAddress && !walletAddress) {
+      setWalletAddress(cachedAddress);
+    }
+  }, [walletAddress]);
 
   // Load wallet on page reload
   useEffect(() => {
-    const loadWallet = async () => {
-      if (isMounted.current) return;
-      isMounted.current = true;
+    // Avoid duplicate reconnection attempts
+    if (reconnectAttempted.current) return;
+    reconnectAttempted.current = true;
 
+    const loadWallet = async () => {
       setIsLoading(true);
       setError(null); // Clear any previous errors
 
       try {
+        console.log('Attempting to reconnect wallet...');
         const wallet = await getWallet();
+        
         if (wallet && wallet.isConnected) {
           const address = wallet.selectedAddress;
           setWalletAddress(address);
+          console.log('Wallet reconnected successfully:', address);
 
-          const { balances, network } = await getTokenBalances(address);
-          setBalances(balances);
-          setNetwork(network);
-          setError(null);
-          console.log(`Balances loaded on page reload (${network}):`, balances);
+         
+          try {
+            const { balances, network } = await getTokenBalances(address);
+            setBalances(balances);
+            setNetwork(network);
+            console.log(`Balances loaded on page reload (${network}):`, balances);
+          } catch (balanceError) {
+            console.error('Failed to fetch balances:', balanceError);
+            
+            if (balanceError.message.includes('Contract not found')) {
+              setError(`Failed to fetch balances: Token contract not found. Please ensure the token addresses are correct for this network.`);
+            } else {
+              setError(`Failed to fetch balances: ${balanceError.message}`);
+            }
+          }
+        } else {
+          console.log('No active wallet connection detected.');
+          
+          const cachedAddress = localStorage.getItem('starknetLastConnectedAddress');
+          if (cachedAddress && !walletAddress) {
+            console.log('Using cached address while waiting for reconnection:', cachedAddress);
+            setWalletAddress(cachedAddress);
+            setError('Waiting for wallet connection...');
+          }
         }
       } catch (error) {
         console.error('Failed to load wallet on page reload:', error);
-        if (error.message.includes('Contract not found')) {
-          setError(`Failed to fetch balances: Token contract not found on ${network === 'mainnet' ? 'Mainnet' : 'Sepolia Testnet'}. Please ensure the token addresses are correct for this network.`);
-        } else {
-          setError(`Failed to fetch balances: ${error.message}`);
-        }
+        setError(`Failed to reconnect wallet: ${error.message}`);
       } finally {
         setIsLoading(false);
-        isMounted.current = false;
       }
     };
 
@@ -59,8 +85,13 @@ function Dashboard() {
   };
 
   const handleConnectWallet = async () => {
+    if (walletAddress && isDropdownOpen) {
+      setIsDropdownOpen(false);
+      return;
+    }
+
     if (walletAddress) {
-      setIsDropdownOpen(!isDropdownOpen);
+      setIsDropdownOpen(true);
       return;
     }
 
@@ -80,9 +111,9 @@ function Dashboard() {
     } catch (error) {
       console.error('Failed to connect wallet or fetch balances:', error);
       if (error.message.includes('Contract not found')) {
-        setError(`Failed to fetch balances: Token contract not found on ${network === 'mainnet' ? 'Mainnet' : 'Sepolia Testnet'}. Please ensure the token addresses are correct for this network.`);
+        setError(`Failed to fetch balances: Token contract not found. Please ensure the token addresses are correct for this network.`);
       } else {
-        setError(`Failed to fetch balances: ${error.message}`);
+        setError(`Failed to connect wallet: ${error.message}`);
       }
     } finally {
       setIsLoading(false);
@@ -103,6 +134,8 @@ function Dashboard() {
       setError('Failed to disconnect wallet. Please try again.');
     }
   };
+
+ 
 
   return (
     <div>

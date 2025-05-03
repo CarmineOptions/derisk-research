@@ -1,21 +1,19 @@
 from fastapi import APIRouter, Request, Depends, status
-from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from loguru import logger
 
 from app.utils.watcher_mixin import WatcherMixin
-from app.crud import db_connector
+from app.crud.base import db_connector
 from app.db.session import get_db
-from app.models import NotificationData
+from app.models.watcher import NotificationData
 from app.schemas import NotificationForm
 # from telegram import get_subscription_link    #FIXME
 from app.utils.fucntools import get_client_ip
 from app.utils.values import CreateSubscriptionValues, ProtocolIDs, NotificationValidationValues
 
 router = APIRouter()
-templates = Jinja2Templates(directory="templates")
 
 
 @router.post(
@@ -24,7 +22,7 @@ templates = Jinja2Templates(directory="templates")
 )
 async def subscribe_to_notification(
     request: Request,
-    data: NotificationForm = Depends(NotificationForm.as_form),
+    data: NotificationForm,
     db: Session = Depends(get_db),
 ):
     """
@@ -34,6 +32,7 @@ async def subscribe_to_notification(
     :param db: Session
     :return: dict
     """
+    # assign client IP for record
     data.ip_address = get_client_ip(request)
 
     if not all(
@@ -46,14 +45,11 @@ async def subscribe_to_notification(
         logger.error(
             f"User with {get_client_ip(request)} IP submits with a lack of all required fields"
         )
-        return templates.TemplateResponse(
-            request=request,
-            name="notification.html",
-            context={
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={
                 "status_code": status.HTTP_400_BAD_REQUEST,
-                "messages": [
-                    CreateSubscriptionValues.create_subscription_exception_message
-                ],
+                "messages": [CreateSubscriptionValues.create_subscription_exception_message],
                 "message_type": "error",
                 "protocol_ids": [item.value for item in ProtocolIDs],
             },
@@ -64,10 +60,9 @@ async def subscribe_to_notification(
 
     if validation_errors:
         logger.error(f"User with {get_client_ip(request)} IP submits with invalid data")
-        return templates.TemplateResponse(
-            request=request,
-            name="notification.html",
-            context={
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={
                 "status_code": status.HTTP_400_BAD_REQUEST,
                 "messages": list(validation_errors.values()),
                 "message_type": "error",
@@ -81,14 +76,26 @@ async def subscribe_to_notification(
     logger.info(f"Activation link for user with {get_client_ip(request)} IP is sent")
 
     logger.info(f"User with {get_client_ip(request)} IP submitted successfully")
-    return templates.TemplateResponse(
-        request=request,
-        name="notification.html",
-        context={
+    return JSONResponse(
+        status_code=status.HTTP_201_CREATED,
+        content={
             "status_code": status.HTTP_201_CREATED,
             "messages": [CreateSubscriptionValues.create_subscription_success_message],
             "message_type": "success",
             # "activation_link": activation_link, # FIXME unccomend once telegram is ready
             "protocol_ids": [item.value for item in ProtocolIDs],
         },
+    )
+
+@router.get(
+    path="/protocol-ids",
+    description="Returns a list of valid protocol IDs"
+)
+async def get_protocol_ids() -> JSONResponse:
+    """
+    Returns all protocol IDs defined in the backend.
+    """
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content={"protocol_ids": [item.value for item in ProtocolIDs]},
     )

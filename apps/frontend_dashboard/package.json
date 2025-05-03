@@ -18,7 +18,7 @@
     "lucide-react": "^0.485.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "starknet": "^6.23.1",
+    "starknet": "^6.24.1",
     "starknetkit": "^2.10.4"
   },
   "devDependencies": {
