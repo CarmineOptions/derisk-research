@@ -1,0 +1,377 @@
+"""
+Module to handle VesuLoan events and calculate health factors.
+This module interacts with the VesuLoan contract on Starknet to fetch user positions,
+calculate collateral and debt values, and determine health factors for users.
+"""
+
+from decimal import Decimal
+
+from shared.constants import TOKEN_SETTINGS
+from shared.starknet_client import StarknetClient
+from starknet_py.hash.selector import get_selector_from_name
+
+
+class VesuLoanEntity:
+    """
+    Class to handle VesuLoan events and calculate health factors.
+    This class interacts with the VesuLoan contract on Starknet to fetch user positions,
+    calculate collateral and debt values, and determine health factors for users.
+    It uses a mock database to store user positions and a cache to optimize data retrieval.
+    """
+
+    VESU_ADDRESS = "0x02545b2e5d519fc230e9cd781046d3a64e092114f07e44771e0d719d148725ef"
+
+    TOKEN_SETTINGS = TOKEN_SETTINGS
+
+    def __init__(self):
+        """Initialize Starknet client and storage."""
+        self.client = StarknetClient()
+        self.mock_db = {}
+        self._cache = {}
+        self.last_processed_block = 654244  # First VESU event block
+
+    def _get_token_symbol_by_address(self, address: str) -> str:
+        """
+        Convert token address to symbol using TOKEN_SETTINGS
+
+        :param address: Token address in decimal format
+
+        :return: Token symbol if found, else None
+        """
+        address_str = hex(address)
+        for symbol, settings in TOKEN_SETTINGS.items():
+            if settings.address.lower() == address_str.lower():
+                return symbol
+        return None
+
+    def _get_token_decimals(self, token_symbol: str) -> int:
+        """
+        Get decimals for a token from TOKEN_SETTINGS
+
+        :param token_symbol: Token symbol
+
+        :return: Number of decimals for the token
+        """
+        if token_symbol in TOKEN_SETTINGS:
+            decimal_str = str(TOKEN_SETTINGS[token_symbol].decimal_factor)
+            return int(decimal_str.split("E")[1]) if "E" in decimal_str else 0
+        return 18
+
+    async def calculate_health_factor(self, user_address: int) -> dict:
+        """
+        Calculate health factors for all positions of a user.
+
+        :param user_address: User address in int format
+
+        :return: Dictionary with pool IDs as keys and health factors as values
+        """
+
+        user_positions = {k: v for k, v in self.mock_db.items() if k[0] == user_address}
+
+        if not user_positions:
+            return {}
+
+        results = {}
+        for (_, pool_id), position_data in user_positions.items():
+            collateral_asset = position_data["collateral_asset"]
+            debt_asset = position_data["debt_asset"]
+
+            collateral_symbol = position_data.get("collateral_symbol")
+            if not collateral_symbol:
+                collateral_symbol = self._get_token_symbol_by_address(collateral_asset)
+
+            debt_symbol = position_data.get("debt_symbol")
+            if not debt_symbol:
+                debt_symbol = self._get_token_symbol_by_address(debt_asset)
+
+            position = await self._get_position_data(
+                user_address, pool_id, collateral_asset, debt_asset
+            )
+
+            collateral_shares_low = position[0]
+            collateral_shares_high = position[1]
+            collateral_sign = 0 if collateral_shares_low >= 0 else 1
+
+            collateral_value = await self._get_collateral_value(
+                pool_id,
+                collateral_asset,
+                collateral_shares_low,
+                collateral_shares_high,
+                collateral_sign,
+            )
+
+            debt_config = await self._get_asset_config(pool_id, debt_asset)
+            nominal_debt_low = position[2]
+            nominal_debt_high = position[3]
+            debt_sign = 0 if nominal_debt_low >= 0 else 1
+
+            rate_acc_low = debt_config[14]
+            rate_acc_high = debt_config[15]
+            scale_low = debt_config[10]
+            scale_high = debt_config[11]
+
+            debt_value = await self._calculate_debt(
+                nominal_debt_low,
+                nominal_debt_high,
+                debt_sign,
+                rate_acc_low,
+                rate_acc_high,
+                scale_low,
+                scale_high,
+            )
+
+            ltv_data = await self.get_ltv_config(pool_id, collateral_asset, debt_asset)
+
+            collateral_decimals = self._get_token_decimals(collateral_symbol)
+            debt_decimals = self._get_token_decimals(debt_symbol)
+
+            collateral_factor = Decimal(ltv_data[0]) / Decimal(10**collateral_decimals)
+
+            collateral_price = await self.fetch_token_price(collateral_asset, pool_id)
+            debt_price = await self.fetch_token_price(debt_asset, pool_id)
+
+            collateral_normalized = collateral_value / Decimal(10**collateral_decimals)
+            debt_normalized = debt_value / Decimal(10**debt_decimals)
+
+            collateral_usd = collateral_normalized * collateral_price
+            debt_usd = debt_normalized * debt_price
+
+            health_factor = (
+                (collateral_usd * collateral_factor) / debt_usd
+                if debt_usd > 0
+                else Decimal("inf")
+            )
+
+            results[hex(pool_id)] = health_factor
+
+        return results
+
+    async def _get_position_data(
+        self, user, pool_id, collateral_asset, debt_asset
+    ) -> tuple:
+        """
+        Get user position data with caching.
+        :param user: User address in decimal format
+        :param pool_id: Pool ID in decimal
+        :param collateral_asset: Collateral asset address in decimal format
+        :param debt_asset: Debt asset address in decimal format
+        :return: Position data as a tuple
+        """
+        vesu_addr = int(self.VESU_ADDRESS, 16)
+
+        cache_key = f"position_{user}_{pool_id}_{collateral_asset}_{debt_asset}"
+        return await self._get_contract_data(
+            cache_key,
+            self.client.func_call,
+            [vesu_addr, "position", [pool_id, collateral_asset, debt_asset, user]],
+        )
+
+    async def _get_contract_data(self, cache_key, func, params) -> tuple:
+        """
+        Get data from contract with caching.
+
+        :param cache_key: Cache key for the data
+        :param func: Function to call
+        :param params: Parameters for the function call
+        :return: Result of the function call
+        """
+        if cache_key not in self._cache:
+            self._cache[cache_key] = await func(*params)
+        return self._cache[cache_key]
+
+    async def _get_collateral_value(
+        self, pool_id, asset, shares_low, shares_high, sign=0
+    ) -> Decimal:
+        """
+        Calculate collateral value.
+
+        :param pool_id: Pool ID in decimal
+        :param asset: Asset address in decimal format
+        :param shares_low: Low part of shares
+        :param shares_high: High part of shares
+        :param sign: Sign of the shares (0 or 1)
+        :return: Collateral value as a Decimal
+        """
+        vesu_addr = int(self.VESU_ADDRESS, 16)
+
+        cache_key = f"collateral_{asset}_{shares_low}_{shares_high}_{sign}"
+        result = await self._get_contract_data(
+            cache_key,
+            self.client.func_call,
+            [
+                vesu_addr,
+                "calculate_collateral",
+                [pool_id, asset, shares_low, shares_high, sign],
+            ],
+        )
+        return self._u256_to_decimal(result[0], result[1])
+
+    async def _calculate_debt(
+        self,
+        nominal_debt_low,
+        nominal_debt_high,
+        sign,
+        rate_accumulator_low,
+        rate_accumulator_high,
+        scale_low,
+        scale_high,
+    ) -> Decimal:
+        """
+        Calculate debt value.
+
+        :param nominal_debt_low: Low part of nominal debt
+        :param nominal_debt_high: High part of nominal debt
+        :param sign: Sign of the debt (0 or 1)
+        :param rate_accumulator_low: Low part of rate accumulator
+        :param rate_accumulator_high: High part of rate accumulator
+        :param scale_low: Low part of scale
+        :param scale_high: High part of scale
+        :return: Debt value as a Decimal
+        """
+        vesu_addr = int(self.VESU_ADDRESS, 16)
+
+        cache_key = f"debt_{nominal_debt_low}_{nominal_debt_high}_{sign}_ \
+        {rate_accumulator_low}_{rate_accumulator_high}"
+        result = await self._get_contract_data(
+            cache_key,
+            self.client.func_call,
+            [
+                vesu_addr,
+                "calculate_debt",
+                [
+                    nominal_debt_low,
+                    nominal_debt_high,
+                    sign,
+                    rate_accumulator_low,
+                    rate_accumulator_high,
+                    scale_low,
+                    scale_high,
+                ],
+            ],
+        )
+        return self._u256_to_decimal(result[0], result[1])
+
+    async def _get_asset_config(self, pool_id, asset_address) -> tuple:
+        """
+        Get asset configuration with caching.
+
+        :param pool_id: Pool ID in decimal
+        :param asset_address: Asset address in decimal format
+        :return: Asset configuration as a tuple
+        """
+        vesu_addr = int(self.VESU_ADDRESS, 16)
+
+        cache_key = f"asset_config_{pool_id}_{asset_address}"
+        return await self._get_contract_data(
+            cache_key,
+            self.client.func_call,
+            [vesu_addr, "asset_config", [pool_id, asset_address]],
+        )
+
+    async def get_ltv_config(self, pool_id, collateral, debt) -> tuple:
+        """
+        Get LTV configuration with caching.
+
+        :param pool_id: Pool ID in decimal
+        :param collateral: Collateral asset address in decimal format
+        :param debt: Debt asset address in decimal format
+        :return: LTV configuration as a tuple
+        """
+        vesu_addr = int(self.VESU_ADDRESS, 16)
+
+        cache_key = f"ltv_{pool_id}_{collateral}_{debt}"
+        return await self._get_contract_data(
+            cache_key,
+            self.client.func_call,
+            [vesu_addr, "ltv_config", [pool_id, collateral, debt]],
+        )
+
+    async def fetch_token_price(self, address, pool_id) -> Decimal:
+        """
+        Fetch token price using price extension.
+
+        :param address: Token address in decimal format
+        :param pool_id: Pool ID in decimal
+        :return: Token price as a Decimal
+        """
+        try:
+            vesu_addr = int(self.VESU_ADDRESS, 16)
+            cache_key = f"extension_price_{pool_id}"
+            if cache_key not in self._cache:
+                extension_result = await self.client.func_call(
+                    vesu_addr, "extension", [pool_id]
+                )
+                self._cache[cache_key] = extension_result[0]
+            price_extension_addr = self._cache[cache_key]
+            cache_key_price = f"price_{pool_id}_{address}"
+            if cache_key_price not in self._cache:
+                price_result = await self.client.func_call(
+                    price_extension_addr, "price", [pool_id, address]
+                )
+                price_u256 = price_result[0]
+                is_valid = price_result[2] if len(price_result) > 2 else 1
+                if not is_valid:
+                    print(
+                        f"Warning: Price for \
+                        {TOKEN_SETTINGS.get(address, {}).get('symbol', address)} is not valid"
+                    )
+                    return Decimal("1")
+                price = Decimal(price_u256) / Decimal(10**18)
+                self._cache[cache_key_price] = price
+
+                return self._cache[cache_key_price]
+
+        except Exception as e:
+            print(f"Error fetching price for {address}: {e}")
+            return Decimal("1")
+
+    def _u256_to_decimal(self, low, high) -> Decimal:
+        """
+        Convert u256 (low, high) pair to Decimal.
+
+        :param low: Low part of u256
+        :param high: High part of u256
+
+        :return: Decimal representation of u256
+        """
+        return Decimal(low) + (Decimal(high) * Decimal(2**128))
+
+    async def update_positions_data(self) -> None:
+        """
+        Process ModifyPosition events to track user positions.
+
+        :return: None
+        """
+        current_block = await self.client.client.get_block_number()
+
+        if current_block <= self.last_processed_block:
+            return
+
+        events = await self.client.client.get_events(
+            address=self.VESU_ADDRESS,
+            from_block_number=self.last_processed_block + 1,
+            to_block_number=current_block,
+            keys=[[hex(get_selector_from_name("ModifyPosition"))]],
+            chunk_size=2,
+        )
+        for event in events.events:
+            event_keys = event.keys
+
+            pool_id = event_keys[1]
+            collateral_asset = event_keys[2]
+            debt_asset = event_keys[3]
+            user = event_keys[4]
+            block_number = event.block_number
+
+            collateral_symbol = self._get_token_symbol_by_address(collateral_asset)
+            debt_symbol = self._get_token_symbol_by_address(debt_asset)
+
+            self.mock_db[(user, pool_id)] = {
+                "pool_id": pool_id,
+                "collateral_asset": collateral_asset,
+                "debt_asset": debt_asset,
+                "collateral_symbol": collateral_symbol,
+                "debt_symbol": debt_symbol,
+                "block_number": block_number,
+            }
+            self.last_processed_block = max(self.last_processed_block, block_number)
