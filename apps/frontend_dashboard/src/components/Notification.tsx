@@ -135,7 +135,7 @@ const NotificationSubscription = () => {
             <div className="flex flex-col gap-3 w-full lg:w-auto justify-center">
               <label 
                 htmlFor="health_ratio_level" 
-                className="text-[#9b9b9b] text-base font-medium font-montserrat"
+                className="text-[#9b9b9b] text-base font-medium font-montserrat text-start"
               >
                 Health ratio level: <span className="text-red-500">*</span>
               </label>
@@ -154,7 +154,7 @@ const NotificationSubscription = () => {
             <div className="flex flex-col gap-3 w-full lg:w-auto justify-center">
               <label 
                 htmlFor="protocol_id" 
-                className="text-[#9b9b9b] text-base font-medium font-montserrat"
+                className="text-[#9b9b9b] text-base font-medium font-montserrat text-start"
               >
                 Protocol ID: <span className="text-red-500">*</span>
               </label>
