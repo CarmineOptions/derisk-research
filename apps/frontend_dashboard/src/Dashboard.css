@@ -59,3 +59,7 @@ div {
     margin: 20px auto;
     color: white;
   }
+
+  body{
+    overflow-x: hidden;
+  }

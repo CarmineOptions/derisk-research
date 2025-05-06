@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { connectWallet, getWallet, getTokenBalances, disconnectWallet } from '../service/wallet';
 import '../Dashboard.css';
+import { mockTradeHistory } from "../data/mockTradeHistory.js";
 import { createFileRoute } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/dashboard')({  component: Dashboard,
+export const Route = createFileRoute('/Dashboard')({  component: Dashboard,
 })
 
 function Dashboard() {
@@ -135,30 +136,70 @@ function Dashboard() {
     }
   };
 
- 
+
 
   return (
-    <div>
-      <h1>Dashboard</h1>
-      <div className="wallet-button-container">
-        <button onClick={handleConnectWallet} className="wallet-button" disabled={isLoading}>
-          {isLoading ? 'Connecting...' : walletAddress ? truncateAddress(walletAddress) : 'Connect Wallet'}
-        </button>
-        {isDropdownOpen && walletAddress && (
-          <div className="dropdown">
-            <button onClick={handleDisconnect}>Disconnect</button>
+      <div className='w-[100vw]'>
+        <div className="wallet-button-container">
+          <button onClick={handleConnectWallet} className="wallet-button" disabled={isLoading}>
+            {isLoading ? 'Connecting...' : walletAddress ? truncateAddress(walletAddress) : 'Connect Wallet'}
+          </button>
+          {isDropdownOpen && walletAddress && (
+              <div className="dropdown">
+                <button onClick={handleDisconnect}>Disconnect</button>
+              </div>
+          )}
+        </div>
+        <h1>Dashboard</h1>
+        <div className="p-4 mx-auto">
+          <h2 className="text-2xl font-bold mb-4">Trade History</h2>
+          <div className="overflow-x-auto rounded-lg shadow-md text-black">
+            <table className="min-w-full bg-white border border-gray-200">
+              <thead className="bg-gray-100 text-gray-700 text-sm font-semibold">
+              <tr>
+                <th className="px-4 py-3 text-left">Token</th>
+                <th className="px-4 py-3 text-left">Date</th>
+                <th className="px-4 py-3 text-right">Price</th>
+                <th className="px-4 py-3 text-right">Amount</th>
+                <th className="px-4 py-3 text-center">Type</th>
+              </tr>
+              </thead>
+              <tbody>
+              {mockTradeHistory.map((trade, index) => (
+                  <tr
+                      key={index}
+                      className="border-t border-gray-200 hover:bg-gray-200"
+                  >
+                    <td className="px-4 py-2 text-start">{trade.token}</td>
+                    <td className="px-4 py-2 text-start">
+                      {new Date(trade.datetime).toLocaleString()}
+                    </td>
+                    <td className="px-4 py-2 text-right">
+                      ${trade.price.toFixed(2)}
+                    </td>
+                    <td className="px-4 py-2 text-right">{trade.amount}</td>
+                    <td
+                        className={`px-4 py-2 text-center font-semibold ${
+                            trade.is_sell ? "text-red-600" : "text-green-600"
+                        }`}
+                    >
+                      {trade.is_sell ? "Sell" : "Buy"}
+                    </td>
+                  </tr>
+              ))}
+              </tbody>
+            </table>
           </div>
+        </div>
+        {error && <p style={{color: 'red'}}>{error}</p>}
+        {isLoading && <p>Loading balances...</p>}
+        {balances && !isLoading && (
+            <div>
+              <h2>Balances on {network === 'mainnet' ? 'Mainnet' : 'Sepolia Testnet'}</h2>
+              <pre>{JSON.stringify(balances, null, 2)}</pre>
+            </div>
         )}
       </div>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      {isLoading && <p>Loading balances...</p>}
-      {balances && !isLoading && (
-        <div>
-          <h2>Balances on {network === 'mainnet' ? 'Mainnet' : 'Sepolia Testnet'}</h2>
-          <pre>{JSON.stringify(balances, null, 2)}</pre>
-        </div>
-      )}
-    </div>
   );
 }
 
