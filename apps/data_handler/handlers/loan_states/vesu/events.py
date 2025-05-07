@@ -30,32 +30,18 @@ class VesuLoanEntity:
         self._cache = {}
         self.last_processed_block = 654244  # First VESU event block
 
-    def _get_token_symbol_by_address(self, address: str) -> str:
-        """
-        Convert token address to symbol using TOKEN_SETTINGS
-
-        :param address: Token address in decimal format
-
-        :return: Token symbol if found, else None
-        """
-        address_str = hex(address)
-        for symbol, settings in TOKEN_SETTINGS.items():
-            if settings.address.lower() == address_str.lower():
-                return symbol
-        return None
-
-    def _get_token_decimals(self, token_symbol: str) -> int:
+    def _get_token_decimals(self, token_address: int) -> Decimal:
         """
         Get decimals for a token from TOKEN_SETTINGS
 
-        :param token_symbol: Token symbol
+        :param token_address: Token address in decimal format
 
         :return: Number of decimals for the token
         """
-        if token_symbol in TOKEN_SETTINGS:
-            decimal_str = str(TOKEN_SETTINGS[token_symbol].decimal_factor)
-            return int(decimal_str.split("E")[1]) if "E" in decimal_str else 0
-        return 18
+        for token in self.TOKEN_SETTINGS.values():
+            if int(token.address, 16) == token_address:
+                return token.decimal_factor
+        return Decimal("1")
 
     async def calculate_health_factor(self, user_address: int) -> dict:
         """
@@ -76,20 +62,11 @@ class VesuLoanEntity:
             collateral_asset = position_data["collateral_asset"]
             debt_asset = position_data["debt_asset"]
 
-            collateral_symbol = position_data.get("collateral_symbol")
-            if not collateral_symbol:
-                collateral_symbol = self._get_token_symbol_by_address(collateral_asset)
-
-            debt_symbol = position_data.get("debt_symbol")
-            if not debt_symbol:
-                debt_symbol = self._get_token_symbol_by_address(debt_asset)
-
             position = await self._get_position_data(
                 user_address, pool_id, collateral_asset, debt_asset
             )
 
-            collateral_shares_low = position[0]
-            collateral_shares_high = position[1]
+            collateral_shares_low, collateral_shares_high = position[0], position[1]
             collateral_sign = 0 if collateral_shares_low >= 0 else 1
 
             collateral_value = await self._get_collateral_value(
@@ -101,14 +78,11 @@ class VesuLoanEntity:
             )
 
             debt_config = await self._get_asset_config(pool_id, debt_asset)
-            nominal_debt_low = position[2]
-            nominal_debt_high = position[3]
+            nominal_debt_low, nominal_debt_high = position[2], position[3]
             debt_sign = 0 if nominal_debt_low >= 0 else 1
 
-            rate_acc_low = debt_config[14]
-            rate_acc_high = debt_config[15]
-            scale_low = debt_config[10]
-            scale_high = debt_config[11]
+            rate_acc_low, rate_acc_high = debt_config[14], debt_config[15]
+            scale_low, scale_high = debt_config[10], debt_config[11]
 
             debt_value = await self._calculate_debt(
                 nominal_debt_low,
@@ -122,16 +96,16 @@ class VesuLoanEntity:
 
             ltv_data = await self.get_ltv_config(pool_id, collateral_asset, debt_asset)
 
-            collateral_decimals = self._get_token_decimals(collateral_symbol)
-            debt_decimals = self._get_token_decimals(debt_symbol)
+            collateral_decimals = self._get_token_decimals(collateral_asset)
+            debt_decimals = self._get_token_decimals(debt_asset)
 
-            collateral_factor = Decimal(ltv_data[0]) / Decimal(10**collateral_decimals)
+            collateral_factor = Decimal(ltv_data[0]) / collateral_decimals
 
             collateral_price = await self.fetch_token_price(collateral_asset, pool_id)
             debt_price = await self.fetch_token_price(debt_asset, pool_id)
 
-            collateral_normalized = collateral_value / Decimal(10**collateral_decimals)
-            debt_normalized = debt_value / Decimal(10**debt_decimals)
+            collateral_normalized = collateral_value / collateral_decimals
+            debt_normalized = debt_value / debt_decimals
 
             collateral_usd = collateral_normalized * collateral_price
             debt_usd = debt_normalized * debt_price
@@ -296,6 +270,7 @@ class VesuLoanEntity:
         """
         try:
             vesu_addr = int(self.VESU_ADDRESS, 16)
+
             cache_key = f"extension_price_{pool_id}"
             if cache_key not in self._cache:
                 extension_result = await self.client.func_call(
@@ -303,23 +278,21 @@ class VesuLoanEntity:
                 )
                 self._cache[cache_key] = extension_result[0]
             price_extension_addr = self._cache[cache_key]
-            cache_key_price = f"price_{pool_id}_{address}"
-            if cache_key_price not in self._cache:
-                price_result = await self.client.func_call(
-                    price_extension_addr, "price", [pool_id, address]
-                )
-                price_u256 = price_result[0]
-                is_valid = price_result[2] if len(price_result) > 2 else 1
-                if not is_valid:
-                    print(
-                        f"Warning: Price for \
-                        {TOKEN_SETTINGS.get(address, {}).get('symbol', address)} is not valid"
-                    )
-                    return Decimal("1")
-                price = Decimal(price_u256) / Decimal(10**18)
-                self._cache[cache_key_price] = price
 
-                return self._cache[cache_key_price]
+            price_result = await self.client.func_call(
+                price_extension_addr, "price", [pool_id, address]
+            )
+            price_u256 = price_result[0]
+            is_valid = price_result[2] if len(price_result) > 2 else 1
+
+            if not is_valid:
+                print(
+                    f"Warning: Price for \
+                    {TOKEN_SETTINGS.get(address, {}).get('symbol', address)} is not valid"
+                )
+                return Decimal("1")
+
+            return Decimal(price_u256) / Decimal(10**18)
 
         except Exception as e:
             print(f"Error fetching price for {address}: {e}")
@@ -339,6 +312,7 @@ class VesuLoanEntity:
     async def update_positions_data(self) -> None:
         """
         Process ModifyPosition events to track user positions.
+        Uses continuation tokens to fetch all events across multiple pages.
 
         :return: None
         """
@@ -347,14 +321,26 @@ class VesuLoanEntity:
         if current_block <= self.last_processed_block:
             return
 
-        events = await self.client.client.get_events(
-            address=self.VESU_ADDRESS,
-            from_block_number=self.last_processed_block + 1,
-            to_block_number=current_block,
-            keys=[[hex(get_selector_from_name("ModifyPosition"))]],
-            chunk_size=2,
-        )
-        for event in events.events:
+        continuation_token = None
+        all_events = []
+
+        while True:
+            events = await self.client.client.get_events(
+                address=self.VESU_ADDRESS,
+                from_block_number=self.last_processed_block + 1,
+                to_block_number=current_block,
+                keys=[[hex(get_selector_from_name("ModifyPosition"))]],
+                chunk_size=5,
+                continuation_token=continuation_token,
+            )
+
+            all_events.extend(events.events)
+
+            continuation_token = events.continuation_token
+            if not continuation_token:
+                break
+
+        for event in all_events:
             event_keys = event.keys
 
             pool_id = event_keys[1]
@@ -363,15 +349,10 @@ class VesuLoanEntity:
             user = event_keys[4]
             block_number = event.block_number
 
-            collateral_symbol = self._get_token_symbol_by_address(collateral_asset)
-            debt_symbol = self._get_token_symbol_by_address(debt_asset)
-
             self.mock_db[(user, pool_id)] = {
                 "pool_id": pool_id,
                 "collateral_asset": collateral_asset,
                 "debt_asset": debt_asset,
-                "collateral_symbol": collateral_symbol,
-                "debt_symbol": debt_symbol,
                 "block_number": block_number,
             }
             self.last_processed_block = max(self.last_processed_block, block_number)
