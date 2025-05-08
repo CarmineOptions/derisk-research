@@ -6,7 +6,6 @@ calculate collateral and debt values, and determine health factors for users.
 
 from decimal import Decimal
 
-from shared.constants import TOKEN_SETTINGS
 from shared.starknet_client import StarknetClient
 from starknet_py.hash.selector import get_selector_from_name
 
@@ -21,8 +20,6 @@ class VesuLoanEntity:
 
     VESU_ADDRESS = "0x02545b2e5d519fc230e9cd781046d3a64e092114f07e44771e0d719d148725ef"
 
-    TOKEN_SETTINGS = TOKEN_SETTINGS
-
     def __init__(self):
         """Initialize Starknet client and storage."""
         self.client = StarknetClient()
@@ -30,18 +27,20 @@ class VesuLoanEntity:
         self._cache = {}
         self.last_processed_block = 654244  # First VESU event block
 
-    def _get_token_decimals(self, token_address: int) -> Decimal:
+    async def _get_token_decimals(self, token_address: int) -> Decimal:
         """
-        Get decimals for a token from TOKEN_SETTINGS
+        Fetch decimals directly from the token contract
 
         :param token_address: Token address in decimal format
 
-        :return: Number of decimals for the token
+        :return: Decimal factor based on token decimals (10^n)
         """
-        for token in self.TOKEN_SETTINGS.values():
-            if int(token.address, 16) == token_address:
-                return token.decimal_factor
-        return Decimal("1")
+        result = await self.client.func_call(token_address, "decimals", [])
+        if result and len(result) > 0:
+            print(f"Decimals for token {hex(token_address)}: {result[0]}")
+            decimals = result[0]
+            return Decimal(10) ** Decimal(decimals)
+        return Decimal("Inf")
 
     async def calculate_health_factor(self, user_address: int) -> dict:
         """
@@ -62,10 +61,12 @@ class VesuLoanEntity:
             collateral_asset = position_data["collateral_asset"]
             debt_asset = position_data["debt_asset"]
 
+            if collateral_asset == 0 or debt_asset == 0:
+                continue
+
             position = await self._get_position_data(
                 user_address, pool_id, collateral_asset, debt_asset
             )
-
             collateral_shares_low, collateral_shares_high = position[0], position[1]
             collateral_sign = 0 if collateral_shares_low >= 0 else 1
 
@@ -96,8 +97,8 @@ class VesuLoanEntity:
 
             ltv_data = await self.get_ltv_config(pool_id, collateral_asset, debt_asset)
 
-            collateral_decimals = self._get_token_decimals(collateral_asset)
-            debt_decimals = self._get_token_decimals(debt_asset)
+            collateral_decimals = await self._get_token_decimals(collateral_asset)
+            debt_decimals = await self._get_token_decimals(debt_asset)
 
             collateral_factor = Decimal(ltv_data[0]) / collateral_decimals
 
@@ -288,7 +289,7 @@ class VesuLoanEntity:
             if not is_valid:
                 print(
                     f"Warning: Price for \
-                    {TOKEN_SETTINGS.get(address, {}).get('symbol', address)} is not valid"
+                    {address} is not valid"
                 )
                 return Decimal("1")
 
