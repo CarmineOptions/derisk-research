@@ -62,6 +62,7 @@ class VesuLoanEntity:
             debt_asset = position_data["debt_asset"]
 
             if collateral_asset == 0 or debt_asset == 0:
+                results[hex(pool_id)] = Decimal("inf")
                 continue
 
             position = await self._get_position_data(
