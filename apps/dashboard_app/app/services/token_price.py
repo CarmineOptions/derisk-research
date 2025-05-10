@@ -1,6 +1,6 @@
-from dashboard_app.app.utils.api_request import api_request
+from app.utils.api_request import api_request
 from shared.constants import TOKEN_SETTINGS
-from dashboard_app.core.config import settings
+from app.core.config import settings
 
 
 class PriceHistoryManager:
@@ -13,8 +13,8 @@ class PriceHistoryManager:
         """
         self.headers = {
             "accept": "application/json",
-            "x-cg-api-key": settings.coingecko_api_key
-                }
+            "x-cg-api-key": settings.coingecko_api_key,
+        }
         self.base_url = settings.coingecko_api_url
 
     async def get_all_prices(self, date: str):
@@ -28,12 +28,11 @@ class PriceHistoryManager:
             dict: A dictionary where the keys are token symbols and the values are their respective prices.
         """
 
-        prices = dict()
-        for token in TOKEN_SETTINGS:
-            prices[f'{token.symbol}'] = await self.get_token_price(coin_id=token.coind_id, date=date)
+        prices = {}
+        for token in TOKEN_SETTINGS.values():
+            prices[token.symbol] = await self.get_token_price(token.coin_id, date)
 
         return prices
-
 
     async def get_token_price(self, coin_id: str, date: str):
         """
@@ -48,7 +47,11 @@ class PriceHistoryManager:
         """
 
         url = f"{self.base_url}/coins/{coin_id}/history?date={date}"
-        return (await api_request(url=url, headers = self.headers, key='market_data')).get("current_price").get("usd")
+        return (
+            (await api_request(url=url, headers=self.headers, key="market_data"))
+            .get("current_price")
+            .get("usd")
+        )
 
 
 price_history_manager = PriceHistoryManager()
