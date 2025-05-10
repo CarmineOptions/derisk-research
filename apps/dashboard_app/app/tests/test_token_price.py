@@ -1,9 +1,4 @@
-import sys
-from pathlib import Path
-
-# sys.path.append(Path().resolve().parent.absolute().as_posix())
-# print(sys.path)
-from unittest.mock import AsyncMock, Mock, call, patch
+from unittest.mock import AsyncMock, call, patch
 from hashlib import md5
 from shared.constants import TOKEN_SETTINGS
 from app.core.config import settings
