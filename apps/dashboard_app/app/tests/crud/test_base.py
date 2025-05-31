@@ -183,23 +183,20 @@ class TestDBConnectorAsync:
     async def test_get_object_by_field_success(self, db_connector: DBConnectorAsync, mock_session, sample_model_instance: MockModel):
         """Test successful get_object_by_field operation"""
         db_connector.session_maker.return_value = mock_session
-        
+
         mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = sample_model_instance
         mock_session.execute.return_value = mock_result
-        
-        with patch("app.crud.base.select") as mock_select, \
-             patch("builtins.getattr") as mock_getattr:
-            
+
+        with patch("app.crud.base.select") as mock_select:
             mock_field_attr = MagicMock()
-            mock_getattr.return_value = mock_field_attr
+            setattr(MockModel, "name", mock_field_attr)
             mock_where_stmt = MagicMock()
             mock_select.return_value.where.return_value = mock_where_stmt
-            
+
             result = await db_connector.get_object_by_field(MockModel, "name", "test_value")
-            
+
             mock_select.assert_called_once_with(MockModel)
-            mock_getattr.assert_called_once_with(MockModel, "name")
             mock_session.execute.assert_called_once_with(mock_where_stmt)
             mock_result.scalar_one_or_none.assert_called_once()
             mock_session.close.assert_called_once()
@@ -209,16 +206,19 @@ class TestDBConnectorAsync:
     async def test_get_object_by_field_not_found(self, db_connector: DBConnectorAsync, mock_session):
         """Test get_object_by_field when object not found"""
         db_connector.session_maker.return_value = mock_session
-        
+
         mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = None
         mock_session.execute.return_value = mock_result
-        
-        with patch("app.crud.base.select") as mock_select, \
-             patch("builtins.getattr") as mock_getattr:
-            
+
+        with patch("app.crud.base.select") as mock_select:
+            mock_field_attr = MagicMock()
+            setattr(MockModel, "name", mock_field_attr)
+            mock_where_stmt = MagicMock()
+            mock_select.return_value.where.return_value = mock_where_stmt
+
             result = await db_connector.get_object_by_field(MockModel, "name", "nonexistent")
-            
+
             mock_session.close.assert_called_once()
             assert result is None
 
