@@ -4,6 +4,10 @@ from shared.constants import TOKEN_SETTINGS
 from app.core.config import settings
 
 
+# Date format required by CoinGecko API
+COINGECKO_DATE_FORMAT = "%d-%m-%Y"
+
+
 class PriceHistoryManager:
     def __init__(self):
         """
@@ -45,8 +49,8 @@ class PriceHistoryManager:
         Raises:
             Exception: If the API request fails or the response does not contain the expected data.
         """
-        # Format date as required by CoinGecko API (dd-mm-yyyy)
-        formatted_date = date_obj.strftime("%d-%m-%Y")
+        # Format date as required by CoinGecko API
+        formatted_date = date_obj.strftime(COINGECKO_DATE_FORMAT)
         url = f"{self.base_url}/coins/{coin_id}/history?date={formatted_date}"
         return (
             (await api_request(url=url, headers=self.headers, key="market_data"))
