@@ -79,6 +79,7 @@ While in `data_handler` directory,
 poetry install
 ```
 to install all the dependency libs to run migrations.
+
 2. Activate the Poetry environment (this is dependent on the version of Poetry you have installed)
 ```bash 
 poetry shell
