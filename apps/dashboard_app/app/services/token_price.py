@@ -1,6 +1,11 @@
+from datetime import date
 from app.utils.api_request import api_request
 from shared.constants import TOKEN_SETTINGS
 from app.core.config import settings
+
+
+# Date format required by CoinGecko API
+COINGECKO_DATE_FORMAT = "%d-%m-%Y"
 
 
 class PriceHistoryManager:
@@ -17,36 +22,36 @@ class PriceHistoryManager:
         }
         self.base_url = settings.coingecko_api_url
 
-    async def get_all_prices(self, date: str):
+    async def get_all_prices(self, date_obj: date):
         """
         Fetches the historical prices of all tokens for a given date.
         This asynchronous function iterates through the tokens defined in `TOKEN_SETTINGS`
         and retrieves their prices for the specified date using the `get_token_price` function.
         Args:
-            date (str): The date for which to fetch token prices, formatted as 'YYYY-MM-DD'.
+            date_obj (date): The date for which to fetch token prices.
         Returns:
             dict: A dictionary where the keys are token symbols and the values are their respective prices.
         """
-
         prices = {}
         for token in TOKEN_SETTINGS.values():
-            prices[token.symbol] = await self.get_token_price(token.coin_id, date)
+            prices[token.symbol] = await self.get_token_price(token.coin_id, date_obj)
 
         return prices
 
-    async def get_token_price(self, coin_id: str, date: str):
+    async def get_token_price(self, coin_id: str, date_obj: date):
         """
         Fetches the historical price of a cryptocurrency in USD for a specific date.
         Args:
             coin_id (str): The unique identifier of the cryptocurrency (e.g., 'bitcoin', 'ethereum').
-            date (str): The date for which the price is requested, in the format 'dd-mm-yyyy'.
+            date_obj (date): The date for which the price is requested.
         Returns:
             float: The price of the cryptocurrency in USD on the specified date.
         Raises:
             Exception: If the API request fails or the response does not contain the expected data.
         """
-
-        url = f"{self.base_url}/coins/{coin_id}/history?date={date}"
+        # Format date as required by CoinGecko API
+        formatted_date = date_obj.strftime(COINGECKO_DATE_FORMAT)
+        url = f"{self.base_url}/coins/{coin_id}/history?date={formatted_date}"
         return (
             (await api_request(url=url, headers=self.headers, key="market_data"))
             .get("current_price")
