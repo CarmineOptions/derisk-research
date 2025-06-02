@@ -48,46 +48,17 @@ TELEGRAM_TOKEN=#
 
 ### 5. Build your docker containers
 
-From `data_handler` run 
-```bash 
-docker-compose -f ../../devops/dev/docker-compose.data-handler.yaml up -d --build
-```
-
-Or from `devops/dev/` run
 ```bash
 docker-compose up -d --build
 ```
 
 #### Stop your containers
-From `data_handler` run 
-```bash 
-docker-compose -f ../../devops/dev/docker-compose.data-handler.yaml down
-```
-
-Or from `devops/dev/` run
 ```bash
 docker-compose down
 ```
 
 ## Data migrations with Alembic
-This project is using `alembic` for data migrations.
-
-### Ensuring dependencies are installed via Poetry
-While in `data_handler` directory, 
-1. run
-```bash 
-poetry install
-```
-to install all the dependency libs to run migrations.
-
-2. Activate the Poetry environment (this is dependent on the version of Poetry you have installed)
-```bash 
-poetry shell
-``` 
-or 
-```bash 
-poetry env activate
-``` 
+In this project is using alembic for data migrations.
 
 ### Generating Migrations
 Navigate to the `apps` folder and generate a new migration using the following command:
