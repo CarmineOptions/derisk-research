@@ -5,8 +5,11 @@ calculate collateral and debt values, and determine health factors for users.
 """
 
 from decimal import Decimal
+from sqlalchemy import select
 
 from shared.starknet_client import StarknetClient
+from shared.db import session
+from apps.data_handler.models import VesuPosition
 from starknet_py.hash.selector import get_selector_from_name
 
 
@@ -23,7 +26,8 @@ class VesuLoanEntity:
     def __init__(self):
         """Initialize Starknet client and storage."""
         self.client = StarknetClient()
-        self.mock_db = {}
+        self.session = session
+        # self.mock_db = {}
         self._cache = {}
         self.last_processed_block = 654244  # First VESU event block
 
@@ -42,24 +46,27 @@ class VesuLoanEntity:
             return Decimal(10) ** Decimal(decimals)
         return Decimal("Inf")
 
-    async def calculate_health_factor(self, user_address: int) -> dict:
+    async def calculate_health_factor(self, user_address: int) -> dict[str, Decimal]:
         """
         Calculate health factors for all positions of a user.
 
         :param user_address: User address in int format
-
-        :return: Dictionary with pool IDs as keys and health factors as values
+        :return: Dictionary with pool IDs (in hex) as keys and health factors as values
         """
+        result = await self.session.execute(
+            select(VesuPosition).where(VesuPosition.user == str(user_address))
+        )
+        positions = result.scalars().all()
 
-        user_positions = {k: v for k, v in self.mock_db.items() if k[0] == user_address}
-
-        if not user_positions:
+        if not positions:
             return {}
 
         results = {}
-        for (_, pool_id), position_data in user_positions.items():
-            collateral_asset = position_data["collateral_asset"]
-            debt_asset = position_data["debt_asset"]
+
+        for pos in positions:
+            pool_id = int(pos.pool_id)
+            collateral_asset = int(pos.collateral_asset)
+            debt_asset = int(pos.debt_asset)
 
             if collateral_asset == 0 or debt_asset == 0:
                 results[hex(pool_id)] = Decimal("inf")
@@ -351,10 +358,15 @@ class VesuLoanEntity:
             user = event_keys[4]
             block_number = event.block_number
 
-            self.mock_db[(user, pool_id)] = {
-                "pool_id": pool_id,
-                "collateral_asset": collateral_asset,
-                "debt_asset": debt_asset,
-                "block_number": block_number,
-            }
+            position = VesuPosition(
+                user=str(user),
+                pool_id=str(pool_id),
+                collateral_asset=str(collateral_asset),
+                debt_asset=str(debt_asset),
+                block_number=block_number,
+            )
+            self.session.add(position)
+
             self.last_processed_block = max(self.last_processed_block, block_number)
+
+        await self.session.commit()
