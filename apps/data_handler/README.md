@@ -53,13 +53,12 @@ docker-compose up -d --build
 ```
 
 #### Stop your containers
-
 ```bash
 docker-compose down
 ```
 
 ## Data migrations with Alembic
-In this project is using `alembic` for data migrations.
+In this project is using alembic for data migrations.
 
 ### Generating Migrations
 Navigate to the `apps` folder and generate a new migration using the following command:

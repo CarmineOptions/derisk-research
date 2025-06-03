@@ -48,3 +48,16 @@ class ZkLendCollateralDebt(Base):
     deposit = Column(JSON, nullable=True)
     collateral_enabled = Column(JSON, nullable=False)
 
+
+class VesuCollateralDebt(Base):
+    """
+    SQLAlchemy model for table with obligation data for Vesu.
+    """
+
+    __tablename__ = "vesu_collateral_debt"
+
+    user_id = Column(String, nullable=False, index=True)
+    collateral = Column(JSON, nullable=True)
+    debt = Column(JSON, nullable=True)
+    deposit = Column(JSON, nullable=True)
+
