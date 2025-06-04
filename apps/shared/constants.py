@@ -205,6 +205,8 @@ class ProtocolIDs(Enum):
     # zkLend protocol
     ZKLEND: str = "zkLend"
 
+    VESU: str = "Vesu"
+
     @classmethod
     def choices(cls) -> list[str]:
         """

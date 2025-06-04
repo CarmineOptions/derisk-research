@@ -51,17 +51,20 @@ class ProtocolIDs(Enum):
     NOSTRA_ALPHA: str = "Nostra_alpha"
     NOSTRA_MAINNET: str = "Nostra_mainnet"
     ZKLEND: str = "zkLend"
+    VESU: str = "Vesu"
 
 
 class ProtocolIDCodeNames(Enum):
     HASHSTACK: str = "hashstack_v1"
     NOSTRA: str = "nostra_mainnet"
     ZKLEND: str = "zklend"
+    VESU: str = "Vesu"
 
 
 CURRENTLY_AVAILABLE_PROTOCOLS_IDS: tuple[str, ...] = (
     "zkLend",
     "Nostra_alpha",
     "Nostra_mainnet",
+    "Vesu",
 )
 HEALTH_RATIO_LEVEL_ALERT_VALUE: float = 0.1
