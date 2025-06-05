@@ -1,7 +1,8 @@
-from sqlalchemy import Column, BigInteger, String
+from sqlalchemy import BigInteger, Column, String
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
+
 
 class VesuPosition(Base):
     __tablename__ = "vesu_positions"

@@ -1,18 +1,15 @@
 """ This module contains all the models used in the database. """
 from .base import Base
 from .liquidable_debt import HealthRatioLevel, LiquidableDebt
-from .loan_states import (
-    InterestRate,
-    LoanState,
-    ZkLendCollateralDebt,
-)
+from .loan_states import InterestRate, LoanState, ZkLendCollateralDebt
 from .order_book import OrderBookModel
+from .vesu import VesuPosition
 from .zklend_events import (
     AccumulatorsSyncEventModel,
-    LiquidationEventModel,
-    WithdrawalEventModel,
     BorrowingEventModel,
-    RepaymentEventModel,
-    DepositEventModel,
     CollateralEnabledDisabledEventModel,
+    DepositEventModel,
+    LiquidationEventModel,
+    RepaymentEventModel,
+    WithdrawalEventModel,
 )
