@@ -13,6 +13,7 @@ class LiquidableDebt(Base):
     """
 
     __tablename__ = "liquidable_debt"
+    __table_args__ = {'extend_existing': True}
 
     liquidable_debt = Column(DECIMAL, nullable=False)
     protocol_name = Column(ChoiceType(LendingProtocolNames, impl=String()), nullable=False)
@@ -27,6 +28,7 @@ class HealthRatioLevel(Base):
     """
 
     __tablename__ = "health_ratio_level"
+    __table_args__ = {'extend_existing': True}
 
     timestamp = Column(BigInteger, index=True)
     user_id = Column(String, index=True)

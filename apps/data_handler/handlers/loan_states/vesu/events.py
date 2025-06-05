@@ -10,9 +10,9 @@ from sqlalchemy import select
 from starknet_py.hash.selector import get_selector_from_name
 from data_handler.db.models.liquidable_debt import HealthRatioLevel
 
-from apps.data_handler.db.crud import DBConnector
-from apps.data_handler.db.models import VesuPosition
-from apps.shared.starknet_client import StarknetClient
+from data_handler.db.crud import DBConnector
+from data_handler.db.models import VesuPosition
+from shared.starknet_client import StarknetClient
 
 
 class VesuLoanEntity:
@@ -147,7 +147,7 @@ class VesuLoanEntity:
             if session is not None:
                 await self.save_health_ratio_level(
                     session=session,
-                    timestamp=position_data.get("block_number", 0),
+                    timestamp=pos.get("block_number", 0),
                     user_id=str(user_address),
                     value=health_factor,
                     protocol_id=pool_id,
