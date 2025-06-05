@@ -27,7 +27,6 @@ class NotificationData(Base):
     )
 
 class TelegramLog(Base):
-    __tablename__ = "telegram_log"
 
     sent_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, nullable=False)
     notification_data_id: Mapped[str] = mapped_column(ForeignKey(NotificationData.id), nullable=False)
