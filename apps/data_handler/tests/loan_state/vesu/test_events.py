@@ -9,8 +9,12 @@ from data_handler.db.models.liquidable_debt import HealthRatioLevel
 @pytest.fixture
 def vesu_entity():
     """Create VesuLoanEntity instance for testing"""
-    with patch("data_handler.handlers.loan_states.vesu.events.StarknetClient"):
-        return VesuLoanEntity()
+    with patch("data_handler.handlers.loan_states.vesu.events.StarknetClient"), \
+         patch("data_handler.handlers.loan_states.vesu.events.DBConnector"):
+        entity = VesuLoanEntity()
+        # Mock the session to avoid real database calls
+        entity.session = AsyncMock()
+        return entity
 
 
 @pytest.fixture
@@ -21,6 +25,17 @@ def mock_session():
     session.commit = AsyncMock()
     session.refresh = AsyncMock()
     return session
+
+
+@pytest.fixture
+def mock_vesu_position():
+    """Mock VesuPosition object"""
+    position = MagicMock()
+    position.pool_id = "456"
+    position.collateral_asset = "789"
+    position.debt_asset = "101112"
+    position.get.return_value = 1000000  # block_number
+    return position
 
 
 class TestVesuLoanEntity:
@@ -49,16 +64,15 @@ class TestVesuLoanEntity:
 
     @pytest.mark.asyncio
     async def test_calculate_health_factor_with_session(
-        self, vesu_entity, mock_session
+        self, vesu_entity, mock_session, mock_vesu_position
     ):
         """Test calculate_health_factor saves to database when session provided"""
-        vesu_entity.mock_db = {
-            (123, 456): {
-                "collateral_asset": 789,
-                "debt_asset": 101112,
-                "block_number": 1000000,
-            }
-        }
+        # Mock the database query result properly
+        mock_scalars = MagicMock()
+        mock_scalars.all.return_value = [mock_vesu_position]
+        mock_result = MagicMock()
+        mock_result.scalars.return_value = mock_scalars
+        vesu_entity.session.execute = AsyncMock(return_value=mock_result)
 
         with patch.object(
             vesu_entity, "_get_position_data"
@@ -83,11 +97,11 @@ class TestVesuLoanEntity:
                 0,
                 200,
                 0,
-            ) 
+            )
             mock_collateral.return_value = Decimal("1000")
             mock_asset_config.return_value = [
                 0
-            ] * 16 
+            ] * 16
             mock_debt.return_value = Decimal("500")
             mock_ltv.return_value = (Decimal("80"),)
             mock_decimals.return_value = Decimal("1000000")
@@ -108,7 +122,12 @@ class TestVesuLoanEntity:
     @pytest.mark.asyncio
     async def test_calculate_health_factor_without_session(self, vesu_entity):
         """Test calculate_health_factor doesn't save when no session provided"""
-        vesu_entity.mock_db = {}
+        # Mock empty database query result properly
+        mock_scalars = MagicMock()
+        mock_scalars.all.return_value = []
+        mock_result = MagicMock()
+        mock_result.scalars.return_value = mock_scalars
+        vesu_entity.session.execute = AsyncMock(return_value=mock_result)
 
         with patch.object(vesu_entity, "save_health_ratio_level") as mock_save:
             result = await vesu_entity.calculate_health_factor(123)
