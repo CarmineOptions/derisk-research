@@ -5,13 +5,14 @@ calculate collateral and debt values, and determine health factors for users.
 """
 
 from decimal import Decimal
-from sqlalchemy import select
 
-from shared.starknet_client import StarknetClient
-from shared.db import session
-from apps.data_handler.models import VesuPosition
+from sqlalchemy import select
 from starknet_py.hash.selector import get_selector_from_name
 from data_handler.db.models.liquidable_debt import HealthRatioLevel
+
+from apps.data_handler.db.crud import DBConnector
+from apps.data_handler.db.models import VesuPosition
+from apps.shared.starknet_client import StarknetClient
 
 
 class VesuLoanEntity:
@@ -27,8 +28,8 @@ class VesuLoanEntity:
     def __init__(self):
         """Initialize Starknet client and storage."""
         self.client = StarknetClient()
-        self.session = session
-        # self.mock_db = {}
+        self.db_connector = DBConnector()
+        self.session = self.db_connector.Session()
         self._cache = {}
         self.last_processed_block = 654244  # First VESU event block
 
