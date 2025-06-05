@@ -12,7 +12,6 @@ def vesu_entity():
     with patch("data_handler.handlers.loan_states.vesu.events.StarknetClient"), \
          patch("data_handler.handlers.loan_states.vesu.events.DBConnector"):
         entity = VesuLoanEntity()
-        # Mock the session to avoid real database calls
         entity.session = AsyncMock()
         return entity
 
@@ -34,8 +33,7 @@ def mock_vesu_position():
     position.pool_id = "456"
     position.collateral_asset = "789"
     position.debt_asset = "101112"
-    position.get.return_value = 1000000  # block_number
-    return position
+    position.get.return_value = 1000000 
 
 
 class TestVesuLoanEntity:
@@ -67,7 +65,6 @@ class TestVesuLoanEntity:
         self, vesu_entity, mock_session, mock_vesu_position
     ):
         """Test calculate_health_factor saves to database when session provided"""
-        # Mock the database query result properly
         mock_scalars = MagicMock()
         mock_scalars.all.return_value = [mock_vesu_position]
         mock_result = MagicMock()
@@ -122,7 +119,6 @@ class TestVesuLoanEntity:
     @pytest.mark.asyncio
     async def test_calculate_health_factor_without_session(self, vesu_entity):
         """Test calculate_health_factor doesn't save when no session provided"""
-        # Mock empty database query result properly
         mock_scalars = MagicMock()
         mock_scalars.all.return_value = []
         mock_result = MagicMock()
