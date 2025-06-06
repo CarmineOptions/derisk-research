@@ -8,10 +8,11 @@ from decimal import Decimal
 
 from sqlalchemy import select
 from starknet_py.hash.selector import get_selector_from_name
+from data_handler.db.models.liquidable_debt import HealthRatioLevel
 
-from apps.data_handler.db.crud import DBConnector
-from apps.data_handler.db.models import VesuPosition
-from apps.shared.starknet_client import StarknetClient
+from data_handler.db.crud import DBConnector
+from data_handler.db.models import VesuPosition
+from shared.starknet_client import StarknetClient
 
 
 class VesuLoanEntity:
@@ -46,8 +47,23 @@ class VesuLoanEntity:
             decimals = result[0]
             return Decimal(10) ** Decimal(decimals)
         return Decimal("Inf")
+    
+    async def save_health_ratio_level(
+        self, session, timestamp, user_id, value, protocol_id
+    ):
+        """Save a HealthRatioLevel record to the DB."""
+        record = HealthRatioLevel(
+            timestamp=timestamp,
+            user_id=user_id,
+            value=value,
+            protocol_id=protocol_id,
+        )
+        session.add(record)
+        await session.commit()
+        await session.refresh(record)
+        return record
 
-    async def calculate_health_factor(self, user_address: int) -> dict[str, Decimal]:
+    async def calculate_health_factor(self, user_address: int, session=None) -> dict[str, Decimal]:
         """
         Calculate health factors for all positions of a user.
 
@@ -127,6 +143,15 @@ class VesuLoanEntity:
             )
 
             results[hex(pool_id)] = health_factor
+
+            if session is not None:
+                await self.save_health_ratio_level(
+                    session=session,
+                    timestamp=pos.get("block_number", 0),
+                    user_id=str(user_address),
+                    value=health_factor,
+                    protocol_id=pool_id,
+                )
 
         return results
 
