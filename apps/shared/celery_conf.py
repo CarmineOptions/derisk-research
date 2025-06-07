@@ -67,6 +67,10 @@ app.conf.beat_schedule = {
         "task": "process_nostra_events",
         "schedule": crontab(minute=f"*/{CRONTAB_TIME}"),
     },
+    "process_vesu_events_every_5_mins": {
+        "task": "process_vesu_events",
+        "schedule": crontab(minute="*/5"),
+    },
 }
 
 from apps.shared.background_tasks.data_handler.order_books_tasks import ekubo_order_book

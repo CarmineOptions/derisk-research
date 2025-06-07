@@ -3,13 +3,43 @@ Tasks for processing and storing ZkLend protocol events.
 """
 
 import logging
+import asyncio
 from datetime import datetime
+import threading
 
 from apps.shared.celery_conf import app
 from data_handler.handlers.events.nostra.transform_events import NostraTransformer
 from data_handler.handlers.events.zklend.transform_events import ZklendTransformer
+from apps.data_handler.handlers.loan_states.vesu.events import VesuLoanEntity
 
 logger = logging.getLogger(__name__)
+
+CHUNK_SIZE = 5
+
+"""in the event of mulitple loop run async method in a new thread to avoid event loop conflicts"""
+def run_async_in_thread(coro):
+    """Run an async coroutine in a new thread with its own event loop."""
+    result = None
+    exception = None
+
+    def run_coro():
+        nonlocal result, exception
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            result = loop.run_until_complete(coro)
+        except Exception as e:
+            exception = e
+        finally:
+            loop.close()
+
+    thread = threading.Thread(target=run_coro)
+    thread.start()
+    thread.join()
+
+    if exception:
+        raise exception
+    return result
 
 
 @app.task(name="process_zklend_events")
@@ -96,3 +126,44 @@ def process_nostra_events():
             exc,
             exc_info=True,
         )
+
+
+@app.task(name="process_vesu_events", bind=True, max_retries=3)
+def process_vesu_events(self):
+    """
+    Process and store Vesu protocol events.
+    Fetches ModifyPosition events from the blockchain, updates user positions,
+    and stores them in a mock database.
+    """
+    start_time = datetime.utcnow()
+    logger.info("Starting Vesu event processing")
+    try:
+        vesu_entity = VesuLoanEntity()
+        run_async_in_thread(vesu_entity.update_positions_data())
+        execution_time = (datetime.utcnow() - start_time).total_seconds()
+        logger.info(
+            "Successfully processed Vesu events in %.2fs (UTC). Blocks: %d to %d",
+            execution_time, 
+            vesu_entity.last_processed_block - CHUNK_SIZE, # default as update_positions_data chunk_size
+            vesu_entity.last_processed_block,
+        )
+    except (ValueError, TypeError, RuntimeError) as exc:
+        execution_time = (datetime.utcnow() - start_time).total_seconds()
+        logger.error(
+            "Error processing Vesu events after %.2fs: %s",
+            execution_time,
+            exc,
+            exc_info=True,
+        )
+        self.retry(countdown=60)
+    except Exception as exc:
+        execution_time = (datetime.utcnow() - start_time).total_seconds()
+        logger.error(
+            "Unexpected error processing Vesu events after %.2fs: %s",
+            execution_time,
+            exc,
+            exc_info=True,
+        )
+        self.retry(countdown=60)
+
+
