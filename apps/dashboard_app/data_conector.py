@@ -48,6 +48,41 @@ class DataConnector:
         FROM interest_rate
         WHERE protocol_id = 'zkLend' AND block = (SELECT max_block FROM max_block);
     """
+    
+    VESU_POSITIONS_SQL_QUERY = """
+        SELECT
+            vp.user,
+            vp.pool_id,
+            vp.collateral_asset,
+            vp.debt_asset,
+            vp.block_number
+        FROM
+            vesu_positions AS vp
+        WHERE
+            vp.block_number = (
+                SELECT MAX(block_number)
+                FROM vesu_positions
+                WHERE user = vp.user
+                AND pool_id = vp.pool_id
+            );
+    """
+
+    VESU_HEALTH_FACTORS_SQL_QUERY = """
+        SELECT
+            hrl.user_id as user,
+            hrl.protocol_id as pool_id,
+            hrl.value as health_factor,
+            hrl.timestamp
+        FROM
+            health_ratio_level AS hrl
+        WHERE
+            hrl.timestamp = (
+                SELECT MAX(timestamp)
+                FROM health_ratio_level
+                WHERE user_id = hrl.user_id
+                AND protocol_id = hrl.protocol_id
+            );
+    """
 
     def __init__(self):
         """
@@ -343,4 +378,6 @@ class DataConnectorAsync(DataConnector):
 if __name__ == "__main__":
     connector = DataConnector()
     df = connector.fetch_data(DataConnector.ZKLEND_SQL_QUERY, "zkLend")
+    #remove comment when vesu protocolid will be added to the database
+    # df = connector.fetch_data(DataConnector.VESU_POSITIONS_SQL_QUERY, "Vesu")
     print(df)
