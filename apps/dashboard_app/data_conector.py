@@ -48,7 +48,7 @@ class DataConnector:
         FROM interest_rate
         WHERE protocol_id = 'zkLend' AND block = (SELECT max_block FROM max_block);
     """
-    
+
     VESU_POSITIONS_SQL_QUERY = """
         SELECT
             vp.user,
@@ -244,12 +244,40 @@ class DataConnector:
             logger.error(f"Error reading CSV file: {e}")
             return None
 
+    def fetch_vesu_positions(self) -> pd.DataFrame:
+        """
+        Fetch Vesu positions data using the predefined query.
+
+        :return: DataFrame containing Vesu positions data
+        """
+        try:
+            with self.engine.connect() as connection:
+                return pd.read_sql(self.VESU_POSITIONS_SQL_QUERY, connection)
+        except sqlalchemy.exc.SQLAlchemyError as e:
+            logger.error(f"Database error: {e}")
+            raise DatabaseConnectionError(f"Failed to fetch Vesu positions: {str(e)}")
+
+    def fetch_vesu_health_factors(self) -> pd.DataFrame:
+        """
+        Fetch Vesu health factors data using the predefined query.
+
+        :return: DataFrame containing Vesu health factors data
+        """
+        try:
+            with self.engine.connect() as connection:
+                return pd.read_sql(self.VESU_HEALTH_FACTORS_SQL_QUERY, connection)
+        except sqlalchemy.exc.SQLAlchemyError as e:
+            logger.error(f"Database error: {e}")
+            raise DatabaseConnectionError(
+                f"Failed to fetch Vesu health factors: {str(e)}"
+            )
+
 
 class DataConnectorAsync(DataConnector):
     """
     Handles database connection and fetches data asynchronously.
     """
-    
+
     async def fetch_data(
         self,
         query: str,
@@ -333,7 +361,7 @@ class DataConnectorAsync(DataConnector):
             return pd.DataFrame()
 
         return pd.concat(all_data, ignore_index=True)
-    
+
     async def fetch_protocol_first_block_number(self, protocol: str) -> int:
         """
         Asynchronously fetch the first block number for a specific protocol.
@@ -378,6 +406,4 @@ class DataConnectorAsync(DataConnector):
 if __name__ == "__main__":
     connector = DataConnector()
     df = connector.fetch_data(DataConnector.ZKLEND_SQL_QUERY, "zkLend")
-    #remove comment when vesu protocolid will be added to the database
-    # df = connector.fetch_data(DataConnector.VESU_POSITIONS_SQL_QUERY, "Vesu")
     print(df)
