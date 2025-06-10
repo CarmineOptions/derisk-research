@@ -4,6 +4,7 @@ This module interacts with the VesuLoan contract on Starknet to fetch user posit
 calculate collateral and debt values, and determine health factors for users.
 """
 
+from datetime import datetime
 from decimal import Decimal
 
 from sqlalchemy import select
@@ -29,7 +30,7 @@ class VesuLoanEntity:
         """Initialize Starknet client and storage."""
         self.client = StarknetClient()
         self.db_connector = DBConnector()
-        self.session = self.db_connector.Session()
+        self.session = self.db_connector.Session
         self._cache = {}
         self.last_processed_block = 654244  # First VESU event block
 
@@ -47,9 +48,9 @@ class VesuLoanEntity:
             decimals = result[0]
             return Decimal(10) ** Decimal(decimals)
         return Decimal("Inf")
-    
+
     async def save_health_ratio_level(
-        self, session, timestamp, user_id, value, protocol_id
+        self, timestamp, user_id, value, protocol_id
     ):
         """Save a HealthRatioLevel record to the DB."""
         record = HealthRatioLevel(
@@ -58,19 +59,19 @@ class VesuLoanEntity:
             value=value,
             protocol_id=protocol_id,
         )
-        session.add(record)
-        await session.commit()
-        await session.refresh(record)
+        self.session.add(record)
+        self.session.commit()
+        self.session.refresh(record)
         return record
 
-    async def calculate_health_factor(self, user_address: int, session=None) -> dict[str, Decimal]:
+    async def calculate_health_factor(self, user_address: int) -> dict[str, Decimal]:
         """
         Calculate health factors for all positions of a user.
 
         :param user_address: User address in int format
         :return: Dictionary with pool IDs (in hex) as keys and health factors as values
         """
-        result = await self.session.execute(
+        result = self.session.execute(
             select(VesuPosition).where(VesuPosition.user == str(user_address))
         )
         positions = result.scalars().all()
@@ -144,13 +145,12 @@ class VesuLoanEntity:
 
             results[hex(pool_id)] = health_factor
 
-            if session is not None:
-                await self.save_health_ratio_level(
-                    session=session,
-                    timestamp=pos.get("block_number", 0),
+            await self.save_health_ratio_level(
+                    # session=self.session,
+                    timestamp=datetime.now().timestamp(),
                     user_id=str(user_address),
                     value=health_factor,
-                    protocol_id=pool_id,
+                    protocol_id="Vesu",
                 )
 
         return results
@@ -395,4 +395,4 @@ class VesuLoanEntity:
 
             self.last_processed_block = max(self.last_processed_block, block_number)
 
-        await self.session.commit()
+        self.session.commit()
