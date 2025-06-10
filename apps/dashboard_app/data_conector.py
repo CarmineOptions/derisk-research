@@ -49,6 +49,41 @@ class DataConnector:
         WHERE protocol_id = 'zkLend' AND block = (SELECT max_block FROM max_block);
     """
 
+    VESU_POSITIONS_SQL_QUERY = """
+        SELECT
+            vp.user,
+            vp.pool_id,
+            vp.collateral_asset,
+            vp.debt_asset,
+            vp.block_number
+        FROM
+            vesu_positions AS vp
+        WHERE
+            vp.block_number = (
+                SELECT MAX(block_number)
+                FROM vesu_positions
+                WHERE user = vp.user
+                AND pool_id = vp.pool_id
+            );
+    """
+
+    VESU_HEALTH_FACTORS_SQL_QUERY = """
+        SELECT
+            hrl.user_id as user,
+            hrl.protocol_id as pool_id,
+            hrl.value as health_factor,
+            hrl.timestamp
+        FROM
+            health_ratio_level AS hrl
+        WHERE
+            hrl.timestamp = (
+                SELECT MAX(timestamp)
+                FROM health_ratio_level
+                WHERE user_id = hrl.user_id
+                AND protocol_id = hrl.protocol_id
+            );
+    """
+
     def __init__(self):
         """
         Initialize the DataConnector with database connection details.
@@ -209,12 +244,40 @@ class DataConnector:
             logger.error(f"Error reading CSV file: {e}")
             return None
 
+    def fetch_vesu_positions(self) -> pd.DataFrame:
+        """
+        Fetch Vesu positions data using the predefined query.
+
+        :return: DataFrame containing Vesu positions data
+        """
+        try:
+            with self.engine.connect() as connection:
+                return pd.read_sql(self.VESU_POSITIONS_SQL_QUERY, connection)
+        except sqlalchemy.exc.SQLAlchemyError as e:
+            logger.error(f"Database error: {e}")
+            raise DatabaseConnectionError(f"Failed to fetch Vesu positions: {str(e)}")
+
+    def fetch_vesu_health_factors(self) -> pd.DataFrame:
+        """
+        Fetch Vesu health factors data using the predefined query.
+
+        :return: DataFrame containing Vesu health factors data
+        """
+        try:
+            with self.engine.connect() as connection:
+                return pd.read_sql(self.VESU_HEALTH_FACTORS_SQL_QUERY, connection)
+        except sqlalchemy.exc.SQLAlchemyError as e:
+            logger.error(f"Database error: {e}")
+            raise DatabaseConnectionError(
+                f"Failed to fetch Vesu health factors: {str(e)}"
+            )
+
 
 class DataConnectorAsync(DataConnector):
     """
     Handles database connection and fetches data asynchronously.
     """
-    
+
     async def fetch_data(
         self,
         query: str,
@@ -298,7 +361,7 @@ class DataConnectorAsync(DataConnector):
             return pd.DataFrame()
 
         return pd.concat(all_data, ignore_index=True)
-    
+
     async def fetch_protocol_first_block_number(self, protocol: str) -> int:
         """
         Asynchronously fetch the first block number for a specific protocol.
