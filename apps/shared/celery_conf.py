@@ -2,7 +2,6 @@
 Celery configuration for scheduling periodic tasks.
 """
 
-
 # run_loan_states_computation_for_nostra_mainnet,; run_loan_states_computation_for_zklend,;
 # run_liquidable_debt_computation_for_nostra_alpha,;
 # run_liquidable_debt_computation_for_nostra_mainnet,;
@@ -15,6 +14,7 @@ import os
 
 from celery import Celery
 from celery.schedules import crontab
+from shared.constants import CRONTAB_TIME
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -25,13 +25,20 @@ REDIS_PORT = os.environ.get("REDIS_PORT", 6379)
 
 ORDER_BOOK_TIME_INTERVAL = int(os.environ.get("ORDER_BOOK_TIME_INTERVAL", 5))
 
+# Tasks settings
+CHECK_DATA_CHANGES_PERIOD = int(
+    os.environ.get("CHECK_DATA_CHANGES_PERIOD", 1)  # 60 * 30
+)  # in minutes
+
 app = Celery(
     main="DataHandler",
     broker=f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
     backend=f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
 )
 
-CRONTAB_TIME = os.environ.get("CRONTAB_TIME", "5")
+# TODO reuse
+
+print("#AXCHECK_DATA_CHANGES_PERIOD", CHECK_DATA_CHANGES_PERIOD)
 
 app.conf.beat_schedule = {
     # },
@@ -49,7 +56,7 @@ app.conf.beat_schedule = {
     # },
     f"run_liquidable_debt_computation_for_zklend_every_{CRONTAB_TIME}_mins": {
         "task": "run_liquidable_debt_computation_for_zklend",
-        "schedule": crontab(minute=f"*/1"),  # FIXME - CRONTAB_TIME
+        "schedule": crontab(minute=f"*/{CRONTAB_TIME}"),
     },
     # "constant_product_market_makers_order_book": {
     #     "task": "uniswap_v2_order_book",
@@ -67,14 +74,25 @@ app.conf.beat_schedule = {
         "task": "process_nostra_events",
         "schedule": crontab(minute=f"*/{CRONTAB_TIME}"),
     },
-    "process_vesu_events_every_5_mins": {
+    f"process_vesu_events_every_{CRONTAB_TIME}_mins": {
         "task": "process_vesu_events",
-        "schedule": crontab(minute="*/5"),
+        "schedule": crontab(minute=f"*/{CRONTAB_TIME}"),
     },
+    # f"check_health_ratio_level_changes_{CHECK_DATA_CHANGES_PERIOD}_mins": {
+    #     "task": "check_health_ratio_level_changes",
+    #     "schedule": crontab(minute=f"*/{CHECK_DATA_CHANGES_PERIOD}"),
+    # },
 }
 
-from apps.shared.background_tasks.data_handler.order_books_tasks import ekubo_order_book
-from apps.shared.background_tasks.data_handler.generic_tasks import run_liquidable_debt_computation_for_zklend
+from shared.background_tasks.data_handler.order_books_tasks import ekubo_order_book
+from shared.background_tasks.data_handler.generic_tasks import (
+    run_liquidable_debt_computation_for_zklend,
+)
+# from shared.background_tasks.tasks import check_health_ratio_level_changes
+
+# from shared.background_tasks.data_handler.event_tasks import process_zklend_events
+# from shared.background_tasks.data_handler.event_tasks import process_nostra_events
+# from shared.background_tasks.data_handler.event_tasks import process_vesu_events
 
 
 # run_loan_states_computation_for_nostra_alpha,; run_loan_states_computation_for_nostra_mainnet,;
@@ -82,4 +100,5 @@ from apps.shared.background_tasks.data_handler.generic_tasks import run_liquidab
 # run_liquidable_debt_computation_for_nostra_mainnet,;
 # uniswap_v2_order_book,
 
-app.autodiscover_tasks(["celery_app.tasks", "celery_app.order_books_tasks"])
+# TODO
+# app.autodiscover_tasks(["celery_app.tasks", "celery_app.order_books_tasks"])

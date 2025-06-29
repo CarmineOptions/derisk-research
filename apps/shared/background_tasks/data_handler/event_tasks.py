@@ -7,10 +7,10 @@ import asyncio
 from datetime import datetime
 import threading
 
-from apps.shared.celery_conf import app
+from celery import shared_task
 from data_handler.handlers.events.nostra.transform_events import NostraTransformer
 from data_handler.handlers.events.zklend.transform_events import ZklendTransformer
-from apps.data_handler.handlers.loan_states.vesu.events import VesuLoanEntity
+from data_handler.handlers.loan_states.vesu.events import VesuLoanEntity
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ def run_async_in_thread(coro):
     return result
 
 
-@app.task(name="process_zklend_events")
+@shared_task(name="process_zklend_events")
 def process_zklend_events():
     """
     Process and store ZkLend protocol events.
@@ -85,7 +85,7 @@ def process_zklend_events():
         )
 
 
-@app.task(name="process_nostra_events")
+@shared_task(name="process_nostra_events")
 def process_nostra_events():
     """
     Process and store Nostra protocol events.
@@ -128,7 +128,7 @@ def process_nostra_events():
         )
 
 
-@app.task(name="process_vesu_events", bind=True, max_retries=3)
+@shared_task(name="process_vesu_events", bind=True, max_retries=3)
 def process_vesu_events(self):
     """
     Process and store Vesu protocol events.
