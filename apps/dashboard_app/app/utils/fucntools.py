@@ -1,7 +1,5 @@
-from fastapi import Request
 
-
-def get_client_ip(request: Request) -> str:
+def get_client_ip(request) -> str:
     """
     Returns the client IP address
     :param request: Request

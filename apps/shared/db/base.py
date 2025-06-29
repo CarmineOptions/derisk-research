@@ -3,6 +3,7 @@ import uuid
 from contextlib import asynccontextmanager
 from typing import Any, AsyncIterator, Dict, List, Optional, Type, TypeVar
 
+from data_handler.db.models.loan_states import ZkLendCollateralDebt
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -167,7 +168,7 @@ class InitializerDBConnectorAsync:
     - save_collateral_enabled_by_user: Updates or creates a ZkLendCollateralDebt record.
     """
 
-    def __init__(self, db_url: str = SQLALCHEMY_DATABASE_URL):
+    def __init__(self, db_url: str):
         """
         Initialize the async database connection and session factory.
 

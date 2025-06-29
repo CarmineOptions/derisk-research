@@ -13,11 +13,14 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+RUN pip install poetry
 
 COPY dashboard_app/pyproject.toml dashboard_app/poetry.lock* ./
-RUN pip install poetry
 RUN poetry config virtualenvs.create false \
   && poetry install --no-interaction --no-root
+
+COPY shared/pyproject.toml shared/poetry.lock* ./
+RUN poetry install --no-interaction --no-root 
 
 COPY dashboard_app/alembic ./alembic
 COPY dashboard_app/app/ ./app/

@@ -14,16 +14,12 @@ RUN curl -sSL https://install.python-poetry.org | POETRY_HOME=/usr/local/ POETRY
 RUN pip install celery
 RUN pip install redis
 
-COPY data_handler /app/data_handler
+#TODO shouldn't be in shared 
+COPY data_handler /app/data_handler 
 COPY shared /app/shared
-
-COPY shared/background_tasks/data_handler /app/shared
-COPY shared/background_tasks/celery_conf.py /app/shared
-COPY shared/background_tasks/tasks.py /app/shared
-COPY shared/run_celery.sh /app/shared
-RUN touch /app/shared__init__.py
+COPY shared/celery_conf.py /app/
+COPY shared/telegram_app /app/telegram_app
+COPY shared/models /app/models
 
 
-WORKDIR /app/shared
-
-ENTRYPOINT ["bash", "run_celery.sh"]
+CMD ["celery", "-A", "celery_conf", "beat", "--loglevel=INFO"]
