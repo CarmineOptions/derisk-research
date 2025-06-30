@@ -1,10 +1,15 @@
 """ This module contains the constants used in the system. """
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
 from decimal import Decimal
 from enum import Enum
 from typing import List, Union
 
 from shared.custom_types import TokenSettings
+
+CRONTAB_TIME = os.environ.get("CRONTAB_TIME", "5")
 
 ZKLEND = "zkLend"
 NOSTRA_ALPHA = "Nostra Alpha"

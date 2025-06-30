@@ -34,7 +34,6 @@ if config.config_file_name is not None:
 
 # Import models to add them to the metadata
 # This will need to be updated when actual models are added
-from app.models.watcher import TelegramLog, NotificationData
 
 # add your model's MetaData object here
 # for 'autogenerate' support

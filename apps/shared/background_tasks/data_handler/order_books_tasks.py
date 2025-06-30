@@ -3,7 +3,7 @@
 
 import logging
 
-from apps.shared.celery_conf import app
+from celery import shared_task
 from data_handler.db.crud import DBConnector
 from data_handler.db.models import OrderBookModel
 from data_handler.handlers.order_books.constants import TOKEN_MAPPING
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 connector = DBConnector()
 
 
-@app.task(name="ekubo_order_book")
+@shared_task(name="ekubo_order_book")
 def ekubo_order_book():
     """
     Fetch the current price and liquidity of the pair from the Ekubo API.
@@ -39,7 +39,7 @@ def ekubo_order_book():
             continue
 
 
-@app.task(name="haiko_order_book")
+@shared_task(name="haiko_order_book")
 def haiko_order_book():
     """
     Fetch the current price and liquidity of the pair from the Haiko API.

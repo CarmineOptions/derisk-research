@@ -22,12 +22,12 @@ from data_handler.handlers.order_books.uniswap_v2.main import UniswapV2OrderBook
 from data_handler.db.crud import DBConnector
 from data_handler.db.models import OrderBookModel
 
-from apps.shared.celery_conf import app
+from celery import shared_task
 
 connector = DBConnector()
 
 
-# @app.task(name="run_loan_states_computation_for_zklend")
+# @shared_task(name="run_loan_states_computation_for_zklend")
 # def run_loan_states_computation_for_zklend():
 #     start = monotonic()
 #     logging.basicConfig(level=logging.INFO)
@@ -42,7 +42,7 @@ connector = DBConnector()
 #     )
 
 
-@app.task(name="run_loan_states_computation_for_nostra_alpha")
+@shared_task(name="run_loan_states_computation_for_nostra_alpha")
 def run_loan_states_computation_for_nostra_alpha():
     """fn docstring"""
     start = monotonic()
@@ -58,7 +58,7 @@ def run_loan_states_computation_for_nostra_alpha():
     )
 
 
-# @app.task(name="run_loan_states_computation_for_nostra_mainnet")
+# @shared_task(name="run_loan_states_computation_for_nostra_mainnet")
 # def run_loan_states_computation_for_nostra_mainnet():
 #     start = monotonic()
 #     logging.basicConfig(level=logging.INFO)
@@ -74,7 +74,7 @@ def run_loan_states_computation_for_nostra_alpha():
 #
 
 
-@app.task(name="uniswap_v2_order_book")
+@shared_task(name="uniswap_v2_order_book")
 def uniswap_v2_order_book():
     """
     Fetch the current price and liquidity of the pair from the Uniswap V2 AMMs.
@@ -94,7 +94,7 @@ def uniswap_v2_order_book():
                 )
 
 
-@app.task(name="run_liquidable_debt_computation_for_zklend")
+@shared_task(name="run_liquidable_debt_computation_for_zklend")
 def run_liquidable_debt_computation_for_zklend():
     """fn docstring"""
     logging.info("Starting zkLend liquidable debt computation")
@@ -102,7 +102,7 @@ def run_liquidable_debt_computation_for_zklend():
     logging.info("zkLend liquidable debt computation finished")
 
 
-@app.task(name="run_liquidable_debt_computation_for_nostra_alpha")
+@shared_task(name="run_liquidable_debt_computation_for_nostra_alpha")
 def run_liquidable_debt_computation_for_nostra_alpha():
     """fn docstring"""
     logging.info("Starting nostra alpha liquidable debt computation")
@@ -110,7 +110,7 @@ def run_liquidable_debt_computation_for_nostra_alpha():
     logging.info("Nostra alpha liquidable debt computation finished")
 
 
-@app.task(name="run_liquidable_debt_computation_for_hashstack_v0")
+@shared_task(name="run_liquidable_debt_computation_for_hashstack_v0")
 def run_liquidable_debt_computation_for_hashstack_v0():
     """fn docstring"""
     logging.info("Starting hashstack v0 liquidable debt computation")
@@ -118,7 +118,7 @@ def run_liquidable_debt_computation_for_hashstack_v0():
     logging.info("Hashstack v0 liquidable debt computation finished")
 
 
-@app.task(name="run_liquidable_debt_computation_for_nostra_mainnet")
+@shared_task(name="run_liquidable_debt_computation_for_nostra_mainnet")
 def run_liquidable_debt_computation_for_nostra_mainnet():
     """fn docstring"""
     logging.info("Starting nostra mainnet liquidable debt computation")
@@ -126,7 +126,7 @@ def run_liquidable_debt_computation_for_nostra_mainnet():
     logging.info("Nostra mainnet liquidable debt computation finished")
 
 
-@app.task(name="run_liquidable_debt_computation_for_hashstack_v1")
+@shared_task(name="run_liquidable_debt_computation_for_hashstack_v1")
 def run_liquidable_debt_computation_for_hashstack_v1():
     """fn docstring"""
     logging.info("Starting hashstack v1 liquidable debt computation")
