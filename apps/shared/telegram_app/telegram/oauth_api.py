@@ -13,7 +13,7 @@ app = FastAPI()
 def verify_telegram_auth(data: dict, bot_token: str) -> bool:
     # Extract and validate hash
     check_hash = data.pop('hash', None)
-    if not check_hash:
+    if not check_hash: 
         return False
     
     # Build data string for verification
