@@ -17,6 +17,52 @@ function Dashboard() {
   const [isLoadingWallet, setIsLoadingWallet] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const reconnectAttempted = useRef(false);
+
+  // Helper to get localStorage key for a wallet
+  const getHistoryCacheKey = (address) => `dashboardHistory_${address}`;
+
+  // Load history: first from cache, then fetch in background
+  useEffect(() => {
+    if (!walletAddress) return;
+
+    // 1. Try to load from cache
+    const cacheKey = getHistoryCacheKey(walletAddress);
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        setHistory(parsed);
+      } catch (e) {
+        // Corrupted cache, ignore
+        setHistory(null);
+      }
+    } else {
+      setHistory(null); // No cache, clear
+    }
+
+    // 2. Always fetch in background
+    let cancelled = false;
+    const fetchHistory = async () => {
+      setIsLoadingHistory(true);
+      try {
+        const response = await fetch(`/api/history?wallet_id=${walletAddress}`);
+        if (response.status === 200) {
+          const freshHistory = await response.json();
+          if (!cancelled) {
+            setHistory(freshHistory || null);
+            // Update cache
+            localStorage.setItem(cacheKey, JSON.stringify(freshHistory || []));
+          }
+        }
+      } catch (e) {
+        // Optionally handle fetch error
+      }
+      if (!cancelled) setIsLoadingHistory(false);
+    };
+    fetchHistory();
+    return () => { cancelled = true; };
+  }, [walletAddress]);
+
   useEffect(() => {
     if (!walletAddress) {
       const cachedAddress = localStorage.getItem('starknetLastConnectedAddress') || '0x5105649f42252f79109356e1c8765b7dcdb9bf4a6a68534e7fc962421c7efd2';
@@ -142,11 +188,17 @@ function Dashboard() {
   const handleDisconnect = async () => {
     try {
       await disconnectWallet();
+      // Clear wallet and history
+      if (walletAddress) {
+        const cacheKey = getHistoryCacheKey(walletAddress);
+        localStorage.removeItem(cacheKey);
+      }
       setWalletAddress(null);
       setBalances(null);
       setNetwork(null);
       setError(null);
       setIsDropdownOpen(false);
+      setHistory(null);
       console.log('Disconnected successfully');
     } catch (error) {
       console.error('Failed to disconnect wallet:', error);
