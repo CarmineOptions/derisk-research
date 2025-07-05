@@ -1,7 +1,7 @@
 from typing import Optional
 from pydantic import BaseModel, EmailStr
 from pydantic.networks import IPvAnyAddress
-from app.utils.values import ProtocolIDs
+from dashboard_app.app.utils.values import ProtocolIDs
 
 class NotificationForm(BaseModel):
     """

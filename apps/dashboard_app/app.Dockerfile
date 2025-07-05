@@ -2,8 +2,7 @@ FROM python:3.12-slim
 
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
-
-ENV PATH "/root/.local/bin:$PATH"
+ENV PATH="/root/.local/bin:$PATH"
 ENV PYTHONPATH="/app"
 
 RUN apt-get update \
@@ -15,19 +14,21 @@ RUN apt-get update \
 WORKDIR /app
 RUN pip install poetry
 
-COPY dashboard_app/pyproject.toml dashboard_app/poetry.lock* ./
+COPY dashboard_app/pyproject.toml dashboard_app/poetry.lock* ./dashboard_app/
+COPY shared/pyproject.toml shared/poetry.lock* ./shared/
+
+# Install dependencies for dashboard_app
+WORKDIR /app/dashboard_app
 RUN poetry config virtualenvs.create false \
   && poetry install --no-interaction --no-root
 
-COPY shared/pyproject.toml shared/poetry.lock* ./
-RUN poetry install --no-interaction --no-root 
+# Install dependencies for shared
+WORKDIR /app/shared
+RUN poetry config virtualenvs.create false \
+  && poetry install --no-interaction --no-root
 
-COPY dashboard_app/alembic ./alembic
-COPY dashboard_app/app/ ./app/
-COPY dashboard_app/app/ ./app/
-COPY shared/ ./shared/
-COPY data_handler/ ./data_handler/
+WORKDIR /app
 
 EXPOSE 8000
 
-ENTRYPOINT ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+ENTRYPOINT ["uvicorn", "dashboard_app.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
