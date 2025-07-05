@@ -10,6 +10,7 @@ from loguru import logger
 
 from app.api import watcher
 from app.api import history
+from app.api import oauth
 
 
 @asynccontextmanager
@@ -50,6 +51,7 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 app.include_router(watcher.router)
 app.include_router(history.router)
+app.include_router(oauth.router)
 
 
 @app.middleware("http")
@@ -80,6 +82,7 @@ async def read_root() -> dict[str, Any]:
             "Loan portfolio analysis",
             "Real-time data updates",
             "Notification subscription via POST /api/liquidation-watcher",
+            "Telegram OAuth authentication via POST /api/auth/telegram-oauth",
         ],
     }
 
