@@ -8,12 +8,9 @@ services:
   celery:
     build:
       context: ../../apps
-      dockerfile: shared/Dockerfile.celery
-    # entrypoint: celery -A celery_app.celery_conf worker --loglevel=INFO
-    environment:
-      - PYTHONPATH=/celery
+      dockerfile: data_handler/Dockerfile.celery_worker
     volumes:
-      - ../../apps/:/celery
+      - ../../apps:/app
     depends_on:
       - redis
     networks:

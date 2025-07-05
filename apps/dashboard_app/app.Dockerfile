@@ -15,19 +15,18 @@ RUN apt-get update \
 WORKDIR /app
 RUN pip install poetry
 
-COPY dashboard_app/pyproject.toml dashboard_app/poetry.lock* ./
+COPY apps/dashboard_app/pyproject.toml apps/dashboard_app/poetry.lock* ./dashboard_app/
 RUN poetry config virtualenvs.create false \
   && poetry install --no-interaction --no-root
 
-COPY shared/pyproject.toml shared/poetry.lock* ./
+COPY apps/shared/pyproject.toml apps/shared/poetry.lock* ./shared/
 RUN poetry install --no-interaction --no-root 
 
-COPY dashboard_app/alembic ./alembic
-COPY dashboard_app/app/ ./app/
-COPY dashboard_app/app/ ./app/
-COPY shared/ ./shared/
-COPY data_handler/ ./data_handler/
+COPY apps/dashboard_app/alembic ./dashboard_app/alembic
+COPY apps/dashboard_app/app/ ./dashboard_app/app/
+COPY apps/shared/ ./shared/
+COPY apps/data_handler/ ./data_handler/
 
 EXPOSE 8000
 
-ENTRYPOINT ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+ENTRYPOINT ["uvicorn", "dashboard_app.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
