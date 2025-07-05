@@ -1,7 +1,7 @@
 from datetime import date
-from app.utils.api_request import api_request
+from dashboard_app.app.utils.api_request import api_request
 from shared.constants import TOKEN_SETTINGS
-from app.core.config import settings
+from dashboard_app.app.core.config import settings
 
 
 # Date format required by CoinGecko API

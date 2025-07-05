@@ -2,8 +2,7 @@ FROM python:3.12-slim
 
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
-
-ENV PATH "/root/.local/bin:$PATH"
+ENV PATH="/root/.local/bin:$PATH"
 ENV PYTHONPATH="/app"
 
 RUN apt-get update \
@@ -15,17 +14,20 @@ RUN apt-get update \
 WORKDIR /app
 RUN pip install poetry
 
-COPY apps/dashboard_app/pyproject.toml apps/dashboard_app/poetry.lock* ./dashboard_app/
+COPY dashboard_app/pyproject.toml dashboard_app/poetry.lock* ./dashboard_app/
+COPY shared/pyproject.toml shared/poetry.lock* ./shared/
+
+# Install dependencies for dashboard_app
+WORKDIR /app/dashboard_app
 RUN poetry config virtualenvs.create false \
   && poetry install --no-interaction --no-root
 
-COPY apps/shared/pyproject.toml apps/shared/poetry.lock* ./shared/
-RUN poetry install --no-interaction --no-root 
+# Install dependencies for shared
+WORKDIR /app/shared
+RUN poetry config virtualenvs.create false \
+  && poetry install --no-interaction --no-root
 
-COPY apps/dashboard_app/alembic ./dashboard_app/alembic
-COPY apps/dashboard_app/app/ ./dashboard_app/app/
-COPY apps/shared/ ./shared/
-COPY apps/data_handler/ ./data_handler/
+WORKDIR /app
 
 EXPOSE 8000
 
