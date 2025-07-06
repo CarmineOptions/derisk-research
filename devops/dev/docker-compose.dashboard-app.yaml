@@ -1,5 +1,3 @@
-version: '3.8'
-
 networks:
   dashboard_app_network:
     driver: bridge
@@ -36,8 +34,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    # volumes:
-    #   - ../../apps/dashboard_app:/app
+    volumes:
+      - ../../apps/dashboard_app:/src
     networks:
       - dashboard_app_network
     environment:
@@ -60,6 +58,9 @@ services:
       - "8000:8000"
     networks:
       - dashboard_app_network
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   postgres_data:

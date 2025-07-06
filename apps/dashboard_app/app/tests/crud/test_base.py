@@ -1,7 +1,6 @@
 import pytest
 import uuid
 from unittest.mock import AsyncMock, MagicMock, patch
-from typing import Optional
 from pydantic import BaseModel
 from sqlalchemy.exc import SQLAlchemyError
 

@@ -8,8 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from loguru import logger
 
-from app.api import watcher
-from app.api import history
+from dashboard_app.app.api import watcher
+from dashboard_app.app.api import history
 
 
 @asynccontextmanager

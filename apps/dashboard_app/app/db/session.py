@@ -5,7 +5,7 @@ This module contains the session configuration.
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
-from app.core.config import settings
+from dashboard_app.app.core.config import settings
 
 # Ensure the DATABASE_URL uses asyncpg
 engine = create_async_engine(settings.database_url, echo=True)
