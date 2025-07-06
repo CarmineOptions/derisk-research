@@ -12,7 +12,7 @@ from alembic import op
 import sqlalchemy as sa
 import sqlalchemy_utils.types.choice
 from sqlalchemy_utils.types.choice import ChoiceType
-from app.models.watcher import ProtocolIDs
+from dashboard_app.app.models.watcher import ProtocolIDs
 
 
 # revision identifiers, used by Alembic.
