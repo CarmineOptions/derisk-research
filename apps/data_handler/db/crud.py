@@ -8,9 +8,8 @@ import logging
 import uuid
 from typing import List, Optional, Type, TypeVar
 
-from data_handler.db.database import SQLALCHEMY_DATABASE_URL
+from shared.db import SQLALCHEMY_DATABASE_URL, Base
 from data_handler.db.models import (
-    Base,
     InterestRate,
     LoanState,
     OrderBookModel,
@@ -533,6 +532,7 @@ class InitializerDBConnector:
             session.commit()
         finally:
             session.close()
+
 
 class ZkLendEventDBConnector(DBConnector):
     """

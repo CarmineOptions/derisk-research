@@ -5,13 +5,17 @@ from sqlalchemy.orm import Session
 from loguru import logger
 
 from app.utils.watcher_mixin import WatcherMixin
-from app.crud.base import db_connector
-from app.db.session import get_db
+from shared.db import db_connector
 from app.models.watcher import NotificationData
 from app.schemas import NotificationForm
+
 # from telegram import get_subscription_link    #FIXME
 from app.utils.fucntools import get_client_ip
-from app.utils.values import CreateSubscriptionValues, ProtocolIDs, NotificationValidationValues
+from app.utils.values import (
+    CreateSubscriptionValues,
+    ProtocolIDs,
+    NotificationValidationValues,
+)
 
 router = APIRouter()
 
@@ -23,7 +27,7 @@ router = APIRouter()
 async def subscribe_to_notification(
     request: Request,
     data: NotificationForm,
-    db: Session = Depends(get_db),
+    db: Session = Depends(db_connector.get_db),
 ):
     """
     Creates a new subscription for notifications
@@ -49,14 +53,18 @@ async def subscribe_to_notification(
             status_code=status.HTTP_400_BAD_REQUEST,
             content={
                 "status_code": status.HTTP_400_BAD_REQUEST,
-                "messages": [CreateSubscriptionValues.create_subscription_exception_message],
+                "messages": [
+                    CreateSubscriptionValues.create_subscription_exception_message
+                ],
                 "message_type": "error",
                 "protocol_ids": [item.value for item in ProtocolIDs],
             },
         )
 
     subscription = NotificationData(**data.model_dump())
-    validation_errors = WatcherMixin.validate_fields(db=db, obj=subscription, model=NotificationData)
+    validation_errors = WatcherMixin.validate_fields(
+        db=db, obj=subscription, model=NotificationData
+    )
 
     if validation_errors:
         logger.error(f"User with {get_client_ip(request)} IP submits with invalid data")
@@ -70,7 +78,7 @@ async def subscribe_to_notification(
             },
         )
 
-    subscription_id = db_connector.write_to_db(obj=subscription)
+    await db_connector.write_to_db(obj=subscription)
 
     # activation_link = await get_subscription_link(ident=subscription_id)  #FIXME
     logger.info(f"Activation link for user with {get_client_ip(request)} IP is sent")
@@ -87,10 +95,8 @@ async def subscribe_to_notification(
         },
     )
 
-@router.get(
-    path="/protocol-ids",
-    description="Returns a list of valid protocol IDs"
-)
+
+@router.get(path="/protocol-ids", description="Returns a list of valid protocol IDs")
 async def get_protocol_ids() -> JSONResponse:
     """
     Returns all protocol IDs defined in the backend.

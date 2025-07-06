@@ -4,13 +4,29 @@ from contextlib import asynccontextmanager
 from typing import Any, AsyncIterator, Dict, List, Optional, Type, TypeVar
 
 from data_handler.db.models.loan_states import ZkLendCollateralDebt
+from db.conf import SQLALCHEMY_DATABASE_URL
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from re import sub
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from uuid import uuid4, UUID
+from sqlalchemy.orm import DeclarativeBase, Mapped, declared_attr
+from sqlalchemy import Column, MetaData
 
 logger = logging.getLogger(__name__)
 ModelType = TypeVar("ModelType", bound=BaseModel)
+
+
+class Base(DeclarativeBase):
+    id: Mapped[UUID] = Column(PG_UUID(as_uuid=True), default=uuid4, primary_key=True)
+    metadata = MetaData()
+
+    @classmethod
+    @declared_attr.directive
+    def __tablename__(cls) -> str:
+        return sub(r"(?<!^)(?=[A-Z])", "_", cls.__name__).lower()
 
 
 class DBConnectorAsync:
@@ -38,6 +54,10 @@ class DBConnectorAsync:
         """
         self.engine = create_async_engine(db_url)
         self.session_maker = async_sessionmaker(self.engine)
+
+    async def get_db(self):
+        async with self.session_maker() as session:
+            yield session
 
     @asynccontextmanager
     async def session(self) -> AsyncIterator[AsyncSession]:
@@ -159,6 +179,9 @@ class DBConnectorAsync:
             await db.commit()
 
 
+db_connector = DBConnectorAsync(SQLALCHEMY_DATABASE_URL)
+
+
 class InitializerDBConnectorAsync:
     """
     Provides asynchronous database connection and CRUD operations for ZkLendCollateralDebt.
@@ -215,7 +238,7 @@ class InitializerDBConnectorAsync:
 
     @staticmethod
     def _convert_decimal_to_float(
-        data: Optional[Dict[str, Any]]
+        data: Optional[Dict[str, Any]],
     ) -> Optional[Dict[str, float]]:
         """
         Convert Decimal values to float for JSON serialization.

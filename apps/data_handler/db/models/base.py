@@ -1,23 +1,10 @@
-""" Base classes for ORM models. """
-from uuid import uuid4
+"""Base classes for ORM models."""
 
-from sqlalchemy import UUID, BigInteger, Column, MetaData, String
-from sqlalchemy.orm import DeclarativeBase, Mapped
+from sqlalchemy import BigInteger, Column, String
 from sqlalchemy.types import JSON
 from sqlalchemy_utils.types.choice import ChoiceType
 
 from shared.constants import ProtocolIDs
-
-
-class Base(DeclarativeBase):
-    """
-    Base class for ORM models.
-
-    :ivar id: The unique identifier of the entity.
-    """
-
-    id: Mapped[UUID] = Column(UUID, default=uuid4, primary_key=True)
-    metadata = MetaData()
 
 
 class BaseState(Base):

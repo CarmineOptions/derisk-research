@@ -49,9 +49,7 @@ class VesuLoanEntity:
             return Decimal(10) ** Decimal(decimals)
         return Decimal("Inf")
 
-    async def save_health_ratio_level(
-        self, timestamp, user_id, value, protocol_id
-    ):
+    async def save_health_ratio_level(self, timestamp, user_id, value, protocol_id):
         """Save a HealthRatioLevel record to the DB."""
         record = HealthRatioLevel(
             timestamp=timestamp,
@@ -146,12 +144,12 @@ class VesuLoanEntity:
             results[hex(pool_id)] = health_factor
 
             await self.save_health_ratio_level(
-                    # session=self.session,
-                    timestamp=datetime.now().timestamp(),
-                    user_id=str(user_address),
-                    value=health_factor,
-                    protocol_id="Vesu",
-                )
+                # session=self.session,
+                timestamp=datetime.now().timestamp(),
+                user_id=str(user_address),
+                value=health_factor,
+                protocol_id="Vesu",
+            )
 
         return results
 
