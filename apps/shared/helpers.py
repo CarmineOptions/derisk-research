@@ -4,10 +4,15 @@ from typing import Dict, Set
 
 import pandas as pd
 import starknet_py
-from data_handler.handlers.blockchain_call import func_call
+from shared.blockchain_call import func_call
 from starknet_py.net.client_errors import ClientError
 
-from .constants import GS_BUCKET_NAME, NULL_CHAR, PAIRS, UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES
+from .constants import (
+    GS_BUCKET_NAME,
+    NULL_CHAR,
+    PAIRS,
+    UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES,
+)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -33,10 +38,14 @@ def load_data(protocol: str) -> tuple[dict[str, pd.DataFrame], pd.DataFrame]:
     directory = f"{protocol.lower().replace(' ', '_')}_data"
     main_chart_data = {}
     for pair in PAIRS:
-        collateral_token_underlying_symbol, debt_token_underlying_symbol = pair.split("-")
-        collateral_token_underlying_address = UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[
-            collateral_token_underlying_symbol
-        ]
+        collateral_token_underlying_symbol, debt_token_underlying_symbol = pair.split(
+            "-"
+        )
+        collateral_token_underlying_address = (
+            UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[
+                collateral_token_underlying_symbol
+            ]
+        )
         debt_token_underlying_address = UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES[
             debt_token_underlying_symbol
         ]
@@ -87,7 +96,10 @@ async def get_symbol(token_address: str) -> str:
 
     """
     # DAI V2's symbol is `DAI` but we don't want to mix it with DAI = DAI V1.
-    if token_address == "0x05574eb6b8789a91466f902c380d978e472db68170ff82a5b650b95a58ddf4ad":
+    if (
+        token_address
+        == "0x05574eb6b8789a91466f902c380d978e472db68170ff82a5b650b95a58ddf4ad"
+    ):
         return "DAI V2"
     symbol = await func_call(
         addr=token_address,
@@ -116,7 +128,9 @@ async def get_underlying_token_symbol(token_address: str) -> str | None:
             calldata=[],
         )
         underlying_token_address = add_leading_zeros(hex(underlying_token_address[0]))
-        underlying_token_symbol = await get_symbol(token_address=underlying_token_address)
+        underlying_token_symbol = await get_symbol(
+            token_address=underlying_token_address
+        )
         return underlying_token_symbol.strip(NULL_CHAR)
     except ClientError as e:
         # Log the network-related error and return 'network_error'
@@ -159,7 +173,8 @@ def update_loan_data_with_symbols(
         """
         if isinstance(col, dict) and col:  # Check if it's a non-empty dictionary
             return {
-                f"{addr} ({token_symbols.get(addr, 'Unknown')})": val for addr, val in col.items()
+                f"{addr} ({token_symbols.get(addr, 'Unknown')})": val
+                for addr, val in col.items()
             }
         return col  # Return the original value if it's not a non-empty dictionary
 
@@ -183,6 +198,8 @@ def fetch_token_symbols_from_set_of_loan_addresses(
         Fetches symbols for a set of token addresses asynchronously.
         Returns: dict mapping token addresses to their respective symbols.
         """
-        return {addr: await get_underlying_token_symbol(addr) for addr in token_addresses}
+        return {
+            addr: await get_underlying_token_symbol(addr) for addr in token_addresses
+        }
 
     return asyncio.run(async_fetch())

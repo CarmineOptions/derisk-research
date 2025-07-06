@@ -8,7 +8,7 @@ from typing import Iterator
 
 import pandas as pd
 import requests
-from data_handler.handlers.loan_states.abstractions import State
+from shared.state import State
 from shared.amms import SwapAmm
 from shared.blockchain_call import func_call
 from shared.custom_types import Prices, TokenParameters

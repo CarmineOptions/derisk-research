@@ -8,7 +8,7 @@ from decimal import Decimal
 
 import numpy as np
 import pandas as pd
-from data_handler.handlers import blockchain_call
+from shared import blockchain_call
 from shared.constants import TOKEN_SETTINGS
 from shared.custom_types import Prices
 from shared.state import State

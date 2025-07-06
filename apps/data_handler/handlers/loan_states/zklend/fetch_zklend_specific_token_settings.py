@@ -1,9 +1,10 @@
-""" Fetch ZkLend specific token settings. """
+"""Fetch ZkLend specific token settings."""
+
 import asyncio
 import decimal
 
 from data_handler.handler_tools.constants import ProtocolAddresses
-from data_handler.handlers import blockchain_call
+from shared import blockchain_call
 from pydantic import BaseModel, field_validator
 
 from data_handler.handlers.loan_states.zklend.settings import (
@@ -71,7 +72,9 @@ async def get_token_reserve_data(token_setting_address: str) -> list:
     return reserve_data
 
 
-async def fetch_zklend_specific_token_settings() -> (dict[str, ZkLendSpecificTokenSettings]):
+async def fetch_zklend_specific_token_settings() -> dict[
+    str, ZkLendSpecificTokenSettings
+]:
     """
     Fetch ZkLend specific token settings.
     :return: Dict of ZkLend specific token settings.

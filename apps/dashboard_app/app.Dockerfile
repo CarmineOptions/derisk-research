@@ -25,7 +25,6 @@ COPY dashboard_app/alembic ./alembic
 COPY dashboard_app/app/ ./app/
 COPY dashboard_app/app/ ./app/
 COPY shared/ ./shared/
-COPY data_handler/ ./data_handler/
 
 EXPOSE 8000
 

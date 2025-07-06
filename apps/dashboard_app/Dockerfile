@@ -20,7 +20,6 @@ RUN poetry install --no-interaction --no-root
 
 
 COPY dashboard_app/ ./dashboard_app/
-COPY data_handler/ ./data_handler/
 COPY shared/ ./shared/
 RUN touch ./dashboard_app/__init__.py
 RUN touch ./__init__.py
