@@ -4,14 +4,14 @@ from sqlalchemy.orm import Session
 
 from loguru import logger
 
-from app.utils.watcher_mixin import WatcherMixin
 from shared.db import db_connector
-from app.models.watcher import NotificationData
-from app.schemas import NotificationForm
+from dashboard_app.app.utils.watcher_mixin import WatcherMixin
+from dashboard_app.app.models.watcher import NotificationData
+from dashboard_app.app.schemas import NotificationForm
 
 # from telegram import get_subscription_link    #FIXME
-from app.utils.fucntools import get_client_ip
-from app.utils.values import (
+from dashboard_app.app.utils.fucntools import get_client_ip
+from dashboard_app.app.utils.values import (
     CreateSubscriptionValues,
     ProtocolIDs,
     NotificationValidationValues,

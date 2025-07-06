@@ -3,7 +3,7 @@ import uuid
 from contextlib import asynccontextmanager
 from typing import Any, AsyncIterator, Dict, List, Optional, Type, TypeVar
 
-from data_handler.db.models.loan_states import ZkLendCollateralDebt
+# from data_handler.db.models.loan_states import ZkLendCollateralDebt
 from db.conf import SQLALCHEMY_DATABASE_URL
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -182,119 +182,120 @@ class DBConnectorAsync:
 db_connector = DBConnectorAsync(SQLALCHEMY_DATABASE_URL)
 
 
-class InitializerDBConnectorAsync:
-    """
-    Provides asynchronous database connection and CRUD operations for ZkLendCollateralDebt.
-
-    Methods:
-    - get_zklend_by_user_ids: Retrieves ZkLendCollateralDebt records by user_ids.
-    - save_collateral_enabled_by_user: Updates or creates a ZkLendCollateralDebt record.
-    """
-
-    def __init__(self, db_url: str):
-        """
-        Initialize the async database connection and session factory.
-
-        Args:
-            db_url: Database connection URL.
-        """
-        self.engine = create_async_engine(db_url)
-        self.session_factory = async_sessionmaker(
-            bind=self.engine, expire_on_commit=False
-        )
-
-    @asynccontextmanager
-    async def session(self) -> AsyncIterator[AsyncSession]:
-        """Async context manager for database sessions."""
-        async with self.session_factory() as session:
-            try:
-                yield session
-            except SQLAlchemyError as e:
-                await session.rollback()
-                logger.error(f"Database error: {e}")
-                raise
-            finally:
-                await session.close()
-
-    async def get_zklend_by_user_ids(
-        self, user_ids: List[str]
-    ) -> List[ZkLendCollateralDebt]:
-        """
-        Retrieves ZkLendCollateralDebt records by user_ids.
-
-        Args:
-            user_ids: List of user IDs to query
-
-        Returns:
-            List of ZkLendCollateralDebt objects
-        """
-        async with self.session() as session:
-            result = await session.execute(
-                select(ZkLendCollateralDebt).where(
-                    ZkLendCollateralDebt.user_id.in_(user_ids)
-                )
-            )
-            return result.scalars().all()
-
-    @staticmethod
-    def _convert_decimal_to_float(
-        data: Optional[Dict[str, Any]],
-    ) -> Optional[Dict[str, float]]:
-        """
-        Convert Decimal values to float for JSON serialization.
-
-        Args:
-            data: Dictionary potentially containing Decimal values
-
-        Returns:
-            Dictionary with Decimal values converted to float or None
-        """
-        if data:
-            return {
-                k: float(v) if isinstance(v, Decimal) else v for k, v in data.items()
-            }
-        return None
-
-    async def save_collateral_enabled_by_user(
-        self,
-        user_id: str,
-        collateral_enabled: Dict[str, bool],
-        collateral: Optional[Dict[str, Any]] = None,
-        debt: Optional[Dict[str, Any]] = None,
-    ) -> None:
-        """
-        Updates or creates a ZkLendCollateralDebt record.
-
-        Args:
-            user_id: User ID to update/create
-            collateral_enabled: Collateral enabled status dictionary
-            collateral: Optional collateral data
-            debt: Optional debt data
-        """
-        processed_collateral = self._convert_decimal_to_float(collateral)
-        processed_debt = self._convert_decimal_to_float(debt)
-
-        async with self.session() as session:
-            result = await session.execute(
-                select(ZkLendCollateralDebt).where(
-                    ZkLendCollateralDebt.user_id == user_id
-                )
-            )
-            record = result.scalar_one_or_none()
-
-            if record:
-                if processed_collateral is not None:
-                    record.collateral = processed_collateral
-                if processed_debt is not None:
-                    record.debt = processed_debt
-                record.collateral_enabled = collateral_enabled
-            else:
-                new_record = ZkLendCollateralDebt(
-                    user_id=user_id,
-                    collateral=processed_collateral if processed_collateral else {},
-                    debt=processed_debt if processed_debt else {},
-                    deposit={},
-                    collateral_enabled=collateral_enabled,
-                )
-                session.add(new_record)
-            await session.commit()
+# TODO: why do we need this, since it's not used?
+# class InitializerDBConnectorAsync:
+#     """
+#     Provides asynchronous database connection and CRUD operations for ZkLendCollateralDebt.
+#
+#     Methods:
+#     - get_zklend_by_user_ids: Retrieves ZkLendCollateralDebt records by user_ids.
+#     - save_collateral_enabled_by_user: Updates or creates a ZkLendCollateralDebt record.
+#     """
+#
+#     def __init__(self, db_url: str):
+#         """
+#         Initialize the async database connection and session factory.
+#
+#         Args:
+#             db_url: Database connection URL.
+#         """
+#         self.engine = create_async_engine(db_url)
+#         self.session_factory = async_sessionmaker(
+#             bind=self.engine, expire_on_commit=False
+#         )
+#
+#     @asynccontextmanager
+#     async def session(self) -> AsyncIterator[AsyncSession]:
+#         """Async context manager for database sessions."""
+#         async with self.session_factory() as session:
+#             try:
+#                 yield session
+#             except SQLAlchemyError as e:
+#                 await session.rollback()
+#                 logger.error(f"Database error: {e}")
+#                 raise
+#             finally:
+#                 await session.close()
+#
+#     async def get_zklend_by_user_ids(
+#         self, user_ids: List[str]
+#     ) -> List[ZkLendCollateralDebt]:
+#         """
+#         Retrieves ZkLendCollateralDebt records by user_ids.
+#
+#         Args:
+#             user_ids: List of user IDs to query
+#
+#         Returns:
+#             List of ZkLendCollateralDebt objects
+#         """
+#         async with self.session() as session:
+#             result = await session.execute(
+#                 select(ZkLendCollateralDebt).where(
+#                     ZkLendCollateralDebt.user_id.in_(user_ids)
+#                 )
+#             )
+#             return result.scalars().all()
+#
+#     @staticmethod
+#     def _convert_decimal_to_float(
+#         data: Optional[Dict[str, Any]],
+#     ) -> Optional[Dict[str, float]]:
+#         """
+#         Convert Decimal values to float for JSON serialization.
+#
+#         Args:
+#             data: Dictionary potentially containing Decimal values
+#
+#         Returns:
+#             Dictionary with Decimal values converted to float or None
+#         """
+#         if data:
+#             return {
+#                 k: float(v) if isinstance(v, Decimal) else v for k, v in data.items()
+#             }
+#         return None
+#
+#     async def save_collateral_enabled_by_user(
+#         self,
+#         user_id: str,
+#         collateral_enabled: Dict[str, bool],
+#         collateral: Optional[Dict[str, Any]] = None,
+#         debt: Optional[Dict[str, Any]] = None,
+#     ) -> None:
+#         """
+#         Updates or creates a ZkLendCollateralDebt record.
+#
+#         Args:
+#             user_id: User ID to update/create
+#             collateral_enabled: Collateral enabled status dictionary
+#             collateral: Optional collateral data
+#             debt: Optional debt data
+#         """
+#         processed_collateral = self._convert_decimal_to_float(collateral)
+#         processed_debt = self._convert_decimal_to_float(debt)
+#
+#         async with self.session() as session:
+#             result = await session.execute(
+#                 select(ZkLendCollateralDebt).where(
+#                     ZkLendCollateralDebt.user_id == user_id
+#                 )
+#             )
+#             record = result.scalar_one_or_none()
+#
+#             if record:
+#                 if processed_collateral is not None:
+#                     record.collateral = processed_collateral
+#                 if processed_debt is not None:
+#                     record.debt = processed_debt
+#                 record.collateral_enabled = collateral_enabled
+#             else:
+#                 new_record = ZkLendCollateralDebt(
+#                     user_id=user_id,
+#                     collateral=processed_collateral if processed_collateral else {},
+#                     debt=processed_debt if processed_debt else {},
+#                     deposit={},
+#                     collateral_enabled=collateral_enabled,
+#                 )
+#                 session.add(new_record)
+#             await session.commit()
