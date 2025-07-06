@@ -18,7 +18,7 @@ echo "Activating environment..."
 poetry -C data_handler shell
 
 echo "Applying latest existing migrations..."
-poetry -C data_handler run alembic -c data_handler/alembic.ini upgrade head
+poetry -C data_handler run alembic -c shared/alembic.ini upgrade head
 
 echo "Generating new migration..."
-poetry -C data_handler run alembic -c data_handler/alembic.ini revision --autogenerate -m "Migration"
+poetry -C data_handler run alembic -c shared/alembic.ini revision --autogenerate -m "Migration"

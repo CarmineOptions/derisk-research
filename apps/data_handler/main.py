@@ -31,9 +31,6 @@ from shared.constants import ProtocolIDs
 
 logger = logging.getLogger(__name__)
 
-# Create the database tables
-Base.metadata.create_all(bind=db_connector.engine)
-
 # Set up rate limiting
 limiter = Limiter(key_func=get_remote_address)
 app = FastAPI()
