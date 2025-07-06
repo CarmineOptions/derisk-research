@@ -2,8 +2,7 @@ FROM python:3.12-slim
 
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
-
-ENV PATH "/root/.local/bin:$PATH"
+ENV PATH="/root/.local/bin:$PATH"
 ENV PYTHONPATH="/app"
 
 RUN apt-get update \

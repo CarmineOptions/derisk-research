@@ -1,1 +1,1 @@
-from dashboard_app.app.schemas.watcher import NotificationForm
+from app.schemas.watcher import NotificationForm

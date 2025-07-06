@@ -10,7 +10,7 @@ from dashboard_app.app.utils.fucntools import (
 )
 from dashboard_app.app.utils.values import HEALTH_RATIO_LEVEL_ALERT_VALUE
 
-from .celery_conf import app
+from celery_conf import app
 
 from dashboard_app.app.core.config import settings
 
