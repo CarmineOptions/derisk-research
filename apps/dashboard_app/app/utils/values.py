@@ -1,6 +1,15 @@
+import os
 from dataclasses import dataclass
 from enum import Enum
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
+DATA_HANDLER_ENDPOINT = os.environ.get("DATA_HANDLER_URL", "")
+HEALTH_RATIO_URL = (
+    f"{DATA_HANDLER_ENDPOINT}/health-ratio-per-user/{{protocol}}/?user_id={{user_id}}"
+)
 
 @dataclass(frozen=True)
 class NotificationValidationValues:
