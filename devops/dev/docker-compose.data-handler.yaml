@@ -25,16 +25,13 @@ services:
     networks:
       - data_handler_network
     depends_on:
-      db:
-        condition: service_healthy
+      - db
 
   db:
     image: postgres:16
     container_name: postgres_dev
     env_file:
       - ../../apps/data_handler/.env.dev
-    environment:
-      POSTGRES_PASSWORD: password
     volumes:
       - postgres_data:/var/lib/postgresql/data
     # - ../../apps/data_handler/init-db:/docker-entrypoint-initdb.d # Automatically run initialization scripts
@@ -50,7 +47,7 @@ services:
   celery:
     build:
       context: ../../apps
-      dockerfile: data_handler/Dockerfile.celery_worker
+      dockerfile: shared/Dockerfile.celery_worker
     env_file:
       - ../../apps/data_handler/.env.dev
     environment:
@@ -58,19 +55,17 @@ services:
       DB_USER: postgres
       DB_PASSWORD: password
     volumes:
-      - ../../apps:/app
+      - ../../apps/:/celery
     depends_on:
-      redis:
-        condition: service_started
-      db:
-        condition: service_healthy
+      - redis
+      - db
     networks:
       - data_handler_network
 
   celery_beat:
     build:
-      context: ../../apps
-      dockerfile: data_handler/Dockerfile.celery_beat
+      context: ../../apps/
+      dockerfile: shared/Dockerfile.celery_beat
     env_file:
       - ../../apps/data_handler/.env.dev
     environment:
@@ -78,12 +73,10 @@ services:
       DB_USER: postgres
       DB_PASSWORD: password
     volumes:
-      - ../../apps:/app
+      - ../../apps:/celery
     depends_on:
-      redis:
-        condition: service_started
-      db:
-        condition: service_healthy
+      - redis
+      - db
     networks:
       - data_handler_network
 
@@ -91,7 +84,7 @@ services:
     image: redis:latest
     restart: always
     ports:
-      - "127.0.0.1:6380:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
     networks:
