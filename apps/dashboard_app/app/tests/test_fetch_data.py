@@ -5,7 +5,7 @@ import time
 from typing import List, Optional, Any
 from starknet_py.net.full_node_client import FullNodeClient
 from starknet_py.hash.selector import get_selector_from_name
-from dashboard_app.app.schemas.user_transaction import UserTransaction
+from app.schemas.user_transaction import UserTransaction
 from shared.constants import TOKEN_SETTINGS
 
 

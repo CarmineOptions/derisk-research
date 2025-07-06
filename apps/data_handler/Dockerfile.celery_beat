@@ -1,25 +1,24 @@
 FROM python:3.11
 
 ENV PATH "/root/.local/bin:$PATH"
-ENV PYTHONPATH=/app
 
 
-WORKDIR /app
 
-COPY shared/poetry.lock shared/pyproject.toml /app/
+WORKDIR /app/data_handler
+
+ENV PYTHONPATH "${PYTHONPATH}:/app"
+
+COPY data_handler/poetry.lock data_handler/pyproject.toml ./
 
 RUN curl -sSL https://install.python-poetry.org | POETRY_HOME=/usr/local/ POETRY_VERSION=1.8.3 python3 -\
     && poetry config virtualenvs.create false \
     && poetry install --no-dev
 RUN pip install celery
 RUN pip install redis
-
-#TODO shouldn't be in shared 
-COPY data_handler /app/data_handler 
-COPY shared /app/shared
-COPY shared/celery_conf.py /app/
-COPY shared/telegram_app /app/telegram_app
-COPY shared/models /app/models
-
+COPY data_handler/celery_conf.py ./
+COPY data_handler/background_tasks ./background_tasks
+COPY shared/telegram_app/ ../shared/telegram_app/
+COPY shared ../shared/
+COPY data_handler ./
 
 CMD ["celery", "-A", "celery_conf", "beat", "--loglevel=INFO"]

@@ -1,12 +1,12 @@
 from unittest.mock import AsyncMock, call, patch
 from hashlib import md5
 from shared.constants import TOKEN_SETTINGS
-from dashboard_app.app.core.config import settings
+from app.core.config import settings
 from datetime import date
 import pytest
 import string
 import random
-from dashboard_app.app.services.token_price import price_history_manager
+from app.services.token_price import price_history_manager
 
 
 @pytest.mark.asyncio

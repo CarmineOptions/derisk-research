@@ -7,7 +7,7 @@ from shared.constants import TOKEN_SETTINGS
 import os
 import logging
 import asyncio
-from dashboard_app.app.schemas.user_transaction import UserTransaction
+from app.schemas.user_transaction import UserTransaction
 
 load_dotenv()
 NODE_URL = os.getenv("NODE_URL")

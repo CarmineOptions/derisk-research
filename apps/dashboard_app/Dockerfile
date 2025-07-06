@@ -1,7 +1,8 @@
 FROM python:3.12
 
-ENV PATH "/root/.local/bin:$PATH"
+ENV PATH="/root/.local/bin:$PATH"
 ENV PYTHONPATH="/app"
+
 
 RUN apt-get update && apt-get install -y \
   postgresql-client \
@@ -12,10 +13,10 @@ WORKDIR /app
 RUN pip install poetry
 COPY dashboard_app/pyproject.toml dashboard_app/poetry.lock* ./
 RUN poetry config virtualenvs.create false \
-  && poetry install --no-interaction --no-root
+  && poetry install --no-interaction --no-root 
 
 COPY shared/pyproject.toml shared/poetry.lock* ./
-RUN poetry install --no-interaction --no-root
+RUN poetry install --no-interaction --no-root 
 
 
 COPY dashboard_app/ ./dashboard_app/
