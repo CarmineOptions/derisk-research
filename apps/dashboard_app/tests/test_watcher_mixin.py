@@ -8,7 +8,7 @@ import pytest
 from sqlalchemy import Float, String
 from sqlalchemy.orm import Mapped, Session, mapped_column
 
-from app.models.base import Base
+from shared.db import Base
 from app.utils.values import CreateSubscriptionValues
 from app.utils.watcher_mixin import WatcherMixin
 
@@ -110,11 +110,14 @@ def test_validate_fields(
     """
     Test the validate_fields method against different scenarios.
     """
-    with patch(
-        "app.utils.watcher_mixin.WatcherMixin._exists_in_db",
-        return_value=exists_in_db,
-    ), patch(
-        "app.utils.values.NotificationValidationValues.unique_fields", unique_fields
+    with (
+        patch(
+            "app.utils.watcher_mixin.WatcherMixin._exists_in_db",
+            return_value=exists_in_db,
+        ),
+        patch(
+            "app.utils.values.NotificationValidationValues.unique_fields", unique_fields
+        ),
     ):
         mock_obj = MockModel(test_attr="test", health_ratio_level=health_ratio_level)
         mock_db = MagicMock(spec=Session)
