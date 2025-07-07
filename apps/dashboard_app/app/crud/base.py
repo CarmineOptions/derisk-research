@@ -8,8 +8,8 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from app.models.base import Base
-from app.utils.values import (
+from ..models.base import Base
+from ..utils.values import (
     CURRENTLY_AVAILABLE_PROTOCOL_IDS,
     NotificationValidationValues,
 )
