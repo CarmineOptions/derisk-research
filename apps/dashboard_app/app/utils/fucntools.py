@@ -4,7 +4,12 @@ from decimal import Decimal
 import requests
 from fastapi import Request
 
+from app.core.config import settings
+from app.crud.base import DBConnectorAsync
+from app.models.watcher import NotificationData
+
 from .values import HEALTH_RATIO_URL
+
 
 def get_client_ip(request: Request) -> str:
     """
@@ -22,12 +27,16 @@ def get_client_ip(request: Request) -> str:
     return ip
 
 
-def get_all_activated_subscribers_from_db() -> list[NotificationData]:
+async def get_all_activated_subscribers_from_db() -> list[NotificationData]:
     """
     Returns all activated subscribers from database
     :return: list[NotificationData]
     """
-    return list(DBConnector().get_all_activated_subscribers(model=NotificationData))
+    return list(
+        await DBConnectorAsync(settings.database_url).get_all_activated_subscribers(
+            model=NotificationData
+        )
+    )
 
 
 def calculate_difference(

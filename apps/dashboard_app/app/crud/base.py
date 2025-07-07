@@ -3,11 +3,18 @@ import uuid
 from contextlib import asynccontextmanager
 from typing import AsyncIterator, Optional, Type, TypeVar
 
-from ..core.config import settings
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
+from app.models.base import Base
+from app.utils.values import (
+    CURRENTLY_AVAILABLE_PROTOCOL_IDS,
+    NotificationValidationValues,
+)
+
+from ..core.config import settings
 
 logger = logging.getLogger(__name__)
 ModelType = TypeVar("ModelType", bound=BaseModel)
@@ -157,5 +164,30 @@ class DBConnectorAsync:
         async with self.session() as db:
             await db.delete(obj)
             await db.commit()
+
+    async def get_all_activated_subscribers(
+        self, model: Type[Base] = None
+    ) -> ModelType | None:
+        """
+        Retrieves all activated subscribers from the database who have valid telegram IDs
+        and are subscribed to currently available protocols.
+
+        Args:
+            model: Type[Base] - Model class to query for subscribers
+
+        Returns:
+            ModelType | None - List of activated subscriber objects or None if no records found
+        """
+        async with self.session() as db:
+            result = await db.execute(
+                select(model).where(
+                    func.char_length(model.telegram_id)
+                    >= NotificationValidationValues.telegram_id_min_length,
+                    model.protocol_id.in_(CURRENTLY_AVAILABLE_PROTOCOL_IDS),
+                )
+            )
+
+            return result.scalars().all()
+
 
 db_connector = DBConnectorAsync(settings.database_url)
