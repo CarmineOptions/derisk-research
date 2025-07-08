@@ -1,23 +1,32 @@
-from fastapi import APIRouter, Request, Depends, status
+import asyncio
+
+from fastapi import APIRouter, Depends, Request, status
 from fastapi.responses import JSONResponse
+from loguru import logger
 from sqlalchemy.orm import Session
 
-from loguru import logger
-
-from shared.db import db_connector
-from app.utils.watcher_mixin import WatcherMixin
+from app.crud.base import db_connector
 from app.models.watcher import NotificationData
 from app.schemas import NotificationForm
+from app.telegram_app.telegram import TelegramNotifications
 
 # from telegram import get_subscription_link    #FIXME
-from app.utils.fucntools import get_client_ip
-from app.utils.values import (
-    CreateSubscriptionValues,
-    ProtocolIDs,
-    NotificationValidationValues,
+from app.utils.fucntools import (
+    calculate_difference,
+    get_all_activated_subscribers_from_db,
+    get_client_ip,
+    get_health_ratio_level_from_endpoint,
 )
+from app.utils.values import (
+    HEALTH_RATIO_LEVEL_ALERT_VALUE,
+    CreateSubscriptionValues,
+    NotificationValidationValues,
+    ProtocolIDs,
+)
+from app.utils.watcher_mixin import WatcherMixin
 
 router = APIRouter()
+notificator = TelegramNotifications(db_connector=db_connector)
 
 
 @router.post(
@@ -105,3 +114,31 @@ async def get_protocol_ids() -> JSONResponse:
         status_code=status.HTTP_200_OK,
         content={"protocol_ids": [item.value for item in ProtocolIDs]},
     )
+
+
+@router.post(
+    path="/send-notifications", description="Send notifications to all subscribers"
+)
+async def send_notifications() -> None:
+    """
+    Sends notifications to all activated subscribers when their health ratio level
+    changes significantly.
+
+    Returns:
+        None
+    """
+
+    subscribers = await get_all_activated_subscribers_from_db()
+
+    for subscriber in subscribers:
+        health_ratio_level = get_health_ratio_level_from_endpoint(
+            protocol_id=subscriber.protocol_id.value, user_id=subscriber.wallet_id
+        )
+
+        if (
+            calculate_difference(health_ratio_level, subscriber.health_ratio_level)
+            >= HEALTH_RATIO_LEVEL_ALERT_VALUE
+        ):
+            asyncio.run(notificator.send_notification(notification_id=subscriber.id))
+
+    asyncio.run(notificator(is_infinity=True))

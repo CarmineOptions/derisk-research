@@ -1,14 +1,6 @@
-import asyncio
-
 from ..db.base import DBConnectorAsync as DBConnector
 
-from telegram_app.telegram.utils import TelegramNotifications
-from dashboard_app.app.utils.fucntools import (
-    calculate_difference,
-    get_all_activated_subscribers_from_db,
-    get_health_ratio_level_from_endpoint,
-)
-from dashboard_app.app.utils.values import HEALTH_RATIO_LEVEL_ALERT_VALUE
+from app.telegram_app.telegram import TelegramNotifications
 
 from celery_conf import app
 
