@@ -2,6 +2,7 @@ import asyncio
 import logging
 from typing import Dict, Set
 
+from shared.custom_types.base import TokenParameters
 import pandas as pd
 import starknet_py
 from shared.blockchain_call import func_call
@@ -203,3 +204,34 @@ def fetch_token_symbols_from_set_of_loan_addresses(
         }
 
     return asyncio.run(async_fetch())
+
+
+def get_addresses(
+    token_parameters: TokenParameters,
+    underlying_address: str | None = None,
+    underlying_symbol: str | None = None,
+) -> list[str]:
+    """
+    get the token address based on underlying address or symbol and
+    Returns it.
+    """
+    # Up to 2 addresses can match the given `underlying_address` or `underlying_symbol`.
+    if underlying_address:
+        addresses = [
+            x.address
+            for x in token_parameters.values()
+            if x.underlying_address == underlying_address
+        ]
+    elif underlying_symbol:
+        addresses = [
+            x.address
+            for x in token_parameters.values()
+            if x.underlying_symbol == underlying_symbol
+        ]
+    else:
+        raise ValueError(
+            f"Both `underlying_address` =  {underlying_symbol} "
+            f"or `underlying_symbol` = {underlying_symbol} are not specified."
+        )
+    assert len(addresses) <= 2
+    return addresses

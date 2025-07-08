@@ -11,9 +11,7 @@ from typing import Iterator
 
 import google.cloud.storage
 import pandas
-import starknet_py.cairo.felt as cairo_felt_type
 from data_handler.handler_tools.constants import TOKEN_MAPPING
-from shared import blockchain_call
 from data_handler.handlers.settings import PAIRS
 
 from data_handler.db.models import InterestRate
@@ -265,27 +263,6 @@ def get_symbol(address: str, protocol: str | None = None) -> str:
     raise KeyError(f"Address = {address} does not exist in the symbol table.")
 
 
-async def get_async_symbol(token_address: str) -> str:
-    """
-    Retrieves the symbol of a token asynchronously by its address.
-    """
-    # DAI V2's symbol is `DAI` but we don't want to mix it with DAI = DAI V1.
-    if (
-        token_address
-        == "0x05574eb6b8789a91466f902c380d978e472db68170ff82a5b650b95a58ddf4ad"
-    ):
-        return "DAI V2"
-    symbol = await blockchain_call.func_call(
-        addr=token_address,
-        selector="symbol",
-        calldata=[],
-    )
-    # For some Nostra Mainnet tokens, a list of length 3 is returned.
-    if len(symbol) > 1:
-        return cairo_felt_type.decode_shortstring(symbol[1])
-    return cairo_felt_type.decode_shortstring(symbol[0])
-
-
 def upload_file_to_bucket(source_path: str, target_path: str) -> None:
     """
     Upload file to bucket
@@ -328,39 +305,3 @@ def save_dataframe(data: pandas.DataFrame, path: str) -> None:
     data.to_parquet(path, index=False, engine="fastparquet", compression="gzip")
     upload_file_to_bucket(source_path=path, target_path=path)
     os.remove(path)
-
-
-def get_addresses(
-    token_parameters: "TokenParameters",
-    underlying_address: str | None = None,
-    underlying_symbol: str | None = None,
-) -> list[str]:
-    """
-    Get the addresses of the tokens based on the underlying address or symbol.
-    :param token_parameters: the token parameters
-    :param underlying_address: underlying address
-    :param underlying_symbol: underlying symbol
-    :return: list of addresses
-    """
-    # Up to 2 addresses can match the given `underlying_address` or `underlying_symbol`.
-    if underlying_address:
-        addresses = [
-            x.address
-            for x in token_parameters.values()
-            if x.underlying_address == underlying_address
-        ]
-    elif underlying_symbol:
-        addresses = [
-            x.address
-            for x in token_parameters.values()
-            if x.underlying_symbol == underlying_symbol
-        ]
-    else:
-        raise ValueError(
-            "Both `underlying_address` =  {} or `underlying_symbol` = {} are not specified.".format(
-                underlying_address,
-                underlying_symbol,
-            )
-        )
-    assert len(addresses) <= 2
-    return addresses
