@@ -3,7 +3,7 @@ FROM python:3.11-slim
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PATH="/root/.local/bin:$PATH"
-ENV PYTHONPATH="/app"
+ENV PYTHONPATH="/app:/app/dashboard_app"
 
 WORKDIR /app
 

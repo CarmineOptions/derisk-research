@@ -1,5 +1,5 @@
 from aiogram import F, Router, types
-from dashboard_app.app.models.watcher import NotificationData
+from app.models.watcher import NotificationData
 from ..crud import TelegramCrud
 
 from .utils import kb
