@@ -17,6 +17,8 @@ logger = logging.getLogger(__name__)
 CHUNK_SIZE = 5
 
 """in the event of mulitple loop run async method in a new thread to avoid event loop conflicts"""
+
+
 def run_async_in_thread(coro):
     """Run an async coroutine in a new thread with its own event loop."""
     result = None
@@ -143,8 +145,9 @@ def process_vesu_events(self):
         execution_time = (datetime.utcnow() - start_time).total_seconds()
         logger.info(
             "Successfully processed Vesu events in %.2fs (UTC). Blocks: %d to %d",
-            execution_time, 
-            vesu_entity.last_processed_block - CHUNK_SIZE, # default as update_positions_data chunk_size
+            execution_time,
+            vesu_entity.last_processed_block
+            - CHUNK_SIZE,  # default as update_positions_data chunk_size
             vesu_entity.last_processed_block,
         )
     except (ValueError, TypeError, RuntimeError) as exc:
@@ -165,5 +168,3 @@ def process_vesu_events(self):
             exc_info=True,
         )
         self.retry(countdown=60)
-
-
