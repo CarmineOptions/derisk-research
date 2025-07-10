@@ -6,7 +6,8 @@ from sqlalchemy import URL
 load_dotenv()
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
-
+ENV = os.getenv("ENV")
+TELEGRAM_DEV_USER_ID = os.getenv("TELEGRAM_DEV_USER_ID")
 DB_USER = os.environ.get("DB_USER", "")
 DB_PASSWORD = os.environ.get("DB_PASSWORD", "")
 DB_SERVER = os.environ.get("DB_HOST", "")
