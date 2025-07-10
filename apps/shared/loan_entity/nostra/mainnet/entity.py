@@ -1,7 +1,5 @@
 import logging
-from data_handler.handlers.loan_states.nostra_alpha.events import (
-    NostraAlphaLoanEntity,
-)
+from ..alpha import NostraAlphaLoanEntity
 from shared.constants import ProtocolIDs
 from shared.custom_types import InterestRateModels, Prices, TokenParameters
 

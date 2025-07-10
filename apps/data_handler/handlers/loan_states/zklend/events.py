@@ -21,13 +21,12 @@ from typing import Optional
 
 import pandas as pd
 from data_handler.db.crud import InitializerDBConnector
-from data_handler.handler_tools.data_parser.zklend import ZklendDataParser
-from data_handler.handlers.helpers import get_async_symbol
+from shared.data_parser.zklend import ZklendDataParser
 from data_handler.handlers.loan_states.zklend.settings import (
     ZKLEND_SPECIFIC_TOKEN_SETTINGS,
 )
 from data_handler.handlers.settings import TokenSettings
-from shared.helpers import add_leading_zeros
+from shared.helpers import add_leading_zeros, get_symbol
 from shared.loan_entity import LoanEntity
 from shared.state import State
 
@@ -521,7 +520,7 @@ class ZkLendState(State):
         # the collateral token in the events data is
         # the underlying token directly.
         for underlying_collateral_token_address in collateral_tokens:
-            underlying_collateral_token_symbol = await get_async_symbol(
+            underlying_collateral_token_symbol = await get_symbol(
                 token_address=underlying_collateral_token_address
             )
             # The order of the arguments is:
@@ -537,7 +536,7 @@ class ZkLendState(State):
                 calldata=[underlying_collateral_token_address],
             )
             collateral_token_address = add_leading_zeros(hex(reserve_data[2]))
-            collateral_token_symbol = await get_async_symbol(
+            collateral_token_symbol = await get_symbol(
                 token_address=collateral_token_address
             )
             self.token_parameters.collateral[underlying_collateral_token_address] = (
@@ -552,7 +551,7 @@ class ZkLendState(State):
                 )
             )
         for underlying_debt_token_address in debt_tokens:
-            underlying_debt_token_symbol = await get_async_symbol(
+            underlying_debt_token_symbol = await get_symbol(
                 token_address=underlying_debt_token_address
             )
             # The order of the arguments is: `enabled`, `decimals`,
@@ -568,7 +567,7 @@ class ZkLendState(State):
                 calldata=[underlying_debt_token_address],
             )
             debt_token_address = add_leading_zeros(hex(reserve_data[2]))
-            debt_token_symbol = await get_async_symbol(token_address=debt_token_address)
+            debt_token_symbol = await get_symbol(token_address=debt_token_address)
             self.token_parameters.debt[underlying_debt_token_address] = (
                 ZkLendDebtTokenParameters(
                     address=debt_token_address,

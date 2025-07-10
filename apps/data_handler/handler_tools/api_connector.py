@@ -1,5 +1,4 @@
-""" Module for making HTTP GET requests to the DeRisk API using the `requests` library. """
-import os
+""" Module for making HTTP GET requests to the DeRisk API using the `requests` library. """ import os
 
 import requests
 from dotenv import load_dotenv

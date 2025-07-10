@@ -11,7 +11,7 @@ from typing import Iterator
 
 import google.cloud.storage
 import pandas
-from data_handler.handler_tools.constants import TOKEN_MAPPING
+from .order_books.constants import TOKEN_MAPPING
 from data_handler.handlers.settings import PAIRS
 
 from data_handler.db.models import InterestRate
@@ -109,7 +109,7 @@ class InterestRateState:
             ) = self.last_block_data.get_json_deserialized()
         else:
             self.cumulative_collateral_interest_rates = {
-                token_name: Decimal("1") for token_name in TOKEN_MAPPING.values()
+                token.name: Decimal("1") for token in TOKEN_MAPPING.values()
             }
             self.cumulative_debt_interest_rate = (
                 self.cumulative_collateral_interest_rates.copy()
@@ -120,14 +120,14 @@ class InterestRateState:
         Default value is 0"""
         if self.last_block_data:
             self.previous_token_timestamps = {
-                token_name: self.last_block_data.timestamp
-                for token_name in TOKEN_MAPPING.values()
+                token.name: self.last_block_data.timestamp
+                for token in TOKEN_MAPPING.values()
             }
         else:
             # First token event occurrence will update the timestamp,
             # so after first interest rate for token will be 1.
             self.previous_token_timestamps = {
-                token_name: 0 for token_name in TOKEN_MAPPING.values()
+                token.name: 0 for token in TOKEN_MAPPING.values()
             }
 
     def build_interest_rate_model(self, protocol_id: ProtocolIDs) -> InterestRate:

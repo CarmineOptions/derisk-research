@@ -11,8 +11,9 @@ from data_handler.handler_tools.nostra_mainnet_settings import (
 )
 from data_handler.handlers.helpers import (
     get_addresses,
-    get_async_symbol,
 )
+from shared.helpers import get_symbol
+from shared.constants import ProtocolIDs
 from shared.custom_types.nostra import (
     NostraDebtTokenParameters,
     NostraMainnetCollateralTokenParameters,
@@ -20,6 +21,10 @@ from shared.custom_types.nostra import (
 from shared.helpers import add_leading_zeros
 from shared.starknet_client import StarknetClient
 from .alpha import NostraAlphaState
+from shared.loan_entity import NostraMainnetLoanEntity
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class NostraMainnetState(NostraAlphaState):
@@ -61,7 +66,7 @@ class NostraMainnetState(NostraAlphaState):
             )
             decimals = int(decimals[0])
 
-            token_symbol = await get_async_symbol(token_address=token_address)
+            token_symbol = await get_symbol(token_address=token_address)
             event, is_interest_bearing = self._infer_token_type(
                 token_symbol=token_symbol
             )
@@ -75,7 +80,7 @@ class NostraMainnetState(NostraAlphaState):
             underlying_token_address = add_leading_zeros(
                 hex(underlying_token_address[0])
             )
-            underlying_token_symbol = await get_async_symbol(
+            underlying_token_symbol = await get_symbol(
                 token_address=underlying_token_address
             )
             if event == "collateral":

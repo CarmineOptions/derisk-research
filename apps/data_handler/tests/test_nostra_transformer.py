@@ -6,7 +6,7 @@ from typing import Any, Dict
 from unittest.mock import MagicMock, patch
 
 import pytest
-from data_handler.handler_tools.data_parser.serializers.nostra import (
+from shared.data_parser.serializers import (
     BearingCollateralBurnEventData,
     BearingCollateralMintEventData,
     DebtBurnEventData,

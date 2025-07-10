@@ -1,6 +1,17 @@
 import asyncio
-from data_handler.handler_tools.data_parser.nostra import NostraDataParser
-from data_handler.handler_tools.nostra_alpha_settings import (
+import decimal
+from shared.starknet_client import StarknetClient
+from shared.data_parser.nostra import NostraDataParser
+from shared.helpers import get_addresses
+from ..state import State
+import copy
+import logging
+from typing import Optional
+import pandas as pd
+from shared.constants import ProtocolIDs
+from shared.helpers import add_leading_zeros, get_symbol
+from shared.loan_entity.nostra.alpha import (
+    NostraAlphaLoanEntity,
     NOSTRA_ALPHA_ADDRESSES_TO_EVENTS,
     NOSTRA_ALPHA_CDP_MANAGER_ADDRESS,
     NOSTRA_ALPHA_DEFERRED_BATCH_CALL_ADAPTER_ADDRESS,
@@ -8,14 +19,6 @@ from data_handler.handler_tools.nostra_alpha_settings import (
     NOSTRA_ALPHA_INTEREST_RATE_MODEL_ADDRESS,
     NOSTRA_ALPHA_TOKEN_ADDRESSES,
 )
-from data_handler.handlers.helpers import (
-    get_addresses,
-    get_async_symbol,
-)
-import copy
-import logging
-from typing import Optional
-import pandas as pd
 
 
 class NostraAlphaState(State):
@@ -98,7 +101,7 @@ class NostraAlphaState(State):
             )
             decimals = int(decimals[0])
 
-            token_symbol = await get_async_symbol(token_address=token_address)
+            token_symbol = await get_symbol(token_address=token_address)
             event, is_interest_bearing = self._infer_token_type(
                 token_symbol=token_symbol
             )
@@ -112,7 +115,7 @@ class NostraAlphaState(State):
             underlying_token_address = add_leading_zeros(
                 hex(underlying_token_address[0])
             )
-            underlying_token_symbol = await get_async_symbol(
+            underlying_token_symbol = await get_symbol(
                 token_address=underlying_token_address
             )
 

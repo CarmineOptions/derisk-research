@@ -5,7 +5,6 @@ Event processing for Nostra Alpha protocol, including loan and collateral manage
 import decimal
 from data_handler.handlers.settings import TokenSettings
 from data_handler.handlers.state import NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS
-from shared.constants import ProtocolIDs
 from shared.custom_types import InterestRateModels, Portfolio, Prices, TokenParameters
 from shared.custom_types.nostra import (
     NostraAlphaCollateralTokenParameters,
