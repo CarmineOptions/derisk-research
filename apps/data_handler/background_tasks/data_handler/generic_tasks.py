@@ -1,4 +1,4 @@
-"""Celery tasks for running loan state and liquidable debt computations, 
+"""Celery tasks for running loan state and liquidable debt computations,
 and fetching Uniswap V2 order book data."""
 
 import logging
@@ -89,7 +89,7 @@ def uniswap_v2_order_book():
                 serialized_data = order_book.serialize()
                 connector.write_to_db(OrderBookModel(**serialized_data.model_dump()))
             except Exception as e:
-                logging.info(
+                logging.exception(
                     f"With token pair: {base_token} and {quote_token} something happened: {e}"
                 )
 

@@ -6,7 +6,6 @@ from loguru import logger
 from sqlalchemy.orm import Session
 
 from app.crud.base import db_connector
-from app.db.session import get_db
 from app.models.watcher import NotificationData
 from app.schemas import NotificationForm
 from app.telegram_app.telegram import TelegramNotifications
@@ -37,7 +36,7 @@ notificator = TelegramNotifications(db_connector=db_connector)
 async def subscribe_to_notification(
     request: Request,
     data: NotificationForm,
-    db: Session = Depends(get_db),
+    db: Session = Depends(db_connector.get_db),
 ):
     """
     Creates a new subscription for notifications
@@ -88,7 +87,7 @@ async def subscribe_to_notification(
             },
         )
 
-    subscription_id = db_connector.write_to_db(obj=subscription)
+    await db_connector.write_to_db(obj=subscription)
 
     # activation_link = await get_subscription_link(ident=subscription_id)  #FIXME
     logger.info(f"Activation link for user with {get_client_ip(request)} IP is sent")

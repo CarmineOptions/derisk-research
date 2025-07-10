@@ -2,8 +2,7 @@ from typing import Type
 
 from sqlalchemy.orm import Session
 
-from ..crud.base import ModelType
-from ..models.base import Base
+from shared.db import ModelType, Base
 from ..utils.values import CreateSubscriptionValues, NotificationValidationValues
 
 

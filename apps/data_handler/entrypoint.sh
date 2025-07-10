@@ -1,7 +1,8 @@
 #!/bin/bash
 
 echo "Run migrations..."
-alembic -c data_handler/alembic.ini upgrade head
+cd shared && alembic upgrade head
+cd ../
 
 echo "Starting the server and bot..."
 exec "$@"

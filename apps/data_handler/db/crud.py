@@ -8,9 +8,8 @@ import logging
 import uuid
 from typing import List, Optional, Type, TypeVar
 
-from data_handler.db.database import SQLALCHEMY_DATABASE_URL
+from shared.db import SQLALCHEMY_DATABASE_URL, Base
 from data_handler.db.models import (
-    Base,
     InterestRate,
     LoanState,
     OrderBookModel,
@@ -61,8 +60,8 @@ class DBConnector:
         Initialize the database connection and session factory.
         :param db_url: str = None
         """
-        self.engine = create_engine(db_url)
-        Base.metadata.create_all(self.engine)
+        # use sync driver
+        self.engine = create_engine(db_url.replace("asyncpg", "psycopg2"))
         self.session_factory = sessionmaker(bind=self.engine)
         self.Session = scoped_session(self.session_factory)
 
@@ -345,7 +344,7 @@ class DBConnector:
 
     def get_last_interest_rate_record_by_protocol_id(
         self, protocol_id: ProtocolIDs
-    ) -> InterestRate:
+    ) -> InterestRate | None:
         """
         Retrieves the last interest rate record by protocol ID.
         :param protocol_id: ProtocolIDs - The protocol ID to filter by.
@@ -533,6 +532,7 @@ class InitializerDBConnector:
             session.commit()
         finally:
             session.close()
+
 
 class ZkLendEventDBConnector(DBConnector):
     """

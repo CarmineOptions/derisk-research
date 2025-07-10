@@ -21,8 +21,6 @@ RUN poetry config virtualenvs.create false \
 COPY shared/pyproject.toml shared/poetry.lock* ./
 RUN poetry install --no-interaction --no-root
 
-COPY dashboard_app/alembic ./alembic
-COPY dashboard_app/app/ ./app/
 COPY dashboard_app/app/ ./app/
 COPY shared/ ./shared/
 COPY data_handler/ ./data_handler/

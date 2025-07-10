@@ -4,8 +4,7 @@ from decimal import Decimal
 import requests
 from fastapi import Request
 
-from app.core.config import settings
-from app.crud.base import DBConnectorAsync
+from app.crud.base import db_connector
 from app.models.watcher import NotificationData
 
 from .values import HEALTH_RATIO_URL
@@ -33,9 +32,7 @@ async def get_all_activated_subscribers_from_db() -> list[NotificationData]:
     :return: list[NotificationData]
     """
     return list(
-        await DBConnectorAsync(settings.database_url).get_all_activated_subscribers(
-            model=NotificationData
-        )
+        await db_connector.get_all_activated_subscribers(model=NotificationData)
     )
 
 

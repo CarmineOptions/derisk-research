@@ -1,9 +1,10 @@
-""" This module contains the OrderBookModel class representing 
-an order book entry in the database. """
+"""This module contains the OrderBookModel class representing
+an order book entry in the database."""
+
 from sqlalchemy import DECIMAL, BigInteger, Column, String
 from sqlalchemy.types import JSON
 
-from data_handler.db.models.base import Base
+from shared.db import Base
 
 
 class OrderBookModel(Base):
