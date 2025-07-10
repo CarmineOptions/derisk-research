@@ -220,7 +220,7 @@ function Dashboard() {
     document.getElementById('tg-login').appendChild(script);
 
     return () => {
-      document.getElementById('tg-login').removeChild(script);
+      document.getElementById('tg-login')?.removeChild(script);
     }
   }, []);
 
