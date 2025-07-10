@@ -11,24 +11,6 @@ from starknet_py.net.full_node_client import FullNodeClient
 
 NET = FullNodeClient(node_url="https://starknet-mainnet.public.blastapi.io")
 
-
-async def func_call(addr, selector, calldata):
-    """
-    Executes a contract call with retry on StarkNet.
-    """
-    call = starknet_py.net.client_models.Call(
-        to_addr=addr,
-        selector=starknet_py.hash.selector.get_selector_from_name(selector),
-        calldata=calldata,
-    )
-    try:
-        res = await NET.call_contract(call)
-    except BaseException:
-        time.sleep(10)
-        res = await NET.call_contract(call)
-    return res
-
-
 async def balance_of(token_addr, holder_addr):
     """
     Retrieves the token balance of a specified holder.

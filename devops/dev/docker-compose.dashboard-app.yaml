@@ -65,18 +65,18 @@ services:
       timeout: 5s
       retries: 5
 
-  telegram_bot:
-    build:
-      context: ../../apps
-      dockerfile: dashboard_app/telegram_app.Dockerfile
-    restart: always
-    env_file:
-      - ../../apps/dashboard_app/.env.dev
-    networks:
-      - dashboard_app_network
-    depends_on:
-      backend:
-        condition: service_healthy
+  # telegram_bot:
+  #   build:
+  #     context: ../../apps
+  #     dockerfile: dashboard_app/telegram_app.Dockerfile
+  #   restart: always
+  #   env_file:
+  #     - ../../apps/dashboard_app/.env.dev
+  #   networks:
+  #     - dashboard_app_network
+  #   depends_on:
+  #     backend:
+  #       condition: service_healthy
 
 volumes:
   postgres_data:

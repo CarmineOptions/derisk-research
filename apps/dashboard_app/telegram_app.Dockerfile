@@ -14,5 +14,6 @@ COPY dashboard_app/app/telegram_app/pyproject.toml dashboard_app/app/telegram_ap
 RUN poetry config virtualenvs.create false && poetry install --only main --no-root
 
 COPY dashboard_app/ /app/dashboard_app/
+COPY shared/ ./shared/
 
 CMD ["poetry", "run", "python", "-m", "dashboard_app.app.telegram_app.telegram"]
