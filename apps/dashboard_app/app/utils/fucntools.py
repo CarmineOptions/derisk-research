@@ -4,8 +4,8 @@ from decimal import Decimal
 import requests
 from fastapi import Request
 
-from app.crud.base import db_connector
-from app.models.watcher import NotificationData
+from dashboard_app.app.crud.base import db_connector
+from dashboard_app.app.models.watcher import NotificationData
 
 from .values import HEALTH_RATIO_URL
 

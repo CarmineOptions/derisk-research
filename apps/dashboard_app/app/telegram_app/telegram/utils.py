@@ -6,7 +6,7 @@ from uuid import UUID
 from aiogram import exceptions
 from aiogram.utils.deep_linking import create_deep_link
 from shared.db import DBConnectorAsync
-from app.models.watcher import NotificationData, TelegramLog
+from dashboard_app.app.models.watcher import NotificationData, TelegramLog
 
 from .bot import bot
 

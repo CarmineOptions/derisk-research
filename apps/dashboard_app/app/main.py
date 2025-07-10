@@ -8,9 +8,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from loguru import logger
 
-from app.api import watcher
-from app.api import history
-from app.api import oauth
+from dashboard_app.app.api import watcher
+from dashboard_app.app.api import history
+from dashboard_app.app.api import oauth
 
 
 @asynccontextmanager
@@ -48,7 +48,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
+app.mount("/static", StaticFiles(directory="dashboard_app/app/static"), name="static")
 app.include_router(watcher.router)
 app.include_router(history.router)
 app.include_router(oauth.router)
