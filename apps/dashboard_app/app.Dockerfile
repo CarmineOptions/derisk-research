@@ -21,11 +21,9 @@ RUN poetry config virtualenvs.create false \
 COPY shared/pyproject.toml shared/poetry.lock* ./
 RUN poetry install --no-interaction --no-root
 
-COPY dashboard_app/alembic ./alembic
-COPY dashboard_app/app/ ./app/
-COPY dashboard_app/app/ ./app/
+COPY dashboard_app/ ./dashboard_app/
 COPY shared/ ./shared/
 
 EXPOSE 8000
 
-ENTRYPOINT ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+ENTRYPOINT ["uvicorn", "dashboard_app.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

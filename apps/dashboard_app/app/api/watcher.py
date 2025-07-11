@@ -5,26 +5,25 @@ from fastapi.responses import JSONResponse
 from loguru import logger
 from sqlalchemy.orm import Session
 
-from app.crud.base import db_connector
-from app.db.session import get_db
-from app.models.watcher import NotificationData
-from app.schemas import NotificationForm
-from app.telegram_app.telegram import TelegramNotifications
+from dashboard_app.app.crud.base import db_connector
+from dashboard_app.app.models.watcher import NotificationData
+from dashboard_app.app.schemas import NotificationForm
+from dashboard_app.app.telegram_app.telegram import TelegramNotifications
 
 # from telegram import get_subscription_link    #FIXME
-from app.utils.fucntools import (
+from dashboard_app.app.utils.fucntools import (
     calculate_difference,
     get_all_activated_subscribers_from_db,
     get_client_ip,
     get_health_ratio_level_from_endpoint,
 )
-from app.utils.values import (
+from dashboard_app.app.utils.values import (
     HEALTH_RATIO_LEVEL_ALERT_VALUE,
     CreateSubscriptionValues,
     NotificationValidationValues,
     ProtocolIDs,
 )
-from app.utils.watcher_mixin import WatcherMixin
+from dashboard_app.app.utils.watcher_mixin import WatcherMixin
 
 router = APIRouter()
 notificator = TelegramNotifications(db_connector=db_connector)
@@ -37,7 +36,7 @@ notificator = TelegramNotifications(db_connector=db_connector)
 async def subscribe_to_notification(
     request: Request,
     data: NotificationForm,
-    db: Session = Depends(get_db),
+    db: Session = Depends(db_connector.get_db),
 ):
     """
     Creates a new subscription for notifications
@@ -88,7 +87,7 @@ async def subscribe_to_notification(
             },
         )
 
-    subscription_id = db_connector.write_to_db(obj=subscription)
+    await db_connector.write_to_db(obj=subscription)
 
     # activation_link = await get_subscription_link(ident=subscription_id)  #FIXME
     logger.info(f"Activation link for user with {get_client_ip(request)} IP is sent")

@@ -5,8 +5,8 @@ from uuid import UUID
 
 from aiogram import exceptions
 from aiogram.utils.deep_linking import create_deep_link
-from app.crud.base import DBConnectorAsync as DBConnector
-from app.models.watcher import NotificationData, TelegramLog
+from shared.db import DBConnectorAsync
+from dashboard_app.app.models.watcher import NotificationData, TelegramLog
 
 from .bot import bot
 
@@ -72,7 +72,7 @@ class TelegramNotifications:
         )
 
     def __init__(
-        self, db_connector: DBConnector, text: str = DEFAULT_MESSAGE_TEMPLATE
+        self, db_connector: DBConnectorAsync, text: str = DEFAULT_MESSAGE_TEMPLATE
     ) -> None:
         """
         Initialize the TelegramNotifier instance.

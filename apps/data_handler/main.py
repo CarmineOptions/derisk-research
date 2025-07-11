@@ -1,8 +1,9 @@
 """
-Defines FastAPI endpoints for querying loan states, interest rates, 
-user health ratios, and order book records, with a 10 requests/second rate 
+Defines FastAPI endpoints for querying loan states, interest rates,
+user health ratios, and order book records, with a 10 requests/second rate
 limit per endpoint.
 """
+
 import logging
 from typing import List, Optional
 
@@ -10,10 +11,11 @@ from fastapi import Depends, FastAPI, HTTPException, Path, Query, Request, statu
 from slowapi import Limiter
 from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
-from sqlalchemy import desc
+from shared.db import Base
+from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 
-from data_handler.db.database import Base, engine, get_database
+from shared.db import db_connector
 from data_handler.db.models import (
     HealthRatioLevel,
     InterestRate,
@@ -28,9 +30,6 @@ from data_handler.db.schemas import (
 from shared.constants import ProtocolIDs
 
 logger = logging.getLogger(__name__)
-
-# Create the database tables
-Base.metadata.create_all(bind=engine)
 
 # Set up rate limiting
 limiter = Limiter(key_func=get_remote_address)
@@ -49,7 +48,7 @@ async def read_loan_states(
     start_datetime: Optional[int] = None,
     end_datetime: Optional[int] = None,
     user: Optional[str] = None,
-    db: Session = Depends(get_database),
+    db: Session = Depends(db_connector.get_db),
 ) -> List[LoanStateResponse]:
     """
     Fetch loan states from the database with optional filtering.
@@ -70,7 +69,7 @@ async def read_loan_states(
     Raises:
         HTTPException: If no loan states are found.
     """
-    query = db.query(LoanState)
+    query = select(LoanState)
 
     if protocol is not None:
         query = query.filter(LoanState.protocol_id == protocol)
@@ -85,19 +84,20 @@ async def read_loan_states(
     if user is not None:
         query = query.filter(LoanState.user == user)
 
-    results = query.limit(1000).all()  # Limit the results to 1000 records
-    if not results:
+    results = await db.execute(query.limit(1000))
+    loan_states = results.scalars().all()
+    if not loan_states:
         raise HTTPException(status_code=404, detail="Loan states not found")
 
-    return results
+    return loan_states
 
 
 @limiter.limit("10/second")
 @app.get("/interest-rate/", response_model=InterestRateModel)
-def get_last_interest_rate_by_block(
+async def get_last_interest_rate_by_block(
     request: Request,
     protocol: Optional[str] = None,
-    db: Session = Depends(get_database),
+    db: Session = Depends(db_connector.get_db),
 ):
     """
     Fetch the last interest rate record by block number.
@@ -111,11 +111,14 @@ def get_last_interest_rate_by_block(
     if protocol not in ProtocolIDs.choices():
         raise HTTPException(status_code=400, detail="Invalid protocol ID")
 
-    last_record = (
-        db.query(InterestRate).filter(InterestRate.protocol_id == protocol
-                                      ).order_by(InterestRate.block.desc()).first()
+    query = (
+        select(InterestRate)
+        .filter(InterestRate.protocol_id == protocol)
+        .order_by(InterestRate.block.desc())
+        .limit(1)
     )
-
+    res = await db.execute(query)
+    last_record = res.scalar_one_or_none()
     return last_record
 
 
@@ -123,9 +126,13 @@ def get_last_interest_rate_by_block(
 @app.get("/health-ratio-per-user/{protocol}/")
 async def get_health_ratio_per_user(
     request: Request,
-    protocol: str = Path(..., ),
-    user_id: str = Query(..., ),
-    db: Session = Depends(get_database),
+    protocol: str = Path(
+        ...,
+    ),
+    user_id: str = Query(
+        ...,
+    ),
+    db: Session = Depends(db_connector.get_db),
 ):
     """
     Returns the health ratio by user id provided.
@@ -142,48 +149,60 @@ async def get_health_ratio_per_user(
         raise HTTPException(status_code=400, detail="Invalid protocol ID")
 
     if not user_id:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User ID is required")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="User ID is required"
+        )
 
-    row = (
-        db.query(HealthRatioLevel).filter(
+    query = (
+        select(HealthRatioLevel)
+        .filter(
             HealthRatioLevel.protocol_id == protocol,
             HealthRatioLevel.user_id == user_id,
-        ).order_by(desc(HealthRatioLevel.timestamp)).first()
+        )
+        .order_by(desc(HealthRatioLevel.timestamp))
+        .limit(1)
     )
-
-    if not row:
+    res = await db.execute(query)
+    health_ratio = res.scalar_one_or_none()
+    if not health_ratio:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Health ratio with user ID provided not found",
         )
 
-    return row.value
+    return health_ratio
 
 
 @app.get("/orderbook/", response_model=OrderBookResponseModel)
-def get_orderbook(
-    base_token: str, quote_token: str, dex: str, db: Session = Depends(get_database)
+async def get_orderbook(
+    base_token: str,
+    quote_token: str,
+    dex: str,
+    db: Session = Depends(db_connector.get_db),
 ) -> OrderBookResponseModel:
     """
     Fetch order book records from the database.
     :param base_token: The base token symbol.
     :param quote_token: The quote token symbol.
     :param dex: The DEX name.
-    :return: A list of order book records.
+    :return: A latest order book record.
     """
     print(f"Fetching order book records for {base_token}/{quote_token} on {dex}")
     logger.info(f"Fetching order book records for {base_token}/{quote_token} on {dex}")
 
-    records = (
-        db.query(OrderBookModel).filter(
+    query = (
+        select(OrderBookModel)
+        .filter(
             OrderBookModel.token_a == base_token,
             OrderBookModel.token_b == quote_token,
             OrderBookModel.dex == dex,
-        ).order_by(OrderBookModel.timestamp.desc()).first()
+        )
+        .order_by(OrderBookModel.timestamp.desc())
+        .limit(1)
     )
-    print(f"Found {records} order book records")
-    logger.info(f"Found {records} order book records")
-    if not records:
-        raise HTTPException(status_code=404, detail="Records not found")
+    res = await db.execute(query)
+    order_book = res.scalar_one_or_none()
+    if not order_book:
+        raise HTTPException(status_code=404, detail="Order book not found")
 
-    return records
+    return order_book

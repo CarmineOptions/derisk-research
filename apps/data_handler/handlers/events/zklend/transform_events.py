@@ -5,7 +5,7 @@ which is used to transform Zklend events.
 
 import logging
 from pydantic import BaseModel
-from data_handler.db.models.base import Base
+from shared.db import Base
 from data_handler.handler_tools.api_connector import DeRiskAPIConnector
 from typing import Dict, Any, Tuple, Type, Callable
 from shared.constants import ProtocolIDs

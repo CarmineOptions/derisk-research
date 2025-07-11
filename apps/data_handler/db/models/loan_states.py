@@ -1,10 +1,12 @@
-""" SQLAlchemy models for the loan_states table. """
+"""SQLAlchemy models for the loan_states table."""
+
 from decimal import Decimal
 
 from sqlalchemy import Column, Integer, String, UniqueConstraint
 from sqlalchemy.types import JSON
 
-from data_handler.db.models.base import Base, BaseState
+from data_handler.db.models.base import BaseState
+from shared.db import Base
 
 
 class LoanState(BaseState):
@@ -30,7 +32,9 @@ class InterestRate(BaseState):
 
     def get_json_deserialized(self) -> tuple[dict[str, Decimal], dict[str, Decimal]]:
         """Deserialize the JSON fields of the model from str to the Decimal type."""
-        collateral = {token_name: Decimal(value) for token_name, value in self.collateral.items()}
+        collateral = {
+            token_name: Decimal(value) for token_name, value in self.collateral.items()
+        }
         debt = {token_name: Decimal(value) for token_name, value in self.debt.items()}
         return collateral, debt
 
@@ -60,4 +64,3 @@ class VesuCollateralDebt(Base):
     collateral = Column(JSON, nullable=True)
     debt = Column(JSON, nullable=True)
     deposit = Column(JSON, nullable=True)
-
