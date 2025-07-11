@@ -161,7 +161,7 @@ async def test_process_trade_open_success(mock_client: FullNodeClient) -> None:
         keys=[get_selector_from_name("TradeOpen")],
     )
 
-    mock_tx = MagicMock(sender_address="0xuser123")
+    mock_tx = MagicMock(sender_address=1234)
     mock_tx.calldata = [0, eth_address]
 
     mock_block = MagicMock(timestamp=1714500000)
@@ -173,7 +173,7 @@ async def test_process_trade_open_success(mock_client: FullNodeClient) -> None:
         result: Optional[UserTransaction] = await process_trade_open(event)
 
         assert result is not None
-        assert result.user_address == "0xuser123"
+        assert result.user_address == hex(mock_tx.sender_address)
         assert result.token == "ETH"
         assert result.price == "price --"
         assert result.amount == Decimal("1")
@@ -193,7 +193,7 @@ async def test_process_trade_close_success(mock_client: FullNodeClient) -> None:
         keys=[get_selector_from_name("TradeClose")],
     )
 
-    mock_tx = MagicMock(sender_address="0xuser456")
+    mock_tx = MagicMock(sender_address=1234)
     mock_tx.calldata = [0, usdc_address]
 
     mock_block = MagicMock(timestamp=1714586400)
@@ -205,7 +205,7 @@ async def test_process_trade_close_success(mock_client: FullNodeClient) -> None:
         result: Optional[UserTransaction] = await process_trade_close(event)
 
         assert result is not None
-        assert result.user_address == "0xuser456"
+        assert result.user_address == hex(mock_tx.sender_address)
         assert result.token == "USDC"
         assert result.price == "price --"
         assert result.amount == Decimal("1")
@@ -364,7 +364,7 @@ async def test_process_trade_key_error(mock_client: FullNodeClient) -> None:
         data=[],
     )
 
-    mock_tx = MagicMock(sender_address="0xuser")
+    mock_tx = MagicMock(sender_address=1234)
     mock_client.get_transaction.return_value = mock_tx
 
     with patch("app.services.fetch_data.client", mock_client):
@@ -414,7 +414,7 @@ async def test_amount_calculation_large(mock_client: FullNodeClient) -> None:
         keys=[get_selector_from_name("TradeOpen")],
     )
 
-    mock_tx = MagicMock(sender_address="0xuser")
+    mock_tx = MagicMock(sender_address=123)
     mock_tx.calldata = [0, eth_address]
     mock_block = MagicMock(timestamp=time.time())
     mock_client.get_transaction.return_value = mock_tx
