@@ -46,8 +46,9 @@ class EkuboOrderBook(OrderBookBase):
             # Fetch pool liquidity data
             pool_liquidity = int(row["liquidity"])
             self.block = row["lastUpdate"]["event_id"]
-
-            liquidity_response = self.connector.get_pool_liquidity(key_hash)
+            info = self.connector.get_pool_info(key_hash)          
+            pool_key = info['pool_key']
+            liquidity_response = self.connector.get_pool_liquidity(pool_key)
             liquidity_data = liquidity_response["data"]
             liquidity_data = sorted(liquidity_data, key=lambda x: x["tick"])
 
