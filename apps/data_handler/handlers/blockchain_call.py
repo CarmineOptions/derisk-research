@@ -8,6 +8,8 @@ import starknet_py.hash.selector
 import starknet_py.net.client_models
 import starknet_py.net.networks
 from starknet_py.net.full_node_client import FullNodeClient
+from shared.blockchain_call import func_call
+
 
 NET = FullNodeClient(node_url="https://starknet-mainnet.public.blastapi.io")
 
