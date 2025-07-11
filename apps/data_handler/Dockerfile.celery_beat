@@ -17,7 +17,6 @@ RUN pip install celery
 RUN pip install redis
 COPY data_handler/celery_conf.py ./
 COPY data_handler/background_tasks ./background_tasks
-COPY shared/telegram_app/ ../shared/telegram_app/
 COPY shared ../shared/
 COPY data_handler ./
 
