@@ -9,7 +9,7 @@ from typing import List, Union
 
 from shared.custom_types import TokenSettings
 
-CRONTAB_TIME = os.environ.get("CRONTAB_TIME", "5")
+CRONTAB_TIME = os.environ.get("CRONTAB_TIME", "1")
 
 ZKLEND = "zkLend"
 NOSTRA_ALPHA = "Nostra Alpha"

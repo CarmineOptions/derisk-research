@@ -1,6 +1,6 @@
 # Ekubo
 
-This folder contains all interaction with [Ekubo API](https://docs.ekubo.org/integration-guides/reference/ekubo-api/api-endpoints).
+This folder contains all interaction with [Ekubo API](https://docs.ekubo.org/integration-guides/reference/ekubo-api).
 
 # Endpoints Documentation:
 - [Get Pool Liquidity](docs/pool_liquidity.md) - Detailed information about liquidity in different pools.
