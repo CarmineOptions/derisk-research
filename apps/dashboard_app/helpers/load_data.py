@@ -8,7 +8,7 @@ import math
 from collections import defaultdict
 from time import monotonic
 
-from data_handler.handlers.loan_states.zklend.events import ZkLendState
+from shared.state import ZkLendState
 from shared.constants import TOKEN_SETTINGS
 
 from dashboard_app.data_conector import DataConnectorAsync
@@ -118,17 +118,20 @@ class DashboardDataHandler:
         zklend_interest_rate_data = await self.data_connector.fetch_data(
             self.data_connector.ZKLEND_INTEREST_RATE_SQL_QUERY
         )
-       
-        if not zklend_interest_rate_data["collateral"].empty:
-            zklend_state.interest_rate_models.collateral = zklend_interest_rate_data["collateral"].iloc[0]
-        else:
-            zklend_state.interest_rate_models.collateral = None  
 
         if not zklend_interest_rate_data["collateral"].empty:
-            zklend_state.interest_rate_models.debt = zklend_interest_rate_data["debt"].iloc[0]
+            zklend_state.interest_rate_models.collateral = zklend_interest_rate_data[
+                "collateral"
+            ].iloc[0]
         else:
-            zklend_state.interest_rate_models.debt = None  
+            zklend_state.interest_rate_models.collateral = None
 
+        if not zklend_interest_rate_data["collateral"].empty:
+            zklend_state.interest_rate_models.debt = zklend_interest_rate_data[
+                "debt"
+            ].iloc[0]
+        else:
+            zklend_state.interest_rate_models.debt = None
 
     def _set_prices(self) -> None:
         """

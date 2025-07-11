@@ -5,7 +5,8 @@ import pandas as pd
 from shared import blockchain_call
 from shared.constants import ProtocolIDs
 from shared.helpers import add_leading_zeros, get_symbol
-from typing import Optional
+from shared.data_parser.zklend import ZklendDataParser
+from typing import Optional, Protocol
 from shared.custom_types import (
     Prices,
     ZkLendCollateralTokenParameters,
@@ -35,6 +36,12 @@ EVENTS_METHODS_MAPPING: dict[str, str] = {
     "zklend::market::Market::Liquidation": "process_liquidation_event",
 }
 
+logger = logging.getLogger(__name__)
+
+
+class CollateralSaverI(Protocol):
+    def __call__(self, user, collateral_enabled, collateral, debt) -> None: ...
+
 
 class ZkLendState(State):
     """
@@ -49,12 +56,13 @@ class ZkLendState(State):
     def __init__(
         self,
         verbose_user: Optional[str] = None,
+        save_collateral_cb: CollateralSaverI | None = None,
     ) -> None:
         super().__init__(
             loan_entity_class=ZkLendLoanEntity,
             verbose_user=verbose_user,
         )
-        self.db_connector = InitializerDBConnector()
+        self._save_collateral_cb = save_collateral_cb
 
     def process_accumulators_sync_event(self, event: pd.Series) -> None:
         """Processes an accumulators sync event, updating collateral and
@@ -129,7 +137,13 @@ class ZkLendState(State):
             value=self.loan_entities[user].deposit[token],
         )
         # save last loan collateral_enabled state to db
-        self.db_connector.save_collateral_enabled_by_user(
+        if not self._save_collateral_cb:
+            logger.warning(
+                "Unable to save collateral_enabled because saver not provided"
+                "Make sure to provide collateral_saver when initializing ZklendState for processing events"
+            )
+            return
+        self._save_collateral_cb(
             user,
             self.loan_entities[user].collateral_enabled,
             self.loan_entities[user].collateral,

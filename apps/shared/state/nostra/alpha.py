@@ -10,6 +10,11 @@ from typing import Optional
 import pandas as pd
 from shared.constants import ProtocolIDs
 from shared.helpers import add_leading_zeros, get_symbol
+from shared.custom_types import (
+    NostraAlphaCollateralTokenParameters,
+    NostraDebtTokenParameters,
+    Prices,
+)
 from shared.loan_entity.nostra.alpha import (
     NostraAlphaLoanEntity,
     NOSTRA_ALPHA_ADDRESSES_TO_EVENTS,

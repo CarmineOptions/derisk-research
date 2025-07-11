@@ -1,16 +1,20 @@
-""" This module contains the zkLend loan state computation class. """
+"""This module contains the zkLend loan state computation class."""
+
 import logging
 from time import monotonic
 
 import pandas as pd
 from data_handler.handler_tools.constants import ProtocolAddresses
+from data_handler.db.crud import InitializerDBConnector
 from data_handler.handlers.loan_states.abstractions import LoanStateComputationBase
-from data_handler.handlers.loan_states.zklend.events import ZkLendState
+from shared.state import ZkLendState, State
 from data_handler.handlers.loan_states.zklend.utils import ZkLendInitializer
 from shared.constants import ProtocolIDs
-from shared.state import State
 
 logger = logging.getLogger(__name__)
+
+
+db_connector = InitializerDBConnector()
 
 
 class ZkLendLoanStateComputation(LoanStateComputationBase):
@@ -82,7 +86,9 @@ class ZkLendLoanStateComputation(LoanStateComputationBase):
 
         :return: pd.DataFrame
         """
-        zklend_state = ZkLendState()
+        zklend_state = ZkLendState(
+            save_collateral_cb=db_connector.save_collateral_enabled_by_user
+        )
         events_mapping = zklend_state.EVENTS_METHODS_MAPPING
         # Init DataFrame
         df = pd.DataFrame(data)

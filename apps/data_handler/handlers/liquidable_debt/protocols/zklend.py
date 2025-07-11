@@ -1,4 +1,5 @@
-""" This script is used to compute the liquidable debt for the zKlend protocol. """
+"""This script is used to compute the liquidable debt for the zKlend protocol."""
+
 import logging
 
 from data_handler.handlers.liquidable_debt.debt_handlers import (
@@ -10,10 +11,8 @@ from data_handler.handlers.liquidable_debt.values import (
     LIQUIDABLE_DEBT_FIELD_NAME,
     PRICE_FIELD_NAME,
 )
-from data_handler.handlers.loan_states.zklend.events import (
-    ZkLendLoanEntity,
-    ZkLendState,
-)
+from shared.state import ZkLendState
+from shared.loan_entity import ZkLendLoanEntity
 
 from data_handler.db.models import LiquidableDebt
 from shared.constants import ProtocolIDs

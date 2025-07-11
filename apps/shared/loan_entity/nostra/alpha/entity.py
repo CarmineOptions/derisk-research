@@ -3,17 +3,9 @@ Event processing for Nostra Alpha protocol, including loan and collateral manage
 """
 
 import decimal
-from data_handler.handlers.settings import TokenSettings
-from data_handler.handlers.state import NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS
+from .settings import NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS
 from shared.custom_types import InterestRateModels, Portfolio, Prices, TokenParameters
-from shared.custom_types.nostra import (
-    NostraAlphaCollateralTokenParameters,
-    NostraDebtTokenParameters,
-)
-from shared.helpers import add_leading_zeros
 from shared.loan_entity import LoanEntity
-from shared.starknet_client import StarknetClient
-from shared.state import State
 
 LIQUIDATION_HEALTH_FACTOR_THRESHOLD = decimal.Decimal("1")
 TARGET_HEALTH_FACTOR = decimal.Decimal("1.25")
@@ -30,7 +22,7 @@ class NostraAlphaLoanEntity(LoanEntity):
     earns interest and the amount that doesn't. We keep all balances in raw amounts.
     """
 
-    TOKEN_SETTINGS: dict[str, TokenSettings] = NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS
+    TOKEN_SETTINGS = NOSTRA_ALPHA_SPECIFIC_TOKEN_SETTINGS
     # TODO: Move these to `PROTOCOL_SETTINGS` (similar to `TOKEN_SETTINGS`)? Might be useful when
     # `compute_health_factor` is generalized.
     LIQUIDATION_HEALTH_FACTOR_THRESHOLD = LIQUIDATION_HEALTH_FACTOR_THRESHOLD

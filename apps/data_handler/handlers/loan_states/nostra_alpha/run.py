@@ -1,4 +1,5 @@
-""" This module contains the logic to compute the loan states for the NOSTRA_ALPHA protocol. """
+"""This module contains the logic to compute the loan states for the NOSTRA_ALPHA protocol."""
+
 import logging
 from time import monotonic
 
@@ -7,17 +8,17 @@ from data_handler.handler_tools.constants import (
     NOSTRA_EVENTS_MAPPING,
     ProtocolAddresses,
 )
-from data_handler.handler_tools.nostra_alpha_settings import (
+from shared.loan_entity.nostra.alpha import (
     NOSTRA_ALPHA_ADDRESSES_TO_EVENTS,
     NOSTRA_ALPHA_EVENTS_TO_METHODS,
     NOSTRA_ALPHA_INTEREST_RATE_MODEL_ADDRESS,
 )
 from data_handler.handlers.loan_states.abstractions import LoanStateComputationBase
-from data_handler.handlers.loan_states.nostra_alpha.events import NostraAlphaState
+from shared.state import NostraAlphaState
 from shared.constants import ProtocolIDs
 
 logger = logging.getLogger(__name__)
-NOSTRA_ALPHA_EVENTS_TO_ORDER: dict[str, str] = {
+NOSTRA_ALPHA_EVENTS_TO_ORDER: dict[str, int] = {
     "InterestStateUpdated": 0,
     "Transfer": 1,
     "openzeppelin::token::erc20_v070::erc20::ERC20::Transfer": 2,

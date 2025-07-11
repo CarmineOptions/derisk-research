@@ -1,22 +1,21 @@
 from decimal import Decimal
 
+import copy
 import pandas as pd
 import starknet_py
-from data_handler.handler_tools.nostra_mainnet_settings import (
+from shared.loan_entity.nostra.mainnet import (
     NOSTRA_MAINNET_CDP_MANAGER_ADDRESS,
     NOSTRA_MAINNET_DEFERRED_BATCH_CALL_ADAPTER_ADDRESS,
     NOSTRA_MAINNET_EVENTS_TO_METHODS,
     NOSTRA_MAINNET_INTEREST_RATE_MODEL_ADDRESS,
     NOSTRA_MAINNET_TOKEN_ADDRESSES,
 )
-from data_handler.handlers.helpers import (
-    get_addresses,
-)
-from shared.helpers import get_symbol
+from shared.helpers import get_symbol, get_addresses
 from shared.constants import ProtocolIDs
-from shared.custom_types.nostra import (
+from shared.custom_types import (
     NostraDebtTokenParameters,
     NostraMainnetCollateralTokenParameters,
+    Prices,
 )
 from shared.helpers import add_leading_zeros
 from shared.starknet_client import StarknetClient
