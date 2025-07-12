@@ -13,17 +13,12 @@ Functions:
     - process_*_event: Updates loan states based on events.
 """
 
-import copy
 import decimal
 import logging
 from decimal import Decimal
 from typing import Optional
 
-import pandas as pd
-from data_handler.db.crud import InitializerDBConnector
-from shared.data_parser.zklend import ZklendDataParser
 from .settings import ZKLEND_SPECIFIC_TOKEN_SETTINGS
-from shared.helpers import add_leading_zeros, get_symbol
 from ..loan_entity import LoanEntity
 
 
