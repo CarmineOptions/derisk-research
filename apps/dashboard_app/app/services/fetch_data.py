@@ -165,7 +165,7 @@ async def process_trade_open(event: dict) -> UserTransaction:
         logging.error(f"KeyError processing TradeOpen: {e}")
         return None
     except Exception as e:
-        logging.error(f"Unexpected error processing TradeOpen: {e}")
+        logging.exception(f"Unexpected error processing TradeOpen: {e}")
         return None
 
 

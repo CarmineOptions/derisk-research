@@ -1,4 +1,5 @@
-""" This script is used to compute the liquidable debt for the Nostra Mainnet protocol. """
+"""This script is used to compute the liquidable debt for the Nostra Mainnet protocol."""
+
 from data_handler.handlers.liquidable_debt.debt_handlers import (
     NostraMainnetDBLiquidableDebtDataHandler,
 )
@@ -8,10 +9,8 @@ from data_handler.handlers.liquidable_debt.values import (
     LIQUIDABLE_DEBT_FIELD_NAME,
     PRICE_FIELD_NAME,
 )
-from data_handler.handlers.loan_states.nostra_mainnet.events import (
-    NostraMainnetLoanEntity,
-    NostraMainnetState,
-)
+from shared.state import NostraMainnetState
+from shared.loan_entity import NostraMainnetLoanEntity
 
 from data_handler.db.models import LiquidableDebt
 from shared.constants import ProtocolIDs
@@ -26,7 +25,9 @@ def run() -> None:
         loan_state_class=NostraMainnetState, loan_entity_class=NostraMainnetLoanEntity
     )
 
-    data = handler.calculate_liquidable_debt(protocol_name=ProtocolIDs.NOSTRA_MAINNET.value)
+    data = handler.calculate_liquidable_debt(
+        protocol_name=ProtocolIDs.NOSTRA_MAINNET.value
+    )
 
     for liquidable_debt_info in data:
         db_row = LiquidableDebt(

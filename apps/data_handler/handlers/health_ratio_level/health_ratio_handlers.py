@@ -1,4 +1,5 @@
-""" This module contains the health ratio level handlers for different protocols. """
+"""This module contains the health ratio level handlers for different protocols."""
+
 import asyncio
 from datetime import datetime
 from decimal import Decimal
@@ -10,22 +11,16 @@ from data_handler.handlers.liquidable_debt.values import (
     TIMESTAMP_FIELD_NAME,
     USER_FIELD_NAME,
 )
-from data_handler.handlers.loan_states.nostra_alpha.events import (
+from shared.loan_entity import (
     NostraAlphaLoanEntity,
-    NostraAlphaState,
-)
-from data_handler.handlers.loan_states.nostra_mainnet.events import (
-    NostraMainnetLoanEntity,
-    NostraMainnetState,
-)
-from data_handler.handlers.loan_states.zklend.events import (
     ZkLendLoanEntity,
-    ZkLendState,
+    NostraMainnetLoanEntity,
+    LoanEntity,
 )
+from shared.state import NostraAlphaState, ZkLendState, NostraMainnetState, State
 
 from data_handler.db.crud import DBConnector
 from shared.constants import ProtocolIDs
-from shared.state import LoanEntity, State
 from shared.custom_types import TokenValues
 
 
@@ -68,9 +63,11 @@ class BaseHealthRatioHandler:
             loan_entity.debt = TokenValues(values=instance.debt)
             loan_entity.collateral = TokenValues(values=instance.collateral)
 
-            state.loan_entities.update({
-                instance.user: loan_entity,
-            })
+            state.loan_entities.update(
+                {
+                    instance.user: loan_entity,
+                }
+            )
 
         return state
 
@@ -81,7 +78,9 @@ class BaseHealthRatioHandler:
         :param health_ratio_level: Health ratio level
         :return: bool
         """
-        return health_ratio_level > Decimal("0") and health_ratio_level != Decimal("Infinity")
+        return health_ratio_level > Decimal("0") and health_ratio_level != Decimal(
+            "Infinity"
+        )
 
 
 class ZkLendHealthRatioHandler(BaseHealthRatioHandler):
@@ -100,12 +99,16 @@ class ZkLendHealthRatioHandler(BaseHealthRatioHandler):
         Calculates health ratio based on provided data.
         :return: A list of the ready health ratio data.
         """
-        data, interest_rate_models = self.fetch_data(protocol_name=ProtocolIDs.ZKLEND.value)
+        data, interest_rate_models = self.fetch_data(
+            protocol_name=ProtocolIDs.ZKLEND.value
+        )
         state = self.state_class()
         state = self.initialize_loan_entities(state=state, data=data)
 
         # Set up collateral and debt interest rate models
-        state.collateral_interest_rate_models = TokenValues(values=interest_rate_models.collateral)
+        state.collateral_interest_rate_models = TokenValues(
+            values=interest_rate_models.collateral
+        )
         state.debt_interest_rate_models = TokenValues(values=interest_rate_models.debt)
 
         current_prices = Prices()
@@ -150,19 +153,25 @@ class NostrAlphaHealthRatioHandler(BaseHealthRatioHandler):
     """
 
     def __init__(self):
-        super().__init__(state_class=NostraAlphaState, loan_entity_class=NostraAlphaLoanEntity)
+        super().__init__(
+            state_class=NostraAlphaState, loan_entity_class=NostraAlphaLoanEntity
+        )
 
     def calculate_health_ratio(self) -> list[dict]:
         """
         Calculates health ratio based on provided data.
         :return: A list of the ready health ratio data.
         """
-        data, interest_rate_models = self.fetch_data(protocol_name=ProtocolIDs.NOSTRA_ALPHA.value)
+        data, interest_rate_models = self.fetch_data(
+            protocol_name=ProtocolIDs.NOSTRA_ALPHA.value
+        )
         state = self.state_class()
         state = self.initialize_loan_entities(state=state, data=data)
 
         # Set up collateral and debt interest rate models
-        state.collateral_interest_rate_models = TokenValues(values=interest_rate_models.collateral)
+        state.collateral_interest_rate_models = TokenValues(
+            values=interest_rate_models.collateral
+        )
         state.debt_interest_rate_models = TokenValues(values=interest_rate_models.debt)
 
         current_prices = Prices()
@@ -207,19 +216,25 @@ class NostrMainnetHealthRatioHandler(BaseHealthRatioHandler):
     """
 
     def __init__(self):
-        super().__init__(state_class=NostraMainnetState, loan_entity_class=NostraMainnetLoanEntity)
+        super().__init__(
+            state_class=NostraMainnetState, loan_entity_class=NostraMainnetLoanEntity
+        )
 
     def calculate_health_ratio(self) -> list[dict]:
         """
         Calculates health ratio based on provided data.
         :return: A list of the ready health ratio data.
         """
-        data, interest_rate_models = self.fetch_data(protocol_name=ProtocolIDs.NOSTRA_MAINNET.value)
+        data, interest_rate_models = self.fetch_data(
+            protocol_name=ProtocolIDs.NOSTRA_MAINNET.value
+        )
         state = self.state_class()
         state = self.initialize_loan_entities(state=state, data=data)
 
         # Set up collateral and debt interest rate models
-        state.collateral_interest_rate_models = TokenValues(values=interest_rate_models.collateral)
+        state.collateral_interest_rate_models = TokenValues(
+            values=interest_rate_models.collateral
+        )
         state.debt_interest_rate_models = TokenValues(values=interest_rate_models.debt)
 
         current_prices = Prices()

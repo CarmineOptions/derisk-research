@@ -5,24 +5,13 @@ which is used to transform Nostra events.
 
 import logging
 from decimal import Decimal
-from typing import Any, Callable, Dict, Tuple, Type
+from typing import Callable, Dict, Tuple
 
 from data_handler.db.crud import NostraEventDBConnector
-from shared.db import Base
-from data_handler.db.models.nostra_events import (
-    BearingCollateralBurnEventModel,
-    BearingCollateralMintEventModel,
-    DebtBurnEventModel,
-    DebtMintEventModel,
-    DebtTransferEventModel,
-    InterestRateModelEventModel,
-    NonInterestBearingCollateralBurnEventModel,
-    NonInterestBearingCollateralMintEventModel,
-)
 from data_handler.handler_tools.api_connector import DeRiskAPIConnector
 from data_handler.handler_tools.constants import ProtocolAddresses
-from data_handler.handler_tools.data_parser.nostra import NostraDataParser
-from data_handler.handler_tools.data_parser.serializers import (
+from shared.data_parser.nostra import NostraDataParser
+from shared.data_parser.serializers import (
     BearingCollateralBurnEventData,
     BearingCollateralMintEventData,
     DebtBurnEventData,

@@ -8,7 +8,7 @@ import plotly
 import streamlit as st
 import matplotlib.pyplot as plt
 import seaborn as sns
-from data_handler.handlers.loan_states.abstractions import State
+from shared.state import State
 from shared.helpers import (
     add_leading_zeros,
     extract_token_addresses,
@@ -24,14 +24,13 @@ from helpers.settings import (
 )
 
 
-
 from .constants import ChartsHeaders, CommonValues
 from .main_chart_figure import (
     get_bar_chart_figures,
     get_main_chart_figure,
     get_specific_loan_usd_amounts,
     get_user_history,
-    get_total_amount_by_field
+    get_total_amount_by_field,
 )
 from .utils import (
     get_protocol_data_mappings,
@@ -40,7 +39,6 @@ from .utils import (
     transform_loans_data,
     transform_main_chart_data,
 )
- 
 
 
 class Dashboard:
@@ -60,13 +58,13 @@ class Dashboard:
     ]
 
     def __init__(
-            self,
-            state: State | None = None,
-            general_stats: dict | None = None,
-            supply_stats: dict | None = None,
-            collateral_stats: dict | None = None,
-            debt_stats: dict | None = None,
-            utilization_stats: dict | None = None,
+        self,
+        state: State | None = None,
+        general_stats: dict | None = None,
+        supply_stats: dict | None = None,
+        collateral_stats: dict | None = None,
+        debt_stats: dict | None = None,
+        utilization_stats: dict | None = None,
     ):
         """
         Initialize the dashboard.
@@ -124,7 +122,7 @@ class Dashboard:
                 st.warning(
                     "⚠️ You are selecting the same token for both collateral and debt."
                 )
-    
+
     def load_main_chart(self):
         """
         Generates a chart that visualizes liquidable debt against available supply.
@@ -204,16 +202,16 @@ class Dashboard:
         st.dataframe(
             loans_data[
                 (
-                        loans_data[CommonValues.health_factor.value] > 0
+                    loans_data[CommonValues.health_factor.value] > 0
                 )  # TODO: debug the negative HFs
                 & loans_data[CommonValues.debt_usd.value].between(
                     debt_usd_lower_bound, debt_usd_upper_bound
                 )
-                ]
+            ]
             .sort_values(CommonValues.health_factor.value)
             .iloc[:20],
             use_container_width=True,
-            )
+        )
 
     def load_top_loans_chart(self):
         """
@@ -237,37 +235,37 @@ class Dashboard:
             st.dataframe(
                 loans_data[
                     (
-                            loans_data[CommonValues.health_factor.value] > 1
+                        loans_data[CommonValues.health_factor.value] > 1
                     )  # TODO: debug the negative HFs
                     & (
-                            loans_data[CommonValues.standardized_health_factor.value]
-                            != float("inf")
+                        loans_data[CommonValues.standardized_health_factor.value]
+                        != float("inf")
                     )
-                    ]
+                ]
                 .sort_values(CommonValues.collateral_usd.value, ascending=False)
                 .iloc[:20],
                 use_container_width=True,
-                )
+            )
         with col2:
             st.subheader("Sorted by debt")
             st.dataframe(
                 loans_data[
                     (loans_data[CommonValues.health_factor.value] > 1)
                     & (
-                            loans_data[CommonValues.standardized_health_factor.value]
-                            != float("inf")
+                        loans_data[CommonValues.standardized_health_factor.value]
+                        != float("inf")
                     )  # TODO: debug the negative HFs
-                    ]
+                ]
                 .sort_values(CommonValues.debt_usd.value, ascending=False)
                 .iloc[:20],
                 use_container_width=True,
-                )
+            )
 
     def display_box(self):
         """
         Displays a box plot for collateral, debt, and deposit amounts.
 
-        This method retrieves total amounts for collateral, debt, and deposit 
+        This method retrieves total amounts for collateral, debt, and deposit
         from the class's data attributes, then visualizes them using a box plot.
 
         The box plot uses:
@@ -277,18 +275,23 @@ class Dashboard:
 
         The plot is displayed using Streamlit.
         """
-        collateral_df = get_total_amount_by_field(self.collateral_stats, 'collateral')
-        debt_df = get_total_amount_by_field(self.debt_stats, 'debt')
-        deposit_df = get_total_amount_by_field(self.supply_stats, 'deposit')
-        
-        boxplot_data = pd.DataFrame({
-            "Collateral": collateral_df["total_amount"],
-            "Debt": debt_df["total_amount"],
-            "Deposit": deposit_df["total_amount"]
-        })
-        
+        collateral_df = get_total_amount_by_field(self.collateral_stats, "collateral")
+        debt_df = get_total_amount_by_field(self.debt_stats, "debt")
+        deposit_df = get_total_amount_by_field(self.supply_stats, "deposit")
+
+        boxplot_data = pd.DataFrame(
+            {
+                "Collateral": collateral_df["total_amount"],
+                "Debt": debt_df["total_amount"],
+                "Deposit": deposit_df["total_amount"],
+            }
+        )
+
         fig, ax = plt.subplots(figsize=(8, 5))
-        sns.boxplot(data=boxplot_data, palette={"Collateral": "green", "Debt": "red", "Deposit": "red"})
+        sns.boxplot(
+            data=boxplot_data,
+            palette={"Collateral": "green", "Debt": "red", "Deposit": "red"},
+        )
 
         ax.set_ylabel("Total Amount")
         ax.set_title("Box Plot of Collateral, Debt, and Deposit")
@@ -425,34 +428,34 @@ class Dashboard:
                     figure = self._plot_chart(token, "supply")
                     st.plotly_chart(figure, True)
 
-    def get_user_history(self, wallet_id):  
-        """  
-        Fetch and return the transaction history for a specific user.  
-        """  
-        user_data = get_user_history(wallet_id)  
-        if user_data is None or user_data.empty:  
-            st.error("No data found for this user.")  
-            return None  
+    def get_user_history(self, wallet_id):
+        """
+        Fetch and return the transaction history for a specific user.
+        """
+        user_data = get_user_history(wallet_id)
+        if user_data is None or user_data.empty:
+            st.error("No data found for this user.")
+            return None
 
-        user_data.columns = [CommonValues.protocol.value, CommonValues.total_usd.value]  
-        user_data = user_data.sort_values(CommonValues.total_usd.value, ascending=False)  
-        user_data.reset_index(drop=True, inplace=True)  
-        
-        st.dataframe(user_data)  
-        return user_data  
+        user_data.columns = [CommonValues.protocol.value, CommonValues.total_usd.value]
+        user_data = user_data.sort_values(CommonValues.total_usd.value, ascending=False)
+        user_data.reset_index(drop=True, inplace=True)
+
+        st.dataframe(user_data)
+        return user_data
 
         # TODO: add last update functionality
-        
+
     def load_leaderboard(self):
         """
         Display a leaderboard of the top 5 biggest collateral and debt per token.
         """
         st.header("Leaderboard: Top 5 Collateral & Debt per Token")
-        
+
         if self.collateral_stats.empty or self.debt_stats.empty:
             st.warning("No data available for leaderboard.")
             return
-        
+
         top_collateral = (
             self.collateral_stats.groupby("token")["amount_usd"]
             .sum()
@@ -460,7 +463,7 @@ class Dashboard:
             .reset_index()
         )
         top_collateral["type"] = "Collateral"
-        
+
         top_debt = (
             self.debt_stats.groupby("token")["amount_usd"]
             .sum()
@@ -468,13 +471,13 @@ class Dashboard:
             .reset_index()
         )
         top_debt["type"] = "Debt"
-        
+
         leaderboard_df = pd.concat([top_collateral, top_debt])
-        
+
         def highlight_values(row):
             color = "green" if row["type"] == "Collateral" else "red"
-            return [f'background-color: {color}; color: white' for _ in row]
-        
+            return [f"background-color: {color}; color: white" for _ in row]
+
         st.dataframe(
             leaderboard_df.style.apply(highlight_values, axis=1),
             hide_index=True,

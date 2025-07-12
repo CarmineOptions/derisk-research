@@ -8,11 +8,10 @@ from typing import Iterator
 
 import pandas as pd
 import requests
-from data_handler.handlers.loan_states.abstractions import State
+from shared.state import State
 from shared.amms import SwapAmm
-from shared.blockchain_call import func_call
 from shared.custom_types import Prices, TokenParameters
-from starknet_py.cairo.felt import decode_shortstring
+from shared.helpers import add_leading_zeros
 
 AMMS = ["10kSwap", "MySwap", "SithSwap", "JediSwap"]
 
@@ -59,27 +58,6 @@ def get_collateral_token_range(
     return list(float_range(start=readable_step, stop=stop_price, step=readable_step))
 
 
-async def get_symbol(token_address: str) -> str:
-    """
-    Takes the address of a token and returns the symbol of that token
-    """
-    # DAI V2's symbol is `DAI` but we don't want to mix it with DAI = DAI V1.
-    if (
-        token_address
-        == "0x05574eb6b8789a91466f902c380d978e472db68170ff82a5b650b95a58ddf4ad"
-    ):
-        return "DAI V2"
-    symbol = await func_call(
-        addr=token_address,
-        selector="symbol",
-        calldata=[],
-    )
-    # For some Nostra Mainnet tokens, a list of length 3 is returned.
-    if len(symbol) > 1:
-        return decode_shortstring(symbol[1])
-    return decode_shortstring(symbol[0])
-
-
 def get_prices(token_decimals: dict[str, int]) -> dict[str, float]:
     """
     Get the prices of the tokens.
@@ -119,45 +97,6 @@ def get_prices(token_decimals: dict[str, int]) -> dict[str, float]:
         prices[token] = token_info.get("currentPrice")
 
     return prices
-
-
-def add_leading_zeros(hash: str) -> str:
-    """
-    Converts e.g. `0x436d8d078de345c11493bd91512eae60cd2713e05bcaa0bb9f0cba90358c6e` to
-    `0x00436d8d078de345c11493bd91512eae60cd2713e05bcaa0bb9f0cba90358c6e`.
-    """
-    return "0x" + hash[2:].zfill(64)
-
-
-def get_addresses(
-    token_parameters: TokenParameters,
-    underlying_address: str | None = None,
-    underlying_symbol: str | None = None,
-) -> list[str]:
-    """
-    get the token address based on underlying address or symbol and
-    Returns it.
-    """
-    # Up to 2 addresses can match the given `underlying_address` or `underlying_symbol`.
-    if underlying_address:
-        addresses = [
-            x.address
-            for x in token_parameters.values()
-            if x.underlying_address == underlying_address
-        ]
-    elif underlying_symbol:
-        addresses = [
-            x.address
-            for x in token_parameters.values()
-            if x.underlying_symbol == underlying_symbol
-        ]
-    else:
-        raise ValueError(
-            f"Both `underlying_address` =  {underlying_symbol} "
-            f"or `underlying_symbol` = {underlying_symbol} are not specified."
-        )
-    assert len(addresses) <= 2
-    return addresses
 
 
 def get_underlying_address(

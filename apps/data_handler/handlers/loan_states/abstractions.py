@@ -1,5 +1,6 @@
-""" This module contains the base class for computing loan states 
-based on data from a DeRisk API. """
+"""This module contains the base class for computing loan states
+based on data from a DeRisk API."""
+
 import logging
 from abc import ABC, abstractmethod
 from typing import Dict, Optional
@@ -9,7 +10,6 @@ from data_handler.db.crud import DBConnector
 from data_handler.db.models import InterestRate, LoanState
 from data_handler.handler_tools.api_connector import DeRiskAPIConnector
 from shared.constants import ProtocolIDs
-from shared.custom_types import InterestRateModels
 from shared.state import State
 
 logger = logging.getLogger(__name__)

@@ -1,4 +1,5 @@
-""" This module contains constants for the data handler """
+"""This module contains constants for the data handler"""
+
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Set
@@ -164,17 +165,4 @@ FIRST_RUNNING_MAPPING = {
     "0x03e0576565c1b51fcac3b402eb002447f21e97abb5da7011c0a2e0b465136814": 0,
     "0x06726ec97bae4e28efa8993a8e0853bd4bad0bd71de44c23a1cd651b026b00e7": 0,
     "0x073fa792a8ad45303db3651c34176dc419bee98bfe45791ab12f884201a90ae2": 0,
-}
-
-TOKEN_MAPPING = {
-    "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7": "ETH",
-    "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8": "USDC",
-    "0x68f5c6a61780768455de69077e07e89787839bf8166decfbf92b645209c0fb8": "USDT",
-    "0xda114221cb83fa859dbdb4c44beeaa0bb37c7537ad5ae66fe5e0efd20e6eb3": "DAI",
-    "0x3fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac": "wBTC",
-    "0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d": "STRK",
-    "0x719b5092403233201aa822ce928bd4b551d0cdb071a724edd7dc5e5f57b7f34": "UNO",
-    "0x585c32b625999e6e5e78645ff8df7a9001cf5cf3eb6b80ccdd16cb64bd3a34": "ZEND",
-    "0x42b8f0484674ca266ac5d08e4ac6a3fe65bd3129795def2dca5c34ecc5f96d2": "wstETH",
-    "0x124aeb495b947201f5fac96fd1138e326ad86195b98df6dec9009158a533b49": "LORDS",
 }

@@ -1,4 +1,5 @@
-""" This module contains the Nostra Mainnet loan state computation class. """
+"""This module contains the Nostra Mainnet loan state computation class."""
+
 import logging
 from time import monotonic
 
@@ -7,14 +8,14 @@ from data_handler.handler_tools.constants import (
     NOSTRA_EVENTS_MAPPING,
     ProtocolAddresses,
 )
-from data_handler.handler_tools.nostra_mainnet_settings import (
+from shared.loan_entity.nostra.mainnet import (
     NOSTRA_MAINNET_ADDRESSES_TO_EVENTS,
     NOSTRA_MAINNET_EVENTS_TO_METHODS,
     NOSTRA_MAINNET_EVENTS_TO_ORDER,
     NOSTRA_MAINNET_INTEREST_RATE_MODEL_ADDRESS,
 )
 from data_handler.handlers.loan_states.abstractions import LoanStateComputationBase
-from data_handler.handlers.loan_states.nostra_mainnet.events import NostraMainnetState
+from shared.state import NostraMainnetState
 from shared.constants import ProtocolIDs
 
 logger = logging.getLogger(__name__)

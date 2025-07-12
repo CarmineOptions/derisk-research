@@ -1,6 +1,7 @@
 """
 Helper functions for data handling, blockchain interactions, and Google Cloud Storage operations.
 """
+
 import asyncio
 import decimal
 import logging
@@ -10,9 +11,7 @@ from typing import Iterator
 
 import google.cloud.storage
 import pandas
-import starknet_py.cairo.felt as cairo_felt_type
-from data_handler.handler_tools.constants import TOKEN_MAPPING
-from data_handler.handlers import blockchain_call
+from .order_books.constants import TOKEN_MAPPING
 from data_handler.handlers.settings import PAIRS
 
 from data_handler.db.models import InterestRate
@@ -48,7 +47,7 @@ class InterestRateState:
         """
         Initialize the InterestRateState object.
         :param current_block: int - The current block number.
-        :param last_block_data: InterestRate | None - 
+        :param last_block_data: InterestRate | None -
         The last block data from storage or None if is not present.
         """
         self.last_block_data = last_block_data
@@ -66,7 +65,9 @@ class InterestRateState:
         :param token_name: str - The name of the token, for example `STRK`.
         :return: Decimal - The number of seconds passed.
         """
-        return Decimal(self.current_timestamp - self.previous_token_timestamps[token_name])
+        return Decimal(
+            self.current_timestamp - self.previous_token_timestamps[token_name]
+        )
 
     def update_state_cumulative_data(
         self,
@@ -79,14 +80,17 @@ class InterestRateState:
         Update the state of interest rate calculation with the new data.
         :param token_name: str - The name of the token, for example `STRK`.
         :param current_block: int - The current block number.
-        :param cumulative_collateral_interest_rate_increase: 
+        :param cumulative_collateral_interest_rate_increase:
         Decimal - The change in collateral(supply) interest rate.
-        :param cumulative_debt_interest_rate_increase: 
+        :param cumulative_debt_interest_rate_increase:
         Decimal - The change in debt(borrow) interest rate.
         """
-        self.cumulative_collateral_interest_rates[token_name
-                                                  ] += cumulative_collateral_interest_rate_increase
-        self.cumulative_debt_interest_rate[token_name] += cumulative_debt_interest_rate_increase
+        self.cumulative_collateral_interest_rates[token_name] += (
+            cumulative_collateral_interest_rate_increase
+        )
+        self.cumulative_debt_interest_rate[token_name] += (
+            cumulative_debt_interest_rate_increase
+        )
         self.previous_token_timestamps[token_name] = self.current_timestamp
         self.current_block = current_block
 
@@ -96,7 +100,7 @@ class InterestRateState:
         self._fill_timestamps()
 
     def _fill_cumulative_data(self) -> None:
-        """Fill the cumulative collateral and debt data with latest block data or default values. 
+        """Fill the cumulative collateral and debt data with latest block data or default values.
         Default value is 1."""
         if self.last_block_data:
             (
@@ -105,25 +109,25 @@ class InterestRateState:
             ) = self.last_block_data.get_json_deserialized()
         else:
             self.cumulative_collateral_interest_rates = {
-                token_name: Decimal("1")
-                for token_name in TOKEN_MAPPING.values()
+                token.name: Decimal("1") for token in TOKEN_MAPPING.values()
             }
-            self.cumulative_debt_interest_rate = (self.cumulative_collateral_interest_rates.copy())
+            self.cumulative_debt_interest_rate = (
+                self.cumulative_collateral_interest_rates.copy()
+            )
 
     def _fill_timestamps(self) -> None:
-        """Fill the token timestamps with latest block timestamp or default value. 
+        """Fill the token timestamps with latest block timestamp or default value.
         Default value is 0"""
         if self.last_block_data:
             self.previous_token_timestamps = {
-                token_name: self.last_block_data.timestamp
-                for token_name in TOKEN_MAPPING.values()
+                token.name: self.last_block_data.timestamp
+                for token in TOKEN_MAPPING.values()
             }
         else:
             # First token event occurrence will update the timestamp,
             # so after first interest rate for token will be 1.
             self.previous_token_timestamps = {
-                token_name: 0
-                for token_name in TOKEN_MAPPING.values()
+                token.name: 0 for token in TOKEN_MAPPING.values()
             }
 
     def build_interest_rate_model(self, protocol_id: ProtocolIDs) -> InterestRate:
@@ -152,8 +156,9 @@ class InterestRateState:
         return {"collateral": collateral, "debt": debt}
 
 
-def decimal_range(start: decimal.Decimal, stop: decimal.Decimal,
-                  step: decimal.Decimal) -> Iterator[decimal.Decimal]:
+def decimal_range(
+    start: decimal.Decimal, stop: decimal.Decimal, step: decimal.Decimal
+) -> Iterator[decimal.Decimal]:
     """
     Generates a range of decimals from start to stop with a given step.
     """
@@ -162,8 +167,9 @@ def decimal_range(start: decimal.Decimal, stop: decimal.Decimal,
         start += step
 
 
-def get_range(start: decimal.Decimal, stop: decimal.Decimal,
-              step: decimal.Decimal) -> list[decimal.Decimal]:
+def get_range(
+    start: decimal.Decimal, stop: decimal.Decimal, step: decimal.Decimal
+) -> list[decimal.Decimal]:
     """
     Returns a list of decimal values from start to stop with a specified step.
     """
@@ -202,7 +208,9 @@ def load_data(
         main_chart_data[pair] = pandas.read_parquet(
             f"gs://{GS_BUCKET_NAME}/{directory}/{pair}.parquet"
         )
-    histogram_data = pandas.read_parquet(f"gs://{GS_BUCKET_NAME}/{directory}/histogram.parquet")
+    histogram_data = pandas.read_parquet(
+        f"gs://{GS_BUCKET_NAME}/{directory}/histogram.parquet"
+    )
     loans_data = pandas.read_parquet(f"gs://{GS_BUCKET_NAME}/{directory}/loans.parquet")
     return (
         main_chart_data,
@@ -216,17 +224,17 @@ def get_symbol(address: str, protocol: str | None = None) -> str:
     """
     Get the symbol of the token by its address.
 
-    This function takes an address and an optional protocol as input, 
+    This function takes an address and an optional protocol as input,
     and returns the symbol of the token.
     If the address is not found in the symbol table, it raises a KeyError.
-    If a protocol is provided and the address is not found, 
+    If a protocol is provided and the address is not found,
     it also sends an error message to a Telegram bot.
 
     :param address: str - The address of the token.
     :param protocol: str | None - The name of the protocol.
     :return: str - The symbol of the token.
     :raises KeyError: If the address is not found in the symbol table.
-    :note: If the address is not found and a protocol is provided, 
+    :note: If the address is not found and a protocol is provided,
     an error message will be sent to a Telegram bot.
 
     """
@@ -246,29 +254,13 @@ def get_symbol(address: str, protocol: str | None = None) -> str:
         ERROR_LOGS.update({error_info})
         asyncio.run(
             BOT.send_message(
-                MessageTemplates.NEW_TOKEN_MESSAGE.format(protocol_name=protocol, address=address)
+                MessageTemplates.NEW_TOKEN_MESSAGE.format(
+                    protocol_name=protocol, address=address
+                )
             )
         )
 
     raise KeyError(f"Address = {address} does not exist in the symbol table.")
-
-
-async def get_async_symbol(token_address: str) -> str:
-    """
-    Retrieves the symbol of a token asynchronously by its address.
-    """
-    # DAI V2's symbol is `DAI` but we don't want to mix it with DAI = DAI V1.
-    if (token_address == "0x05574eb6b8789a91466f902c380d978e472db68170ff82a5b650b95a58ddf4ad"):
-        return "DAI V2"
-    symbol = await blockchain_call.func_call(
-        addr=token_address,
-        selector="symbol",
-        calldata=[],
-    )
-    # For some Nostra Mainnet tokens, a list of length 3 is returned.
-    if len(symbol) > 1:
-        return cairo_felt_type.decode_shortstring(symbol[1])
-    return cairo_felt_type.decode_shortstring(symbol[0])
 
 
 def upload_file_to_bucket(source_path: str, target_path: str) -> None:
@@ -286,7 +278,9 @@ def upload_file_to_bucket(source_path: str, target_path: str) -> None:
             os.getenv("CREDENTIALS_PATH", "")
         )
     except FileNotFoundError as e:
-        logger.info(f"Failed to initialize the Google Cloud Storage client due to an error: {e}")
+        logger.info(
+            f"Failed to initialize the Google Cloud Storage client due to an error: {e}"
+        )
         raise FileNotFoundError
 
     # Get the target bucket.
@@ -295,7 +289,9 @@ def upload_file_to_bucket(source_path: str, target_path: str) -> None:
     # Upload the file to the bucket.
     blob = bucket.blob(target_path)
     blob.upload_from_filename(source_path)
-    logger.info(f"File = {source_path} uploaded to = gs://{GS_BUCKET_NAME}/{target_path}")
+    logger.info(
+        f"File = {source_path} uploaded to = gs://{GS_BUCKET_NAME}/{target_path}"
+    )
 
 
 def save_dataframe(data: pandas.DataFrame, path: str) -> None:
@@ -309,36 +305,3 @@ def save_dataframe(data: pandas.DataFrame, path: str) -> None:
     data.to_parquet(path, index=False, engine="fastparquet", compression="gzip")
     upload_file_to_bucket(source_path=path, target_path=path)
     os.remove(path)
-
-
-def get_addresses(
-    token_parameters: "TokenParameters",
-    underlying_address: str | None = None,
-    underlying_symbol: str | None = None,
-) -> list[str]:
-    """
-    Get the addresses of the tokens based on the underlying address or symbol.
-    :param token_parameters: the token parameters
-    :param underlying_address: underlying address
-    :param underlying_symbol: underlying symbol
-    :return: list of addresses
-    """
-    # Up to 2 addresses can match the given `underlying_address` or `underlying_symbol`.
-    if underlying_address:
-        addresses = [
-            x.address for x in token_parameters.values()
-            if x.underlying_address == underlying_address
-        ]
-    elif underlying_symbol:
-        addresses = [
-            x.address for x in token_parameters.values() if x.underlying_symbol == underlying_symbol
-        ]
-    else:
-        raise ValueError(
-            "Both `underlying_address` =  {} or `underlying_symbol` = {} are not specified.".format(
-                underlying_address,
-                underlying_symbol,
-            )
-        )
-    assert len(addresses) <= 2
-    return addresses

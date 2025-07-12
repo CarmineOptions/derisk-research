@@ -1,6 +1,7 @@
 """
 This moudel process and transform liquidity, loan, and chart data for protocols.
 """
+
 import asyncio
 import difflib
 import logging
@@ -10,7 +11,7 @@ from collections import defaultdict
 
 import pandas as pd
 import streamlit as st
-from data_handler.handlers.loan_states.abstractions import State
+from shared.state import State
 from shared.amms import SwapAmm
 from shared.constants import PAIRS
 
@@ -287,9 +288,9 @@ def transform_main_chart_data(
             main_chart_data[f"liquidable_debt_{protocol}"] = protocol_main_chart_data[
                 "liquidable_debt"
             ]
-            main_chart_data[
-                f"liquidable_debt_at_interval_{protocol}"
-            ] = protocol_main_chart_data["liquidable_debt_at_interval"]
+            main_chart_data[f"liquidable_debt_at_interval_{protocol}"] = (
+                protocol_main_chart_data["liquidable_debt_at_interval"]
+            )
         else:
             main_chart_data["liquidable_debt"] += protocol_main_chart_data[
                 "liquidable_debt"
@@ -300,11 +301,12 @@ def transform_main_chart_data(
             main_chart_data[f"liquidable_debt_{protocol}"] = protocol_main_chart_data[
                 "liquidable_debt"
             ]
-            main_chart_data[
-                f"liquidable_debt_at_interval_{protocol}"
-            ] = protocol_main_chart_data["liquidable_debt_at_interval"]
+            main_chart_data[f"liquidable_debt_at_interval_{protocol}"] = (
+                protocol_main_chart_data["liquidable_debt_at_interval"]
+            )
 
     return main_chart_data
+
 
 def infer_protocol_name(input_protocol: str, valid_protocols: list[str]) -> str:
     """Find the closest matching protocol name from a list of valid protocols using fuzzy matching.
