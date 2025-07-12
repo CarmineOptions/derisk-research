@@ -17,11 +17,8 @@ from dashboard_app.helpers.loans_table import (
     get_protocol,
     get_supply_function_call_parameters,
 )
-from dashboard_app.helpers.tools import (
-    add_leading_zeros,
-    get_addresses,
-    get_underlying_address,
-)
+from .tools import get_underlying_address
+from shared.helpers import get_addresses, add_leading_zeros
 
 
 def get_general_stats(

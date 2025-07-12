@@ -35,7 +35,7 @@ services:
       db:
         condition: service_healthy
     volumes:
-      - ../../apps/dashboard_app:/src
+      - ../../apps/dashboard_app:/app/dashboard_app
     networks:
       - dashboard_app_network
     environment:
@@ -51,7 +51,7 @@ services:
       dockerfile: dashboard_app/app.Dockerfile
     restart: always
     volumes:
-      - ../../apps:/src
+      - ../../apps:/app
     env_file:
       - ../../apps/dashboard_app/.env
     ports:
