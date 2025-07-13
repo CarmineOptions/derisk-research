@@ -27,7 +27,7 @@ ORDER_BOOK_TIME_INTERVAL = int(os.environ.get("ORDER_BOOK_TIME_INTERVAL", 5))
 
 # Tasks settings
 CHECK_DATA_CHANGES_PERIOD = int(
-    os.environ.get("CHECK_DATA_CHANGES_PERIOD", 1)  # 60 * 30
+    os.environ.get("CHECK_DATA_CHANGES_PERIOD", 5)  # 60 * 30
 )  # in minutes
 
 app = Celery(
@@ -38,7 +38,7 @@ app = Celery(
 
 # TODO reuse
 
-print("#AXCHECK_DATA_CHANGES_PERIOD", CHECK_DATA_CHANGES_PERIOD)
+print("#AXCHECK_DATA_CHANGES_PERIOD", CHECK_DATA_CHANGES_PERIOD, CRONTAB_TIME)
 
 app.conf.beat_schedule = {
     # },
@@ -62,9 +62,13 @@ app.conf.beat_schedule = {
     #     "task": "uniswap_v2_order_book",
     #     "schedule": ORDER_BOOK_TIME_INTERVAL,
     # },
-    f"run_ekubo_order_book_{ORDER_BOOK_TIME_INTERVAL}_mins": {
+    # f"run_ekubo_order_book_{ORDER_BOOK_TIME_INTERVAL}_mins": {
+    #     "task": "ekubo_order_book",
+    #     "schedule": ORDER_BOOK_TIME_INTERVAL,
+    # },
+    f"run_ekubo_order_book_{CRONTAB_TIME}_mins": {
         "task": "ekubo_order_book",
-        "schedule": ORDER_BOOK_TIME_INTERVAL,
+        "schedule": crontab(minute=f"*/{CRONTAB_TIME}"),
     },
     f"process_zklend_events_{CRONTAB_TIME}_mins": {
         "task": "process_zklend_events",
@@ -90,9 +94,9 @@ from data_handler.background_tasks.data_handler.generic_tasks import (
 )
 # from shared.background_tasks.tasks import check_health_ratio_level_changes
 
-# from shared.background_tasks.data_handler.event_tasks import process_zklend_events
-# from shared.background_tasks.data_handler.event_tasks import process_nostra_events
-# from shared.background_tasks.data_handler.event_tasks import process_vesu_events
+from data_handler.background_tasks.data_handler.event_tasks import process_zklend_events
+from data_handler.background_tasks.data_handler.event_tasks import process_nostra_events
+from data_handler.background_tasks.data_handler.event_tasks import process_vesu_events
 
 
 # run_loan_states_computation_for_nostra_alpha,; run_loan_states_computation_for_nostra_mainnet,;

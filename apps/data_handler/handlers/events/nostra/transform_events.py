@@ -296,21 +296,23 @@ class NostraTransformer:
         """
         Run the NostraTransformer class.
         """
-        max_retries = 5
-        retry = 0
-        while retry < max_retries:
-            try:
-                self.fetch_and_transform_events(
-                    from_address=self.PROTOCOL_ADDRESSES,
-                    min_block=self.last_block,
-                    max_block=self.last_block + self.PAGINATION_SIZE,
-                )
-                self.last_block += self.PAGINATION_SIZE
-                retry += 1
-            except Exception as e:
-                logger.error(f"Error during fetching or saving events: {e}")
-        if retry == max_retries:
-            logger.info(f"Reached max retries for address {self.PROTOCOL_ADDRESSES}")
+        for address in self.PROTOCOL_ADDRESSES:
+            print(address)
+            max_retries = 5
+            retry = 0
+            while retry < max_retries:
+                try:
+                    self.fetch_and_transform_events(
+                        from_address=address,
+                        min_block=self.last_block,
+                        max_block=self.last_block + self.PAGINATION_SIZE,
+                    )
+                    self.last_block += self.PAGINATION_SIZE
+                    retry += 1
+                except Exception as e:
+                    logger.error(f"HH Error during fetching or saving events: {e}")
+            if retry == max_retries:
+                logger.info(f"Reached max retries for address {address}")
 
 
 if __name__ == "__main__":

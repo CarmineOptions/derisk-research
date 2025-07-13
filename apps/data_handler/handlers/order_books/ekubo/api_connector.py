@@ -1,8 +1,8 @@
 """ This module contains the EkuboAPIConnector class, which is responsible for"""
 import time
+from typing import Any, Dict
 
 from data_handler.handlers.order_books.abstractions import AbstractionAPIConnector
-
 
 class EkuboAPIConnector(AbstractionAPIConnector):
     """ A class that interacts with the Ekubo API to fetch data related to the Ekubo protocol. """
@@ -50,7 +50,7 @@ class EkuboAPIConnector(AbstractionAPIConnector):
         return cls.send_get_request(endpoint)
 
     @classmethod
-    def get_pool_liquidity(cls, key_hash: str) -> list:
+    def get_pool_liquidity(cls, pool_key:Dict[str, Any]) -> list:
         """
         Get the liquidity delta for each tick 
         for the given pool key hash. The response includes an array
@@ -74,8 +74,79 @@ class EkuboAPIConnector(AbstractionAPIConnector):
         ]
 
         """
-        endpoint = f"/pools/{key_hash}/liquidity"
-        return cls.send_get_request(endpoint)
+        token0 = pool_key['token0']
+        token1 = pool_key['token1']
+        fee = pool_key['fee']
+        tick_spacing = pool_key['tick_spacing']
+        extension = pool_key['extension']
+
+        endpoint = f"/pools/{token0}/{token1}/{fee}/{tick_spacing}/{extension}/liquidity"
+        attempts = 10
+        while attempts > 0:
+            response = cls.send_get_request(endpoint)
+            if isinstance(response, dict) and response.get("error"):
+                # Handling too many requests
+                time.sleep(2)
+                attempts -= 1
+            else:
+                break 
+
+       
+        return response       
+    
+    @classmethod
+    def get_pool_info(cls, key_hash: str) -> list:
+        """
+        Get the pool info for the given pool key hash.
+        The response includes an object
+        of pool with info details, 
+
+        :param key_hash: The pool key hash in hexadecimal or decimal format.
+        :type key_hash: str
+        :return: An object detailing the current pool chart for the pool.              
+        :rtype: object
+
+        Example of returned data:
+        {
+            "pool_key":{
+                "token0":"0x124aeb495b947201f5fac96fd1138e326ad86195b98df6dec9009158a533b49",
+                "token1":"0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8",
+                "fee":"0x20c49ba5e353f80000000000000000",
+                "tick_spacing":1000,
+                "extension":"0x0"
+            },
+            "human_readable":{
+                "token0":{
+                    "name":"LORDS",
+                    "symbol":"LORDS",
+                    "decimals":18,
+                    "l2_token_address":"0x0124aeb495b947201f5fac96fd1138e326ad86195b98df6dec9009158a533b49",
+                    "sort_order":1,
+                    "total_supply":50900000,
+                    "logo_url":"https://imagedelivery.net/0xPAQaDtnQhBs8IzYRIlNg/a3bfe959-50c4-4f89-0aef-b19207d82a00/logo"
+                },
+                "token1":{
+                    "name":"USD Coin",
+                    "symbol":"USDC",
+                    "decimals":6,
+                    "l2_token_address":"0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8",
+                    "sort_order":5,
+                    "total_supply":"None",
+                    "logo_url":"https://imagedelivery.net/0xPAQaDtnQhBs8IzYRIlNg/e5aaa970-a998-47e8-bd43-4a3b56b87200/logo"
+                },
+                "fee":"0.05%",
+                "tick_spacing":"0.10005%"
+            }
+        }
+
+        """
+        endpoint = f"/pools/{key_hash}"
+        response = cls.send_get_request(endpoint)
+        if isinstance(response, dict) and response.get("error"):
+            # handling too many requests
+            time.sleep(2)
+            response = cls.send_get_request(endpoint)
+        return response
 
     def get_list_tokens(self) -> list:
         """
