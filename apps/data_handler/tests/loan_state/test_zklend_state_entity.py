@@ -38,9 +38,7 @@ def mock_portfolio():
 @pytest.fixture
 def zklend_state(mock_db_connector):
     """Create a ZkLendState instance with mocked dependencies."""
-    with (
-        patch("sqlalchemy.orm.declarative_base") as mock_base,
-    ):
+    with (patch("sqlalchemy.orm.declarative_base") as mock_base,):
         mock_metadata = MagicMock()
         mock_metadata.create_all = MagicMock()
         mock_base_instance = MagicMock()

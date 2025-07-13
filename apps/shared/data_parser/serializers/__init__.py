@@ -6,7 +6,7 @@ from .nostra import (
     BearingCollateralMintEventData,
     BearingCollateralBurnEventData,
     NonInterestBearingCollateralMintEventData,
-    NonInterestBearingCollateralBurnEventData
+    NonInterestBearingCollateralBurnEventData,
 )
 
 from .zklend import (

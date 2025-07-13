@@ -1,4 +1,5 @@
-""" This module contains the data collectors for the liquidable debt data handler. """
+"""This module contains the data collectors for the liquidable debt data handler."""
+
 from typing import Iterable
 
 import dask.dataframe as dd
@@ -9,6 +10,7 @@ from data_handler.handlers.liquidable_debt.managers import LocalStorageManager
 
 class GoogleCloudDataCollector(Collector):
     """class docstring"""
+
     LS_MANAGER = LocalStorageManager
 
     @classmethod
@@ -56,7 +58,9 @@ class GoogleCloudDataCollector(Collector):
         :return: None
         """
 
-        data = dd.read_parquet(url.format(bucket_name=bucket_name, protocol_name=protocol_name))
+        data = dd.read_parquet(
+            url.format(bucket_name=bucket_name, protocol_name=protocol_name)
+        )
         dd.to_parquet(df=data, path=path.format(protocol_name=protocol_name))
 
     @classmethod
@@ -79,8 +83,8 @@ class GoogleCloudDataCollector(Collector):
         :return: None
         """
         if not cls._protocol_exists(
-                protocol_name=protocol_name,
-                available_protocols=available_protocols,
+            protocol_name=protocol_name,
+            available_protocols=available_protocols,
         ):
             raise ProtocolExistenceError(protocol=protocol_name)
 
@@ -100,6 +104,7 @@ class GoogleCloudDataCollector(Collector):
 
 class DBDataCollector(Collector):
     """class docstring"""
+
     # TODO write logic when it will be needed
     def collect_data(self):
         pass

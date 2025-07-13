@@ -12,10 +12,11 @@ app = FastAPI()
 version = "v1"
 version_prefix = f"/api/{version}"
 
-redis_client = redis.Redis(host='localhost', port=6379, decode_responses=True)
+redis_client = redis.Redis(host="localhost", port=6379, decode_responses=True)
 
 limiter = Limiter(key_func=get_remote_address, storage_uri="redis://localhost:6379")
 app.state.limiter = limiter
+
 
 @app.middleware("http")
 async def rate_limiter_middleware(request: Request, call_next):
@@ -24,12 +25,13 @@ async def rate_limiter_middleware(request: Request, call_next):
         return response
     except RateLimitExceeded:
         raise HTTPException(
-            status_code=429,
-            detail="Too Many Requests. Please try again later."
+            status_code=429, detail="Too Many Requests. Please try again later."
         )
+
 
 app.include_router(loan_router, prefix=f"{version_prefix}/loans", tags=["loans"])
 app.include_router(auth_router, prefix=f"{version_prefix}/auth", tags=["auth"])
+
 
 @app.get("/test")
 @limiter.limit("5/minute")

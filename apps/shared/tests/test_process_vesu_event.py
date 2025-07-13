@@ -5,7 +5,7 @@
 # from datetime import datetime
 # import logging
 # from apps.data_handler.handlers.loan_states.vesu.events import VesuLoanEntity
-# from apps.shared.background_tasks.data_handler.event_tasks import process_vesu_events 
+# from apps.shared.background_tasks.data_handler.event_tasks import process_vesu_events
 
 
 # logging.basicConfig(level=logging.INFO)
@@ -94,7 +94,7 @@
 #     num_runs = 3
 #     for i in range(num_runs):
 #         process_vesu_events()
-#         if i < num_runs - 1:  
+#         if i < num_runs - 1:
 #             time.sleep(10)
 
 

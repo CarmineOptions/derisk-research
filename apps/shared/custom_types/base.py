@@ -4,7 +4,6 @@ from pydantic import BaseModel
 from typing import Optional, Union
 
 
-
 class ExtraInfo(BaseModel):
     block: int
     timestamp: int

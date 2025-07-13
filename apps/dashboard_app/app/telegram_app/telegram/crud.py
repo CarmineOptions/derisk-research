@@ -2,7 +2,7 @@ from typing import Sequence
 from uuid import UUID
 
 from dashboard_app.app.crud.base import ModelType
-from dashboard_app.app.models.watcher  import Base, NotificationData
+from dashboard_app.app.models.watcher import Base, NotificationData
 from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 from .config import DATABASE_URL

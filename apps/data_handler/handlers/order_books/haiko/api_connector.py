@@ -1,9 +1,11 @@
-""" This module contains API connectors for Haiko and Blast APIs. """
+"""This module contains API connectors for Haiko and Blast APIs."""
+
 from data_handler.handlers.order_books.abstractions import AbstractionAPIConnector
 
 
 class HaikoAPIConnector(AbstractionAPIConnector):
-    """ This module contains API connectors for Haiko and Blast APIs. """
+    """This module contains API connectors for Haiko and Blast APIs."""
+
     API_URL = "https://app.haiko.xyz/api/v1"
 
     @classmethod
@@ -107,7 +109,8 @@ class HaikoAPIConnector(AbstractionAPIConnector):
 
 
 class HaikoBlastAPIConnector(AbstractionAPIConnector):
-    """ This module contains API connectors for Haiko and Blast APIs. """
+    """This module contains API connectors for Haiko and Blast APIs."""
+
     API_URL = "https://starknet-mainnet.blastapi.io"
     PROJECT_ID = "a419bd5a-ec9e-40a7-93a4-d16467fb79b3"
 

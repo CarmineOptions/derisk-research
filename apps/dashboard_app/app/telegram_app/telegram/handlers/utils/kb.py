@@ -105,11 +105,16 @@ def pagination_notifications(curent_uuid: UUID, page: int):
         markup.adjust(2, 1, 1)
     return markup.as_markup()
 
+
 def cancel_form():
     """
     Returns an InlineKeyboardMarkup with a single button labeled "Cancel" with the callback data "cancel_form".
     """
-    return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Cancel", callback_data="cancel_form")]])
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="Cancel", callback_data="cancel_form")]
+        ]
+    )
 
 
 def protocols():

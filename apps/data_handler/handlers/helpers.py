@@ -85,12 +85,12 @@ class InterestRateState:
         :param cumulative_debt_interest_rate_increase:
         Decimal - The change in debt(borrow) interest rate.
         """
-        self.cumulative_collateral_interest_rates[token_name] += (
-            cumulative_collateral_interest_rate_increase
-        )
-        self.cumulative_debt_interest_rate[token_name] += (
-            cumulative_debt_interest_rate_increase
-        )
+        self.cumulative_collateral_interest_rates[
+            token_name
+        ] += cumulative_collateral_interest_rate_increase
+        self.cumulative_debt_interest_rate[
+            token_name
+        ] += cumulative_debt_interest_rate_increase
         self.previous_token_timestamps[token_name] = self.current_timestamp
         self.current_block = current_block
 

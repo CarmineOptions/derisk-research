@@ -20,9 +20,7 @@ async def test_get_token_price():
         test_date = date.today()
         res = await price_history_manager.get_token_price(coin_id, test_date)
         assert res == mock_token_price
-        expected_url = (
-            f"{settings.coingecko_api_url}/coins/{coin_id}/history?date={test_date.strftime('%d-%m-%Y')}"
-        )
+        expected_url = f"{settings.coingecko_api_url}/coins/{coin_id}/history?date={test_date.strftime('%d-%m-%Y')}"
         expected_headers = {
             "accept": "application/json",
             "x-cg-api-key": settings.coingecko_api_key,

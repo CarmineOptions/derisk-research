@@ -409,6 +409,7 @@ class NonInterestBearingCollateralBurnEventData(BaseModel):
                 f"{info.field_name} field is not a valid hexadecimal number"
             )
 
+
 #
 # """ This module contains the data models and parser class for zkLend data events. """
 # from decimal import Decimal

@@ -1,4 +1,5 @@
-""" This module contains the EkuboOrderBook class. """
+"""This module contains the EkuboOrderBook class."""
+
 from decimal import Decimal, getcontext
 
 import pandas as pd
@@ -9,7 +10,8 @@ getcontext().prec = 18
 
 
 class EkuboOrderBook(OrderBookBase):
-    """ Ekubo Order Book class. """
+    """Ekubo Order Book class."""
+
     DEX = "Ekubo"
 
     def __init__(self, token_a: str, token_b: str) -> None:
@@ -37,7 +39,9 @@ class EkuboOrderBook(OrderBookBase):
         pools = self.connector.get_pools()
         df = pd.DataFrame(pools)
         # filter pool data by token_a and token_b
-        pool_df = df.loc[(df["token0"] == self.token_a) & (df["token1"] == self.token_b)]
+        pool_df = df.loc[
+            (df["token0"] == self.token_a) & (df["token1"] == self.token_b)
+        ]
 
         # set current price
         self.set_current_price()
@@ -46,8 +50,8 @@ class EkuboOrderBook(OrderBookBase):
             # Fetch pool liquidity data
             pool_liquidity = int(row["liquidity"])
             self.block = row["lastUpdate"]["event_id"]
-            info = self.connector.get_pool_info(key_hash)          
-            pool_key = info['pool_key']
+            info = self.connector.get_pool_info(key_hash)
+            pool_key = info["pool_key"]
             liquidity_response = self.connector.get_pool_liquidity(pool_key)
             liquidity_data = liquidity_response["data"]
             liquidity_data = sorted(liquidity_data, key=lambda x: x["tick"])
@@ -79,10 +83,14 @@ class EkuboOrderBook(OrderBookBase):
 
         # Filter asks and bids by price range
         self.asks = [
-            (price, supply) for price, supply in self.asks if min_price < price < max_price
+            (price, supply)
+            for price, supply in self.asks
+            if min_price < price < max_price
         ]
         self.bids = [
-            (price, supply) for price, supply in self.bids if min_price < price < max_price
+            (price, supply)
+            for price, supply in self.bids
+            if min_price < price < max_price
         ]
 
     def add_asks(self, liquidity_data: list[dict], row: pd.Series) -> None:
@@ -104,7 +112,9 @@ class EkuboOrderBook(OrderBookBase):
         prev_sqrt = self._get_pure_sqrt_ratio(prev_tick)
         next_sqrt = self._get_pure_sqrt_ratio(next_tick)
 
-        supply = abs(((glob_liq / prev_sqrt) - (glob_liq / next_sqrt)) / 10**self.token_a_decimal)
+        supply = abs(
+            ((glob_liq / prev_sqrt) - (glob_liq / next_sqrt)) / 10**self.token_a_decimal
+        )
         price = self.tick_to_price(prev_tick)
         self.asks.append((price, supply))
 
@@ -120,7 +130,8 @@ class EkuboOrderBook(OrderBookBase):
             next_sqrt = self._get_pure_sqrt_ratio(curr_tick)
 
             supply = abs(
-                ((glob_liq / prev_sqrt) - (glob_liq / next_sqrt)) / 10**self.token_a_decimal
+                ((glob_liq / prev_sqrt) - (glob_liq / next_sqrt))
+                / 10**self.token_a_decimal
             )
             price = self.tick_to_price(prev_tick)
             self.asks.append((price, supply))
@@ -143,7 +154,9 @@ class EkuboOrderBook(OrderBookBase):
         prev_sqrt = self._get_pure_sqrt_ratio(prev_tick)
         next_sqrt = self._get_pure_sqrt_ratio(next_tick)
 
-        supply = abs(((glob_liq * prev_sqrt) - (glob_liq * next_sqrt)) / 10**self.token_b_decimal)
+        supply = abs(
+            ((glob_liq * prev_sqrt) - (glob_liq * next_sqrt)) / 10**self.token_b_decimal
+        )
         price = self.tick_to_price(prev_tick)
         self.bids.append((price, supply))
 
@@ -158,7 +171,8 @@ class EkuboOrderBook(OrderBookBase):
             next_sqrt = self._get_pure_sqrt_ratio(curr_tick)
 
             supply = (
-                abs(((glob_liq * prev_sqrt) - (glob_liq * next_sqrt))) / 10**self.token_b_decimal
+                abs(((glob_liq * prev_sqrt) - (glob_liq * next_sqrt)))
+                / 10**self.token_b_decimal
             )
             price = self.tick_to_price(prev_tick)
             self.bids.append((price, supply))
@@ -169,11 +183,12 @@ class EkuboOrderBook(OrderBookBase):
         :param tick: tick value
         :return: square root ratio
         """
-        return Decimal("1.000001").sqrt()**tick
+        return Decimal("1.000001").sqrt() ** tick
 
     @staticmethod
-    def sort_ticks_by_asks_and_bids(sorted_liquidity_data: list,
-                                    current_tick: int) -> tuple[list, list]:
+    def sort_ticks_by_asks_and_bids(
+        sorted_liquidity_data: list, current_tick: int
+    ) -> tuple[list, list]:
         """
         Sort tick by ask and bid
         :param sorted_liquidity_data: list - List of sorted liquidity data
@@ -189,7 +204,9 @@ class EkuboOrderBook(OrderBookBase):
                 bid_data.append(sorted_data)
         return ask_data, bid_data
 
-    def calculate_liquidity_amount(self, tick: Decimal, liquidity_pair_total: Decimal) -> Decimal:
+    def calculate_liquidity_amount(
+        self, tick: Decimal, liquidity_pair_total: Decimal
+    ) -> Decimal:
         """
         Calculate the liquidity amount based on the liquidity delta and sqrt ratio.
         :param tick: Decimal - The sqrt ratio.
@@ -209,8 +226,9 @@ class EkuboOrderBook(OrderBookBase):
         sqrt_ratio = self.get_sqrt_ratio(tick)
         # calculate price by formula price = (sqrt_ratio / (2 ** 128)) ** 2 * 10
         # ** (token_a_decimal - token_b_decimal)
-        price = ((sqrt_ratio /
-                  (Decimal(2)**128))**2) * 10**(self.token_a_decimal - self.token_b_decimal)
+        price = ((sqrt_ratio / (Decimal(2) ** 128)) ** 2) * 10 ** (
+            self.token_a_decimal - self.token_b_decimal
+        )
         return price
 
 

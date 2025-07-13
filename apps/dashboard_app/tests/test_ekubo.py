@@ -2,6 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
+
 pytest.importorskip("helper")
 from helpers.ekubo import EkuboLiquidity
 

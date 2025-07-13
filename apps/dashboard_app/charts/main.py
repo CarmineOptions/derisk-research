@@ -491,12 +491,16 @@ class Dashboard:
         """
         return plotly.express.pie(
             getattr(self, f"{stats_type}_stats").reset_index(),
-            values=f"{token} {stats_type}"
-            if stats_type == "collateral"
-            else f"{token} {stats_type}".lower(),
-            names=CommonValues.protocol.value
-            if stats_type == "collateral"
-            else CommonValues.protocol.value.lower(),
+            values=(
+                f"{token} {stats_type}"
+                if stats_type == "collateral"
+                else f"{token} {stats_type}".lower()
+            ),
+            names=(
+                CommonValues.protocol.value
+                if stats_type == "collateral"
+                else CommonValues.protocol.value.lower()
+            ),
             title=f"{token} {stats_type}",
             color_discrete_sequence=self.FIGURE_COLORS_DATA_MAPPING[stats_type],
         )

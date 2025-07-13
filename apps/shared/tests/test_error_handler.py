@@ -50,7 +50,9 @@ class TestErrorHandlerBot:
 
     def test_add_invalid_message_format(self, error_handler):
         """Test adding message with invalid format"""
-        invalid_message = "Invalid message format"  # This should be an instance of Message, not a str
+        invalid_message = (
+            "Invalid message format"  # This should be an instance of Message, not a str
+        )
         with pytest.raises(TypeError, match="Only Message instances are allowed"):
             error_handler.add_message(invalid_message)
 
@@ -88,6 +90,7 @@ class TestErrorHandlerBot:
     def test_message_format_validation(self, error_handler):
         """Test various message format validations"""
         from shared.error_handler.notifications import Message
+
         # Define a valid Message instance
         valid_message = Message(text="Valid message", is_sent=False)
 

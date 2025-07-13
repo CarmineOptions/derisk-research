@@ -30,7 +30,7 @@ services:
     ports:
       - "8501:8501"
     env_file:
-      - ../../apps/dashboard_app/.env.dev
+      - ../../apps/dashboard_app/.env
     depends_on:
       db:
         condition: service_healthy

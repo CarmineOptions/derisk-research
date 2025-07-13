@@ -1,7 +1,8 @@
 """
-Module for processing order book data, allowing calculation of the quantity of a base token needed 
+Module for processing order book data, allowing calculation of the quantity of a base token needed
 to impact the price by a specified ratio on various DEX platforms.
 """
+
 from decimal import Decimal
 
 from data_handler.db.crud import DBConnector
@@ -28,12 +29,14 @@ class OrderBookProcessor:
         """
         Calculate quantity of `token_a` that can be bought to change the price by the given ratio.
         :param price_change_ratio: Decimal - The price change ratio.
-        :return: Decimal - Quantity that can be traded without 
+        :return: Decimal - Quantity that can be traded without
         moving price outside acceptable bound.
         """
         # Fetch order book
         connector = DBConnector()
-        order_book = connector.get_latest_order_book(self.dex, self.token_a, self.token_b)
+        order_book = connector.get_latest_order_book(
+            self.dex, self.token_a, self.token_b
+        )
         if not order_book:
             raise ValueError("No order book found for the given DEX and token pair.")
 
