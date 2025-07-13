@@ -8,7 +8,7 @@ from decimal import Decimal
 
 import numpy as np
 import pandas as pd
-from data_handler.handlers import blockchain_call
+from shared import blockchain_call
 from shared.constants import TOKEN_SETTINGS
 from shared.custom_types import Prices
 from shared.state import State
@@ -17,11 +17,8 @@ from dashboard_app.helpers.loans_table import (
     get_protocol,
     get_supply_function_call_parameters,
 )
-from dashboard_app.helpers.tools import (
-    add_leading_zeros,
-    get_addresses,
-    get_underlying_address,
-)
+from .tools import get_underlying_address
+from shared.helpers import get_addresses, add_leading_zeros
 
 
 def get_general_stats(

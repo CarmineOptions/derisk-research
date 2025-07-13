@@ -1,116 +1,29 @@
-""" This module contains the class that describes the state of all Nostra Mainnet loan entities. """
-import copy
-import logging
 from decimal import Decimal
 
+import copy
 import pandas as pd
 import starknet_py
-from data_handler.handler_tools.nostra_mainnet_settings import (
+from shared.loan_entity.nostra.mainnet import (
     NOSTRA_MAINNET_CDP_MANAGER_ADDRESS,
     NOSTRA_MAINNET_DEFERRED_BATCH_CALL_ADAPTER_ADDRESS,
     NOSTRA_MAINNET_EVENTS_TO_METHODS,
     NOSTRA_MAINNET_INTEREST_RATE_MODEL_ADDRESS,
     NOSTRA_MAINNET_TOKEN_ADDRESSES,
 )
-from data_handler.handlers.helpers import (
-    blockchain_call,
-    get_addresses,
-    get_async_symbol,
-)
-from data_handler.handlers.loan_states.nostra_alpha.events import (
-    NostraAlphaLoanEntity,
-    NostraAlphaState,
-)
+from shared.helpers import get_symbol, get_addresses
 from shared.constants import ProtocolIDs
-from shared.custom_types import InterestRateModels, Prices, TokenParameters
-from shared.custom_types.nostra import (
+from shared.custom_types import (
     NostraDebtTokenParameters,
     NostraMainnetCollateralTokenParameters,
+    Prices,
 )
 from shared.helpers import add_leading_zeros
 from shared.starknet_client import StarknetClient
+from .alpha import NostraAlphaState
+from shared.loan_entity import NostraMainnetLoanEntity
+import logging
 
 logger = logging.getLogger(__name__)
-
-
-class NostraMainnetLoanEntity(NostraAlphaLoanEntity):
-    """
-    A class that describes the state of all Nostra Mainnet loan entities.
-      All methods for correct processing of every
-    relevant event are implemented in `.nostra_alpha.NostraAlphaState`.
-    """
-
-    PROTOCOL_NAME = ProtocolIDs.NOSTRA_MAINNET.value
-    # TODO: fetch from chain
-    TARGET_HEALTH_FACTOR = 1.25
-    # TODO: confirm this
-    # Source: https://docs.nostra.finance/lend/liquidations/an-example-of-liquidation.
-    LIQUIDATION_BONUS = 0.2
-
-    def compute_debt_to_be_liquidated(
-        self,
-        collateral_token_addresses: list[str],
-        debt_token_addresses: list[str],
-        prices: Prices,
-        collateral_token_parameters: TokenParameters,
-        debt_token_parameters: TokenParameters,
-        collateral_interest_rate_model: InterestRateModels | None = None,
-        debt_interest_rate_model: InterestRateModels | None = None,
-        risk_adjusted_collateral_usd: float | None = None,
-        risk_adjusted_debt_usd: float | None = None,
-    ) -> float:
-        """
-        Computes the amount of debt that can be liquidated given the
-        current state of the loan entity.
-        :param collateral_token_addresses: Collateral token addresses.
-        :param debt_token_addresses:  Debt token addresses.
-        :param prices: Prices of all tokens.
-        :param collateral_token_parameters: Collateral token parameters.
-        :param debt_token_parameters: Debt token parameters.
-        :param collateral_interest_rate_model: Collateral interest rate model.
-        :param debt_interest_rate_model: Debt interest rate model.
-        :param risk_adjusted_collateral_usd: Risk-adjusted collateral value in USD.
-        :param risk_adjusted_debt_usd: Risk-adjusted debt value in USD.
-        :return: float
-        """
-        if risk_adjusted_collateral_usd is None:
-            risk_adjusted_collateral_usd = self.compute_collateral_usd(
-                risk_adjusted=True,
-                collateral_token_parameters=collateral_token_parameters,
-                collateral_interest_rate_model=collateral_interest_rate_model,
-                prices=prices,
-            )
-        if risk_adjusted_debt_usd is None:
-            risk_adjusted_debt_usd = self.compute_debt_usd(
-                risk_adjusted=True,
-                collateral_token_parameters=debt_token_parameters,
-                debt_interest_rate_model=debt_interest_rate_model,
-                prices=prices,
-            )
-
-        # TODO: Commit a PDF with the derivation of the formula?
-        # See an example of a liquidation here:
-        # https://docs.nostra.finance/lend/liquidations/an-example-of-liquidation.
-        numerator = (
-            risk_adjusted_collateral_usd
-            - risk_adjusted_debt_usd * self.TARGET_HEALTH_FACTOR
-        )
-        # TODO: figure out what to do when there's multiple collateral token addresses
-        collateral_token_address = collateral_token_addresses[0]
-        # TODO: figure out what to do when there's multiple collateral token addresses
-        debt_token_address = debt_token_addresses[0]
-        denominator = (
-            collateral_token_parameters[collateral_token_address].collateral_factor
-            * (1 + self.LIQUIDATION_BONUS)
-            - (1 / debt_token_parameters[debt_token_address].debt_factor)
-            * self.TARGET_HEALTH_FACTOR
-        )
-        max_debt_to_be_liquidated = numerator / denominator
-        # The liquidator can't liquidate more debt than what is available.
-        debt_to_be_liquidated = min(
-            float(self.debt[debt_token_address]), max_debt_to_be_liquidated
-        )
-        return debt_to_be_liquidated
 
 
 class NostraMainnetState(NostraAlphaState):
@@ -152,7 +65,7 @@ class NostraMainnetState(NostraAlphaState):
             )
             decimals = int(decimals[0])
 
-            token_symbol = await get_async_symbol(token_address=token_address)
+            token_symbol = await get_symbol(token_address=token_address)
             event, is_interest_bearing = self._infer_token_type(
                 token_symbol=token_symbol
             )
@@ -166,7 +79,7 @@ class NostraMainnetState(NostraAlphaState):
             underlying_token_address = add_leading_zeros(
                 hex(underlying_token_address[0])
             )
-            underlying_token_symbol = await get_async_symbol(
+            underlying_token_symbol = await get_symbol(
                 token_address=underlying_token_address
             )
             if event == "collateral":
@@ -239,9 +152,7 @@ class NostraMainnetState(NostraAlphaState):
                 assert len(interest_bearing_collateral_token_addresses) == 1
                 self.debt_token_addresses_to_interest_bearing_collateral_token_addresses[
                     debt_token_parameters.address
-                ] = interest_bearing_collateral_token_addresses[
-                    0
-                ]
+                ] = interest_bearing_collateral_token_addresses[0]
 
     def process_interest_rate_model_event(self, event: pd.Series) -> None:
         """
@@ -284,9 +195,9 @@ class NostraMainnetState(NostraAlphaState):
         )
         # The indices are saved under the respective collateral or debt token address.
         if collateral_token:
-            self.interest_rate_models.collateral[
-                collateral_token
-            ] = collateral_interest_rate_index
+            self.interest_rate_models.collateral[collateral_token] = (
+                collateral_interest_rate_index
+            )
         self.interest_rate_models.debt[debt_token] = debt_interest_rate_index
 
     def process_collateral_transfer_event(self, event: pd.Series) -> None:

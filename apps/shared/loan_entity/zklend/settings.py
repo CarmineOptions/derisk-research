@@ -1,4 +1,5 @@
-""" Settings for ZkLend. """
+"""Settings for ZkLend."""
+
 import decimal
 from pydantic import Extra, BaseModel
 

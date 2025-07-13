@@ -1,13 +1,13 @@
 """
-Module for handling Swap AMM pools, including Pool, Pair, 
+Module for handling Swap AMM pools, including Pool, Pair,
 and MySwapPool classes for liquidity and balance operations.
 """
+
 from dataclasses import dataclass
 from decimal import Decimal
 from typing import Optional
 
-from shared.blockchain_call import func_call
-from data_handler.handlers.blockchain_call import balance_of,  get_myswap_pool
+from shared.blockchain_call import balance_of, func_call, get_myswap_pool
 
 from shared.constants import TOKEN_SETTINGS
 from shared.helpers import add_leading_zeros
@@ -18,6 +18,7 @@ class Pair:
     """
     Utility class for handling token pairs in pools.
     """
+
     @staticmethod
     def tokens_to_id(base_token, quote_token):
         """
@@ -31,6 +32,7 @@ class Pool(Pair):
     """
     Represents a liquidity pool, inheriting from Pair and providing balance and supply operations.
     """
+
     def __init__(self, symbol1, symbol2, addresses, myswap_id):
         self.id = Pair.tokens_to_id(symbol1, symbol2)
         self.addresses = addresses
@@ -77,15 +79,19 @@ class Pool(Pair):
         Calculate supply available at a specified price, assuming constant product function.
         """
         # assuming constant product function
-        constant = Decimal(self.tokens[0].balance_converted * self.tokens[1].balance_converted)
-        return (initial_price * constant).sqrt() * (Decimal("1") - Decimal("0.95").sqrt())
+        constant = Decimal(
+            self.tokens[0].balance_converted * self.tokens[1].balance_converted
+        )
+        return (initial_price * constant).sqrt() * (
+            Decimal("1") - Decimal("0.95").sqrt()
+        )
 
 
 class MySwapPool(Pool):
     """
     This class implements MySwap pools where Hashstack V1
       users can spend their debt. To properly account for their
-    token holdings, we collect the total supply of LP 
+    token holdings, we collect the total supply of LP
     tokens and the amounts of both tokens in the pool.
     """
 
@@ -100,7 +106,7 @@ class MySwapPool(Pool):
         self.token_amounts: Optional[TokenValues] = None
 
     async def get_data(self) -> None:
-        """ Collects the total supply of LP tokens and the amounts of both tokens in the pool. """
+        """Collects the total supply of LP tokens and the amounts of both tokens in the pool."""
         self.total_lp_supply = Decimal(
             (
                 await func_call(
@@ -111,7 +117,7 @@ class MySwapPool(Pool):
             )[0]
         )
         self.token_amounts = TokenValues()
-        # The order of the values returned is: `name`, `token_a_address`, 
+        # The order of the values returned is: `name`, `token_a_address`,
         # `token_a_reserves`, ``, `token_b_address`,
         # `token_b_reserves`, ``, `fee_percentage`, `cfmm_type`, `liq_token`.
         pool = await func_call(
@@ -127,17 +133,19 @@ class MySwapPool(Pool):
 
 @dataclass
 class SwapAmmToken(TokenSettings):
-    """ This class represents a token in the Swap AMM, with balance and conversion operations. """
+    """This class represents a token in the Swap AMM, with balance and conversion operations."""
+
     # TODO: Improve this.
     balance_base: Optional[float] = None
     balance_converted: Optional[float] = None
 
 
 class SwapAmm(Pair):
-    """ This class represents the Swap AMM, which contains pools and provides balance 
-    and supply operations. """
+    """This class represents the Swap AMM, which contains pools and provides balance
+    and supply operations."""
+
     async def init(self):
-        """ Initialize the SwapAmm with predefined pools and fetch balances. """
+        """Initialize the SwapAmm with predefined pools and fetch balances."""
         # TODO: Add AVNU
         self.pools = {}
         self.add_pool(

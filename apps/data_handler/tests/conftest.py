@@ -12,8 +12,8 @@ from data_handler.db.crud import (
     ZkLendEventDBConnector,
 )
 from data_handler.handler_tools.api_connector import DeRiskAPIConnector
-from data_handler.handler_tools.data_parser.nostra import NostraDataParser
-from data_handler.handler_tools.data_parser.zklend import ZklendDataParser
+from shared.data_parser.nostra import NostraDataParser
+from shared.data_parser.zklend import ZklendDataParser
 from data_handler.handlers.events.nostra.transform_events import NostraTransformer
 
 
@@ -100,12 +100,15 @@ def transformer(
     """
     Creates an instance of NostraTransformer with mocked dependencies.
     """
-    with patch(
-        "data_handler.handlers.events.nostra.transform_events.NostraEventDBConnector",
-        return_value=mock_nostra_event_db_connector,
-    ), patch(
-        "data_handler.handlers.events.nostra.transform_events.DeRiskAPIConnector",
-        return_value=mock_api_connector,
+    with (
+        patch(
+            "data_handler.handlers.events.nostra.transform_events.NostraEventDBConnector",
+            return_value=mock_nostra_event_db_connector,
+        ),
+        patch(
+            "data_handler.handlers.events.nostra.transform_events.DeRiskAPIConnector",
+            return_value=mock_api_connector,
+        ),
     ):
         transformer = NostraTransformer()
         transformer.api_connector = mock_api_connector
