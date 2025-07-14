@@ -1,1 +1,1 @@
-""" This module contains the settings for the ZkLend loan states handler. """
+"""This module contains the settings for the ZkLend loan states handler."""

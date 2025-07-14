@@ -15,12 +15,14 @@ from dashboard_app.charts.utils import (
 
 class DummyState:
     """Dummy state for testing purposes."""
+
     # No additional implementation required.
 
 
 # -------------------------------
 # Tests for get_data
 # -------------------------------
+
 
 def test_get_data_positive(monkeypatch):
     """
@@ -38,26 +40,26 @@ def test_get_data_positive(monkeypatch):
 
     def dummy_get_loans_table_data(*_args, **_kwargs):
         # Return a dummy DataFrame for loans data.
-        return pd.DataFrame({
-            "Collateral": ["TokenA: 1", "TokenB: 2"],
-            "Debt": ["TokenA: 0.5", "TokenB: 1"]
-        })
+        return pd.DataFrame(
+            {
+                "Collateral": ["TokenA: 1", "TokenB: 2"],
+                "Debt": ["TokenA: 0.5", "TokenB: 1"],
+            }
+        )
 
     async def dummy_get_balance(_self):
         return None
 
     monkeypatch.setattr("apps.dashboard_app.charts.utils.get_prices", dummy_get_prices)
     monkeypatch.setattr(
-        "apps.dashboard_app.charts.utils.get_main_chart_data",
-        dummy_get_main_chart_data
+        "apps.dashboard_app.charts.utils.get_main_chart_data", dummy_get_main_chart_data
     )
     monkeypatch.setattr(
         "apps.dashboard_app.charts.utils.get_loans_table_data",
-        dummy_get_loans_table_data
+        dummy_get_loans_table_data,
     )
     monkeypatch.setattr(
-        "apps.dashboard_app.charts.utils.SwapAmm.get_balance",
-        dummy_get_balance
+        "apps.dashboard_app.charts.utils.SwapAmm.get_balance", dummy_get_balance
     )
 
     main_chart_data, loans_data = get_data("DummyProtocol", state)
@@ -82,26 +84,21 @@ def test_get_data_negative(monkeypatch):
         raise ValueError("Dummy error")
 
     def dummy_get_loans_table_data(*_args, **_kwargs):
-        return pd.DataFrame({
-            "Collateral": ["TokenA: 1"],
-            "Debt": ["TokenA: 0.5"]
-        })
+        return pd.DataFrame({"Collateral": ["TokenA: 1"], "Debt": ["TokenA: 0.5"]})
 
     async def dummy_get_balance(_self):
         return None
 
     monkeypatch.setattr("apps.dashboard_app.charts.utils.get_prices", dummy_get_prices)
     monkeypatch.setattr(
-        "apps.dashboard_app.charts.utils.get_main_chart_data",
-        dummy_get_main_chart_data
+        "apps.dashboard_app.charts.utils.get_main_chart_data", dummy_get_main_chart_data
     )
     monkeypatch.setattr(
         "apps.dashboard_app.charts.utils.get_loans_table_data",
-        dummy_get_loans_table_data
+        dummy_get_loans_table_data,
     )
     monkeypatch.setattr(
-        "apps.dashboard_app.charts.utils.SwapAmm.get_balance",
-        dummy_get_balance
+        "apps.dashboard_app.charts.utils.SwapAmm.get_balance", dummy_get_balance
     )
 
     main_chart_data, _ = get_data("DummyProtocol", state)
@@ -114,6 +111,7 @@ def test_get_data_negative(monkeypatch):
 # Tests for get_protocol_data_mappings
 # -------------------------------
 
+
 def test_get_protocol_data_mappings_positive(monkeypatch):
     """
     Test get_protocol_data_mappings returns correct mappings for valid input.
@@ -123,17 +121,16 @@ def test_get_protocol_data_mappings_positive(monkeypatch):
     def dummy_get_data(_protocol_name, _state):
         # Return dummy main_chart_data and loans_data.
         main_chart = {"TestPair": pd.DataFrame({"col": [1]})}
-        loans = pd.DataFrame({
-            "Collateral": ["TokenA: 1"],
-            "Debt": ["TokenA: 0.5"]
-        })
+        loans = pd.DataFrame({"Collateral": ["TokenA: 1"], "Debt": ["TokenA: 0.5"]})
         return main_chart, loans
 
     monkeypatch.setattr("apps.dashboard_app.charts.utils.get_data", dummy_get_data)
 
     protocols = ["DummyProtocol"]
     current_pair = "TestPair"
-    stable_coin_pair = "USDC-ETH"  # Different from current_pair to bypass stablecoin branch.
+    stable_coin_pair = (
+        "USDC-ETH"  # Different from current_pair to bypass stablecoin branch.
+    )
 
     main_chart_mappings, loans_mappings = get_protocol_data_mappings(
         current_pair, stable_coin_pair, protocols, state
@@ -142,10 +139,9 @@ def test_get_protocol_data_mappings_positive(monkeypatch):
     expected_df = pd.DataFrame({"col": [1]})
     pd.testing.assert_frame_equal(main_chart_mappings["DummyProtocol"], expected_df)
 
-    expected_loans_df = pd.DataFrame({
-        "Collateral": ["TokenA: 1"],
-        "Debt": ["TokenA: 0.5"]
-    })
+    expected_loans_df = pd.DataFrame(
+        {"Collateral": ["TokenA: 1"], "Debt": ["TokenA: 0.5"]}
+    )
     pd.testing.assert_frame_equal(loans_mappings["DummyProtocol"], expected_loans_df)
 
 
@@ -157,10 +153,7 @@ def test_get_protocol_data_mappings_negative(monkeypatch):
 
     def dummy_get_data(_protocol_name, _state):
         main_chart = {"TestPair": pd.DataFrame({"col": [1]})}
-        loans = pd.DataFrame({
-            "Collateral": ["TokenA: 1"],
-            "Debt": ["TokenA: 0.5"]
-        })
+        loans = pd.DataFrame({"Collateral": ["TokenA: 1"], "Debt": ["TokenA: 0.5"]})
         return main_chart, loans
 
     monkeypatch.setattr("apps.dashboard_app.charts.utils.get_data", dummy_get_data)
@@ -181,18 +174,13 @@ def test_get_protocol_data_mappings_negative(monkeypatch):
 # Tests for transform_loans_data
 # -------------------------------
 
+
 def test_transform_loans_data_positive():
     """
     Test transform_loans_data returns correctly transformed loans DataFrame.
     """
-    df1 = pd.DataFrame({
-        "Collateral": ["BTC: 1, ETH: 2"],
-        "Debt": ["BTC: 0.5, ETH: 1"]
-    })
-    df2 = pd.DataFrame({
-        "Collateral": ["BTC: 3"],
-        "Debt": ["BTC: 1.5"]
-    })
+    df1 = pd.DataFrame({"Collateral": ["BTC: 1, ETH: 2"], "Debt": ["BTC: 0.5, ETH: 1"]})
+    df2 = pd.DataFrame({"Collateral": ["BTC: 3"], "Debt": ["BTC: 1.5"]})
     mapping = {"Prot1": df1, "Prot2": df2}
     protocols = ["Prot1", "Prot2"]
 

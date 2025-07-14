@@ -1,15 +1,12 @@
-
 import pandas as pd
 import math
 import pytest
 import pytest
+
 pytest.importorskip("data_handler")
 import logging
 
-from charts.utils import (
-    transform_main_chart_data,
-    infer_protocol_name
-)
+from charts.utils import transform_main_chart_data, infer_protocol_name
 from typing import Dict, List, Union
 from unittest.mock import patch
 from helpers.settings import (
@@ -305,7 +302,7 @@ Tests for the parse_token_amounts and create_stablecoin_bundle functions in help
 
 
 def test_parse_token_amounts_empty_string(
-    sample_token_amount_strings: Dict[str, str]
+    sample_token_amount_strings: Dict[str, str],
 ) -> None:
     """
     Tests parse_token_amounts with an empty string.
@@ -319,7 +316,7 @@ def test_parse_token_amounts_empty_string(
 
 
 def test_parse_token_amounts_single_token(
-    sample_token_amount_strings: Dict[str, str]
+    sample_token_amount_strings: Dict[str, str],
 ) -> None:
     """
     Tests parse_token_amounts with a single token amount.
@@ -330,7 +327,7 @@ def test_parse_token_amounts_single_token(
 
 
 def test_parse_token_amounts_multiple_tokens(
-    sample_token_amount_strings: Dict[str, str]
+    sample_token_amount_strings: Dict[str, str],
 ) -> None:
     """
     Tests parse_token_amounts with multiple token amounts.
@@ -343,7 +340,7 @@ def test_parse_token_amounts_multiple_tokens(
 
 
 def test_parse_token_amounts_with_duplicates(
-    sample_token_amount_strings: Dict[str, str]
+    sample_token_amount_strings: Dict[str, str],
 ) -> None:
     """
     Tests parse_token_amounts with duplicate tokens that should be summed.
@@ -376,7 +373,7 @@ def test_parse_token_amounts_with_malformed_input() -> None:
 )
 @patch("dashboard_app.helpers.settings.STABLECOIN_BUNDLE_NAME", "STABLECOIN_BUNDLE")
 def test_create_stablecoin_bundle_successful(
-    sample_stablecoin_data: Dict[str, pd.DataFrame]
+    sample_stablecoin_data: Dict[str, pd.DataFrame],
 ) -> None:
     """
     Tests successful execution of create_stablecoin_bundle function.
@@ -402,7 +399,7 @@ def test_create_stablecoin_bundle_successful(
 
 
 def test_create_stablecoin_bundle_with_empty_dataframe(
-    sample_stablecoin_data: Dict[str, pd.DataFrame]
+    sample_stablecoin_data: Dict[str, pd.DataFrame],
 ) -> None:
     """
     Tests create_stablecoin_bundle function when one of the DataFrames is empty.
@@ -481,7 +478,7 @@ def test_create_stablecoin_bundle_with_missing_columns() -> None:
 )
 @patch("dashboard_app.helpers.settings.STABLECOIN_BUNDLE_NAME", "STABLECOIN_BUNDLE")
 def test_create_stablecoin_bundle_with_different_price_ranges(
-    sample_stablecoin_data: Dict[str, pd.DataFrame]
+    sample_stablecoin_data: Dict[str, pd.DataFrame],
 ) -> None:
     """
     Tests create_stablecoin_bundle function with DataFrames having different price ranges.
@@ -511,22 +508,24 @@ def test_create_stablecoin_bundle_with_different_price_ranges(
 @pytest.fixture
 def sample_protocol_data():
     """Fixture providing sample protocol data for testing."""
-    df1 = pd.DataFrame({
-        'collateral_token_price': [100, 200, 300],
-        'liquidable_debt': [1000, 2000, 3000],
-        'liquidable_debt_at_interval': [500, 1000, 1500]
-    })
+    df1 = pd.DataFrame(
+        {
+            "collateral_token_price": [100, 200, 300],
+            "liquidable_debt": [1000, 2000, 3000],
+            "liquidable_debt_at_interval": [500, 1000, 1500],
+        }
+    )
 
-    df2 = pd.DataFrame({
-        'collateral_token_price': [100, 200, 300],
-        'liquidable_debt': [2000, 4000, 6000],
-        'liquidable_debt_at_interval': [1000, 2000, 3000]
-    })
+    df2 = pd.DataFrame(
+        {
+            "collateral_token_price": [100, 200, 300],
+            "liquidable_debt": [2000, 4000, 6000],
+            "liquidable_debt_at_interval": [1000, 2000, 3000],
+        }
+    )
 
-    return {
-        'protocol1': df1,
-        'protocol2': df2
-    }
+    return {"protocol1": df1, "protocol2": df2}
+
 
 def test_transform_main_chart_data_with_multiple_protocols(sample_protocol_data):
     """Tests if transform_main_chart_data correctly combines data from multiple protocols."""
@@ -537,16 +536,17 @@ def test_transform_main_chart_data_with_multiple_protocols(sample_protocol_data)
 
     assert isinstance(result, pd.DataFrame)
     assert len(result) == 3
-    assert 'liquidable_debt_protocol1' in result.columns
-    assert 'liquidable_debt_protocol2' in result.columns
-    assert 'liquidable_debt_at_interval_protocol1' in result.columns
-    assert 'liquidable_debt_at_interval_protocol2' in result.columns
+    assert "liquidable_debt_protocol1" in result.columns
+    assert "liquidable_debt_protocol2" in result.columns
+    assert "liquidable_debt_at_interval_protocol1" in result.columns
+    assert "liquidable_debt_at_interval_protocol2" in result.columns
 
-    assert result['liquidable_debt'].tolist() == [3000, 6000, 9000]
-    assert result['liquidable_debt_at_interval'].tolist() == [1500, 3000, 4500]
+    assert result["liquidable_debt"].tolist() == [3000, 6000, 9000]
+    assert result["liquidable_debt_at_interval"].tolist() == [1500, 3000, 4500]
 
-    assert result['liquidable_debt_protocol1'].tolist() == [1000, 2000, 3000]
-    assert result['liquidable_debt_protocol2'].tolist() == [2000, 4000, 6000]
+    assert result["liquidable_debt_protocol1"].tolist() == [1000, 2000, 3000]
+    assert result["liquidable_debt_protocol2"].tolist() == [2000, 4000, 6000]
+
 
 def test_transform_main_chart_data_with_empty_data(sample_protocol_data, caplog):
     """Tests transform_main_chart_data with one protocol having empty data."""
@@ -556,24 +556,31 @@ def test_transform_main_chart_data_with_empty_data(sample_protocol_data, caplog)
     sample_protocol_data["protocol3"] = pd.DataFrame()
 
     with caplog.at_level(logging.WARNING):
-        result = transform_main_chart_data(sample_protocol_data, current_pair, protocols)
+        result = transform_main_chart_data(
+            sample_protocol_data, current_pair, protocols
+        )
 
     assert isinstance(result, pd.DataFrame)
     assert "No data for pair ETH-USDC from protocol3" in caplog.text
     assert len(result) == 3
 
-    assert result['liquidable_debt'].tolist() == [3000, 6000, 9000]
+    assert result["liquidable_debt"].tolist() == [3000, 6000, 9000]
 
-@pytest.mark.parametrize("input_protocol, valid_protocols, expected", [
-    ("protocol1", ["protocol1", "protocol2", "protocol3"], "protocol1"),
-    ("protocl1", ["protocol1", "protocol2", "protocol3"], "protocol1"),
-    ("proto1", ["protocol1", "protocol2", "protocol3"], "protocol1"),
-    ("unknown", ["protocol1", "protocol2", "protocol3"], "unknown"),
-])
+
+@pytest.mark.parametrize(
+    "input_protocol, valid_protocols, expected",
+    [
+        ("protocol1", ["protocol1", "protocol2", "protocol3"], "protocol1"),
+        ("protocl1", ["protocol1", "protocol2", "protocol3"], "protocol1"),
+        ("proto1", ["protocol1", "protocol2", "protocol3"], "protocol1"),
+        ("unknown", ["protocol1", "protocol2", "protocol3"], "unknown"),
+    ],
+)
 def test_infer_protocol_name(input_protocol, valid_protocols, expected):
     """Tests if infer_protocol_name correctly matches input to valid protocol names."""
     result = infer_protocol_name(input_protocol, valid_protocols)
     assert result == expected
+
 
 def test_infer_protocol_name_with_empty_list():
     """Tests infer_protocol_name with an empty list of valid protocols."""
@@ -582,10 +589,10 @@ def test_infer_protocol_name_with_empty_list():
     result = infer_protocol_name(input_protocol, valid_protocols)
     assert result == input_protocol
 
+
 def test_infer_protocol_name_with_very_similar_names():
     """Tests infer_protocol_name with very similar protocol names."""
     input_protocol = "protocol_v2"
     valid_protocols = ["protocol_v1", "protocol_v2", "protocol_v3"]
     result = infer_protocol_name(input_protocol, valid_protocols)
     assert result == "protocol_v2"
-

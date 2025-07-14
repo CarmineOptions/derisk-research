@@ -6,6 +6,7 @@ from db_connector import DBConnector
 This module contains the tests for the DBConnector.
 """
 
+
 def test_connect_to_db(mock_db_connector):
     """
     Test the connect_to_db method.
@@ -70,14 +71,14 @@ def test_get_loan_state(mock_db_connector):
     """
     mock_db_connector.cur.fetchone.return_value = [
         {"collateral": 100.0},  # collateral
-        {"debt": 50.0},         # debt
-        {"deposit": 200.0}      # deposit
+        {"debt": 50.0},  # debt
+        {"deposit": 200.0},  # deposit
     ]
     result = mock_db_connector.get_loan_state("protocol_id", "wallet_id")
     assert result == {
         "collateral": {"collateral": 100.0},
         "debt": {"debt": 50.0},
-        "deposit": {"deposit": 200.0}
+        "deposit": {"deposit": 200.0},
     }
     mock_db_connector.cur.execute.assert_called_once_with(
         """

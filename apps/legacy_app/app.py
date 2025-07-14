@@ -55,7 +55,7 @@ def _remove_leading_zeros(address: str) -> str:
 
 
 def create_stablecoin_bundle(
-    data: dict[str, pandas.DataFrame]
+    data: dict[str, pandas.DataFrame],
 ) -> dict[str, pandas.DataFrame]:
     """
     Creates a stablecoin bundle by merging relevant DataFrames for collateral tokens and debt tokens.

@@ -214,4 +214,3 @@ class TestZkLendLoanEntity:
         """Test token settings configuration."""
         assert hasattr(ZkLendLoanEntity, "TOKEN_SETTINGS")
         assert isinstance(ZkLendLoanEntity.TOKEN_SETTINGS, dict)
-

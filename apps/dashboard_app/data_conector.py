@@ -1,5 +1,5 @@
 """
-This is module connects to a PostgreSQL database and fetches data. 
+This is module connects to a PostgreSQL database and fetches data.
 """
 
 import logging

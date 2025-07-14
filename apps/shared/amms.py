@@ -1,4 +1,4 @@
-"""  AMMS module for managing liquidity pools and automated market makers. """
+"""AMMS module for managing liquidity pools and automated market makers."""
 
 from dataclasses import dataclass
 from decimal import Decimal

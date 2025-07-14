@@ -315,7 +315,8 @@ class DepositEventData(BaseModel):
 
 
 class CollateralEnabledDisabledEventData(BaseModel):
-    """ Data model representing a collateral enabled/disabled event in the system. """
+    """Data model representing a collateral enabled/disabled event in the system."""
+
     user: str
     token: str
 

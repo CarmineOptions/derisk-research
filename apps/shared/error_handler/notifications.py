@@ -16,10 +16,12 @@ dispatcher = Dispatcher()
 from uuid import uuid4
 from typing import Optional
 
+
 class Message:
     def __init__(self, text: str, is_sent: bool):
         self.text = text
         self.is_sent = is_sent
+
 
 class ErrorHandlerBot:
     SESSION_ID = str(uuid4())

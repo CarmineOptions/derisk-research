@@ -1,4 +1,5 @@
-"""  Module for storing constants and values used in the liquidable_debt module. """
+"""Module for storing constants and values used in the liquidable_debt module."""
+
 import os
 from enum import Enum
 
@@ -43,6 +44,7 @@ FIELDS_TO_VALIDATE = (
 
 class LendingProtocolNames(Enum):
     """class docstring"""
+
     NOSTRA_ALPHA: str = "Nostra_alpha"
     NOSTRA_MAINNET: str = "Nostra_mainnet"
     ZKLEND: str = "zkLend"

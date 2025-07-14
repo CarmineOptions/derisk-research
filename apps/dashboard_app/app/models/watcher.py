@@ -39,4 +39,3 @@ class TelegramLog(Base):
     message: Mapped[str] = mapped_column(
         String, server_default="", default="", nullable=False
     )
-

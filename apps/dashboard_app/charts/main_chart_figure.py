@@ -1,11 +1,12 @@
 """
 This module includes functions to generate financial charts using token price and liquidity data.
 """
+
 import ast
 import math
 from decimal import Decimal
 import pandas as pd
-import streamlit as st  
+import streamlit as st
 import plotly.express
 import plotly.graph_objs
 from shared.amms import SwapAmm
@@ -377,36 +378,46 @@ def get_user_history(user_id: str, df: pd.DataFrame) -> pd.DataFrame:
     """
     try:
         user_df = df[df[CommonValues.user.value] == user_id][
-            [CommonValues.collateral_usd.value, CommonValues.debt_usd.value]].copy()
-        user_df.rename(columns={CommonValues.collateral_usd.value: "Collateral", CommonValues.debt_usd.value: "Debt"}, inplace=True)
+            [CommonValues.collateral_usd.value, CommonValues.debt_usd.value]
+        ].copy()
+        user_df.rename(
+            columns={
+                CommonValues.collateral_usd.value: "Collateral",
+                CommonValues.debt_usd.value: "Debt",
+            },
+            inplace=True,
+        )
         user_df.insert(0, "Transaction", user_df.index + 1)
         return user_df
     except KeyError:
         print(f"User ID {user_id} not found in the DataFrame.")
         return pd.DataFrame()
-    
-def display_user_history_chart(df: pd.DataFrame):  
-    """  
-    Displays a chart based on the user's wallet ID input to show their transaction history.  
 
-    Args:  
-        df (pd.DataFrame): The DataFrame containing all transactions.  
-    """  
-    st.subheader("Input Wallet ID to View History")  
 
-    wallet_id = st.text_input("Enter Wallet ID:")  
+def display_user_history_chart(df: pd.DataFrame):
+    """
+    Displays a chart based on the user's wallet ID input to show their transaction history.
 
-    if wallet_id:  
-        user_history_data = get_user_history(wallet_id, df)   
-        
-        if not user_history_data.empty:  
-            st.dataframe(user_history_data)  
+    Args:
+        df (pd.DataFrame): The DataFrame containing all transactions.
+    """
+    st.subheader("Input Wallet ID to View History")
 
-            st.subheader(f"Collateral and Debt History for Wallet ID: {wallet_id}")  
-            chart_data = user_history_data.set_index("Transaction")[["Collateral", "Debt"]]  
-            st.line_chart(chart_data)  
-        else:  
-            st.error("No data found for this wallet ID.") 
+    wallet_id = st.text_input("Enter Wallet ID:")
+
+    if wallet_id:
+        user_history_data = get_user_history(wallet_id, df)
+
+        if not user_history_data.empty:
+            st.dataframe(user_history_data)
+
+            st.subheader(f"Collateral and Debt History for Wallet ID: {wallet_id}")
+            chart_data = user_history_data.set_index("Transaction")[
+                ["Collateral", "Debt"]
+            ]
+            st.line_chart(chart_data)
+        else:
+            st.error("No data found for this wallet ID.")
 
 
 def get_total_amount_by_field(df: pd.DataFrame, field_name: str) -> pd.DataFrame:
@@ -426,13 +437,15 @@ def get_total_amount_by_field(df: pd.DataFrame, field_name: str) -> pd.DataFrame
         pd.DataFrame: A DataFrame with columns 'address' and 'total_amount',
                       showing the total collateral amount for each token address.
     """
-    df[field_name] = df[field_name].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else x)
+    df[field_name] = df[field_name].apply(
+        lambda x: ast.literal_eval(x) if isinstance(x, str) else x
+    )
 
     df_expanded = df[field_name].apply(pd.Series)
 
     totals = df_expanded.sum()
 
     result = totals.reset_index()
-    result.columns = ['address', 'total_amount']
+    result.columns = ["address", "total_amount"]
 
     return result

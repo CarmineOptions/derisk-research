@@ -369,16 +369,16 @@ class ZkLendState(src.state.State):
             collateral_token_symbol = await src.helpers.get_symbol(
                 token_address=collateral_token_address
             )
-            self.token_parameters.collateral[
-                underlying_collateral_token_address
-            ] = ZkLendCollateralTokenParameters(
-                address=collateral_token_address,
-                decimals=int(reserve_data[1]),
-                symbol=collateral_token_symbol,
-                underlying_symbol=underlying_collateral_token_symbol,
-                underlying_address=underlying_collateral_token_address,
-                collateral_factor=reserve_data[4] / 1e27,
-                liquidation_bonus=reserve_data[14] / 1e27,
+            self.token_parameters.collateral[underlying_collateral_token_address] = (
+                ZkLendCollateralTokenParameters(
+                    address=collateral_token_address,
+                    decimals=int(reserve_data[1]),
+                    symbol=collateral_token_symbol,
+                    underlying_symbol=underlying_collateral_token_symbol,
+                    underlying_address=underlying_collateral_token_address,
+                    collateral_factor=reserve_data[4] / 1e27,
+                    liquidation_bonus=reserve_data[14] / 1e27,
+                )
             )
         for underlying_debt_token_address in debt_tokens:
             underlying_debt_token_symbol = await src.helpers.get_symbol(
@@ -397,15 +397,15 @@ class ZkLendState(src.state.State):
             debt_token_symbol = await src.helpers.get_symbol(
                 token_address=debt_token_address
             )
-            self.token_parameters.debt[
-                underlying_debt_token_address
-            ] = ZkLendDebtTokenParameters(
-                address=debt_token_address,
-                decimals=int(reserve_data[1]),
-                symbol=debt_token_symbol,
-                underlying_symbol=underlying_debt_token_symbol,
-                underlying_address=underlying_debt_token_address,
-                debt_factor=reserve_data[5] / 1e27,
+            self.token_parameters.debt[underlying_debt_token_address] = (
+                ZkLendDebtTokenParameters(
+                    address=debt_token_address,
+                    decimals=int(reserve_data[1]),
+                    symbol=debt_token_symbol,
+                    underlying_symbol=underlying_debt_token_symbol,
+                    underlying_address=underlying_debt_token_address,
+                    debt_factor=reserve_data[5] / 1e27,
+                )
             )
 
     def compute_liquidable_debt_at_price(

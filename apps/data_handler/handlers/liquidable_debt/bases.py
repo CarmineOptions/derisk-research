@@ -1,4 +1,5 @@
-""" Base class for collectors. """
+"""Base class for collectors."""
+
 from abc import ABC, abstractmethod
 
 

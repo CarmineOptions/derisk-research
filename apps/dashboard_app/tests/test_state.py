@@ -1,10 +1,12 @@
 import pytest
+
 pytest.importorskip("shared")
 from shared.state import State
 
 
 class MockLoanEntity:
     """Mock loan entity for testing"""
+
     pass
 
 
@@ -23,10 +25,7 @@ def test_state_without_protocol_name():
         _ = mock_state.get_protocol_name
 
 
-@pytest.mark.parametrize(
-    "protocol_name",
-    ["zkLend", "Nostra Alpha", "Nostra Mainnet"]
-)
+@pytest.mark.parametrize("protocol_name", ["zkLend", "Nostra Alpha", "Nostra Mainnet"])
 def test_protocol_names(protocol_name):
     """Test that protocol name is correctly returned"""
     mock_state = MockState()

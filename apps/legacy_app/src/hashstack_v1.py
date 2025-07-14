@@ -516,9 +516,9 @@ class HashstackV1State(src.state.State):
         )
 
         new_borrowed_collateral = src.types.Portfolio()
-        new_borrowed_collateral[
-            new_borrowed_collateral_token
-        ] = new_borrowed_collateral_face_amount
+        new_borrowed_collateral[new_borrowed_collateral_token] = (
+            new_borrowed_collateral_face_amount
+        )
         self.loan_entities[new_loan_id].borrowed_collateral = new_borrowed_collateral
         self.loan_entities[new_loan_id].collateral = src.types.Portfolio(
             **{
@@ -609,13 +609,13 @@ class HashstackV1State(src.state.State):
         assert new_original_collateral_face_amount == decimal.Decimal("0")
 
         new_original_collateral = src.types.Portfolio()
-        new_original_collateral[
-            new_original_collateral_token
-        ] = new_original_collateral_face_amount
+        new_original_collateral[new_original_collateral_token] = (
+            new_original_collateral_face_amount
+        )
         new_borrowed_collateral = src.types.Portfolio()
-        new_borrowed_collateral[
-            new_borrowed_collateral_token
-        ] = new_borrowed_collateral_face_amount
+        new_borrowed_collateral[new_borrowed_collateral_token] = (
+            new_borrowed_collateral_face_amount
+        )
         self.loan_entities[new_loan_id].original_collateral = new_original_collateral
         self.loan_entities[new_loan_id].borrowed_collateral = new_borrowed_collateral
         self.loan_entities[new_loan_id].collateral = src.types.Portfolio(

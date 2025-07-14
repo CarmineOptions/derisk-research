@@ -29,9 +29,11 @@ async def get_history(wallet_id: str) -> List[UserTransaction]:
             HTTPException: Internal Server Error
     """
 
-    try:   
-        filtered_trade_open, filtered_trade_close = await get_history_by_wallet_id(wallet_id)       
+    try:
+        filtered_trade_open, filtered_trade_close = await get_history_by_wallet_id(
+            wallet_id
+        )
         return filtered_trade_open + filtered_trade_close
-    except Exception as e:      
+    except Exception as e:
         logger.error(e)
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")

@@ -5,6 +5,7 @@ Unit tests for loans table functionality.
 from unittest.mock import MagicMock
 import pytest
 import pandas as pd
+
 pytest.importorskip("shared")
 from helpers.loans_table import (
     get_protocol,
@@ -65,11 +66,14 @@ class MockState(State):
         return None  # Returns a mock value
 
 
-@pytest.mark.parametrize("state, expected", [
-    (MockState("zkLend"), "zkLend"),
-    (MockState("Nostra Alpha"), "Nostra Alpha"),
-    (MockState("Nostra Mainnet"), "Nostra Mainnet"),
-])
+@pytest.mark.parametrize(
+    "state, expected",
+    [
+        (MockState("zkLend"), "zkLend"),
+        (MockState("Nostra Alpha"), "Nostra Alpha"),
+        (MockState("Nostra Mainnet"), "Nostra Mainnet"),
+    ],
+)
 def test_get_protocol(state, expected):
     """Test protocol retrieval for different states."""
     assert get_protocol(state) == expected
@@ -96,8 +100,15 @@ def test_get_loans_table_data(mock_prices_fixture):
     assert isinstance(loan_data_frame, pd.DataFrame)
     assert not loan_data_frame.empty
     assert set(loan_data_frame.columns) == {
-        "User", "Protocol", "Collateral (USD)", "Risk-adjusted collateral (USD)",
-        "Debt (USD)", "Health factor", "Standardized health factor", "Collateral", "Debt"
+        "User",
+        "Protocol",
+        "Collateral (USD)",
+        "Risk-adjusted collateral (USD)",
+        "Debt (USD)",
+        "Health factor",
+        "Standardized health factor",
+        "Collateral",
+        "Debt",
     }
     assert loan_data_frame.iloc[0]["User"] == "User1"
     assert loan_data_frame.iloc[0]["Collateral (USD)"] == 1000.0
@@ -105,11 +116,14 @@ def test_get_loans_table_data(mock_prices_fixture):
     assert loan_data_frame.iloc[0]["Health factor"] == 2.0
 
 
-@pytest.mark.parametrize("protocol, token_addresses, expected", [
-    ("zkLend", ["0x123"], (["0x123"], "felt_total_supply")),
-    ("Nostra Alpha", ["0x456"], (["0x456"], "totalSupply")),
-    ("Nostra Mainnet", ["0x789"], (["0x789"], "totalSupply")),
-])
+@pytest.mark.parametrize(
+    "protocol, token_addresses, expected",
+    [
+        ("zkLend", ["0x123"], (["0x123"], "felt_total_supply")),
+        ("Nostra Alpha", ["0x456"], (["0x456"], "totalSupply")),
+        ("Nostra Mainnet", ["0x789"], (["0x789"], "totalSupply")),
+    ],
+)
 def test_get_supply_function_call_parameters(protocol, token_addresses, expected):
     """Test supply function call parameter retrieval for different protocols."""
     assert get_supply_function_call_parameters(protocol, token_addresses) == expected

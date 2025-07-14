@@ -152,7 +152,9 @@ class NostraMainnetState(NostraAlphaState):
                 assert len(interest_bearing_collateral_token_addresses) == 1
                 self.debt_token_addresses_to_interest_bearing_collateral_token_addresses[
                     debt_token_parameters.address
-                ] = interest_bearing_collateral_token_addresses[0]
+                ] = interest_bearing_collateral_token_addresses[
+                    0
+                ]
 
     def process_interest_rate_model_event(self, event: pd.Series) -> None:
         """

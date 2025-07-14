@@ -12,7 +12,9 @@ from datetime import timedelta, datetime, timezone
 dotenv.load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", default=86400))
+ACCESS_TOKEN_EXPIRE_MINUTES = int(
+    os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", default=86400)
+)
 
 auth_router = APIRouter()
 
@@ -40,7 +42,10 @@ def obtain_token(
     elif email:
         token = create_access_token({"email": email})
     else:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Either wallet_id or email must be provided")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Either wallet_id or email must be provided",
+        )
 
     return token
 

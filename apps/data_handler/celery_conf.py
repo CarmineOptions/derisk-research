@@ -88,10 +88,13 @@ app.conf.beat_schedule = {
     # },
 }
 
-from data_handler.background_tasks.data_handler.order_books_tasks import ekubo_order_book
+from data_handler.background_tasks.data_handler.order_books_tasks import (
+    ekubo_order_book,
+)
 from data_handler.background_tasks.data_handler.generic_tasks import (
     run_liquidable_debt_computation_for_zklend,
 )
+
 # from shared.background_tasks.tasks import check_health_ratio_level_changes
 
 from data_handler.background_tasks.data_handler.event_tasks import process_zklend_events

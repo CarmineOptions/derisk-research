@@ -3,6 +3,7 @@ Test module for State and LoanEntity classes.
 This module provides unit tests for the State and LoanEntity abstract base classes,
 using mock implementations to test core functionality.
 """
+
 import pytest
 from decimal import Decimal
 import pandas as pd
@@ -16,6 +17,7 @@ class MockMessage:
     Mock implementation of Message class for testing.
     Used to simulate message handling without actual messaging infrastructure.
     """
+
     text: str
     is_sent: bool
 
@@ -26,6 +28,7 @@ class MockMessageTemplates:
     Mock implementation of MessageTemplates for testing.
     Provides template messages used in error handling and notifications.
     """
+
     ENTRY_MESSAGE: str = "Now you will receive notifications if any error occurs."
     RETRY_ENTRY_MESSAGE: str = "You have already registered for error notifications."
     NEW_TOKEN_MESSAGE: str = "{protocol_name} has a new token with address {address}."
@@ -36,6 +39,7 @@ class MockErrorHandlerBot:
     Mock implementation of ErrorHandlerBot for testing.
     Simulates bot functionality without actual messaging capabilities.
     """
+
     def __init__(self, token=None):
         """Initialize mock bot with optional token."""
         self.token = token
@@ -43,6 +47,7 @@ class MockErrorHandlerBot:
     async def send_message(self, message: str) -> None:
         """Mock implementation of message sending."""
         pass
+
 
 # Initialize mock objects
 mock_bot = MockErrorHandlerBot()
@@ -77,6 +82,7 @@ class MockLoanEntity(LoanEntity):
     Mock implementation of LoanEntity for testing.
     Provides concrete implementations of abstract methods for testing purposes.
     """
+
     def __init__(self) -> None:
         super().__init__()
 
@@ -101,6 +107,7 @@ class MockState(State):
     Mock implementation of State for testing.
     Provides concrete implementations of abstract methods and test-specific attributes.
     """
+
     PROTOCOL_NAME = "MockProtocol"
     ADDRESSES_TO_TOKENS = {"0x123": "MOCK_TOKEN"}
     EVENTS_METHODS_MAPPING = {"deposit": "process_deposit"}

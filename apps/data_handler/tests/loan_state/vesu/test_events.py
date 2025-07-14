@@ -9,8 +9,9 @@ from data_handler.db.models.liquidable_debt import HealthRatioLevel
 @pytest.fixture
 def vesu_entity():
     """Create VesuLoanEntity instance for testing"""
-    with patch("data_handler.handlers.loan_states.vesu.events.StarknetClient"), \
-         patch("data_handler.handlers.loan_states.vesu.events.DBConnector"):
+    with patch("data_handler.handlers.loan_states.vesu.events.StarknetClient"), patch(
+        "data_handler.handlers.loan_states.vesu.events.DBConnector"
+    ):
         entity = VesuLoanEntity()
         entity.session = AsyncMock()
         return entity
@@ -33,7 +34,7 @@ def mock_vesu_position():
     position.pool_id = "456"
     position.collateral_asset = "789"
     position.debt_asset = "101112"
-    position.get.return_value = 1000000 
+    position.get.return_value = 1000000
 
 
 class TestVesuLoanEntity:
@@ -96,9 +97,7 @@ class TestVesuLoanEntity:
                 0,
             )
             mock_collateral.return_value = Decimal("1000")
-            mock_asset_config.return_value = [
-                0
-            ] * 16
+            mock_asset_config.return_value = [0] * 16
             mock_debt.return_value = Decimal("500")
             mock_ltv.return_value = (Decimal("80"),)
             mock_decimals.return_value = Decimal("1000000")

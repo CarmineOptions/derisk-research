@@ -20,6 +20,7 @@ def order_book():
     order_book = main.UniswapV2OrderBook(token_a, token_b)
     return order_book
 
+
 @pytest.fixture(scope="session")
 def event_loop():
     """
@@ -62,10 +63,16 @@ class TestUniswapV2OrderBook:
         """
         tick = Decimal("500")
         final_value = Decimal("9.997500313723646666869072034E-15")
-        rounded_final_value = final_value.quantize(Decimal("1e-18"), rounding=ROUND_FLOOR)
+        rounded_final_value = final_value.quantize(
+            Decimal("1e-18"), rounding=ROUND_FLOOR
+        )
         liquidity_amount = order_book.calculate_liquidity_amount(tick, Decimal("10000"))
-        rounded_liquidity_value = liquidity_amount.quantize(Decimal("1e-18"), rounding=ROUND_FLOOR)
-        assert rounded_final_value == rounded_liquidity_value, "liquidity amount does not match"
+        rounded_liquidity_value = liquidity_amount.quantize(
+            Decimal("1e-18"), rounding=ROUND_FLOOR
+        )
+        assert (
+            rounded_final_value == rounded_liquidity_value
+        ), "liquidity amount does not match"
 
     def test_get_prices_ranges(self, order_book: main.UniswapV2OrderBook):
         """
@@ -77,7 +84,9 @@ class TestUniswapV2OrderBook:
             len(price_ranges) > 1
         ), "Price ranges list length should be greater than 1"
 
-    def test_fetch_price_and_liquidity(self, order_book: main.UniswapV2OrderBook, event_loop):
+    def test_fetch_price_and_liquidity(
+        self, order_book: main.UniswapV2OrderBook, event_loop
+    ):
         """
         Unit test for UniswapV2OrderBook.fetch_price_and_liquidity
         """

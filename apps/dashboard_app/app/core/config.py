@@ -3,7 +3,6 @@ from pydantic import Field
 from pydantic_settings import BaseSettings
 
 
-
 class Settings(BaseSettings):
     # Database settings
     db_driver: str = "postgresql+asyncpg"
@@ -17,7 +16,7 @@ class Settings(BaseSettings):
     network: str = Field(default="sepolia", alias="NETWORK")
     active_protocols: list = Field(
         default_factory=lambda: ["ZkLend", "NostraMainnet", "NostraAlpha"],
-        alias="ACTIVE_PROTOCOLS"
+        alias="ACTIVE_PROTOCOLS",
     )
 
     coingecko_api_key: str = "api_key"
@@ -45,13 +44,11 @@ class Settings(BaseSettings):
 
         for alias, value in self._required_fields.items():
             if value in (None, ""):
-                raise ValueError(
-                    f"Missing required environment variable: {alias}"
-                )
-        return (f"{self.db_driver}://{self.db_user}:{self.db_password}"
-                f"@{self.db_host}:{self.db_port}/{self.db_name}")
-
+                raise ValueError(f"Missing required environment variable: {alias}")
+        return (
+            f"{self.db_driver}://{self.db_user}:{self.db_password}"
+            f"@{self.db_host}:{self.db_port}/{self.db_name}"
+        )
 
 
 settings = Settings()
-

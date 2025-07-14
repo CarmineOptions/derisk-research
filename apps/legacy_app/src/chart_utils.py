@@ -258,9 +258,9 @@ def transform_main_chart_data(
             main_chart_data[f"liquidable_debt_{protocol}"] = protocol_main_chart_data[
                 "liquidable_debt"
             ]
-            main_chart_data[
-                f"liquidable_debt_at_interval_{protocol}"
-            ] = protocol_main_chart_data["liquidable_debt_at_interval"]
+            main_chart_data[f"liquidable_debt_at_interval_{protocol}"] = (
+                protocol_main_chart_data["liquidable_debt_at_interval"]
+            )
         else:
             main_chart_data["liquidable_debt"] += protocol_main_chart_data[
                 "liquidable_debt"
@@ -271,8 +271,8 @@ def transform_main_chart_data(
             main_chart_data[f"liquidable_debt_{protocol}"] = protocol_main_chart_data[
                 "liquidable_debt"
             ]
-            main_chart_data[
-                f"liquidable_debt_at_interval_{protocol}"
-            ] = protocol_main_chart_data["liquidable_debt_at_interval"]
+            main_chart_data[f"liquidable_debt_at_interval_{protocol}"] = (
+                protocol_main_chart_data["liquidable_debt_at_interval"]
+            )
 
     return main_chart_data

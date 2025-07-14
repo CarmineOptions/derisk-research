@@ -1,8 +1,9 @@
 import sys
 import os
-path = (os.path.dirname(os.path.dirname(os.getcwd())))
+
+path = os.path.dirname(os.path.dirname(os.getcwd()))
 sys.path.append(path)
-sys.path.append((f'{path}/apps/shared/telegram_app'))
+sys.path.append((f"{path}/apps/shared/telegram_app"))
 print(path)
 from unittest.mock import MagicMock
 

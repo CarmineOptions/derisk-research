@@ -15,7 +15,7 @@ client = TestClient(app)
 # Endpoint parameters and expected response
 endpoint_params = {
     "wallet_id": "0x042c5b7dcb2706984b2b035e76cf5b4db95667b25eebd1aa057887ef9ad5fca8",
-    "protocol_name": "protocolA"
+    "protocol_name": "protocolA",
 }
 
 loan_response = {
@@ -24,12 +24,10 @@ loan_response = {
     "collateral": {
         "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7": 5.59987142124803e16
     },
-    "debt": {
-        "0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8": 0.0
-    },
+    "debt": {"0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8": 0.0},
     "deposit": {
         "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7": 5.59987142124803e16,
-        "0x00000000000000000000000000000000000000000000000000c4f1656259e56a": -4.17404284944524e75
+        "0x00000000000000000000000000000000000000000000000000c4f1656259e56a": -4.17404284944524e75,
     },
 }
 
@@ -49,7 +47,7 @@ def test_get_loans_complex(mock_db_connector):
         # Check if the mock was called with the correct arguments
         mock_get_loan_state.assert_called_once_with(
             protocol_id=endpoint_params["protocol_name"],
-            wallet_id=endpoint_params["wallet_id"]
+            wallet_id=endpoint_params["wallet_id"],
         )
 
     # Asserting the response status code
@@ -57,6 +55,3 @@ def test_get_loans_complex(mock_db_connector):
 
     # Asserting the response JSON matches the expected response
     assert response.json() == loan_response
-    
-
-

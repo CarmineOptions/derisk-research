@@ -1,4 +1,5 @@
-""" Haiko Order Book class implementation """
+"""Haiko Order Book class implementation"""
+
 from decimal import Decimal
 from pathlib import Path
 
@@ -12,7 +13,8 @@ from data_handler.handlers.order_books.haiko.logger import get_logger
 
 
 class HaikoOrderBook(OrderBookBase):
-    """ Haiko Order Book class. """
+    """Haiko Order Book class."""
+
     DEX = "Haiko"
 
     def __init__(self, token_a, token_b, apply_filtering: bool = False):
@@ -20,7 +22,7 @@ class HaikoOrderBook(OrderBookBase):
         Initialize the HaikoOrderBook object.
         :param token_a: baseToken hexadecimal address
         :param token_b: quoteToken hexadecimal address
-        :param apply_filtering: bool - 
+        :param apply_filtering: bool -
         If True apply min and max price filtering to the order book data
         """
         super().__init__(token_a, token_b)
@@ -32,7 +34,7 @@ class HaikoOrderBook(OrderBookBase):
         self.token_a_price = Decimal(0)
         self.token_b_price = Decimal(0)
 
-        self._decimals_diff = 10**(
+        self._decimals_diff = 10 ** (
             self.token_a_decimal - self.token_b_decimal or self.token_a_decimal
         )
         self._check_tokens_supported()
@@ -63,7 +65,9 @@ class HaikoOrderBook(OrderBookBase):
 
     def _check_tokens_supported(self) -> None:
         """Check if a pair of tokens is supported by Haiko"""
-        supported_tokens = self.haiko_connector.get_supported_tokens(existing_only=False)
+        supported_tokens = self.haiko_connector.get_supported_tokens(
+            existing_only=False
+        )
         if isinstance(supported_tokens, dict) and supported_tokens.get("error"):
             raise RuntimeError(f"Unexpected error from API: {supported_tokens}")
         valid_tokens = self._get_valid_tokens_addresses()
@@ -111,9 +115,13 @@ class HaikoOrderBook(OrderBookBase):
             self._calculate_order_book(market_depth_list, Decimal(market["currPrice"]))
 
         self.sort_asks_bids()
-        self.current_price = max(tokens_markets, key=lambda x: Decimal(x["tvl"]))["currPrice"]
+        self.current_price = max(tokens_markets, key=lambda x: Decimal(x["tvl"]))[
+            "currPrice"
+        ]
 
-    def _calculate_order_book(self, market_ticks_liquidity: list, current_price: Decimal) -> None:
+    def _calculate_order_book(
+        self, market_ticks_liquidity: list, current_price: Decimal
+    ) -> None:
         self.set_current_price(current_price)
         price_range = self.calculate_price_range()
         asks, bids = [], []
@@ -231,7 +239,9 @@ class HaikoOrderBook(OrderBookBase):
         return liquidity_delta / 10**self.token_a_decimal
 
     def tick_to_price(self, tick: Decimal) -> Decimal:
-        return Decimal("1.00001")**tick * (10**(self.token_a_decimal - self.token_b_decimal))
+        return Decimal("1.00001") ** tick * (
+            10 ** (self.token_a_decimal - self.token_b_decimal)
+        )
 
     def _filter_markets_data(self, all_markets_data: list) -> list:
         """
@@ -242,8 +252,8 @@ class HaikoOrderBook(OrderBookBase):
         token_a_valid, token_b_valid = self._get_valid_tokens_addresses()
         return list(
             filter(
-                lambda market: market["baseToken"]["address"] == token_a_valid and market[
-                    "quoteToken"]["address"] == token_b_valid,
+                lambda market: market["baseToken"]["address"] == token_a_valid
+                and market["quoteToken"]["address"] == token_b_valid,
                 all_markets_data,
             )
         )

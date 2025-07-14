@@ -1,6 +1,7 @@
 """
 Token settings for Nostra Alpha, including collateral, debt factors, and liquidation fees.
 """
+
 from pydantic import BaseModel
 import decimal
 
