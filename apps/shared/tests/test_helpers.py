@@ -28,7 +28,7 @@ def test_get_addresses():
 
 async def test_get_symbol():
     """Tests if get_symbol correctly retrieves the symbol for a given address."""
-    mock_func_call = AsyncMock(return_value=["TOKEN"])
-    with patch("dashboard_app.helpers.tools.func_call", mock_func_call):
+    mock_func_call = AsyncMock(return_value=[int.from_bytes("TOKEN".encode())])
+    with patch("shared.blockchain_call.func_call", mock_func_call):
         result = await get_symbol("0x123")
         assert result == "TOKEN"

@@ -53,9 +53,7 @@ async def get_user_debt(wallet_id: str, protocol_name: str) -> UserDebtResponseM
         HTTPException: If user or protocol not found
     """
     try:
-        print("CALLING", db_connector.get_user_debt)
         user_debt_data = await db_connector.get_user_debt(protocol_name, wallet_id)
-        print("FETCHED USER DATA", user_debt_data)
         if not user_debt_data:
             raise HTTPException(
                 status_code=404,
@@ -69,7 +67,6 @@ async def get_user_debt(wallet_id: str, protocol_name: str) -> UserDebtResponseM
         )
 
     except Exception as e:
-        print("EXCEPTION", e)
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 

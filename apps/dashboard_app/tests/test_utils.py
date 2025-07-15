@@ -1,6 +1,4 @@
 import pandas as pd
-import math
-import pytest
 import pytest
 
 pytest.importorskip("data_handler")
@@ -13,7 +11,6 @@ from helpers.settings import (
     UNDERLYING_SYMBOLS_TO_UNDERLYING_ADDRESSES,
     STABLECOIN_BUNDLE_NAME,
 )
-from helpers.ekubo import EkuboLiquidity
 from collections import defaultdict
 from charts.utils import (
     parse_token_amounts,
@@ -144,7 +141,6 @@ def test_process_liquidity_successful_execution(
 
     with patch("dashboard_app.helpers.tools.get_prices", side_effect=mock_prices):
         with patch("dashboard_app.charts.utils.EkuboLiquidity") as MockEkuboLiquidity:
-
             mock_instance = MockEkuboLiquidity.return_value
             mock_instance.fetch_liquidity.return_value = mock_ekubo_liquidity
             mock_instance.apply_liquidity_to_dataframe.return_value = sample_chart_data
@@ -185,7 +181,6 @@ def test_process_liquidity_with_empty_dataframe(
     )
 
     with patch("dashboard_app.charts.utils.EkuboLiquidity") as MockEkuboLiquidity:
-
         mock_instance = MockEkuboLiquidity.return_value
         mock_instance.fetch_liquidity.return_value = mock_ekubo_liquidity
         mock_instance.apply_liquidity_to_dataframe.return_value = expected_df
@@ -238,7 +233,6 @@ def test_process_liquidity_type_conversion(
     )
 
     with patch("dashboard_app.charts.utils.EkuboLiquidity") as MockEkuboLiquidity:
-
         mock_instance = MockEkuboLiquidity.return_value
         mock_instance.fetch_liquidity.return_value = mock_ekubo_liquidity
         mock_instance.apply_liquidity_to_dataframe.return_value = expected_df
@@ -453,13 +447,16 @@ def test_create_stablecoin_bundle_with_missing_columns() -> None:
         ),
     }
 
-    with patch("dashboard_app.helpers.settings.COLLATERAL_TOKENS", ["ETH"]), patch(
-        "dashboard_app.helpers.settings.DEBT_TOKENS",
-        ["USDC", "DAI", "STABLECOIN_BUNDLE"],
-    ), patch(
-        "dashboard_app.helpers.settings.STABLECOIN_BUNDLE_NAME", "STABLECOIN_BUNDLE"
+    with (
+        patch("dashboard_app.helpers.settings.COLLATERAL_TOKENS", ["ETH"]),
+        patch(
+            "dashboard_app.helpers.settings.DEBT_TOKENS",
+            ["USDC", "DAI", "STABLECOIN_BUNDLE"],
+        ),
+        patch(
+            "dashboard_app.helpers.settings.STABLECOIN_BUNDLE_NAME", "STABLECOIN_BUNDLE"
+        ),
     ):
-
         with pytest.raises(KeyError):
             result = create_stablecoin_bundle(data)
 
