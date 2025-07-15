@@ -1,12 +1,12 @@
 from fastapi import APIRouter, HTTPException
 from fastapi import Depends
 from ..schemas import UserLoanByWalletParams, UserLoanByWalletResponse
-from shared.db import db_connector
+from ..crud import db_connector
 
-loan_router = APIRouter()
+router = APIRouter()
 
 
-@loan_router.get("/loan_data_by_wallet_id", response_model=UserLoanByWalletResponse)
+@router.get("/loan_data_by_wallet_id", response_model=UserLoanByWalletResponse)
 async def get_loans_by_wallet_id(params: UserLoanByWalletParams = Depends()):
     """
     Retrieve loan data associated with a specific wallet ID.
@@ -27,7 +27,7 @@ async def get_loans_by_wallet_id(params: UserLoanByWalletParams = Depends()):
       HTTPException: If address is not mapped
     """
     try:
-        loan_states = db_connector.get_loan_state(
+        loan_states = await db_connector.get_loan_state(
             wallet_id=params.wallet_id,
             protocol_id=params.protocol_name,
         )

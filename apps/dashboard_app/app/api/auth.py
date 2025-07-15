@@ -24,15 +24,20 @@ import jwt
 import os
 import dotenv
 from pydantic import EmailStr
-from schemas.schemas import Token
+from ..schemas import Token
 
 
 dotenv.load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM")
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(
     os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", default=86400)
 )
+
+if not SECRET_KEY:
+    raise Exception(
+        "Please provide a SECRET_KEY environment variable required for jwt tokens creation"
+    )
 
 router = APIRouter()
 

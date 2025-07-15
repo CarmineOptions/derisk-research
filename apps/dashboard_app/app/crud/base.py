@@ -50,11 +50,13 @@ class DashboardDBConnectorAsync(DBConnectorAsync):
         Returns:
             float | None: User debt if found, otherwise None.
         """
+        print("STARTING TRX", self.session)
         async with self.session() as db:
             sql = text("""
                 SELECT debt FROM loan_state
                 WHERE protocol_id = :protocol_id and "user" = :user;
             """)
+            print("EXECUTING", sql)
             res = await db.execute(sql, {"protocol_id": protocol_id, "user": wallet_id})
             return res.scalar_one_or_none()
 

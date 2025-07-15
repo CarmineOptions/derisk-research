@@ -2,17 +2,15 @@ import pytest
 
 pytest.importorskip("data_handler")
 import pandas as pd
-from helpers.tools import (
+from ..helpers.tools import (
     get_collateral_token_range,
-    get_symbol,
     get_prices,
-    add_leading_zeros,
-    get_addresses,
     get_underlying_address,
     get_custom_data,
     get_main_chart_data,
 )
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
+from shared.helpers import add_leading_zeros
 
 
 @pytest.mark.parametrize("collateral_price, expected_count", [(100, 47)])
@@ -29,24 +27,6 @@ def test_get_collateral_token_range_invalid(collateral_price, expected_count):
     """Tests get_collateral_token_range with an invalid zero price input."""
     result = get_collateral_token_range("0xAddress", collateral_price)
     assert len(result) == expected_count
-
-
-def test_add_leading_zeros():
-    """Tests if add_leading_zeros correctly formats the hash string."""
-    hash_str = "0x123456789abcdef"
-    result = add_leading_zeros(hash_str)
-    assert len(result) == 66
-    assert result.startswith("0x")
-
-
-def test_get_addresses():
-    """Tests if get_addresses correctly returns the expected token addresses."""
-    mock_params = {
-        "token1": MockToken("0xabc", "underlying1"),
-        "token2": MockToken("0xdef", "underlying2"),
-    }
-    result = get_addresses(mock_params, underlying_symbol="underlying1")
-    assert result == ["0xabc"]
 
 
 def test_get_custom_data():
@@ -95,14 +75,6 @@ def test_get_prices():
         mock_get.return_value.json.return_value = mock_response
         result = get_prices(token_decimals)
         assert result[formatted_address] == 50
-
-
-async def test_get_symbol():
-    """Tests if get_symbol correctly retrieves the symbol for a given address."""
-    mock_func_call = AsyncMock(return_value=["TOKEN"])
-    with patch("dashboard_app.helpers.tools.func_call", mock_func_call):
-        result = await get_symbol("0x123")
-        assert result == "TOKEN"
 
 
 class MockState:

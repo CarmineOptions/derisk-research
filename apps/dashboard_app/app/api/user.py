@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException
+from pathlib import Path
 import pandas as pd
 import json
 from ..schemas import (
@@ -12,8 +13,7 @@ router = APIRouter(
     tags=["user"],
     responses={404: {"description": "Not found"}},
 )
-
-file_path = "../mock_data.csv"
+file_path = Path().parent.parent / "mock_data.csv"
 mock_data = pd.read_csv(file_path)
 
 
@@ -53,7 +53,9 @@ async def get_user_debt(wallet_id: str, protocol_name: str) -> UserDebtResponseM
         HTTPException: If user or protocol not found
     """
     try:
-        user_debt_data = db_connector.get_user_debt(protocol_name, wallet_id)
+        print("CALLING", db_connector.get_user_debt)
+        user_debt_data = await db_connector.get_user_debt(protocol_name, wallet_id)
+        print("FETCHED USER DATA", user_debt_data)
         if not user_debt_data:
             raise HTTPException(
                 status_code=404,
@@ -67,6 +69,7 @@ async def get_user_debt(wallet_id: str, protocol_name: str) -> UserDebtResponseM
         )
 
     except Exception as e:
+        print("EXCEPTION", e)
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
