@@ -6,7 +6,7 @@ from shared.custom_types.base import TokenParameters
 import pandas as pd
 
 import starknet_py
-from shared.blockchain_call import func_call
+from shared import blockchain_call
 from starknet_py.net.client_errors import ClientError
 
 from .constants import (
@@ -97,13 +97,14 @@ async def get_symbol(token_address: str) -> str:
     Returns: str
 
     """
+    print("FUNC CALL", blockchain_call.func_call)
     # DAI V2's symbol is `DAI` but we don't want to mix it with DAI = DAI V1.
     if (
         token_address
         == "0x05574eb6b8789a91466f902c380d978e472db68170ff82a5b650b95a58ddf4ad"
     ):
         return "DAI V2"
-    symbol = await func_call(
+    symbol = await blockchain_call.func_call(
         addr=token_address,
         selector="symbol",
         calldata=[],
@@ -124,7 +125,7 @@ async def get_underlying_token_symbol(token_address: str) -> str | None:
     """
     try:
         # Attempt to retrieve the underlying asset's address and its symbol
-        underlying_token_address = await func_call(
+        underlying_token_address = await blockchain_call.func_call(
             addr=token_address,
             selector="underlyingAsset",
             calldata=[],

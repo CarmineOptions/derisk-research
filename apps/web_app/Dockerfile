@@ -9,14 +9,15 @@ WORKDIR /app
 ENV PYTHONPATH "${PYTHONPATH}:/app"
 
 COPY web_app/pyproject.toml /app
-ADD . /app
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libpq-dev \
     && rm -rf /var/lib/apt/lists/* \
     && pip install poetry \
     && poetry config virtualenvs.create false \
-    && poetry install --no-interaction --no-ansi
+    && poetry install --no-interaction --no-ansi --no-root
+
+COPY . /app
 
 ENTRYPOINT ["bash", "/app/entrypoint.sh"]
 

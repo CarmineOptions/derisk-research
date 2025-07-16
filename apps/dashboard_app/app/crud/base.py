@@ -2,7 +2,7 @@ import logging
 from typing import Type, TypeVar
 
 from pydantic import BaseModel
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 
 from shared.db import Base, DBConnectorAsync, SQLALCHEMY_DATABASE_URL
 from ..utils.values import (
@@ -38,6 +38,90 @@ class DashboardDBConnectorAsync(DBConnectorAsync):
             )
 
             return result.scalars().all()
+
+    async def get_user_debt(self, protocol_id: str, wallet_id: str) -> float | None:
+        """
+        Fetches user debt for a given protocol and wallet.
+
+        Args:
+            protocol_id (str): Protocol ID.
+            wallet_id (str): User's wallet ID.
+
+        Returns:
+            float | None: User debt if found, otherwise None.
+        """
+        async with self.session() as db:
+            sql = text("""
+                SELECT debt FROM loan_state
+                WHERE protocol_id = :protocol_id and "user" = :user;
+            """)
+            res = await db.execute(sql, {"protocol_id": protocol_id, "user": wallet_id})
+            return res.scalar_one_or_none()
+
+    async def get_user_deposit(self, protocol_id: str, wallet_id: str) -> float | None:
+        """
+        Fetches user deposit for a given protocol and wallet.
+
+        Args:
+            protocol_id (str): Protocol ID.
+            wallet_id (str): User's wallet ID.
+
+        Returns:
+            float | None: User deposit if found, otherwise None.
+        """
+        async with self.session() as db:
+            sql = text("""
+                SELECT deposit FROM loan_state
+                WHERE protocol_id = :protocol_id and "user" = :user;
+            """)
+            res = await db.execute(sql, {"protocol_id": protocol_id, "user": wallet_id})
+            return res.scalar_one_or_none()
+
+    async def get_user_collateral(
+        self, protocol_id: str, wallet_id: str
+    ) -> float | None:
+        """
+        Fetches user collateral for a given protocol and wallet.
+
+        Args:
+            protocol_id (str): Protocol ID.
+            wallet_id (str): User's wallet ID.
+
+        Returns:
+            float | None: User collateral if found, otherwise None.
+        """
+        async with self.session() as db:
+            sql = text("""
+                SELECT collateral FROM loan_state
+                WHERE protocol_id = %s and "user" = %s;
+            """)
+            res = await db.execute(sql, {"protocol_id": protocol_id, "user": wallet_id})
+            return res.scalar_one_or_none()
+
+    async def get_loan_state(self, protocol_id: str, wallet_id: str) -> dict | None:
+        """
+        Fetches user loan state for a given protocol and wallet.
+
+        Args:
+            protocol_id (str): Protocol ID.
+            wallet_id (str): User's wallet ID.
+
+        Returns:
+            dict | None: User's loan state if found, otherwise None.
+        """
+        async with self.session() as db:
+            sql = text("""
+                SELECT collateral, debt, deposit FROM loan_state
+                WHERE protocol_id = %s and "user" = %s;
+            """)
+            res = (
+                await db.execute(sql, {"protocol_id": protocol_id, "user": wallet_id})
+            ).one()
+            return {
+                "collateral": res[0],
+                "debt": res[1],
+                "deposit": res[2],
+            }
 
 
 db_connector = DashboardDBConnectorAsync(SQLALCHEMY_DATABASE_URL)

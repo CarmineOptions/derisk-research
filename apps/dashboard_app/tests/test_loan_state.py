@@ -1,13 +1,11 @@
-import pytest
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from unittest.mock import AsyncMock, patch
-from db_connector import DBConnector
-from api.loan_state import loan_router
+from unittest.mock import patch
+from ..app.api.loan_state import router
 
 # Setup a test FastAPI app and include the loan router
 app = FastAPI()
-app.include_router(loan_router)
+app.include_router(router)
 
 # Initialize TestClient
 client = TestClient(app)
@@ -32,8 +30,10 @@ loan_response = {
 }
 
 
-def test_get_loans_complex(mock_db_connector):
-    with patch("db_connector.DBConnector.get_loan_state") as mock_get_loan_state:
+def test_get_loans_complex():
+    with patch(
+        "app.dashboard_app.app.crud.base.DashboardDBConnectorAsync.get_loan_state"
+    ) as mock_get_loan_state:
         # Mocking the database response with complex data
         mock_get_loan_state.return_value = {
             "collateral": loan_response["collateral"],
@@ -43,9 +43,9 @@ def test_get_loans_complex(mock_db_connector):
 
         # Sending the GET request
         response = client.get("/loan_data_by_wallet_id", params=endpoint_params)
-
+        print("RESPONSE", response.json())
         # Check if the mock was called with the correct arguments
-        mock_get_loan_state.assert_called_once_with(
+        mock_get_loan_state.assert_awaited_once_with(
             protocol_id=endpoint_params["protocol_name"],
             wallet_id=endpoint_params["wallet_id"],
         )
