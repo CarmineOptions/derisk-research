@@ -3,6 +3,7 @@
 import logging
 
 from celery import shared_task
+import pandas as pd
 from data_handler.db.crud import DBConnector
 from data_handler.db.models import OrderBookModel
 from data_handler.handlers.order_books.constants import TOKEN_MAPPING
@@ -35,7 +36,7 @@ def ekubo_order_book():
         )
         try:
             order_book = EkuboOrderBook(token_a, token_b)
-            order_book.fetch_price_and_liquidity()
+            order_book.fetch_price_and_liquidity(pd.DataFrame([pool_state]))
             serialized_data = order_book.serialize()
             connector.write_to_db(OrderBookModel(**serialized_data.model_dump()))
         except Exception as exc:

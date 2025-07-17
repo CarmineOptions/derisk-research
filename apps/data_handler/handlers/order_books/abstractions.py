@@ -3,6 +3,7 @@
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from decimal import Decimal
+import time
 
 import requests
 
@@ -147,6 +148,9 @@ class AbstractionAPIConnector(ABC):
         """
         try:
             response = requests.get(f"{cls.API_URL}{endpoint}", params=params)
+            if response.status_code == 429:
+                timeout_secs = int(response.headers.get("retry-after", 0)) or 60
+                time.sleep(timeout_secs / 60)
             response.raise_for_status()
             return response.json()
         except requests.RequestException as e:
