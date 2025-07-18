@@ -54,8 +54,15 @@ class DBConnectorAsync:
         """
         self.engine = create_async_engine(db_url)
         self.session_maker = async_sessionmaker(self.engine)
+      
+
+    async def create_tables(self):
+        async with self.engine.begin() as conn:
+            # This will create all tables defined in the Base metadata
+            await conn.run_sync(Base.metadata.create_all)
 
     async def get_db(self):
+        await   self.create_tables() #TODO call once
         async with self.session_maker() as session:
             yield session
 
@@ -91,11 +98,16 @@ class DBConnectorAsync:
         Returns:
             Base - The object instance after being written to the database.
         """
-        async with self.session() as db:
-            obj = await db.merge(obj)
-            await db.commit()
-            await db.refresh(obj)
-            return obj
+        
+        try:
+            async with self.session() as db:
+                obj = await db.merge(obj)
+                await db.commit()
+                await db.refresh(obj)
+                return obj
+        except Exception as e:
+            logger.info(f"#WRITE TO DB ERROR: {e}")
+            print(f"#WRITE TO DB ERROR: {e}")
 
     async def get_object(
         self, model: Type[ModelType] = None, obj_id: uuid.UUID = None

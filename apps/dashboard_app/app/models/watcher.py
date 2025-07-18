@@ -17,7 +17,7 @@ class ProtocolIDs(Enum):
 class NotificationData(Base):
     __tablename__ = "notification"
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now())
     email: Mapped[str | None] = mapped_column(String, index=True, nullable=True)
     wallet_id: Mapped[str] = mapped_column(String, nullable=False)
     telegram_id: Mapped[str] = mapped_column(String, nullable=False)

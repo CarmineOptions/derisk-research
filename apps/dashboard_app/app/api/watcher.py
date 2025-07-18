@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, Request, status
 from fastapi.responses import JSONResponse
@@ -6,9 +7,10 @@ from loguru import logger
 from sqlalchemy.orm import Session
 
 from dashboard_app.app.crud.base import db_connector
-from dashboard_app.app.models.watcher import NotificationData
+from dashboard_app.app.models.watcher import NotificationData, ProtocolIDs
 from dashboard_app.app.schemas import NotificationForm
 from dashboard_app.app.telegram_app.telegram import TelegramNotifications
+from dashboard_app.app.telegram_app.telegram.utils import get_subscription_link
 
 # from telegram import get_subscription_link    #FIXME
 from dashboard_app.app.utils.fucntools import (
@@ -21,7 +23,7 @@ from dashboard_app.app.utils.values import (
     HEALTH_RATIO_LEVEL_ALERT_VALUE,
     CreateSubscriptionValues,
     NotificationValidationValues,
-    ProtocolIDs,
+
 )
 from dashboard_app.app.utils.watcher_mixin import WatcherMixin
 
@@ -87,9 +89,22 @@ async def subscribe_to_notification(
             },
         )
 
-    await db_connector.write_to_db(obj=subscription)
-
-    # activation_link = await get_subscription_link(ident=subscription_id)  #FIXME
+   
+    # subscription.telegram_id = '123456789'
+    # subscription = NotificationData(
+    #     # created_at=datetime.now(),
+    #     email='fnsjful@gmail.com',
+    #     wallet_id='0x5165165',
+    #     telegram_id='123456789',
+    #     ip_address='172.19.0.1',
+    #     health_ratio_level=2.0,
+    #     protocol_id=ProtocolIDs.HASHSTACK 
+    # )
+    subscription = await db_connector.write_to_db(obj=subscription)
+    print(f"#WRITE CCC {subscription}")
+    print(vars(subscription))
+    subscription_id ="1"# subscription.id
+    activation_link = await get_subscription_link(ident=subscription_id)  #FIXME
     logger.info(f"Activation link for user with {get_client_ip(request)} IP is sent")
 
     logger.info(f"User with {get_client_ip(request)} IP submitted successfully")
@@ -99,7 +114,7 @@ async def subscribe_to_notification(
             "status_code": status.HTTP_201_CREATED,
             "messages": [CreateSubscriptionValues.create_subscription_success_message],
             "message_type": "success",
-            # "activation_link": activation_link, # FIXME unccomend once telegram is ready
+            "activation_link": activation_link, # FIXME unccomend once telegram is ready
             "protocol_ids": [item.value for item in ProtocolIDs],
         },
     )
