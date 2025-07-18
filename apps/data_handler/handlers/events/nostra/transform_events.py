@@ -6,6 +6,7 @@ which is used to transform Nostra events.
 import logging
 from decimal import Decimal
 from typing import Callable, Dict, Tuple
+import time
 
 from data_handler.db.crud import NostraEventDBConnector
 from data_handler.handler_tools.api_connector import DeRiskAPIConnector
@@ -99,17 +100,16 @@ class NostraTransformer:
         # Process each event based on its type
         for event in response:
             event_type = event.get("key_name")
-            if event_type in self.EVENT_MAPPING:
-                parser_func, save_to_db_method_name = self.EVENT_MAPPING[event_type]
-                parsed_data = parser_func(event["data"])
+            if event_type not in self.EVENT_MAPPING:
+                continue
+            parser_func, save_to_db_method_name = self.EVENT_MAPPING[event_type]
+            parsed_data = parser_func(event["data"])
 
-                getattr(self, save_to_db_method_name)(
-                    event_name=event_type,
-                    block_number=event.get("block_number"),
-                    event_data=parsed_data,
-                )
-            else:
-                logger.info(f"Event type {event_type} not supported, yet...")
+            getattr(self, save_to_db_method_name)(
+                event_name=event_type,
+                block_number=event.get("block_number"),
+                event_data=parsed_data,
+            )
 
     def save_bearing_collateral_burn_event(
         self,
