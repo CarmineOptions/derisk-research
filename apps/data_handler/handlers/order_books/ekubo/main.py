@@ -35,16 +35,6 @@ class EkuboOrderBook(OrderBookBase):
         """
         Fetch the current price and liquidity of the pair from the Ekubo API.
         """
-        # Get pool liquidity
-        # pools = self.connector.get_pools()
-        # df = pd.DataFrame(pools)
-        # # filter pool data by token_a and token_b
-        # pool_df = df.loc[
-        #     (df["token0"] == self.token_a) & (df["token1"] == self.token_b)
-        # ]
-        # print("FOUND POOL", pool_df)
-
-        # set current price
         self.set_current_price()
         for _, row in list(pool_df.iterrows()):
             key_hash = row["key_hash"]
