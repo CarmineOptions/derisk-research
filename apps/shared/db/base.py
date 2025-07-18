@@ -91,11 +91,16 @@ class DBConnectorAsync:
         Returns:
             Base - The object instance after being written to the database.
         """
-        async with self.session() as db:
-            obj = await db.merge(obj)
-            await db.commit()
-            await db.refresh(obj)
-            return obj
+        
+        try:
+            async with self.session() as db:
+                obj = await db.merge(obj)
+                await db.commit()
+                await db.refresh(obj)
+                return obj
+        except Exception as e:
+            logger.info(f"#WRITE TO DB ERROR: {e}")
+            print(f"#WRITE TO DB ERROR: {e}")
 
     async def get_object(
         self, model: Type[ModelType] = None, obj_id: uuid.UUID = None
