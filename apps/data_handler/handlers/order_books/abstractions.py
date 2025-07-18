@@ -133,7 +133,7 @@ class AbstractionAPIConnector(ABC):
     API_URL: str = None
 
     @classmethod
-    def send_get_request(cls, endpoint: str, params=None) -> dict:
+    def send_get_request(cls, endpoint: str, params=None, max_retries=3) -> dict:
         """
         Send a GET request to the specified endpoint with optional parameters.
 
@@ -146,15 +146,21 @@ class AbstractionAPIConnector(ABC):
         containing the error message.
         :rtype: dict
         """
-        try:
-            response = requests.get(f"{cls.API_URL}{endpoint}", params=params)
-            if response.status_code == 429:
-                timeout_secs = int(response.headers.get("retry-after", 0)) or 60
-                time.sleep(timeout_secs / 60)
-            response.raise_for_status()
-            return response.json()
-        except requests.RequestException as e:
-            return {"error": str(e)}
+        attempts = 0
+        exc: Exception | None = None
+        while attempts < max_retries:
+            try:
+                response = requests.get(f"{cls.API_URL}{endpoint}", params=params)
+                if response.status_code == 429:
+                    timeout_secs = int(response.headers.get("retry-after", 0)) or 60
+                    time.sleep(timeout_secs / 60)
+                    continue
+                response.raise_for_status()
+                return response.json()
+            except requests.RequestException as e:
+                exc = e
+            attempts += 1
+        return {"error": str(exc or "max retries exceeded")}
 
     @classmethod
     def send_post_request(cls, endpoint: str, data=None, json=None) -> dict:
