@@ -5,8 +5,7 @@ import hmac
 import time
 
 from dashboard_app.app.telegram_app.telegram.config import (
-    ENV,
-    TELEGRAM_DEV_USER_ID,
+    ENV,   
     TELEGRAM_TOKEN,
 )
 from dashboard_app.app.telegram_app.telegram.crud import (
@@ -72,50 +71,50 @@ def get_crud():
     return TelegramCrud(sessionmaker)
 
 
-@router.post("/auth/telegram-oauth")
-async def telegram_oauth(request: Request, crud: TelegramCrud = Depends(get_crud)):
-    if not TELEGRAM_TOKEN:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Telegram token not configured",
-        )
+# @router.post("/auth/telegram-oauth")
+# async def telegram_oauth(request: Request, crud: TelegramCrud = Depends(get_crud)):
+#     if not TELEGRAM_TOKEN:
+#         raise HTTPException(
+#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#             detail="Telegram token not configured",
+#         )
 
-    json = await request.json()
-    data = dict(json)
+#     json = await request.json()
+#     data = dict(json)
 
-    data_for_check = data.copy()
-    if ENV != "development":
-        if not verify_telegram_auth(data_for_check, TELEGRAM_TOKEN):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid Telegram OAuth data",
-            )
+#     data_for_check = data.copy()
+#     if ENV != "development":
+#         if not verify_telegram_auth(data_for_check, TELEGRAM_TOKEN):
+#             raise HTTPException(
+#                 status_code=status.HTTP_401_UNAUTHORIZED,
+#                 detail="Invalid Telegram OAuth data",
+#             )
 
-    user_id = TELEGRAM_DEV_USER_ID if ENV == "development" else data.get("id")
-    if not user_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Missing user id"
-        )
-    ip_address = request.client.host if request.client else None
+#     user_id = data.get("id")
+#     if not user_id:
+#         raise HTTPException(
+#             status_code=status.HTTP_400_BAD_REQUEST, detail="Missing user id"
+#         )
+#     ip_address = request.client.host if request.client else None
 
-    existing_user = await crud.get_objects_by_filter(
-        TelegramUser, 0, 1, telegram_id=str(user_id)
-    )
-    if existing_user:
-        await crud.update_values(TelegramUser, existing_user.id, ip_address=ip_address)
-    else:
-        telegram_user = TelegramUser(telegram_id=str(user_id), ip_address=ip_address)
-        await crud.write_to_db(telegram_user)
+#     existing_user = await crud.get_objects_by_filter(
+#         TelegramUser, 0, 1, telegram_id=str(user_id)
+#     )
+#     if existing_user:
+#         await crud.update_values(TelegramUser, existing_user.id, ip_address=ip_address)
+#     else:
+#         telegram_user = TelegramUser(telegram_id=str(user_id), ip_address=ip_address)
+#         await crud.write_to_db(telegram_user)
 
-    if bot is not None:
-        try:
-            await bot.send_message(
-                chat_id=user_id, text="Hello! You are now authenticated via Telegram."
-            )
-        except TelegramAPIError:
-            pass
+#     if bot is not None:
+#         try:
+#             await bot.send_message(
+#                 chat_id=user_id, text="Hello! You are now authenticated via Telegram."
+#             )
+#         except TelegramAPIError:
+#             pass
 
-    return JSONResponse({"status": "ok"}, status_code=200)
+#     return JSONResponse({"status": "ok"}, status_code=200)
 
 
 @router.post("/obtain_token", response_model=Token, status_code=status.HTTP_200_OK)

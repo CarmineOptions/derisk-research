@@ -54,15 +54,16 @@ class DBConnectorAsync:
         """
         self.engine = create_async_engine(db_url)
         self.session_maker = async_sessionmaker(self.engine)
-      
+        self.tables_created = False
 
     async def create_tables(self):
         async with self.engine.begin() as conn:
-            # This will create all tables defined in the Base metadata
             await conn.run_sync(Base.metadata.create_all)
 
     async def get_db(self):
-        await   self.create_tables() #TODO call once
+        if not self.tables_created:
+            await self.create_tables()
+            self.tables_created = True
         async with self.session_maker() as session:
             yield session
 
@@ -98,7 +99,6 @@ class DBConnectorAsync:
         Returns:
             Base - The object instance after being written to the database.
         """
-        
         try:
             async with self.session() as db:
                 obj = await db.merge(obj)
@@ -106,8 +106,7 @@ class DBConnectorAsync:
                 await db.refresh(obj)
                 return obj
         except Exception as e:
-            logger.info(f"#WRITE TO DB ERROR: {e}")
-            print(f"#WRITE TO DB ERROR: {e}")
+            logger.info(f"Error{e}")
 
     async def get_object(
         self, model: Type[ModelType] = None, obj_id: uuid.UUID = None
@@ -125,9 +124,7 @@ class DBConnectorAsync:
         async with self.session() as db:
             return await db.get(model, obj_id)
 
-    async def get_objects(
-        self, model: Type[ModelType] = None, **kwargs
-    ) -> list[ModelType]:
+    async def get_objects(self, model: Type[ModelType] = None, **kwargs) -> list[ModelType]:
         """
         Retrieves a list of objects from the database.
 
@@ -157,14 +154,10 @@ class DBConnectorAsync:
             Optional[Base] - Object instance or None if not found
         """
         async with self.session() as db:
-            result = await db.execute(
-                select(model).where(getattr(model, field) == value)
-            )
+            result = await db.execute(select(model).where(getattr(model, field) == value))
             return result.scalar_one_or_none()
 
-    async def delete_object_by_id(
-        self, model: Type[ModelType], obj_id: uuid.UUID
-    ) -> None:
+    async def delete_object_by_id(self, model: Type[ModelType], obj_id: uuid.UUID) -> None:
         """
         Deletes an object by its ID from the database.
         Uses Idempotent Delete approach.

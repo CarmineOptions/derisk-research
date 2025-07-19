@@ -31,23 +31,24 @@ services:
       - "5432:5432"
 
 
-  # streamlit:
-  #   build:
-  #     context: ../../apps
-  #     dockerfile: dashboard_app/Dockerfile
-  #   ports:
-  #     - "8501:8501"
-  #   env_file:
-  #     - ../../apps/dashboard_app/.env
-  #   depends_on:
-  #     db:
-  #       condition: service_healthy
-  #   volumes:
-  #     - ../../apps/dashboard_app:/app/dashboard_app
-  #   networks:
-  #     - dashboard_app_network
+  streamlit:
+    build:
+      context: ../../apps
+      dockerfile: dashboard_app/Dockerfile
+    ports:
+      - "8501:8501"
+    env_file:
+      - ../../apps/dashboard_app/.env
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ../../apps/dashboard_app:/app/dashboard_app
+    networks:
+      - dashboard_app_network
 
   backend:
+    container_name: backend
     build: 
       context: ../../apps
       dockerfile: dashboard_app/app.Dockerfile
@@ -65,7 +66,7 @@ services:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 120s
+      interval: 10s
       timeout: 5s
       retries: 5
     environment:     
@@ -77,6 +78,24 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_USER: postgres
       POSTGRES_DB: postgres
+
+
+
+  # This service is used to simulate webhook calls over HTTP (instead of using ngrok for HTTPS).
+  # It simply fetches updates using long polling; if there are any, it sends an update to the webhook endpoint.
+  telegram_webhook_simulator:
+    build:
+      context: ../../apps
+      dockerfile: dashboard_app/webhook_simulator.Dockerfile   
+    env_file:
+      - ../../apps/dashboard_app/.env   
+    depends_on:
+      backend:
+        condition: service_healthy
+    volumes:
+      - ../../apps/dashboard_app:/app/dashboard_app
+    networks:
+      - dashboard_app_network
 
 
 volumes:

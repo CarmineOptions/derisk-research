@@ -7,11 +7,11 @@ from sqlalchemy_utils.types.choice import ChoiceType
 from enum import Enum
 
 
-class ProtocolIDs(Enum):
-    HASHSTACK: str = "Hashstack"
-    NOSTRA_ALPHA: str = "Nostra_alpha"
-    NOSTRA_MAINNET: str = "Nostra_mainnet"
-    ZKLEND: str = "zkLend"
+class ProtocolIDs(str, Enum):
+    HASHSTACK = "Hashstack"
+    NOSTRA_ALPHA = "Nostra_alpha"
+    NOSTRA_MAINNET = "Nostra_mainnet"
+    ZKLEND = "zkLend"
 
 
 class NotificationData(Base):
