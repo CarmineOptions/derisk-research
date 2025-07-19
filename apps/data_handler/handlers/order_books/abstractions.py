@@ -49,7 +49,7 @@ class OrderBookBase(ABC):
         """
         token_config = TOKEN_MAPPING.get(token)
         if token_config:
-            return token_config.decimals
+            return Decimal(token_config.decimals)
         return Decimal("0")
 
     @abstractmethod

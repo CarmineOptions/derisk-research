@@ -1,11 +1,32 @@
 import asyncio
-import time
+import logging
 from decimal import Decimal
-from typing import Any, List, Optional, Union
+from typing import List, Optional
 
 from starknet_py.hash.selector import get_selector_from_name
 from starknet_py.net.client_models import Call
 from starknet_py.net.full_node_client import FullNodeClient
+from starknet_py.net.http_client import RpcHttpClient
+from starknet_py.net.client_errors import ClientError
+
+logger = logging.getLogger(__name__)
+
+
+class _StarknetRpcClient(RpcHttpClient):
+    async def request(self, *args, **kwargs):
+        attempts = 0
+        max_retries = 5
+        exc: Exception | None = None
+        while attempts < max_retries:
+            attempts += 1
+            try:
+                return await super().request(*args, **kwargs)
+            except ClientError as e:
+                logger.warning("Starknet client request failed, retrying. Err: %s", e)
+                exc = e
+                if e.code == "429":
+                    await asyncio.sleep(60)
+        raise exc or Exception("Max retries exceeded")
 
 
 class StarknetClient:
@@ -22,7 +43,9 @@ class StarknetClient:
             node_url (str): The URL of the Starknet network to connect to
         """
         self.node_url = node_url
-        self.client = FullNodeClient(node_url=self.node_url)
+        node_client = FullNodeClient(node_url=self.node_url)
+        node_client._client = _StarknetRpcClient(url=node_url)
+        self.client = node_client
 
     async def func_call(
         self, addr: int, selector: str, calldata: List[int], retries: int = 1
