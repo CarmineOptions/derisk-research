@@ -1,7 +1,7 @@
 from typing import Optional
+from dashboard_app.app.models.watcher import ProtocolIDs
 from pydantic import BaseModel, EmailStr
 from pydantic.networks import IPvAnyAddress
-from dashboard_app.app.utils.values import ProtocolIDs
 
 
 class NotificationForm(BaseModel):
@@ -12,6 +12,5 @@ class NotificationForm(BaseModel):
     email: Optional[EmailStr] = None
     wallet_id: str
     telegram_id: Optional[str] = None
-    ip_address: Optional[IPvAnyAddress] = None
     health_ratio_level: float
     protocol_id: ProtocolIDs

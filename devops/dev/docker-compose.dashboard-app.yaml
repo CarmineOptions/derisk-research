@@ -4,24 +4,32 @@ networks:
 
 services:
   db:
+    container_name: postgres_dev
     image: postgres:16
     env_file:
-      - ../../apps/dashboard_app/.env.dev
+      - ../../apps/dashboard_app/.env
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 5s
+      test: ["CMD-SHELL","pg_isready -U postgres"]
+      interval: 10s
       timeout: 5s
       retries: 5
     networks:
         - dashboard_app_network
-    environment:
-      POSTGRES_USER: "postgres"
-      POSTGRES_PASSWORD: "password"
-      POSTGRES_DB: "postgres"
-      DB_HOST: "db"
-      DB_PORT: "5432"
+    environment:     
+      DB_PASSWORD: password
+      DB_HOST: db
+      DB_NAME: postgres
+      DB_USER: postgres
+      DB_PORT: 5432
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+  
+    ports:
+      - "5432:5432"
+
 
   streamlit:
     build:
@@ -38,14 +46,9 @@ services:
       - ../../apps/dashboard_app:/app/dashboard_app
     networks:
       - dashboard_app_network
-    environment:
-      POSTGRES_USER: "postgres"
-      POSTGRES_PASSWORD: "password"
-      POSTGRES_DB: "postgres"
-      DB_HOST: "db"
-      DB_PORT: "5432"
 
   backend:
+    container_name: backend
     build: 
       context: ../../apps
       dockerfile: dashboard_app/app.Dockerfile
@@ -56,14 +59,43 @@ services:
       - ../../apps/dashboard_app/.env
     ports:
       - "8000:8000"
+    networks:
+      - dashboard_app_network
     depends_on:
       db:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 5s
+      interval: 10s
       timeout: 5s
       retries: 5
+    environment:     
+      DB_PASSWORD: password
+      DB_HOST: db
+      DB_NAME: postgres
+      DB_USER: postgres
+      DB_PORT: 5432
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+
+
+
+  # This service is used to simulate webhook calls over HTTP (instead of using ngrok for HTTPS).
+  # It simply fetches updates using long polling; if there are any, it sends an update to the webhook endpoint.
+  telegram_webhook_simulator:
+    build:
+      context: ../../apps
+      dockerfile: dashboard_app/webhook_simulator.Dockerfile   
+    env_file:
+      - ../../apps/dashboard_app/.env   
+    depends_on:
+      backend:
+        condition: service_healthy
+    volumes:
+      - ../../apps/dashboard_app:/app/dashboard_app
+    networks:
+      - dashboard_app_network
 
 
 volumes:

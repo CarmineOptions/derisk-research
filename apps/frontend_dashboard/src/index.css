@@ -1,4 +1,4 @@
-@import "tailwindcss"; 
+@import "tailwindcss";
 
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -13,6 +13,7 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
 }
 
 a {
@@ -20,16 +21,17 @@ a {
   color: #646cff;
   text-decoration: inherit;
 }
+
 a:hover {
   color: #535bf2;
 }
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
+  padding: 0;
+  min-width: 100vw;
   min-height: 100vh;
+  background: rgb(12, 12, 12);
 }
 
 h1 {
@@ -48,9 +50,11 @@ button {
   cursor: pointer;
   transition: border-color 0.25s;
 }
+
 button:hover {
   border-color: #646cff;
 }
+
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
@@ -60,11 +64,36 @@ button:focus-visible {
   :root {
     color: #213547;
     background-color: #ffffff;
+
   }
+
   a:hover {
     color: #747bff;
   }
+
   button {
     background-color: #f9f9f9;
   }
+}
+
+
+header {
+  background-color: rgb(12, 12, 12);
+  border-radius: 18px;
+  box-shadow: rgba(28, 28, 28, 0.08) 0px 0px 41px 8px, rgba(92, 92, 92, 0.24) 0px 4px 22px 0px;
+  opacity: 1;
+  align-content: center;
+  align-items: center;
+  display: flex;
+  flex: none;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  height: min-content;
+  justify-content: space-between;
+  max-width: 1120px;
+
+
+  position: relative;
+  width: 100%;
+  will-change: var(--framer-will-change-override, transform);
 }

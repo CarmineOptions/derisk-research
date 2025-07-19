@@ -7,17 +7,17 @@ from sqlalchemy_utils.types.choice import ChoiceType
 from enum import Enum
 
 
-class ProtocolIDs(Enum):
-    HASHSTACK: str = "Hashstack"
-    NOSTRA_ALPHA: str = "Nostra_alpha"
-    NOSTRA_MAINNET: str = "Nostra_mainnet"
-    ZKLEND: str = "zkLend"
+class ProtocolIDs(str, Enum):
+    HASHSTACK = "Hashstack"
+    NOSTRA_ALPHA = "Nostra_alpha"
+    NOSTRA_MAINNET = "Nostra_mainnet"
+    ZKLEND = "zkLend"
 
 
 class NotificationData(Base):
     __tablename__ = "notification"
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now())
     email: Mapped[str | None] = mapped_column(String, index=True, nullable=True)
     wallet_id: Mapped[str] = mapped_column(String, nullable=False)
     telegram_id: Mapped[str] = mapped_column(String, nullable=False)

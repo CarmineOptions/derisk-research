@@ -23,6 +23,14 @@ async def menu(message: types.Message):
     """
     await message.answer("Menu:", reply_markup=kb.menu())
 
+@cmd_router.message(Command("start"))
+async def start_hello(message: types.Message):
+    """
+    This function is triggered when the user sends the "/start" command to the bot.
+    It sends the user a message "Menu:" along with a reply markup containing a menu with buttons.
+    """
+    await message.answer("Hello from Derisk! You subscribed for updates, will be sent here.")
+
 
 @cmd_router.message(CommandStart(deep_link=True, deep_link_encoded=True))
 async def start(message: types.Message, crud: TelegramCrud, command: CommandObject):
