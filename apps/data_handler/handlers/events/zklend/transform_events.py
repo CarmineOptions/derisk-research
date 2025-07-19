@@ -128,7 +128,7 @@ class ZklendTransformer:
                     event_data=parsed_data,
                 )
             else:
-                logger.info(f"Event type {event_type} not supported, yet...")
+                logger.info(f"ZKLEND: Event type {event_type} not supported, yet...")
 
     def save_accumulators_sync_event(
         self, event_name: str, block_number: int, event_data: AccumulatorsSyncEventData

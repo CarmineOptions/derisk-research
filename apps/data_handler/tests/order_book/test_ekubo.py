@@ -9,24 +9,29 @@ from data_handler.handlers.order_books.ekubo.main import EkuboOrderBook
 
 
 @pytest.fixture
-def mock_connector():
+def mock_pools() -> list[dict]:
+    return [
+        {
+            "token0": "0x1",
+            "token1": "0x2",
+            "key_hash": "0xabc",
+            "liquidity": "1000000",
+            "lastUpdate": {"event_id": "123"},
+            "tick": 100,
+            "tick_spacing": 10,
+        }
+    ]
+
+
+@pytest.fixture
+def mock_connector(mock_pools):
     """Create a mock EkuboAPIConnector."""
     with patch(
         "data_handler.handlers.order_books.ekubo.main.EkuboAPIConnector"
     ) as mock:
         connector = mock.return_value
         connector.get_pair_price.return_value = {"price": "1.5"}
-        connector.get_pools.return_value = [
-            {
-                "token0": "0x1",
-                "token1": "0x2",
-                "key_hash": "0xabc",
-                "liquidity": "1000000",
-                "lastUpdate": {"event_id": "123"},
-                "tick": 100,
-                "tick_spacing": 10,
-            }
-        ]
+        connector.get_pools.return_value = mock_pools
         connector.get_pool_liquidity.return_value = {
             "data": [
                 {"tick": 90, "net_liquidity_delta_diff": "100"},
@@ -62,9 +67,9 @@ def test_set_current_price(order_book):
     assert order_book.current_price == Decimal("1.5")
 
 
-def test_fetch_price_and_liquidity(order_book):
+def test_fetch_price_and_liquidity(order_book, mock_pools):
     """Test fetching price and liquidity data."""
-    order_book.fetch_price_and_liquidity()
+    order_book.fetch_price_and_liquidity(pd.DataFrame([mock_pools[0]]))
     assert order_book.block == "123"
     assert len(order_book.asks) > 0
     assert len(order_book.bids) > 0
