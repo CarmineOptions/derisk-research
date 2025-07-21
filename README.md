@@ -40,7 +40,7 @@ React client app. Uses API if the  [`dashboard_app`](./apps/dashboard_app/README
 - Docker installed on your machine (v19.03+ recommended).
 - Docker Compose installed (v2.0+ recommended).
 
-### Data Handler Local Development
+### Data Handler local development
 
 1. To set up this project run next command for local development in `derisk-research` directory:
 
@@ -68,7 +68,7 @@ For detailed documentation, see the [Data Handler](./apps/data_handler/README.md
 
 
 
-### Dashboard App Running Locally
+### Dashboard App local development
 1. To set up this project run next command for local development in `derisk-research` directory:
 
 2. Environment Configuration:
