@@ -31,21 +31,12 @@ class EkuboOrderBook(OrderBookBase):
         price_data = self.connector.get_pair_price(self.token_a, self.token_b)
         self.current_price = Decimal(price_data.get("price", "0"))
 
-    def fetch_price_and_liquidity(self) -> None:
+    def fetch_price_and_liquidity(self, pool_df: pd.DataFrame) -> None:
         """
         Fetch the current price and liquidity of the pair from the Ekubo API.
         """
-        # Get pool liquidity
-        pools = self.connector.get_pools()
-        df = pd.DataFrame(pools)
-        # filter pool data by token_a and token_b
-        pool_df = df.loc[
-            (df["token0"] == self.token_a) & (df["token1"] == self.token_b)
-        ]
-
-        # set current price
         self.set_current_price()
-        for index, row in list(pool_df.iterrows()):
+        for _, row in list(pool_df.iterrows()):
             key_hash = row["key_hash"]
             # Fetch pool liquidity data
             pool_liquidity = int(row["liquidity"])
@@ -106,8 +97,8 @@ class EkuboOrderBook(OrderBookBase):
         glob_liq = Decimal(row["liquidity"])
 
         # Calculate for current tick (loops start with the next one)
-        next_tick = ask_ticks[0]["tick"]
-        prev_tick = next_tick - row["tick_spacing"]
+        next_tick = Decimal(ask_ticks[0]["tick"])
+        prev_tick = Decimal(next_tick - row["tick_spacing"])
 
         prev_sqrt = self._get_pure_sqrt_ratio(prev_tick)
         next_sqrt = self._get_pure_sqrt_ratio(next_tick)
