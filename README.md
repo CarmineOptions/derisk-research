@@ -1,12 +1,38 @@
 # DeRisk Starknet
 
+## Projects overview
 This project consist of a monorepo with components required for the implementation of DeRisk on Starknet.
 There are several components in this repository, each with its own purpose and functionality. The main components are:
-- [`data_handler`](./apps/data_handler/README.md) - Data processing and analysis component
+
+### Shared
+[`shared`](./apps/shared/README.md)
+Both projects [`data_handler`](./apps/data_handler/README.md), [`dashboard_app`](./apps/dashboard_app/README.md)  work with the same shared database,
+which is contained in the shared folder. It also contains all shared modules.
+
+### Data Handler
+[`data_handler`](./apps/data_handler/README.md)
+Data processing and analysis component: Collects data from DeFi, analyzes it, and saves it to the db. It contains Celery tasks to schedule data collection runs. Once the data is collected, it triggers an endpoint on the `dashboard_app`
+
+### Dashboard App 
+[`dashboard_app`](./apps/dashboard_app/README.md)
+Works as a server for the [`frontend_dashboard`](./apps/frontend_dashboard/README.md). Generates an analytics dashboard using Streamlit. Contains an API to handle the Telegram webhook and send bot messages.
+Key Features:
+- Interactive data visualization
+- Protocol statistics monitoring
+- Loan portfolio analysis
+- Real-time data updates
+
+
+### Dashboard Frontend 
+[`frontend_dashboard`](./apps/frontend_dashboard/README.md)
+React client app. Uses API if the  [`dashboard_app`](./apps/dashboard_app/README.md)
+
+
+### Outdated and about to be removed
 - [`web_app`](./apps/web_app/README.md) - Main web application interface
 - [`legacy_app`](./apps/legacy_app/README.md) - Legacy application functionality
-- [`dashboard_app`](./apps/dashboard_app/README.md) - Analytics dashboard
-- [`shared`](./apps/shared/README.md) - Common code shared between the components
+
+
 
 ## Quick Start Guide
 
@@ -14,17 +40,13 @@ There are several components in this repository, each with its own purpose and f
 - Docker installed on your machine (v19.03+ recommended).
 - Docker Compose installed (v2.0+ recommended).
 
-### Data Handler
-
-The data handler component processes and manages data for the DeRisk platform.
-
-#### Local Development
+### Data Handler local development
 
 1. To set up this project run next command for local development in `derisk-research` directory:
 
 2. Environment Configuration:
 ```bash
-cp apps/data_handler/.env.example apps/data_handler/.env.dev
+cp apps/data_handler/.env.dev apps/data_handler/.env
 ```
 3. Start the Services:
 
@@ -45,82 +67,38 @@ For detailed documentation, see the [Data Handler](./apps/data_handler/README.md
 
 
 
-## Legacy app
 
-The legacy app provides essential functionality for data visualization and analysis through a Streamlit interface.
-
-#### Local Development
-
+### Dashboard App local development
 1. To set up this project run next command for local development in `derisk-research` directory:
+
+2. Environment Configuration:
 ```bash
-make setup
+cp apps/dashboard_app/.env.dev apps/dashboard_app/.env
 ```
+3. Start the Services:
 
-2. To run streamlit app run next command in `derisk-research` directory:
 ```bash
-make app
+docker-compose -f devops/dev/docker-compose.dashboard-app.yaml up --build
 ```
-
-3. Start Jupyter notebook (optional):
+4. Stop the Services:
 ```bash
-make notebook
+docker-compose -f devops/dev/docker-compose.dashboard-app.yaml down
 ```
-For detailed documentation, see [`legacy_app`](./apps/legacy_app/README.md)
-
-## Web app (Notification app)
-To set up this project run next command for local development in `derisk-research` directory:
-
-1. Environment Configuration: 
-```bash
-cp apps/web_app/.env.example apps/web_app/.env.dev
-```
-
-2. Start the Services:
-```bash
-docker-compose -f devops/dev/docker-compose.notification-app.yaml up --build
-```
-
-3. Stop the Services:
-```bash
-docker-compose -f devops/dev/docker-compose.notification-app.yaml down
-```
-
-## Dashboard App
-
-Interactive dashboard application for visualizing and analyzing DeRisk data.
-
-### Key Features
-- Interactive data visualization
-- Protocol statistics monitoring
-- Loan portfolio analysis
-- Real-time data updates
-For detailed documentation, see the [Dashboard App](./apps/dashboard_app/README.md)
-
-### Running Locally
 
 #### Backend API (FastAPI)
 
 ```bash
 cd apps/dashboard_app
 poetry install
-cp .env.dev .env  # if you have .env.dev with DB settings
+cp .env.dev .env  
 poetry run uvicorn app.main:app --reload --port 8000
 ```
 
-The API will be available at http://localhost:8000/api. The notification subscription endpoint is:
-
-```http
-POST /api/liquidation-watcher
-Content-Type: application/json
-
-{
-  "wallet_id": "0x123...",
-  "health_ratio_level": 0.5,
-  "protocol_id": "Hashstack"
-}
-```
+Explore the API will be available at http://localhost:8000/docs. 
 
 #### Frontend App (React + Vite)
+
+Make sure `dashboard_app` is running!
 
 ```bash
 cd apps/frontend_dashboard

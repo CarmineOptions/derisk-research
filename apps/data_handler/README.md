@@ -1,60 +1,30 @@
 # DeRisk Data Handler
 
 ## Overview
-This project was created to make data public for Derisk Alert app.
-This app is not intended for you to use in production. It's just a research project.
+Data processing and analysis component: Collects data from DeFi, analyzes it, and saves it to the db. It contains Celery tasks to schedule data collection runs. Once the data is collected, it triggers an endpoint on the `dashboard_app`
 
-## Requirements
- - python3.11 
- - poetry
- - sqlalchemy
 
-# Setup
 
-### 1. Clone git repository
+## Setup
+1. To set up this project run next command for local development in `derisk-research` directory:
+
+2. Environment Configuration:
+```bash
+cp apps/data_handler/.env.dev apps/data_handler/.env
+```
+3. Start the Services:
 
 ```bash
-git clone https://github.com/CarmineOptions/derisk-research.git
+docker compose -f devops/dev/docker-compose.data-handler.yaml up --build
+```
+4. Stop the Services:
+```bash
+docker compose -f devops/dev/docker-compose.data-handler.yaml down
 ```
 
-### 2. Go to `data_handler/`
-
-
+5. To run test cases for this project run next command in `derisk-research` directory:
 ```bash
-cd data_handler 
-```
-
-### 3. Configure Environment Variables
-
-Create `.env` file or just rename `.env.example` --> `.env`
-
-```bash
-mv .env.example .env
-```
-
-### 4. Provide all environment variables needed
-
-```bash
-DB_NAME=#
-DB_USER=#
-DB_PASSWORD=#
-DB_HOST=db
-DB_PORT=#
-DERISK_API_URL=#
-REDIS_HOST=redis
-ERROR_CHAT_ID=# Actually your telegram id
-TELEGRAM_TOKEN=#
-```
-
-### 5. Build your docker containers
-
-```bash
-docker-compose up -d --build
-```
-
-#### Stop your containers
-```bash
-docker-compose down
+make test_data_handler
 ```
 
 ## Data migrations with Alembic
@@ -83,15 +53,15 @@ alembic -c data_handler/alembic.ini downgrade -1
 Useful commands:
 Purge all celery tasks:
 ```bash
-docker-compose run --rm celery celery -A celery_conf purge
+docker compose run --rm celery celery -A celery_conf purge
 ```
 Purge all celery beat tasks:
 ```bash
-docker-compose run --rm celery_beat celery -A celery_conf purge
+docker compose run --rm celery_beat celery -A celery_conf purge
 ```
 Go to bash
 ```bash
-docker-compose exec backend bash
+docker compose exec backend bash
 ```
 
 
