@@ -1,36 +1,31 @@
 # DeRisk Dashboard App
-
 Interactive dashboard application for visualizing and analyzing DeRisk data.
-
-
-## Prerequisites
-
-- Python 3.11+
-- Poetry
-- Docker 
-
-### Docker Setup
-1. Form `apps/dashboard_app` Run `mv .env.dev .env` fill the data.
-
-2. Build the image:
-```
-docker-compose -f devops/dev/docker-compose.dashboard-app.yaml build
-```
-3. Run the container:
-```
-docker-compose -f devops/dev/docker-compose.dashboard-app.yaml up
-```
-4. stop container:
-```
-docker-compose -f devops/dev/docker-compose.dashboard-app.yaml down
-```
-
-## Key Features
-
+Works as a server for the [`frontend_dashboard`](./apps/frontend_dashboard/README.md). Generates an analytics dashboard using Streamlit. Contains an API to handle the Telegram webhook and send bot messages.
+Key Features:
 - Interactive data visualization
 - Protocol statistics monitoring
 - Loan portfolio analysis
 - Real-time data updates
+
+
+
+## Setup
+1. To set up this project run next command for local development in `derisk-research` directory:
+
+2. Environment Configuration:
+```bash
+cp apps/dashboard_app/.env.dev apps/dashboard_app/.env
+```
+3. Start the Services:
+
+```bash
+docker-compose -f devops/dev/docker-compose.dashboard-app.yaml up --build
+```
+4. Stop the Services:
+```bash
+docker-compose -f devops/dev/docker-compose.dashboard-app.yaml down
+```
+
 
 ### Adding New Charts
 
