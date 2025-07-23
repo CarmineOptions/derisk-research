@@ -8,14 +8,22 @@ export const Route = createFileRoute('/')({
   component: Dashboard,
 })
 
+interface Trade {
+  token: string;
+  timestamp: number;
+  price: number;
+  amount: number;
+  is_sell: boolean;
+}
+
 function Dashboard() {
   const { walletAddress } = useAppContext();
-  const [balances, setBalances] = useState(null);
-  const [network, setNetwork] = useState(null);
-  const [error, setError] = useState(null);
-  const [history, setHistory] = useState<any[] | null>(null);
-  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
-  const [isLoadingWallet, setIsLoadingWallet] = useState(false);
+  const [balances, _setBalances] = useState(null);
+  const [network, _setNetwork] = useState(null);
+  const [error, _setError] = useState(null);
+  const [history, _setHistory] = useState<Trade[] | null>(null);
+  const [isLoadingHistory, _setIsLoadingHistory] = useState(false);
+  const [isLoadingWallet, _setIsLoadingWallet] = useState(false);
 
 
   useEffect(() => {

@@ -1,15 +1,15 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { connectWallet, disconnectWallet, getTokenBalances, getWallet } from "../service/wallet";
+import { connectWallet, disconnectWallet, getWallet } from "../service/wallet";
 import { useAppContext } from "../AppContext";
 
 const Header = () => {
     const { walletAddress, setWalletAddress } = useAppContext();
 
     // '0x5105649f42252f79109356e1c8765b7dcdb9bf4a6a68534e7fc962421c7efd2'
-    const [balances, setBalances] = useState(null);
-    const [network, setNetwork] = useState(null);
-    const [error, setError] = useState<string | null>(null);
+    const [_balances, setBalances] = useState(null);
+    const [_network, setNetwork] = useState(null);
+    const [_error, setError] = useState<string | null>(null);
     const [isLoadingWallet, setIsLoadingWallet] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const reconnectAttempted = useRef(false);
@@ -20,6 +20,7 @@ const Header = () => {
             if (cachedAddress)
                 setWalletAddress(cachedAddress);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [walletAddress]);
 
 
@@ -69,13 +70,15 @@ const Header = () => {
                 }
             } catch (error) {
                 console.error('Failed to load wallet on page reload:', error);
-                setError(`Failed to reconnect wallet: ${error.message}`);
+                setError(`Failed to reconnect wallet: ${error instanceof Error ? error.message : 'Unknown error'}`);
             } finally {
                 setIsLoadingWallet(false);
             }
         };
 
         loadWallet();
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
 
@@ -100,7 +103,9 @@ const Header = () => {
 
         try {
             const wallet = await connectWallet('alwaysAsk');
-            const address = wallet.selectedAddress;
+            console.log('Wallet object:', wallet);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const address = (wallet as any).selectedAddress;
             setWalletAddress(address);
 
             // const { balances, network } = await getTokenBalances(address);
@@ -110,10 +115,10 @@ const Header = () => {
             // console.log(`Balances (${network}):`, balances);
         } catch (error) {
             console.error('Failed to connect wallet or fetch balances:', error);
-            if (error.message.includes('Contract not found')) {
+            if (error instanceof Error && error.message.includes('Contract not found')) {
                 setError(`Failed to fetch balances: Token contract not found. Please ensure the token addresses are correct for this network.`);
             } else {
-                setError(`Failed to connect wallet: ${error.message}`);
+                setError(`Failed to connect wallet: ${error instanceof Error ? error.message : 'Unknown error'}`);
             }
         } finally {
             setIsLoadingWallet(false);
