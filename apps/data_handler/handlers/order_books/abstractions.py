@@ -9,7 +9,7 @@ import requests
 
 from data_handler.db.schemas import OrderBookResponseModel
 
-from .constants import TOKEN_MAPPING, TokenConfig
+from order_books.constants import TOKEN_MAPPING, TokenConfig
 
 
 class OrderBookBase(ABC):

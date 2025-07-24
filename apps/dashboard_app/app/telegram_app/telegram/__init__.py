@@ -1,4 +1,4 @@
-from .bot import bot, dp
-from .config import TELEGRAM_TOKEN
-from .handlers import index_router
-from .utils import TelegramNotifications, get_subscription_link
+from telegram.bot import bot, dp
+from telegram.config import TELEGRAM_TOKEN
+from telegram.handlers import index_router
+from telegram.utils import TelegramNotifications, get_subscription_link
