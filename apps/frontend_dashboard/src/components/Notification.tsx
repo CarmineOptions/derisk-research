@@ -28,7 +28,7 @@ const NotificationSubscription = () => {
   }, []);
 
   useEffect(() => {
-     setWalletId(walletAddress || '');
+    setWalletId(walletAddress || '');
   }, [walletAddress])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -80,7 +80,7 @@ const NotificationSubscription = () => {
     script.setAttribute('data-onauth', "onTelegramAuth(user)");
     script.setAttribute('data-request-access', 'write');
     script.async = true;
-    document.getElementById('tg-login').appendChild(script);
+    document.getElementById('tg-login')?.appendChild(script);
 
     return () => {
       document.getElementById('tg-login')?.removeChild(script);
@@ -92,7 +92,7 @@ const NotificationSubscription = () => {
     try {
       setTelegramId(String(user.id));
     } catch (e) {
-
+      console.error(e);
     }
   }
 

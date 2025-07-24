@@ -1,8 +1,9 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, ReactNode, useContext, useState } from "react";
 
 type IAppContext = {
     walletAddress?: string;
-    setWalletAddress: (address: string|undefined) => void;
+    setWalletAddress: (address: string | undefined) => void;
 }
 
 const AppContext = createContext<IAppContext | undefined>(undefined);
