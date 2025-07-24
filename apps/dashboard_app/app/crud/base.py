@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from sqlalchemy import func, select, text
 
 from shared.db import Base, DBConnectorAsync, SQLALCHEMY_DATABASE_URL
-from ..utils.values import (
+from dashboard_app.app.utils.values import (
     CURRENTLY_AVAILABLE_PROTOCOL_IDS,
     NotificationValidationValues,
 )

@@ -4,4 +4,4 @@ from .base import (
     ModelType as ModelType,
     DBConnectorAsync as DBConnectorAsync,
 )
-from .conf import SQLALCHEMY_DATABASE_URL as SQLALCHEMY_DATABASE_URL
+from db.conf import SQLALCHEMY_DATABASE_URL as SQLALCHEMY_DATABASE_URL

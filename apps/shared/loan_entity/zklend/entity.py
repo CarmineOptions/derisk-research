@@ -18,8 +18,8 @@ import logging
 from decimal import Decimal
 from typing import Optional
 
-from .settings import ZKLEND_SPECIFIC_TOKEN_SETTINGS
-from ..loan_entity import LoanEntity
+from zklend.settings import ZKLEND_SPECIFIC_TOKEN_SETTINGS
+from shared.loan_entity import LoanEntity
 
 
 from shared.custom_types import (

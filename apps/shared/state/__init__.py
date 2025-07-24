@@ -1,4 +1,4 @@
-from .state import State
-from ..loan_entity import LoanEntity
-from .zklend import ZkLendState
-from .nostra import NostraMainnetState, NostraAlphaState
+from shared.state import State
+from shared.loan_entity import LoanEntity
+from state.zklend import ZkLendState
+from state.nostra import NostraMainnetState, NostraAlphaState

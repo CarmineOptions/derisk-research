@@ -1,2 +1,2 @@
-from .entity import ZkLendLoanEntity
-from .settings import ZkLendSpecificTokenSettings
+from zklend.entity import ZkLendLoanEntity
+from zklend.settings import ZkLendSpecificTokenSettings

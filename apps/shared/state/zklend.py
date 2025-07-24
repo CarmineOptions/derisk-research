@@ -1,4 +1,4 @@
-from .state import State
+from shared.state import State
 import decimal
 import logging
 import pandas as pd

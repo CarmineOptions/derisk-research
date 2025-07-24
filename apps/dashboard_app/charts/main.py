@@ -24,15 +24,15 @@ from helpers.settings import (
 )
 
 
-from .constants import ChartsHeaders, CommonValues
-from .main_chart_figure import (
+from charts.constants import ChartsHeaders, CommonValues
+from charts.main_chart_figure import (
     get_bar_chart_figures,
     get_main_chart_figure,
     get_specific_loan_usd_amounts,
     get_user_history,
     get_total_amount_by_field,
 )
-from .utils import (
+from charts.utils import (
     get_protocol_data_mappings,
     infer_protocol_name,
     process_liquidity,

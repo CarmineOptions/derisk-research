@@ -1,1 +1,1 @@
-from .base import db_connector
+from crud.base import db_connector

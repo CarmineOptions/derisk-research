@@ -1,5 +1,5 @@
 import logging
-from ..alpha import NostraAlphaLoanEntity
+from nostra.alpha import NostraAlphaLoanEntity
 from shared.constants import ProtocolIDs
 from shared.custom_types import InterestRateModels, Prices, TokenParameters
 
