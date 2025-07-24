@@ -1,5 +1,5 @@
 
-from . import bot
+from telegram_app.telegram import bot
 
 
 if __name__ == "__main__":

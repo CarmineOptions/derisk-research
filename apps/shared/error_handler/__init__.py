@@ -1,3 +1,3 @@
-from .exceptions import TokenSettingsNotFound
-from .notifications import BOT
-from .values import MessageTemplates
+from error_handler.exceptions import TokenSettingsNotFound
+from error_handler.notifications import BOT
+from error_handler.values import MessageTemplates

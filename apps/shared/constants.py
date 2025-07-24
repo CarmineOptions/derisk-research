@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 from decimal import Decimal
-from enum import Enum
 from typing import List, Union
 
 from shared.custom_types import TokenSettings
@@ -190,32 +189,6 @@ POOL_MAPPING: dict[str, dict[str, Union[List, str]]] = {
     },
 }
 
-
-class ProtocolIDs(Enum):
-    """
-    This class contains the protocol IDs that are used in the system.
-    """
-
-    # hashstack protocols
-    HASHSTACK_V0: str = "Hashstack_v0"
-    HASHSTACK_V1: str = "Hashstack_v1"
-    HASHSTACK_V1_R: str = "Hashstack_v1_r"
-    HASHSTACK_V1_D: str = "Hashstack_v1_d"
-    # nostra protocols
-    NOSTRA_ALPHA: str = "Nostra_alpha"
-    NOSTRA_MAINNET: str = "Nostra_mainnet"
-    # zkLend protocol
-    ZKLEND: str = "zkLend"
-
-    VESU: str = "Vesu"
-
-    @classmethod
-    def choices(cls) -> list[str]:
-        """
-        This method returns the values of the enum.
-        :return: list of values
-        """
-        return [choice.value for choice in cls]
 
 
 # FIXME Uncomment when DAI is added correct address

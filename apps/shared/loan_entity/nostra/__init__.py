@@ -1,2 +1,2 @@
-from .alpha import *
-from .mainnet import *
+from nostra.alpha import *
+from nostra.mainnet import *
