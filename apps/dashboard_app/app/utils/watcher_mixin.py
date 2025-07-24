@@ -3,7 +3,7 @@ from typing import Type
 from sqlalchemy.orm import Session
 
 from shared.db import ModelType, Base
-from ..utils.values import CreateSubscriptionValues, NotificationValidationValues
+from dashboard_app.app.utils.values import CreateSubscriptionValues, NotificationValidationValues
 
 
 class WatcherMixin:

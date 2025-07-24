@@ -1,10 +1,10 @@
 """This module contains all the models used in the database."""
 
-from .liquidable_debt import HealthRatioLevel, LiquidableDebt
-from .loan_states import InterestRate, LoanState, ZkLendCollateralDebt
-from .order_book import OrderBookModel
-from .vesu import VesuPosition
-from .zklend_events import (
+from models.liquidable_debt import HealthRatioLevel, LiquidableDebt
+from models.loan_states import InterestRate, LoanState, ZkLendCollateralDebt
+from models.order_book import OrderBookModel
+from models.vesu import VesuPosition
+from models.zklend_events import (
     AccumulatorsSyncEventModel,
     BorrowingEventModel,
     CollateralEnabledDisabledEventModel,
