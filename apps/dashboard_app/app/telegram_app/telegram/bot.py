@@ -2,11 +2,11 @@ import asyncio
 from aiogram import Bot, Dispatcher
 from aiogram.types import BotCommand, BotCommandScopeDefault
 
-from .crud import get_async_sessionmaker
-from .middleware import DatabaseMiddleware
+from telegram.crud import get_async_sessionmaker
+from telegram.middleware import DatabaseMiddleware
 
-from .config import TELEGRAM_TOKEN, X_TELEGRAM_BOT_API_SECRET_TOKEN, BASE_URL
-from .handlers import index_router
+from telegram.config import TELEGRAM_TOKEN, X_TELEGRAM_BOT_API_SECRET_TOKEN, BASE_URL
+from telegram.handlers import index_router
 
 bot = Bot(token=TELEGRAM_TOKEN)
 dp = Dispatcher()

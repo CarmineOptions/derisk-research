@@ -16,7 +16,7 @@ mock_df = pd.DataFrame(
 
 
 with patch("pandas.read_csv", return_value=mock_df):
-    from ..app.api.user import router
+    from apps.dashboard_app.app.api.user import router
 
 
 app = FastAPI()

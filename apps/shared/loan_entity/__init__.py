@@ -1,3 +1,3 @@
-from .loan_entity import LoanEntity
-from .nostra import *
-from .zklend import *
+from shared.loan_entity import LoanEntity
+from shared.loan_entity.nostra import *
+from shared.loan_entity.zklend import *

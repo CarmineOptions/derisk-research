@@ -15,7 +15,7 @@ from shared.state import ZkLendState
 from shared.loan_entity import ZkLendLoanEntity
 
 from data_handler.db.models import LiquidableDebt
-from shared.constants import ProtocolIDs
+from shared.protocol_ids import ProtocolIDs
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)

@@ -11,7 +11,7 @@ from typing import Iterator
 
 import google.cloud.storage
 import pandas
-from .order_books.constants import TOKEN_MAPPING
+from handlers.order_books.constants import TOKEN_MAPPING
 from data_handler.handlers.settings import PAIRS
 
 from data_handler.db.models import InterestRate

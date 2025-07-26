@@ -1,2 +1,2 @@
-from .alpha import NostraAlphaState
-from .mainnet import NostraMainnetState
+from nostra.alpha import NostraAlphaState
+from nostra.mainnet import NostraMainnetState
