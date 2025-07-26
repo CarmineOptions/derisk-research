@@ -22,7 +22,7 @@ from shared.data_parser.serializers import (
     NonInterestBearingCollateralBurnEventData,
     NonInterestBearingCollateralMintEventData,
 )
-from shared.constants import ProtocolIDs
+from shared.protocol_ids import ProtocolIDs
 
 logger = logging.getLogger(__name__)
 

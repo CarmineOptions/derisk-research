@@ -8,7 +8,7 @@ from data_handler.db.models import (
     LoanState,
     OrderBookModel,
 )
-from shared.constants import ProtocolIDs
+from shared.protocol_ids import ProtocolIDs
 from sqlalchemy.exc import SQLAlchemyError
 
 
