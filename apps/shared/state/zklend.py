@@ -3,7 +3,7 @@ import decimal
 import logging
 import pandas as pd
 from shared import blockchain_call
-from shared.constants import ProtocolIDs
+from shared.protocol_ids import ProtocolIDs
 from shared.helpers import add_leading_zeros, get_symbol
 from shared.data_parser.zklend import ZklendDataParser
 from typing import Optional, Protocol

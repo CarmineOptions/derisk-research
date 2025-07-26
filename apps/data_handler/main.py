@@ -27,7 +27,7 @@ from data_handler.db.schemas import (
     LoanStateResponse,
     OrderBookResponseModel,
 )
-from shared.constants import ProtocolIDs
+from shared.protocol_ids import ProtocolIDs
 
 logger = logging.getLogger(__name__)
 

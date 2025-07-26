@@ -20,7 +20,7 @@ from shared.loan_entity import (
 from shared.state import NostraAlphaState, ZkLendState, NostraMainnetState, State
 
 from data_handler.db.crud import DBConnector
-from shared.constants import ProtocolIDs
+from shared.protocol_ids import ProtocolIDs
 from shared.custom_types import TokenValues
 
 

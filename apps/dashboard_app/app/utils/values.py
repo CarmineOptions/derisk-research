@@ -1,8 +1,8 @@
 import os
 from dataclasses import dataclass
-from enum import Enum
 
 from dotenv import load_dotenv
+from shared.protocol_ids import ProtocolIDs
 
 load_dotenv()
 
@@ -43,12 +43,6 @@ class CreateSubscriptionValues:
         "Creates a new subscription to notifications"
     )
 
-
-class ProtocolIDs(Enum):
-    HASHSTACK = "Hashstack"
-    NOSTRA_ALPHA = "Nostra_alpha"
-    NOSTRA_MAINNET = "Nostra_mainnet"
-    ZKLEND = "zkLend"
 
 
 HEALTH_RATIO_LEVEL_ALERT_VALUE: float = 0.1

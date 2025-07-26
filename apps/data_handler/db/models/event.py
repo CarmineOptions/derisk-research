@@ -13,7 +13,7 @@ from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from shared.db import Base
-from shared.constants import ProtocolIDs
+from shared.protocol_ids import ProtocolIDs
 
 
 class EventBaseModel(Base):

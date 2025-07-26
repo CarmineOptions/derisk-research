@@ -4,15 +4,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy_utils import IPAddressType
 from datetime import datetime
 from sqlalchemy_utils.types.choice import ChoiceType
-from enum import Enum
-
-
-class ProtocolIDs(str, Enum):
-    HASHSTACK = "Hashstack"
-    NOSTRA_ALPHA = "Nostra_alpha"
-    NOSTRA_MAINNET = "Nostra_mainnet"
-    ZKLEND = "zkLend"
-
+from shared.protocol_ids import ProtocolIDs
 
 class NotificationData(Base):
     __tablename__ = "notification"
