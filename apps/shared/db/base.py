@@ -107,6 +107,7 @@ class DBConnectorAsync:
                 return obj
         except Exception as e:
             logger.info(f"Error{e}")
+            raise e
 
     async def get_object(
         self, model: Type[ModelType] = None, obj_id: uuid.UUID = None
