@@ -2,11 +2,11 @@ from fastapi import APIRouter, HTTPException
 from pathlib import Path
 import pandas as pd
 import json
-from ..schemas import (
+from dashboard_app.app.schemas import (
     UserDepositResponse,
     UserDebtResponseModel,
 )
-from ..crud import db_connector
+from dashboard_app.app.crud import db_connector
 
 router = APIRouter(
     prefix="/user",

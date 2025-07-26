@@ -1,2 +1,2 @@
-from .entity import NostraAlphaLoanEntity
-from .settings import *
+from alpha.entity import NostraAlphaLoanEntity
+from alpha.settings import *

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from fastapi import Depends
-from ..schemas import UserLoanByWalletParams, UserLoanByWalletResponse
-from ..crud import db_connector
+from dashboard_app.app.schemas import UserLoanByWalletParams, UserLoanByWalletResponse
+from dashboard_app.app.crud import db_connector
 
 router = APIRouter()
 

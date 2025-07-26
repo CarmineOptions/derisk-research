@@ -13,7 +13,7 @@ from shared.amms import SwapAmm
 from shared.custom_types import Prices
 from shared.state import State
 
-from .constants import CommonValues
+from charts.constants import CommonValues
 from helpers.settings import TOKEN_SETTINGS
 from helpers.tools import (
     get_collateral_token_range,
@@ -22,7 +22,7 @@ from helpers.tools import (
     get_underlying_address,
 )
 
-from .constants import SUPPLY_STATS_TOKEN_SYMBOLS_MAPPING
+from charts.constants import SUPPLY_STATS_TOKEN_SYMBOLS_MAPPING
 
 AMMS = ("10kSwap", "MySwap", "SithSwap", "JediSwap")
 

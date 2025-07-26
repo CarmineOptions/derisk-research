@@ -3,8 +3,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
 from dashboard_app.app.models.watcher import NotificationData
-from ..crud import TelegramCrud
-from .utils import kb
+from telegram_app.telegram.crud import TelegramCrud
+from handlers.utils import kb
 
 create_notification_router = Router()
 

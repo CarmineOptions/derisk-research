@@ -12,7 +12,7 @@ import sqlalchemy as sa
 import sqlalchemy_utils
 from alembic import op
 
-from shared.constants import ProtocolIDs
+from shared.protocol_ids import ProtocolIDs
 
 # revision identifiers, used by Alembic.
 revision: str = "d2fa8201b04a"

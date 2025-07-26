@@ -6,7 +6,7 @@ import pytest
 import pandas as pd
 from unittest.mock import MagicMock
 from datetime import datetime
-from shared.constants import ProtocolIDs
+from shared.protocol_ids import ProtocolIDs
 from data_handler.handlers.loan_states.abstractions import (
     HashstackBaseLoanStateComputation,
 )

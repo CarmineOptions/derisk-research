@@ -7,7 +7,7 @@ from fastapi import Request
 from dashboard_app.app.crud.base import db_connector
 from dashboard_app.app.models.watcher import NotificationData
 
-from .values import HEALTH_RATIO_URL
+from utils.values import HEALTH_RATIO_URL
 
 
 def get_client_ip(request: Request) -> str:

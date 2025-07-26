@@ -23,7 +23,7 @@ import jwt
 import os
 import dotenv
 from pydantic import EmailStr
-from ..schemas import Token
+from dashboard_app.app.schemas import Token
 
 
 dotenv.load_dotenv()

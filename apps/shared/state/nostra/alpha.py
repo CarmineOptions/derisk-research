@@ -3,12 +3,12 @@ import decimal
 from shared.starknet_client import StarknetClient
 from shared.data_parser.nostra import NostraDataParser
 from shared.helpers import get_addresses
-from ..state import State
+from shared.state import State
 import copy
 import logging
 from typing import Optional
 import pandas as pd
-from shared.constants import ProtocolIDs
+from shared.protocol_ids import ProtocolIDs
 from shared.helpers import add_leading_zeros, get_symbol
 from shared.custom_types import (
     NostraAlphaCollateralTokenParameters,

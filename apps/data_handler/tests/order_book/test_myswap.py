@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from ...handlers.order_books.myswap.main import MySwapOrderBook
+from apps.data_handler.handlers.order_books.myswap.main import MySwapOrderBook
 
 MAX_MYSWAP_TICK = Decimal("1774532")
 
