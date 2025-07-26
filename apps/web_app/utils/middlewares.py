@@ -10,7 +10,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
-from utils.values import MiddlewaresValues
+from .values import MiddlewaresValues
 
 load_dotenv()
 

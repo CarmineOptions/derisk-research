@@ -1,5 +1,5 @@
-from apps.shared.helpers import add_leading_zeros, get_addresses, get_symbol
-from apps.shared.custom_types.base import TokenParameters
+from shared.helpers import add_leading_zeros, get_addresses, get_symbol
+from shared.custom_types.base import TokenParameters
 from unittest.mock import AsyncMock, patch
 
 

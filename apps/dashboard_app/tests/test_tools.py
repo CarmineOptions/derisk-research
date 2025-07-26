@@ -2,7 +2,7 @@ import pytest
 
 pytest.importorskip("data_handler")
 import pandas as pd
-from apps.dashboard_app.helpers.tools import (
+from dashboard_app.helpers.tools import (
     get_collateral_token_range,
     get_prices,
     get_underlying_address,

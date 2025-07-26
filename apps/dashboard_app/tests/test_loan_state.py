@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from unittest.mock import patch
-from apps.dashboard_app.app.api.loan_state import router
+from dashboard_app.app.api.loan_state import router
 
 # Setup a test FastAPI app and include the loan router
 app = FastAPI()
