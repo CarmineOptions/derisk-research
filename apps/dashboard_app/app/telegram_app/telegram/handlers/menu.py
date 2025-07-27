@@ -1,8 +1,8 @@
 from aiogram import F, Router, types
 from dashboard_app.app.models.watcher import NotificationData
-from telegram_app.telegram.crud import TelegramCrud
+from dashboard_app.app.telegram_app.telegram.crud import TelegramCrud
 
-from handlers.utils import kb
+from dashboard_app.app.telegram_app.telegram.handlers.utils import kb
 
 menu_router = Router()
 

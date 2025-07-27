@@ -4,7 +4,7 @@ This module contains the logic to parse the nostra data to human-readable format
 
 from typing import Any, List
 
-from data_parser.serializers import (
+from shared.data_parser.serializers import (
     BearingCollateralBurnEventData,
     BearingCollateralMintEventData,
     DebtBurnEventData,

@@ -19,7 +19,7 @@ from shared.custom_types import (
 )
 from shared.helpers import add_leading_zeros
 from shared.starknet_client import StarknetClient
-from nostra.alpha import NostraAlphaState
+from shared.state.nostra.alpha import NostraAlphaState
 from shared.loan_entity import NostraMainnetLoanEntity
 import logging
 

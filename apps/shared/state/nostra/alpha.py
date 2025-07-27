@@ -3,7 +3,7 @@ import decimal
 from shared.starknet_client import StarknetClient
 from shared.data_parser.nostra import NostraDataParser
 from shared.helpers import get_addresses
-from shared.state import State
+from ..state import State
 import copy
 import logging
 from typing import Optional

@@ -3,7 +3,7 @@ This module contains the logic to parse the zkLend data to human-readable format
 """
 
 from typing import Any, List
-from data_parser.serializers import (
+from shared.data_parser.serializers import (
     AccumulatorsSyncEventData,
     LiquidationEventData,
     WithdrawalEventData,

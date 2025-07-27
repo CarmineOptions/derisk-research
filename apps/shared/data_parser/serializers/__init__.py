@@ -1,4 +1,4 @@
-from serializers.nostra import (
+from shared.data_parser.serializers.nostra import (
     DebtMintEventData,
     DebtBurnEventData,
     InterestRateModelEventData,
@@ -9,7 +9,7 @@ from serializers.nostra import (
     NonInterestBearingCollateralBurnEventData,
 )
 
-from serializers.zklend import (
+from shared.data_parser.serializers.zklend import (
     AccumulatorsSyncEventData,
     BorrowingEventData,
     RepaymentEventData,

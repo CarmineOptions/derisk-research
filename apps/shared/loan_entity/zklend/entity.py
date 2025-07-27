@@ -18,7 +18,7 @@ import logging
 from decimal import Decimal
 from typing import Optional
 
-from zklend.settings import ZKLEND_SPECIFIC_TOKEN_SETTINGS
+from shared.loan_entity.zklend.settings import ZKLEND_SPECIFIC_TOKEN_SETTINGS
 from shared.loan_entity import LoanEntity
 
 

@@ -1,5 +1,5 @@
 import logging
-from loan_entity.nostra.alpha import NostraAlphaLoanEntity
+from shared.loan_entity.nostra.alpha import NostraAlphaLoanEntity
 from shared.protocol_ids import ProtocolIDs
 from shared.custom_types import InterestRateModels, Prices, TokenParameters
 
