@@ -34,7 +34,7 @@ from data_handler.db.models.zklend_events import (
     RepaymentEventModel,
     WithdrawalEventModel,
 )
-from shared.constants import ProtocolIDs
+from shared.protocol_ids import ProtocolIDs
 from sqlalchemy import Subquery, and_, create_engine, desc, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import SQLAlchemyError

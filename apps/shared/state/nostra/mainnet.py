@@ -11,7 +11,7 @@ from shared.loan_entity.nostra.mainnet import (
     NOSTRA_MAINNET_TOKEN_ADDRESSES,
 )
 from shared.helpers import get_symbol, get_addresses
-from shared.constants import ProtocolIDs
+from shared.protocol_ids import ProtocolIDs
 from shared.custom_types import (
     NostraDebtTokenParameters,
     NostraMainnetCollateralTokenParameters,
