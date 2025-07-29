@@ -15,7 +15,7 @@ from shared.loan_entity.nostra.alpha import (
 )
 from data_handler.handlers.loan_states.abstractions import LoanStateComputationBase
 from shared.state import NostraAlphaState
-from shared.constants import ProtocolIDs
+from shared.protocol_ids import ProtocolIDs
 
 logger = logging.getLogger(__name__)
 NOSTRA_ALPHA_EVENTS_TO_ORDER: dict[str, int] = {

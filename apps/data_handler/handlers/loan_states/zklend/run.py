@@ -9,7 +9,7 @@ from data_handler.db.crud import InitializerDBConnector
 from data_handler.handlers.loan_states.abstractions import LoanStateComputationBase
 from shared.state import ZkLendState, State
 from data_handler.handlers.loan_states.zklend.utils import ZkLendInitializer
-from shared.constants import ProtocolIDs
+from shared.protocol_ids import ProtocolIDs
 
 logger = logging.getLogger(__name__)
 

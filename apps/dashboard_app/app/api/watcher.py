@@ -8,7 +8,7 @@ from loguru import logger
 from sqlalchemy.orm import Session
 
 from dashboard_app.app.crud.base import db_connector
-from dashboard_app.app.models.watcher import NotificationData, ProtocolIDs
+from dashboard_app.app.models.watcher import NotificationData
 from dashboard_app.app.schemas import NotificationForm
 from dashboard_app.app.telegram_app.telegram import TelegramNotifications
 from dashboard_app.app.telegram_app.telegram.utils import get_subscription_link
@@ -25,6 +25,7 @@ from dashboard_app.app.utils.values import (
     NotificationValidationValues,
 )
 from dashboard_app.app.utils.watcher_mixin import WatcherMixin
+from shared.protocol_ids import ProtocolIDs
 
 router = APIRouter()
 notificator = TelegramNotifications(db_connector=db_connector)

@@ -17,7 +17,7 @@ from shared.data_parser.serializers import (
     NonInterestBearingCollateralMintEventData,
 )
 from data_handler.handlers.events.nostra.transform_events import NostraTransformer
-from shared.constants import ProtocolIDs
+from shared.protocol_ids import ProtocolIDs
 
 
 @pytest.fixture(scope="function")
