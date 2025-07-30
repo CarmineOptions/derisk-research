@@ -2,7 +2,7 @@ import asyncio
 from datetime import datetime
 
 from dashboard_app.app.telegram_app.telegram import bot
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Request, status
 from fastapi.responses import JSONResponse
 from loguru import logger
 from sqlalchemy.orm import Session
@@ -146,6 +146,7 @@ async def send_notifications() -> None:
             calculate_difference(health_ratio_level, subscriber.health_ratio_level)
             >= HEALTH_RATIO_LEVEL_ALERT_VALUE
         ):
-            asyncio.run(notificator.send_notification(notification_id=subscriber.id))
+            await TelegramNotifications.send_notification(notification_id=subscriber.id)
 
-    asyncio.run(notificator(is_infinity=True))
+    # Start the queue consumer
+    asyncio.create_task(notificator(is_infinity=True))
