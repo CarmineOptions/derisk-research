@@ -1,5 +1,5 @@
 
-from telegram import bot
+from dashboard_app.app.telegram_app.telegram import bot
 
 
 if __name__ == "__main__":

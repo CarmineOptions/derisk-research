@@ -13,16 +13,16 @@ from shared.amms import SwapAmm
 from shared.custom_types import Prices
 from shared.state import State
 
-from charts.constants import CommonValues
-from helpers.settings import TOKEN_SETTINGS
-from helpers.tools import (
+from dashboard_app.charts.constants import CommonValues
+from dashboard_app.helpers.settings import TOKEN_SETTINGS
+from dashboard_app.helpers.tools import (
     get_collateral_token_range,
     get_custom_data,
     get_prices,
     get_underlying_address,
 )
 
-from charts.constants import SUPPLY_STATS_TOKEN_SYMBOLS_MAPPING
+from dashboard_app.charts.constants import SUPPLY_STATS_TOKEN_SYMBOLS_MAPPING
 
 AMMS = ("10kSwap", "MySwap", "SithSwap", "JediSwap")
 
