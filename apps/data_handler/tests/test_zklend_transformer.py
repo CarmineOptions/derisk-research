@@ -346,8 +346,8 @@ def test_save_withdrawal_event(transformer, sample_withdrawal_event_data):
 
     expected_parsed_data = WithdrawalEventData(
         user=sample_withdrawal_event_data["data"][0],
-        token=sample_withdrawal_event_data["data"][2],
-        amount=sample_withdrawal_event_data["data"][1],
+        token=sample_withdrawal_event_data["data"][1],
+        amount=sample_withdrawal_event_data["data"][2],
     )
 
     transformer.fetch_and_transform_events(
