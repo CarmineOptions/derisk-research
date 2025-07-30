@@ -2,6 +2,7 @@
 This script loads data and runs the dashboard.
 """
 
+import asyncio
 import logging
 
 from charts.main import Dashboard
@@ -35,4 +36,4 @@ if __name__ == "__main__":
     # Set up autorefresh data config
     st_autorefresh(interval=REFRESH_TIME, key="datarefresh")
 
-    load(dashboard)
+    asyncio.run(load(dashboard))

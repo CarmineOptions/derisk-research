@@ -2,7 +2,7 @@ import asyncio
 from datetime import datetime
 
 from dashboard_app.app.telegram_app.telegram import bot
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Request, status
 from fastapi.responses import JSONResponse
 from loguru import logger
 from sqlalchemy.orm import Session
