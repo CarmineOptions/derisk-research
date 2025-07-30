@@ -16,7 +16,7 @@ from shared.loan_entity.nostra.mainnet import (
 )
 from data_handler.handlers.loan_states.abstractions import LoanStateComputationBase
 from shared.state import NostraMainnetState
-from shared.constants import ProtocolIDs
+from shared.protocol_ids import ProtocolIDs
 
 logger = logging.getLogger(__name__)
 

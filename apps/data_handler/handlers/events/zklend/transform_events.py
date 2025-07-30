@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from shared.db import Base
 from data_handler.handler_tools.api_connector import DeRiskAPIConnector
 from typing import Dict, Any, Tuple, Type, Callable
-from shared.constants import ProtocolIDs
+from shared.protocol_ids import ProtocolIDs
 from shared.data_parser.zklend import ZklendDataParser
 
 from shared.data_parser.serializers import (

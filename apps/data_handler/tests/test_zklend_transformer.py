@@ -4,7 +4,7 @@ Test the zklend transformer
 
 import pytest
 from typing import Dict, Any
-from shared.constants import ProtocolIDs
+from shared.protocol_ids import ProtocolIDs
 from unittest.mock import patch
 from data_handler.handlers.events.zklend.transform_events import ZklendTransformer
 

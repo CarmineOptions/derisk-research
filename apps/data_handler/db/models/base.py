@@ -4,7 +4,7 @@ from sqlalchemy import BigInteger, Column, String
 from sqlalchemy.types import JSON
 from sqlalchemy_utils.types.choice import ChoiceType
 from shared.db import Base
-from shared.constants import ProtocolIDs
+from shared.protocol_ids import ProtocolIDs
 
 
 class BaseState(Base):

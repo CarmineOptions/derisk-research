@@ -17,7 +17,7 @@ from data_handler.handlers.settings import TOKEN_PAIRS
 
 from data_handler.db.crud import DBConnector
 from data_handler.db.models import LoanState
-from shared.constants import ProtocolIDs
+from shared.protocol_ids import ProtocolIDs
 from shared.state import LoanEntity, State
 from shared.custom_types import TokenValues
 

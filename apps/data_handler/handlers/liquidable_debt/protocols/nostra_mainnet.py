@@ -13,7 +13,7 @@ from shared.state import NostraMainnetState
 from shared.loan_entity import NostraMainnetLoanEntity
 
 from data_handler.db.models import LiquidableDebt
-from shared.constants import ProtocolIDs
+from shared.protocol_ids import ProtocolIDs
 
 
 def run() -> None:

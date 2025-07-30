@@ -9,7 +9,7 @@ from data_handler.handlers.health_ratio_level.health_ratio_handlers import (
 )
 from shared.state import State, LoanEntity
 from shared.custom_types import TokenValues
-from shared.constants import ProtocolIDs
+from shared.protocol_ids import ProtocolIDs
 
 
 class MockState(State):
