@@ -1,5 +1,4 @@
 import asyncio
-from datetime import datetime
 
 from dashboard_app.app.telegram_app.telegram import bot
 from fastapi import APIRouter, Depends, Request, status

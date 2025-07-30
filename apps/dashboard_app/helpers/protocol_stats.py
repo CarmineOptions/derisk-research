@@ -38,6 +38,8 @@ def get_general_stats(
         number_of_active_borrowers = (
             state.compute_number_of_active_loan_entities_with_debt()
         )
+        if  loan_stats[protocol].empty: continue
+      
         data.append(
             {
                 "Protocol": protocol,
@@ -158,6 +160,8 @@ def get_collateral_stats(
                 )
             else:
                 raise ValueError
+            
+
             for token_address in token_addresses:
                 try:
                     collateral = (
@@ -165,7 +169,7 @@ def get_collateral_stats(
                             float(loan_entity.collateral.values.get(token_address, 0.0))
                             for loan_entity in state.loan_entities.values()
                         )
-                        / float(TOKEN_SETTINGS[token].decimal_factor)
+                        / float(TOKEN_SETTINGS[token].decimal_factor) #TODO rm! now it's Decimal in db
                         * float(
                             state.interest_rate_models.collateral.get(
                                 token_address, 1.0
@@ -173,7 +177,7 @@ def get_collateral_stats(
                         )
                     )
                     token_collaterals[token] += round(collateral, 4)
-                except TypeError:
+                except AttributeError:
                     # FIXME Remove when all tokens are added
                     token_collaterals[token] = Decimal(0.0)
         data.append(
@@ -228,11 +232,11 @@ def get_debt_stats(
                             float(loan_entity.debt.get(token_address, 0.0))
                             for loan_entity in state.loan_entities.values()
                         )
-                        / float(TOKEN_SETTINGS[token].decimal_factor)
+                        / float(TOKEN_SETTINGS[token].decimal_factor) #TODO rm! now it's Decimal in db
                         * float(state.interest_rate_models.debt.get(token_address, 1.0))
                     )
                     token_debts[token] = round(debt, 4)
-                except TypeError:
+                except AttributeError:
                     # FIXME Remove when all tokens are added
                     token_debts[token] = Decimal(0.0)
 

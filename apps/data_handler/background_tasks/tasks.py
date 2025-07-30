@@ -1,29 +1,15 @@
-# from ..db.base import DBConnectorAsync as DBConnector
+import requests
+import logging
+from celery import shared_task
+logger = logging.getLogger(__name__)
 
-# from dashboard_app.app.telegram_app.telegram import TelegramNotifications
+@shared_task(name="check_health_ratio_level_changes")
+def check_health_ratio_level_changes():
+    try:
+        logger.error("Run check_health_ratio_level_changes")      
+        response = requests.post("http://dashboard_backend:8000/api/send-notifications")
+    except Exception as e:
+        logger.error("Error in check_health_ratio_level_changes", e)
+       
 
-# from celery_conf import app
 
-# from dashboard_app.app.core.config import settings
-
-# connector = DBConnector(db_url=settings.database_url)
-# notificator = TelegramNotifications(db_connector=connector)
-
-
-# @app.task(name="check_health_ratio_level_changes")
-# def check_health_ratio_level_changes():
-#     print('#check_health_ratio_level_changes')
-#     # subscribers = get_all_activated_subscribers_from_db()
-
-#     # for subscriber in subscribers:
-#     #     health_ratio_level = get_health_ratio_level_from_endpoint(
-#     #         protocol_id=subscriber.protocol_id.value, user_id=subscriber.wallet_id
-#     #     )
-
-#     #     if (
-#     #         calculate_difference(health_ratio_level, subscriber.health_ratio_level)
-#     #         >= HEALTH_RATIO_LEVEL_ALERT_VALUE
-#     #     ):
-#     #         asyncio.run(notificator.send_notification(notification_id=subscriber.id))
-
-#     # asyncio.run(notificator(is_infinity=True))

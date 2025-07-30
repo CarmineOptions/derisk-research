@@ -118,7 +118,7 @@ class ZkLendDBLiquidableDebtDataHandler(BaseDBLiquidableDebtDataHandler):
         data, interest_rate_models = self.fetch_data(protocol_name=protocol_name)
         if not interest_rate_models:
             return []
-        state = self.state_class
+        state = self.state_class()
         state = self.initialize_loan_entities(state=state, data=data)
 
         # Set up collateral and debt interest rate models

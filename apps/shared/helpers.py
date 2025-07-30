@@ -1,4 +1,5 @@
 import asyncio
+import decimal
 import logging
 from typing import Dict, Set
 
@@ -26,6 +27,12 @@ def add_leading_zeros(hash: str) -> str:
     `0x00436d8d078de345c11493bd91512eae60cd2713e05bcaa0bb9f0cba90358c6e`.
     """
     return "0x" + hash[2:].zfill(64)
+
+
+#TODO CHECK TOKEN BASE: float(TOKEN_SETTINGS[token].decimal_factor)
+def felt252ToDecimal(felt):
+    return decimal.Decimal(int(felt, base=16))/ decimal.Decimal("1e18")
+
 
 
 def load_data(protocol: str) -> tuple[dict[str, pd.DataFrame], pd.DataFrame]:
@@ -97,7 +104,6 @@ async def get_symbol(token_address: str) -> str:
     Returns: str
 
     """
-    print("FUNC CALL", blockchain_call.func_call)
     # DAI V2's symbol is `DAI` but we don't want to mix it with DAI = DAI V1.
     if (
         token_address
