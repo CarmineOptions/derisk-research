@@ -3,11 +3,10 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
 from dashboard_app.app.models.watcher import NotificationData
-from ..crud import TelegramCrud
-from .utils import kb
+from dashboard_app.app.telegram_app.telegram.crud import TelegramCrud
+from dashboard_app.app.telegram_app.telegram.handlers.utils import kb
 
 create_notification_router = Router()
-
 
 class NotificationFormStates(StatesGroup):
     """States for the notification form process."""

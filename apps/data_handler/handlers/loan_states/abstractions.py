@@ -9,8 +9,8 @@ import pandas as pd
 from data_handler.db.crud import DBConnector
 from data_handler.db.models import InterestRate, LoanState
 from data_handler.handler_tools.api_connector import DeRiskAPIConnector
-from shared.protocol_ids import ProtocolIDs
-from shared.state import State
+from shared.constants import ProtocolIDs
+from shared.state.state import State
 
 logger = logging.getLogger(__name__)
 

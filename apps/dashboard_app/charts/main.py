@@ -17,7 +17,7 @@ from shared.helpers import (
     update_loan_data_with_symbols,
 )
 
-from helpers.settings import (
+from dashboard_app.helpers.settings import (
     COLLATERAL_TOKENS,
     DEBT_TOKENS,
     STABLECOIN_BUNDLE_NAME,
@@ -25,15 +25,15 @@ from helpers.settings import (
 )
 
 
-from .constants import ChartsHeaders, CommonValues
-from .main_chart_figure import (
+from dashboard_app.charts.constants import ChartsHeaders, CommonValues
+from dashboard_app.charts.main_chart_figure import (
     get_bar_chart_figures,
     get_main_chart_figure,
     get_specific_loan_usd_amounts,
     get_user_history,
     get_total_amount_by_field,
 )
-from .utils import (
+from dashboard_app.charts.utils import (
     get_protocol_data_mappings,
     infer_protocol_name,
     process_liquidity,

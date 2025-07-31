@@ -1,6 +1,6 @@
 import logging
-from ..alpha import NostraAlphaLoanEntity
-from shared.constants import ProtocolIDs
+from shared.loan_entity.nostra.alpha import NostraAlphaLoanEntity
+from shared.protocol_ids import ProtocolIDs
 from shared.custom_types import InterestRateModels, Prices, TokenParameters
 
 logger = logging.getLogger(__name__)

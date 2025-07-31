@@ -8,7 +8,7 @@ import copy
 import logging
 from typing import Optional
 import pandas as pd
-from shared.constants import ProtocolIDs
+from shared.protocol_ids import ProtocolIDs
 from shared.helpers import add_leading_zeros, get_symbol
 from shared.custom_types import (
     NostraAlphaCollateralTokenParameters,

@@ -6,7 +6,7 @@ from typing import List
 
 import matplotlib.pyplot as plt
 
-from web_app.order_books.ekubo.main import EkuboOrderBook
+from data_handler.handlers.order_books.ekubo.main import EkuboOrderBook
 
 TOKEN_A = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"  # ETH
 TOKEN_B = "0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8"  # USDC

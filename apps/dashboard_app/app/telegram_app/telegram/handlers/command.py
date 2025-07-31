@@ -10,7 +10,7 @@ from aiogram.filters import Command, CommandObject, CommandStart
 from dashboard_app.app.models.watcher import NotificationData
 from dashboard_app.app.telegram_app.telegram.crud import TelegramCrud
 
-from .utils import kb
+from dashboard_app.app.telegram_app.telegram.handlers.utils import kb
 
 cmd_router = Router()
 

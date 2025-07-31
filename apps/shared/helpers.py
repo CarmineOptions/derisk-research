@@ -10,7 +10,7 @@ import starknet_py
 from shared import blockchain_call
 from starknet_py.net.client_errors import ClientError
 
-from .constants import (
+from shared.constants import (
     GS_BUCKET_NAME,
     NULL_CHAR,
     PAIRS,

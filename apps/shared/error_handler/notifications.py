@@ -4,8 +4,9 @@ from uuid import uuid4
 
 from aiogram import Bot, Dispatcher
 
-from .config import ERROR_CHAT_ID, TELEGRAM_TOKEN
-from .values import Message
+
+from shared.error_handler.config import ERROR_CHAT_ID, TELEGRAM_TOKEN
+from shared.error_handler.values import Message
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
