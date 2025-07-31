@@ -53,8 +53,18 @@ class UniswapV2OrderBook(OrderBookBase):
         self._set_pool()
         self._calculate_order_book()
 
+    # TODO move to utils
+    def get_or_create_eventloop(self) -> asyncio.AbstractEventLoop:
+        try:
+            return asyncio.get_event_loop()
+        except RuntimeError as ex:           
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            return asyncio.get_event_loop()
+           
+        
     def fetch_price_and_liquidity(self) -> None:
-        loop = asyncio.get_event_loop()
+        loop = self.get_or_create_eventloop()
         if loop.is_running():
             new_loop = asyncio.new_event_loop()
             asyncio.set_event_loop(new_loop)

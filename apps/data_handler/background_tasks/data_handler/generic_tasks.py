@@ -5,6 +5,10 @@ import logging
 from time import monotonic
 
 # from data_handler.handlers.loan_states.nostra_mainnet.run import NostraMainnetStateComputation
+from data_handler.handlers.loan_states.nostra_mainnet.run import (
+    NostraMainnetStateComputation,
+)
+from data_handler.handlers.loan_states.zklend.run import ZkLendLoanStateComputation
 from data_handler.handlers.liquidable_debt.protocols import (
     nostra_alpha,
     nostra_mainnet,
@@ -26,20 +30,21 @@ from celery import shared_task
 
 connector = DBConnector()
 
+logger = logging.getLogger(__name__)
 
-# @shared_task(name="run_loan_states_computation_for_zklend")
-# def run_loan_states_computation_for_zklend():
-#     start = monotonic()
-#     logging.basicConfig(level=logging.INFO)
-#
-#     logging.info("Starting zkLend loan state computation")
-#     computation = ZkLendLoanStateComputation()
-#     computation.run()
-#
-#     logging.info(
-#         "Finished zkLend loan state computation, Time taken: %s seconds",
-#         monotonic() - start,
-#     )
+
+@shared_task(name="run_loan_states_computation_for_zklend")
+def run_loan_states_computation_for_zklend():        
+    start = monotonic()
+    logging.basicConfig(level=logging.INFO) 
+    logging.info("Starting zkLend loan state computation")
+    computation = ZkLendLoanStateComputation()   
+    computation.run()   
+
+    logging.info(
+        "Finished zkLend loan state computation, Time taken: %s seconds",
+        monotonic() - start,
+    )
 
 
 @shared_task(name="run_loan_states_computation_for_nostra_alpha")
@@ -58,20 +63,19 @@ def run_loan_states_computation_for_nostra_alpha():
     )
 
 
-# @shared_task(name="run_loan_states_computation_for_nostra_mainnet")
-# def run_loan_states_computation_for_nostra_mainnet():
-#     start = monotonic()
-#     logging.basicConfig(level=logging.INFO)
-#
-#     logging.info("Starting Nostra Mainnet loan state computation")
-#     computation = NostraMainnetStateComputation()
-#     computation.run()
-#
-#     logging.info(
-#         "Finished Nostra Mainnet loan state computation, Time taken: %s seconds",
-#         monotonic() - start,
-#     )
-#
+@shared_task(name="run_loan_states_computation_for_nostra_mainnet")
+def run_loan_states_computation_for_nostra_mainnet():
+    start = monotonic()
+    logging.basicConfig(level=logging.INFO)
+
+    logging.info("Starting Nostra Mainnet loan state computation")
+    computation = NostraMainnetStateComputation()
+    computation.run()
+
+    logging.info(
+        "Finished Nostra Mainnet loan state computation, Time taken: %s seconds",
+        monotonic() - start,
+    )
 
 
 @shared_task(name="uniswap_v2_order_book")

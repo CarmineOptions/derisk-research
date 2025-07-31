@@ -115,7 +115,7 @@ class NostraMainnetStateComputation(LoanStateComputationBase):
         """
         Runs the loan state computation for the specific protocol.
         """
-        max_retries = 5
+        max_retries = 500
         retry = 0
 
         logger.info(f"Default last block: {self.last_block}")

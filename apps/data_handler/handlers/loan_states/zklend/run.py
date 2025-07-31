@@ -148,7 +148,7 @@ class ZkLendLoanStateComputation(LoanStateComputationBase):
         """
         Runs the loan state computation for the specific protocol.
         """
-        max_retries = 5
+        max_retries = 500
         retry = 0
         zklend_protocol_address = self.PROTOCOL_ADDRESSES
 

@@ -20,11 +20,11 @@ class ZklendDataParser:
     """
 
     @classmethod
-    def parse_accumulators_sync_event(
-        cls, event_data: list[Any]
-    ) -> AccumulatorsSyncEventData:
+    def parse_accumulators_sync_event(cls, event_data: list[Any]) -> AccumulatorsSyncEventData:
         """
         Parses the AccumulatorsSync event data into a human-readable format using the AccumulatorsSyncEventData serializer.
+        Example:
+        https://starkscan.co/event/0x01720382d43a8e4ed117689be64b99d0defe3a15a4a14d3b06864687881223d4_0
 
         Args:
             event_data (list[Any]): A list containing the raw event data, typically with 3 elements:
@@ -59,9 +59,33 @@ class ZklendDataParser:
 
         The event data is fetched from on-chain logs and is structured in the following way:
         - event_data[0]: The user address (as a hexadecimal string).
-        - event_data[1]: The amount withdrawn (as a string).
-        - event_data[2]: The token address (as a hexadecimal string).
-        - event_data[3]: The face value of the amount withdrawn (as a string).
+        - event_data[1]: The token address (as a hexadecimal string).
+        - event_data[2]: The face value of the amount withdrawn (as a string).
+
+        - JSON event ABI example. Explore example here:
+            https://starkscan.co/contract/0x04c0a5193d58f74fbace4b74dcf65481e734ed1714121bdc571da345540efa05#class-code-history
+            {
+                "kind": "struct",
+                "name": "zklend::market::Market::Withdrawal",
+                "type": "event",
+                "members": [
+                    {
+                        "kind": "data",
+                        "name": "user",
+                        "type": "core::starknet::contract_address::ContractAddress"
+                    },
+                    {
+                        "kind": "data",
+                        "name": "token",
+                        "type": "core::starknet::contract_address::ContractAddress"
+                    },
+                    {
+                        "kind": "data",
+                        "name": "face_amount",
+                        "type": "core::felt252"
+                    }
+                ]
+            },
 
         Args:
             event_data (list[Any]): A list containing the raw event data, typically with 3 or more elements:
@@ -72,8 +96,8 @@ class ZklendDataParser:
         """
         return WithdrawalEventData(
             user=event_data[0],
-            amount=event_data[1],
-            token=event_data[2],
+            token=event_data[1],
+            amount=event_data[2],
         )
 
     @classmethod

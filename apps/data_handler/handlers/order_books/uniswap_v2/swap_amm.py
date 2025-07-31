@@ -139,6 +139,12 @@ class SwapAmmToken(TokenSettings):
     balance_base: Optional[float] = None
     balance_converted: Optional[float] = None
 
+    def __init__(self, symbol: str, decimal_factor: Decimal, address: str, 
+                 balance_base: Optional[float] = None, balance_converted: Optional[float] = None):
+        super().__init__(symbol=symbol, decimal_factor=decimal_factor, address=address)
+        self.balance_base = balance_base
+        self.balance_converted = balance_converted
+
 
 class SwapAmm(Pair):
     """This class represents the Swap AMM, which contains pools and provides balance
@@ -147,6 +153,8 @@ class SwapAmm(Pair):
     async def init(self):
         """Initialize the SwapAmm with predefined pools and fetch balances."""
         # TODO: Add AVNU
+        # TODO uncomment numbers and remove None, then fix "get_pool" - wrong selector error.
+
         self.pools = {}
         self.add_pool(
             "ETH",
@@ -156,7 +164,8 @@ class SwapAmm(Pair):
                 "0x030615bec9c1506bfac97d9dbd3c546307987d467a7f95d5533c2e861eb81f3f",  # sithswap
                 "0x000023c72abdf49dffc85ae3ede714f2168ad384cc67d08524732acea90df325",  # 10kswap
             ],
-            1,
+            #TODO  1,
+            None
         )
         self.add_pool(
             "DAI",
@@ -166,7 +175,8 @@ class SwapAmm(Pair):
                 "0x0032ebb8e68553620b97b308684babf606d9556d5c0a652450c32e85f40d000d",  # sithswap
                 "0x017e9e62c04b50800d7c59454754fe31a2193c9c3c6c92c093f2ab0faadf8c87",  # 10kswap
             ],
-            2,
+            #TODO  2,
+            None
         )
         self.add_pool(
             "ETH",
@@ -176,7 +186,8 @@ class SwapAmm(Pair):
                 "0x00691fa7f66d63dc8c89ff4e77732fff5133f282e7dbd41813273692cc595516",  # sithswap
                 "0x05900cfa2b50d53b097cb305d54e249e31f24f881885aae5639b0cd6af4ed298",  # 10kswap
             ],
-            4,
+            #TODO  4,
+            None
         )
         self.add_pool(
             "wBTC",
@@ -193,7 +204,8 @@ class SwapAmm(Pair):
                 "0x005a8054e5ca0b277b295a830e53bd71a6a6943b42d0dbb22329437522bc80c8",  # jediswap
                 "0x022e45d94d5c6c477d9efd440aad71b2c02a5cd5bed9a4d6da10bb7c19fd93ba",  # 10kswap
             ],
-            3,
+            #TODO  3,
+            None
         )
         self.add_pool(
             "wBTC",
@@ -219,7 +231,8 @@ class SwapAmm(Pair):
                 "0x015e9cd2d4d6b4bb9f1124688b1e6bc19b4ff877a01011d28c25c9ee918e83e5",  # sithswap
                 "0x02e767b996c8d4594c73317bb102c2018b9036aee8eed08ace5f45b3568b94e5",  # 10kswap
             ],
-            6,
+            # TODO 6,
+            None
         )
         self.add_pool(
             "DAI",
@@ -237,7 +250,8 @@ class SwapAmm(Pair):
                 "0x0601f72228f73704e827de5bcd8dadaad52c652bb1e42bf492d90bbe22df2cec",  # sithswap
                 "0x041a708cf109737a50baa6cbeb9adf0bf8d97112dc6cc80c7a458cbad35328b0",  # 10kswap
             ],
-            5,
+            #TODO  5,
+            None
         )
         self.add_pool(
             "STRK",
