@@ -1,10 +1,11 @@
 import logging
 from typing import Type, TypeVar
-
+from shared.db.base import Base
+from shared.db.conf import SQLALCHEMY_DATABASE_URL
+from shared.db.connector import DBConnectorAsync
 from pydantic import BaseModel
 from sqlalchemy import func, select, text
 
-from shared.db import Base, DBConnectorAsync, SQLALCHEMY_DATABASE_URL
 from dashboard_app.app.utils.values import (
     CURRENTLY_AVAILABLE_PROTOCOL_IDS,
     NotificationValidationValues,

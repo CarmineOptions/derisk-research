@@ -15,7 +15,7 @@ class BearingCollateralBurnEventModel(EventBaseModel):
     __tablename__ = "bearing_collateral_burn_event"
 
     user: Mapped[str] = mapped_column(String, nullable=False)
-    amount: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
+    amount: Mapped[str] = mapped_column(String, nullable=False)
 
 
 class BearingCollateralMintEventModel(EventBaseModel):
@@ -28,7 +28,7 @@ class BearingCollateralMintEventModel(EventBaseModel):
     __tablename__ = "bearing_collateral_mint_event"
 
     user: Mapped[str] = mapped_column(String, nullable=False)
-    amount: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
+    amount: Mapped[str] = mapped_column(String, nullable=False)
 
 
 class DebtMintEventModel(EventBaseModel):
@@ -41,7 +41,7 @@ class DebtMintEventModel(EventBaseModel):
     __tablename__ = "debt_mint_event"
 
     user: Mapped[str] = mapped_column(String, nullable=False)
-    amount: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
+    amount: Mapped[str] = mapped_column(String, nullable=False)
 
 
 class DebtBurnEventModel(EventBaseModel):
@@ -54,7 +54,7 @@ class DebtBurnEventModel(EventBaseModel):
     __tablename__ = "debt_burn_event"
 
     user: Mapped[str] = mapped_column(String, nullable=False)
-    amount: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
+    amount: Mapped[str] = mapped_column(String, nullable=False)
 
 
 class DebtTransferEventModel(EventBaseModel):
@@ -68,7 +68,7 @@ class DebtTransferEventModel(EventBaseModel):
 
     sender: Mapped[str] = mapped_column(String, nullable=False)
     recipient: Mapped[str] = mapped_column(String, nullable=False)
-    amount: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
+    amount: Mapped[str] = mapped_column(String, nullable=False)
 
 
 class InterestRateModelEventModel(EventBaseModel):
@@ -77,15 +77,15 @@ class InterestRateModelEventModel(EventBaseModel):
 
     This model stores the
         debt_token (str): The address of the debt token.
-        lending_index (Decimal): The lending index in hexadecimal.
-        borrow_index (Decimal): The borrow index in hexadecimal.
+        lending_index (str): The lending index in hexadecimal.
+        borrow_index (str): The borrow index in hexadecimal.
     """
 
     __tablename__ = "interest_rate_event"
 
     debt_token: Mapped[str] = mapped_column(String, nullable=False)
-    lending_index: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
-    borrow_index: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
+    lending_index: Mapped[str] = mapped_column(String, nullable=False)
+    borrow_index: Mapped[str] = mapped_column(String, nullable=False)
 
 
 class NonInterestBearingCollateralMintEventModel(EventBaseModel):
@@ -97,7 +97,7 @@ class NonInterestBearingCollateralMintEventModel(EventBaseModel):
 
     sender: Mapped[str] = mapped_column(String, nullable=False)
     recipient: Mapped[str] = mapped_column(String, nullable=False)
-    amount: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
+    amount: Mapped[str] = mapped_column(String, nullable=False)
 
 
 class NonInterestBearingCollateralBurnEventModel(EventBaseModel):
@@ -108,4 +108,4 @@ class NonInterestBearingCollateralBurnEventModel(EventBaseModel):
     __tablename__ = "non_interest_bearing_collateral_burn_event"
 
     user: Mapped[str] = mapped_column(String, nullable=False)
-    amount: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
+    amount: Mapped[str] = mapped_column(String, nullable=False)

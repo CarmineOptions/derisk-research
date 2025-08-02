@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from pydantic import BaseModel
 from sqlalchemy.exc import SQLAlchemyError
 
-from shared.db.base import DBConnectorAsync
+from shared.db.connector import DBConnectorAsync
 
 
 class MockModel(BaseModel):
@@ -27,8 +27,8 @@ def mock_db_url() -> str:
 def db_connector(mock_db_url: str) -> DBConnectorAsync:
     """Create DBConnectorAsync instance with mocked dependencies"""
     with (
-        patch("shared.db.base.create_async_engine") as mock_engine,
-        patch("shared.db.base.async_sessionmaker") as mock_sessionmaker,
+        patch("shared.db.connector.create_async_engine") as mock_engine,
+        patch("shared.db.connector.async_sessionmaker") as mock_sessionmaker,
     ):
         connector = DBConnectorAsync(mock_db_url)
         connector.engine = mock_engine.return_value
@@ -63,8 +63,8 @@ class TestDBConnectorAsync:
     def test_init(self, mock_db_url: str):
         """Test DBConnectorAsync initialization"""
         with (
-            patch("shared.db.base.create_async_engine") as mock_engine,
-            patch("shared.db.base.async_sessionmaker") as mock_sessionmaker,
+            patch("shared.db.connector.create_async_engine") as mock_engine,
+            patch("shared.db.connector.async_sessionmaker") as mock_sessionmaker,
         ):
             connector = DBConnectorAsync(mock_db_url)
 
@@ -170,7 +170,7 @@ class TestDBConnectorAsync:
         mock_result.scalars.return_value = mock_scalars
         mock_session.execute.return_value = mock_result
 
-        with patch("shared.db.base.select") as mock_select:
+        with patch("shared.db.connector.select") as mock_select:
             mock_stmt = MagicMock()
             mock_select.return_value.filter_by.return_value = mock_stmt
 
@@ -197,7 +197,7 @@ class TestDBConnectorAsync:
         mock_result.scalars.return_value = mock_scalars
         mock_session.execute.return_value = mock_result
 
-        with patch("shared.db.base.select") as mock_select:
+        with patch("shared.db.connector.select") as mock_select:
             mock_stmt = MagicMock()
             mock_select.return_value.filter_by.return_value = mock_stmt
 
@@ -220,7 +220,7 @@ class TestDBConnectorAsync:
         mock_result.scalar_one_or_none.return_value = sample_model_instance
         mock_session.execute.return_value = mock_result
 
-        with patch("shared.db.base.select") as mock_select:
+        with patch("shared.db.connector.select") as mock_select:
             mock_field_attr = MagicMock()
             setattr(MockModel, "name", mock_field_attr)
             mock_where_stmt = MagicMock()
@@ -247,7 +247,7 @@ class TestDBConnectorAsync:
         mock_result.scalar_one_or_none.return_value = None
         mock_session.execute.return_value = mock_result
 
-        with patch("shared.db.base.select") as mock_select:
+        with patch("shared.db.connector.select") as mock_select:
             mock_field_attr = MagicMock()
             setattr(MockModel, "name", mock_field_attr)
             mock_where_stmt = MagicMock()

@@ -4,7 +4,7 @@ an order book entry in the database."""
 from sqlalchemy import DECIMAL, BigInteger, Column, String
 from sqlalchemy.types import JSON
 
-from shared.db import Base
+from shared.db.base import Base
 
 
 class OrderBookModel(Base):

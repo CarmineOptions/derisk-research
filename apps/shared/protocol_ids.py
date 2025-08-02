@@ -10,11 +10,11 @@ class ProtocolIDs(Enum):
     ZKLEND: str = "zkLend"
     VESU:str = "Vesu"
 
-    @classmethod
-    def choices(cls) -> list[str]:
-        """
-        This method returns the values of the enum.
-        :return: list of values
-        """
-        return [choice.value for choice in cls]
+    # @classmethod
+    # def choices(cls) -> list[str]:
+    #     """
+    #     This method returns the values of the enum.
+    #     :return: list of values
+    #     """
+    #     return [choice.value for choice in cls]
 

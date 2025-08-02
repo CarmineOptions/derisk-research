@@ -8,7 +8,9 @@ import logging
 import uuid
 from typing import List, Optional, Type, TypeVar
 
-from shared.db import SQLALCHEMY_DATABASE_URL, Base
+
+from shared.db.base import Base
+from shared.db.conf import SQLALCHEMY_DATABASE_URL
 from data_handler.db.models import (
     InterestRate,
     LoanState,

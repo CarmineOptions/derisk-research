@@ -1,5 +1,5 @@
 from sqlalchemy import BigInteger, Column, String
-from shared.db import Base
+from shared.db.base import Base
 
 
 class VesuPosition(Base):

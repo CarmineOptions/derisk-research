@@ -7,7 +7,7 @@ Create Date: 2024-08-17 21:20:15.806069
 """
 
 from typing import Sequence, Union
-
+from sqlalchemy import inspect
 import sqlalchemy as sa
 from alembic import op
 
@@ -21,9 +21,14 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     """Function to apply the upgrade migrations."""
     # ### Step 1: Add the new column as nullable ###
-    op.add_column(
-        "hashtack_collateral_debt", sa.Column("version", sa.Integer(), nullable=True)
-    )
+    conn = op.get_bind()
+    inspector = inspect(conn)
+
+    # Check if the column exists
+    if "version" not in [column['name'] for column in inspector.get_columns("hashtack_collateral_debt")]:
+        op.add_column(
+            "hashtack_collateral_debt", sa.Column("version", sa.Integer(), nullable=True)
+        )
 
     # ### Step 2: Set default value (0) for existing records ###
     op.execute("UPDATE hashtack_collateral_debt SET version = 0")

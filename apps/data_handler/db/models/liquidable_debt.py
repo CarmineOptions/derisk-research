@@ -4,7 +4,7 @@ from data_handler.handlers.liquidable_debt.values import LendingProtocolNames
 from sqlalchemy import DECIMAL, BigInteger, Column, String
 from sqlalchemy_utils.types.choice import ChoiceType
 
-from shared.db import Base
+from shared.db.base import Base
 from shared.protocol_ids import ProtocolIDs
 
 

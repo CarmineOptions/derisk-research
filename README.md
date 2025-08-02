@@ -147,3 +147,63 @@ make test_shared
    ```
 4. **Access the Application**:
     Open your browser and navigate to `http://localhost:5173`.
+
+
+
+
+
+## Data migrations with Alembic
+In this project is using alembic for data migrations.
+
+### Generating Migrations
+Navigate to the project folder and generate a new migration using the following command:
+1. Run:
+```bash
+docker compose -f devops/dev/docker-compose.db.yaml up --build
+```
+2. Then:
+```bash
+cd apps/shared
+alembic -c alembic.ini revision --autogenerate -m "your message"
+```
+
+3. ? You may need to set up `.env` and install missing packages. Check the terminal, as pip-install missing packages
+
+
+### Applying Migrations
+After generating new migration, you need to apply it:
+
+```bash
+alembic -c alembic.ini upgrade head
+```
+### Rolling Back Migrations
+For downgrading migration:
+
+```bash
+alembic -c alembic.ini downgrade -1
+```
+
+### Migration Utility Commands
+Useful commands:
+Purge all celery tasks:
+```bash
+docker compose run --rm celery celery -A celery_conf purge
+```
+Purge all celery beat tasks:
+```bash
+docker compose run --rm celery_beat celery -A celery_conf purge
+```
+Go to bash
+```bash
+docker compose exec backend bash
+```
+
+
+#TODO review:
+## How to run migration command:
+1. Set up `.env.dev` into `derisk-research/apps/data_handler`
+2. Go back to `derisk-research/apps` directory
+3. Then run bash script to migrate:
+```bash
+bash data_handler/migrate.sh
+```
