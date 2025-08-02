@@ -13,11 +13,7 @@ services:
     volumes:
       - ../../apps/:/app
     env_file:
-      - ../../apps/data_handler/.env.dev
-    environment:
-      DB_NAME: postgres
-      DB_USER: postgres
-      DB_PASSWORD: password
+      - ../../apps/data_handler/.env   
     ports:
       - "8000:8000"
     expose:
@@ -32,12 +28,9 @@ services:
     image: postgres:16
     container_name: postgres_dev
     env_file:
-      - ../../apps/data_handler/.env.dev
-    environment:
-      POSTGRES_PASSWORD: password
+      - ../../apps/data_handler/.env     
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-    # - ../../apps/data_handler/init-db:/docker-entrypoint-initdb.d # Automatically run initialization scripts
+      - postgres_data:/var/lib/postgresql/data    
     networks:
       - data_handler_network
     ports:
@@ -52,11 +45,7 @@ services:
       context: ../../apps
       dockerfile: data_handler/Dockerfile.celery_worker
     env_file:
-      - ../../apps/data_handler/.env.dev
-    environment:
-      DB_NAME: postgres
-      DB_USER: postgres
-      DB_PASSWORD: password
+      - ../../apps/data_handler/.env  
     volumes:
       - ../../apps:/app
     depends_on:
@@ -72,11 +61,7 @@ services:
       context: ../../apps
       dockerfile: data_handler/Dockerfile.celery_beat
     env_file:
-      - ../../apps/data_handler/.env.dev
-    environment:
-      DB_NAME: postgres
-      DB_USER: postgres
-      DB_PASSWORD: password
+      - ../../apps/data_handler/.env   
     volumes:
       - ../../apps:/app
     depends_on:

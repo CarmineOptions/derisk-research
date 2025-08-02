@@ -18,7 +18,7 @@ $$
 BEGIN
     IF NOT EXISTS (
         SELECT FROM pg_database
-        WHERE datname = 'data_handler') THEN
+        WHERE datname = 'postgres') THEN
         CREATE DATABASE spotnet WITH OWNER = postgres;
     END IF;
 END
