@@ -4,10 +4,6 @@ services:
   db:
     image: postgres:16
     container_name: postgres_dev
-    environment:
-      POSTGRES_DB: data_handler
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ../../apps/data_handler/init-db:/docker-entrypoint-initdb.d

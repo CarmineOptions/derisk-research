@@ -6,9 +6,9 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     # Database settings
     db_driver: str = "postgresql+asyncpg"
-    db_name: str = Field(default="db_name", alias="POSTGRES_DB")
-    db_user: str = Field(default="user", alias="POSTGRES_USER")
-    db_password: str = Field(default="password", alias="POSTGRES_PASSWORD")
+    db_name: str = Field(default="db_name", alias="DB_NAME")
+    db_user: str = Field(default="user", alias="DB_USER")
+    db_password: str = Field(default="password", alias="DB_PASSWORD")
     db_host: str = Field(default="localhost", alias="DB_HOST")
     db_port: int = 5432
 
@@ -29,10 +29,10 @@ class Settings(BaseSettings):
         return {
             "db_driver": self.db_driver,
             "db_port": self.db_port,
-            "POSTGRES_USER": self.db_user,
-            "POSTGRES_PASSWORD": self.db_password,
+            "DB_USER": self.db_user,
+            "DB_PASSWORD": self.db_password,
             "DB_HOST": self.db_host,
-            "POSTGRES_DB": self.db_name,
+            "DB_NAME": self.db_name,
         }
 
     @property
