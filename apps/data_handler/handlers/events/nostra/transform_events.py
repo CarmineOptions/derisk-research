@@ -299,7 +299,7 @@ class NostraTransformer:
                     self.last_block += self.PAGINATION_SIZE
                     retry += 1
                 except Exception as e:
-                    logger.error(f"HH Error during fetching or saving events: {e}")
+                    logger.error(f"Error during fetching or saving events: {e}")
             if retry == max_retries:
                 logger.info(f"Reached max retries for address {address}")
 

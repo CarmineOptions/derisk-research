@@ -1,6 +1,6 @@
 from decimal import Decimal
 from pydantic import BaseModel, ValidationInfo, field_validator
-from shared.helpers import add_leading_zeros, felt252ToDecimal
+from shared.helpers import add_leading_zeros
 
 
 class AccumulatorsSyncEventData(BaseModel):
@@ -45,11 +45,9 @@ class AccumulatorsSyncEventData(BaseModel):
             Decimal: Converted decimal value.
         """
         try:
-            return felt252ToDecimal(value)
+            return Decimal(int(value, 16))
         except ValueError:
-            raise ValueError(
-                f"{info.field_name} field is not a valid hexadecimal number"
-            )
+            raise ValueError(f"{info.field_name} field is not a valid hexadecimal number")
 
 
 class LiquidationEventData(BaseModel):
@@ -101,11 +99,9 @@ class LiquidationEventData(BaseModel):
             Decimal: Converted decimal value.
         """
         try:
-            return felt252ToDecimal(value)
+            return Decimal(int(value, 16))
         except ValueError:
-            raise ValueError(
-                f"{info.field_name} field is not a valid hexadecimal number"
-            )
+            raise ValueError(f"{info.field_name} field is not a valid hexadecimal number")
 
 
 class WithdrawalEventData(BaseModel):
@@ -156,11 +152,9 @@ class WithdrawalEventData(BaseModel):
             ValueError: If the provided amount is not numeric.
         """
         try:
-            return felt252ToDecimal(value)
+            return Decimal(int(value, 16))
         except ValueError:
-            raise ValueError(
-                f"{info.field_name} field is not a valid hexadecimal number"
-            )
+            raise ValueError(f"{info.field_name} field is not a valid hexadecimal number")
 
 
 class BorrowingEventData(BaseModel):
@@ -207,11 +201,9 @@ class BorrowingEventData(BaseModel):
             Decimal: Converted decimal value.
         """
         try:
-            return felt252ToDecimal(value)
+            return Decimal(int(value, 16))
         except ValueError:
-            raise ValueError(
-                f"{info.field_name} field is not a valid hexadecimal number"
-            )
+            raise ValueError(f"{info.field_name} field is not a valid hexadecimal number")
 
 
 class RepaymentEventData(BaseModel):
@@ -259,11 +251,9 @@ class RepaymentEventData(BaseModel):
             Decimal: Converted decimal value.
         """
         try:
-            return felt252ToDecimal(value)
+            return Decimal(int(value, 16))
         except ValueError:
-            raise ValueError(
-                f"{info.field_name} field is not a valid hexadecimal number"
-            )
+            raise ValueError(f"{info.field_name} field is not a valid hexadecimal number")
 
 
 class DepositEventData(BaseModel):
@@ -307,11 +297,9 @@ class DepositEventData(BaseModel):
             Decimal: Converted decimal value.
         """
         try:
-            return felt252ToDecimal(value)
+            return Decimal(int(value, 16))
         except ValueError:
-            raise ValueError(
-                f"{info.field_name} field is not a valid hexadecimal number"
-            )
+            raise ValueError(f"{info.field_name} field is not a valid hexadecimal number")
 
 
 class CollateralEnabledDisabledEventData(BaseModel):

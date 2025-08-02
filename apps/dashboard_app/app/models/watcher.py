@@ -1,10 +1,11 @@
-from shared.db import Base
 from sqlalchemy import String, DateTime, ForeignKey, Boolean, Float
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy_utils import IPAddressType
 from datetime import datetime
 from sqlalchemy_utils.types.choice import ChoiceType
+from shared.db.base import Base
 from shared.protocol_ids import ProtocolIDs
+
 
 class NotificationData(Base):
     __tablename__ = "notification"
@@ -16,7 +17,10 @@ class NotificationData(Base):
     ip_address: Mapped[str | None] = mapped_column(IPAddressType, nullable=True)
     health_ratio_level: Mapped[float] = mapped_column(Float, nullable=False)
     protocol_id: Mapped[ProtocolIDs] = mapped_column(
-        ChoiceType(ProtocolIDs, impl=String()), nullable=False
+        ChoiceType(
+            choices=[(protocol.value, protocol.name) for protocol in ProtocolIDs]
+        ),
+        nullable=False,
     )
 
 

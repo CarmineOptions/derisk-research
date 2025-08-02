@@ -6,7 +6,7 @@ from sqlalchemy import Column, Integer, String, UniqueConstraint
 from sqlalchemy.types import JSON
 
 from data_handler.db.models.base import BaseState
-from shared.db import Base
+from shared.db.base import Base
 
 
 class LoanState(BaseState):

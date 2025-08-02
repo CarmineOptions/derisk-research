@@ -1,12 +1,10 @@
 """Alembic environment configuration file."""
 
+import os
 from logging.config import fileConfig
-
 from sqlalchemy import engine_from_config, pool
-from shared.db import Base, SQLALCHEMY_DATABASE_URL
-
 from alembic import context
-
+from shared.db.base import Base
 
 # Load environment variables
 from dotenv import load_dotenv
@@ -17,10 +15,16 @@ load_dotenv()
 # access to the values within the .ini file in use.
 config = context.config
 
+# Set the SQLAlchemy URL from environment variables
+DB_USER = os.getenv("DB_USER", "postgres")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "password")
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = os.getenv("DB_PORT", "5432")
+DB_NAME = os.getenv("DB_NAME", "postgres")
+
 # Set the database URL replacing async by sync driver in the alembic config
-config.set_main_option(
-    "sqlalchemy.url", SQLALCHEMY_DATABASE_URL.replace("asyncpg", "psycopg2")
-)
+sqlalchemy_url = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+config.set_main_option("sqlalchemy.url", sqlalchemy_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

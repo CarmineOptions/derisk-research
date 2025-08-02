@@ -12,7 +12,7 @@ from sqlalchemy_utils.types.choice import ChoiceType
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from shared.db import Base
+from shared.db.base import Base
 from shared.protocol_ids import ProtocolIDs
 
 

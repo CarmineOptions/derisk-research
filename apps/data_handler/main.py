@@ -11,11 +11,10 @@ from fastapi import Depends, FastAPI, HTTPException, Path, Query, Request, statu
 from slowapi import Limiter
 from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
-from shared.db import Base
 from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 
-from shared.db import db_connector
+from shared.db.connector import db_connector
 from data_handler.db.models import (
     HealthRatioLevel,
     InterestRate,

@@ -18,10 +18,8 @@ class AccumulatorsSyncEventModel(EventBaseModel):
     __tablename__ = "accumulators_sync_event"
 
     token: Mapped[str] = mapped_column(String, nullable=False)
-    lending_accumulator: Mapped[Decimal] = mapped_column(
-        Numeric(38, 18), nullable=False
-    )
-    debt_accumulator: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
+    lending_accumulator: Mapped[str] = mapped_column(String, nullable=False)
+    debt_accumulator: Mapped[str] = mapped_column(String, nullable=False)
 
 
 class LiquidationEventModel(EventBaseModel):
@@ -36,10 +34,10 @@ class LiquidationEventModel(EventBaseModel):
     liquidator: Mapped[str] = mapped_column(String, nullable=False)
     user: Mapped[str] = mapped_column(String, nullable=False)
     debt_token: Mapped[str] = mapped_column(String, nullable=False)
-    debt_raw_amount: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
-    debt_face_amount: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
+    debt_raw_amount: Mapped[str] = mapped_column(String, nullable=False)
+    debt_face_amount: Mapped[str] = mapped_column(String, nullable=False)
     collateral_token: Mapped[str] = mapped_column(String, nullable=False)
-    collateral_amount: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
+    collateral_amount: Mapped[str] = mapped_column(String, nullable=False)
 
 
 class RepaymentEventModel(EventBaseModel):
@@ -55,8 +53,8 @@ class RepaymentEventModel(EventBaseModel):
     repayer: Mapped[str] = mapped_column(String, nullable=False)
     beneficiary: Mapped[str] = mapped_column(String, nullable=False)
     token: Mapped[str] = mapped_column(String, nullable=False)
-    raw_amount: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
-    face_amount: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
+    raw_amount: Mapped[str] = mapped_column(String, nullable=False)
+    face_amount: Mapped[str] = mapped_column(String, nullable=False)
 
 
 class DepositEventModel(EventBaseModel):
@@ -71,7 +69,7 @@ class DepositEventModel(EventBaseModel):
 
     user: Mapped[str] = mapped_column(String, nullable=False)
     token: Mapped[str] = mapped_column(String, nullable=False)
-    face_amount: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
+    face_amount: Mapped[str] = mapped_column(String, nullable=False)
 
 
 class BorrowingEventModel(EventBaseModel):
@@ -86,8 +84,8 @@ class BorrowingEventModel(EventBaseModel):
 
     user: Mapped[str] = mapped_column(String, nullable=False)
     token: Mapped[str] = mapped_column(String, nullable=False)
-    raw_amount: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
-    face_amount: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
+    raw_amount: Mapped[str] = mapped_column(String, nullable=False)
+    face_amount: Mapped[str] = mapped_column(String, nullable=False)
 
 
 class WithdrawalEventModel(EventBaseModel):
@@ -101,7 +99,7 @@ class WithdrawalEventModel(EventBaseModel):
     __tablename__ = "withdrawal_event"
 
     user: Mapped[str] = mapped_column(String, nullable=False)
-    amount: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
+    amount: Mapped[str] = mapped_column(String, nullable=False)
     token: Mapped[str] = mapped_column(String, nullable=False)
 
 

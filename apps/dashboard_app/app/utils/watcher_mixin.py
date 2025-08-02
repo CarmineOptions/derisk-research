@@ -1,9 +1,11 @@
 from typing import Type
-
 from sqlalchemy.orm import Session
-
-from shared.db import ModelType, Base
-from dashboard_app.app.utils.values import CreateSubscriptionValues, NotificationValidationValues
+from shared.db.base import Base
+from shared.db.connector import ModelType
+from dashboard_app.app.utils.values import (
+    CreateSubscriptionValues,
+    NotificationValidationValues,
+)
 
 
 class WatcherMixin:
