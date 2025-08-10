@@ -23,17 +23,3 @@ class LiquidableDebt(Base):
     collateral_token_price = Column(DECIMAL, nullable=False)
     collateral_token = Column(String, nullable=False)
     debt_token = Column(String, nullable=False)
-
-
-class HealthRatioLevel(Base):
-    """
-    SQLAlchemy model for the health ratio level table.
-    """
-
-    __tablename__ = "health_ratio_level"
-    __table_args__ = {"extend_existing": True}
-
-    timestamp = Column(BigInteger, index=True)
-    user_id = Column(String, index=True)
-    value = Column(DECIMAL, nullable=False)
-    protocol_id = Column(ChoiceType(ProtocolIDs, impl=String()), nullable=False)

@@ -3,14 +3,15 @@ from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from data_handler.handlers.loan_states.vesu.events import VesuLoanEntity
-from data_handler.db.models.liquidable_debt import HealthRatioLevel
+from shared.db.models import HealthRatioLevel
 
 
 @pytest.fixture
 def vesu_entity():
     """Create VesuLoanEntity instance for testing"""
-    with patch("data_handler.handlers.loan_states.vesu.events.StarknetClient"), patch(
-        "data_handler.handlers.loan_states.vesu.events.DBConnector"
+    with (
+        patch("data_handler.handlers.loan_states.vesu.events.StarknetClient"),
+        patch("data_handler.handlers.loan_states.vesu.events.DBConnector"),
     ):
         entity = VesuLoanEntity()
         entity.session = AsyncMock()
@@ -38,7 +39,6 @@ def mock_vesu_position():
 
 
 class TestVesuLoanEntity:
-
     @pytest.mark.asyncio
     async def test_save_health_ratio_level(self, vesu_entity, mock_session):
         """Test saving health ratio level to database"""
@@ -72,24 +72,16 @@ class TestVesuLoanEntity:
         mock_result.scalars.return_value = mock_scalars
         vesu_entity.session.execute = AsyncMock(return_value=mock_result)
 
-        with patch.object(
-            vesu_entity, "_get_position_data"
-        ) as mock_position, patch.object(
-            vesu_entity, "_get_collateral_value"
-        ) as mock_collateral, patch.object(
-            vesu_entity, "_get_asset_config"
-        ) as mock_asset_config, patch.object(
-            vesu_entity, "_calculate_debt"
-        ) as mock_debt, patch.object(
-            vesu_entity, "get_ltv_config"
-        ) as mock_ltv, patch.object(
-            vesu_entity, "_get_token_decimals"
-        ) as mock_decimals, patch.object(
-            vesu_entity, "fetch_token_price"
-        ) as mock_price, patch.object(
-            vesu_entity, "save_health_ratio_level"
-        ) as mock_save:
-
+        with (
+            patch.object(vesu_entity, "_get_position_data") as mock_position,
+            patch.object(vesu_entity, "_get_collateral_value") as mock_collateral,
+            patch.object(vesu_entity, "_get_asset_config") as mock_asset_config,
+            patch.object(vesu_entity, "_calculate_debt") as mock_debt,
+            patch.object(vesu_entity, "get_ltv_config") as mock_ltv,
+            patch.object(vesu_entity, "_get_token_decimals") as mock_decimals,
+            patch.object(vesu_entity, "fetch_token_price") as mock_price,
+            patch.object(vesu_entity, "save_health_ratio_level") as mock_save,
+        ):
             mock_position.return_value = (
                 100,
                 0,

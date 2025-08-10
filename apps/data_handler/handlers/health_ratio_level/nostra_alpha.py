@@ -7,7 +7,7 @@ from data_handler.handlers.liquidable_debt.values import (
 )
 from health_ratio_handlers import NostrAlphaHealthRatioHandler
 
-from data_handler.db.models import HealthRatioLevel
+from shared.db.models import HealthRatioLevel
 from shared.protocol_ids import ProtocolIDs
 
 

@@ -16,7 +16,6 @@ from sqlalchemy.orm import Session
 
 from shared.db.connector import db_connector
 from data_handler.db.models import (
-    HealthRatioLevel,
     InterestRate,
     LoanState,
     OrderBookModel,
@@ -119,57 +118,6 @@ async def get_last_interest_rate_by_block(
     res = await db.execute(query)
     last_record = res.scalar_one_or_none()
     return last_record
-
-
-@limiter.limit("10/second")
-@app.get("/health-ratio-per-user/{protocol}/")
-async def get_health_ratio_per_user(
-    request: Request,
-    protocol: str = Path(
-        ...,
-    ),
-    user_id: str = Query(
-        ...,
-    ),
-    db: Session = Depends(db_connector.get_db),
-):
-    """
-    Returns the health ratio by user id provided.
-    :param request: The request object.
-    :param protocol: The protocol ID to filter by.
-    :param user_id: The user id.
-    :param db: The database session.
-    :return: The health ratio by user id.
-    """
-    if protocol is None:
-        raise HTTPException(status_code=400, detail="Protocol ID is required")
-
-    if protocol not in ProtocolIDs.choices():
-        raise HTTPException(status_code=400, detail="Invalid protocol ID")
-
-    if not user_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="User ID is required"
-        )
-
-    query = (
-        select(HealthRatioLevel)
-        .filter(
-            HealthRatioLevel.protocol_id == protocol,
-            HealthRatioLevel.user_id == user_id,
-        )
-        .order_by(desc(HealthRatioLevel.timestamp))
-        .limit(1)
-    )
-    res = await db.execute(query)
-    health_ratio = res.scalar_one_or_none()
-    if not health_ratio:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Health ratio with user ID provided not found",
-        )
-
-    return health_ratio
 
 
 @app.get("/orderbook/", response_model=OrderBookResponseModel)

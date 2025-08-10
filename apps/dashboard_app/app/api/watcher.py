@@ -137,7 +137,7 @@ async def send_notifications() -> None:
     subscribers = await get_all_activated_subscribers_from_db()
 
     for subscriber in subscribers:
-        health_ratio_level = get_health_ratio_level_from_endpoint(
+        health_ratio_level = await get_health_ratio_level_from_endpoint(
             protocol_id=subscriber.protocol_id.value, user_id=subscriber.wallet_id
         )
 
