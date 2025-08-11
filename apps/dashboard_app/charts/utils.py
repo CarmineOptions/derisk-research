@@ -2,17 +2,21 @@
 This moudel process and transform liquidity, loan, and chart data for protocols.
 """
 
+import os
 import asyncio
+from decimal import Decimal
 import difflib
+import json
 import logging
 import math
 import time
 from collections import defaultdict
 
 import pandas as pd
+from shared.redis_client import redis_client
 import streamlit as st
 from shared.state import State
-from shared.amms import SwapAmm
+from shared.amms import SwapAmm, SwapAmmToken
 from shared.constants import PAIRS
 
 from dashboard_app.helpers.ekubo import EkuboLiquidity
@@ -164,9 +168,243 @@ def create_stablecoin_bundle(data: dict[str, pd.DataFrame]) -> dict[str, pd.Data
     return data
 
 
-def get_data(
-    protocol_name: str, state: State
-) -> tuple[dict[str, pd.DataFrame], pd.DataFrame]:
+def streamlit_dev_fill_with_test_data():
+    """
+    The data_handler is responsible for filling the Redis database in production.
+    For local testing of the dashboard_app alone, this function pre-fills Redis on startup.
+    """
+    if os.getenv("ENV") != "development":
+        return
+
+    pool_balances_data = {
+        "ETH/USDC": [
+            SwapAmmToken(
+                symbol="ETH",
+                decimal_factor=Decimal("1E+18"),
+                address="0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+                coin_id=None,
+                balance_base=166274735523160873935,
+                balance_converted=Decimal("166.274735523160873935"),
+            ),
+            SwapAmmToken(
+                symbol="USDC",
+                decimal_factor=Decimal("1E+6"),
+                address="0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8",
+                coin_id=None,
+                balance_base=702162779844,
+                balance_converted=Decimal("702162.779844"),
+            ),
+        ],
+        "DAI/ETH": [
+            SwapAmmToken(
+                symbol="DAI",
+                decimal_factor=Decimal("1E+18"),
+                address="0x00da114221cb83fa859dbdb4c44beeaa0bb37c7537ad5ae66fe5e0efd20e6eb3",
+                coin_id=None,
+                balance_base=65108606605199470507424,
+                balance_converted=Decimal("65108.606605199470507424"),
+            ),
+            SwapAmmToken(
+                symbol="ETH",
+                decimal_factor=Decimal("1E+18"),
+                address="0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+                coin_id=None,
+                balance_base=22016206486065246860,
+                balance_converted=Decimal("22.016206486065246860"),
+            ),
+        ],
+        "ETH/USDT": [
+            SwapAmmToken(
+                symbol="ETH",
+                decimal_factor=Decimal("1E+18"),
+                address="0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+                coin_id=None,
+                balance_base=31901032708597071438,
+                balance_converted=Decimal("31.901032708597071438"),
+            ),
+            SwapAmmToken(
+                symbol="USDT",
+                decimal_factor=Decimal("1E+6"),
+                address="0x068f5c6a61780768455de69077e07e89787839bf8166decfbf92b645209c0fb8",
+                coin_id=None,
+                balance_base=134678181459,
+                balance_converted=Decimal("134678.181459"),
+            ),
+        ],
+        "ETH/wBTC": [
+            SwapAmmToken(
+                symbol="wBTC",
+                decimal_factor=Decimal("1E+8"),
+                address="0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac",
+                coin_id=None,
+                balance_base=46905981,
+                balance_converted=Decimal("0.46905981"),
+            ),
+            SwapAmmToken(
+                symbol="ETH",
+                decimal_factor=Decimal("1E+18"),
+                address="0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+                coin_id=None,
+                balance_base=13034136090766330744,
+                balance_converted=Decimal("13.034136090766330744"),
+            ),
+        ],
+        "USDT/wBTC": [
+            SwapAmmToken(
+                symbol="wBTC",
+                decimal_factor=Decimal("1E+8"),
+                address="0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac",
+                coin_id=None,
+                balance_base=1125739,
+                balance_converted=Decimal("0.01125739"),
+            ),
+            SwapAmmToken(
+                symbol="USDT",
+                decimal_factor=Decimal("1E+6"),
+                address="0x068f5c6a61780768455de69077e07e89787839bf8166decfbf92b645209c0fb8",
+                coin_id=None,
+                balance_base=1325234363,
+                balance_converted=Decimal("1325.234363"),
+            ),
+        ],
+        "DAI/wBTC": [
+            SwapAmmToken(
+                symbol="DAI",
+                decimal_factor=Decimal("1E+18"),
+                address="0x00da114221cb83fa859dbdb4c44beeaa0bb37c7537ad5ae66fe5e0efd20e6eb3",
+                coin_id=None,
+                balance_base=1385187871194750204052,
+                balance_converted=Decimal("1385.187871194750204052"),
+            ),
+            SwapAmmToken(
+                symbol="wBTC",
+                decimal_factor=Decimal("1E+8"),
+                address="0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac",
+                coin_id=None,
+                balance_base=1630203,
+                balance_converted=Decimal("0.01630203"),
+            ),
+        ],
+        "DAI/USDC": [
+            SwapAmmToken(
+                symbol="DAI",
+                decimal_factor=Decimal("1E+18"),
+                address="0x00da114221cb83fa859dbdb4c44beeaa0bb37c7537ad5ae66fe5e0efd20e6eb3",
+                coin_id=None,
+                balance_base=14505239364029335687970,
+                balance_converted=Decimal("14505.239364029335687970"),
+            ),
+            SwapAmmToken(
+                symbol="USDC",
+                decimal_factor=Decimal("1E+6"),
+                address="0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8",
+                coin_id=None,
+                balance_base=22247672316,
+                balance_converted=Decimal("22247.672316"),
+            ),
+        ],
+        "DAI/USDT": [
+            SwapAmmToken(
+                symbol="DAI",
+                decimal_factor=Decimal("1E+18"),
+                address="0x00da114221cb83fa859dbdb4c44beeaa0bb37c7537ad5ae66fe5e0efd20e6eb3",
+                coin_id=None,
+                balance_base=5328944331027197631074,
+                balance_converted=Decimal("5328.944331027197631074"),
+            ),
+            SwapAmmToken(
+                symbol="USDT",
+                decimal_factor=Decimal("1E+6"),
+                address="0x068f5c6a61780768455de69077e07e89787839bf8166decfbf92b645209c0fb8",
+                coin_id=None,
+                balance_base=7578909081,
+                balance_converted=Decimal("7578.909081"),
+            ),
+        ],
+        "USDC/USDT": [
+            SwapAmmToken(
+                symbol="USDC",
+                decimal_factor=Decimal("1E+6"),
+                address="0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8",
+                coin_id=None,
+                balance_base=86819620335,
+                balance_converted=Decimal("86819.620335"),
+            ),
+            SwapAmmToken(
+                symbol="USDT",
+                decimal_factor=Decimal("1E+6"),
+                address="0x068f5c6a61780768455de69077e07e89787839bf8166decfbf92b645209c0fb8",
+                coin_id=None,
+                balance_base=81397474231,
+                balance_converted=Decimal("81397.474231"),
+            ),
+        ],
+        "STRK/USDC": [
+            SwapAmmToken(
+                symbol="STRK",
+                decimal_factor=Decimal("1E+18"),
+                address="0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d",
+                coin_id=None,
+                balance_base=44947698311457427395814,
+                balance_converted=Decimal("44947.698311457427395814"),
+            ),
+            SwapAmmToken(
+                symbol="USDC",
+                decimal_factor=Decimal("1E+6"),
+                address="0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8",
+                coin_id=None,
+                balance_base=6147176297,
+                balance_converted=Decimal("6147.176297"),
+            ),
+        ],
+        "STRK/USDT": [
+            SwapAmmToken(
+                symbol="STRK",
+                decimal_factor=Decimal("1E+18"),
+                address="0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d",
+                coin_id=None,
+                balance_base=319056783238631116664,
+                balance_converted=Decimal("319.056783238631116664"),
+            ),
+            SwapAmmToken(
+                symbol="USDT",
+                decimal_factor=Decimal("1E+6"),
+                address="0x068f5c6a61780768455de69077e07e89787839bf8166decfbf92b645209c0fb8",
+                coin_id=None,
+                balance_base=43484094,
+                balance_converted=Decimal("43.484094"),
+            ),
+        ],
+        "DAI/STRK": [
+            SwapAmmToken(
+                symbol="DAI",
+                decimal_factor=Decimal("1E+18"),
+                address="0x00da114221cb83fa859dbdb4c44beeaa0bb37c7537ad5ae66fe5e0efd20e6eb3",
+                coin_id=None,
+                balance_base=14823686402180398360,
+                balance_converted=Decimal("14.823686402180398360"),
+            ),
+            SwapAmmToken(
+                symbol="STRK",
+                decimal_factor=Decimal("1E+18"),
+                address="0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d",
+                coin_id=None,
+                balance_base=152246403511055917564,
+                balance_converted=Decimal("152.246403511055917564"),
+            ),
+        ],
+    }
+
+    data = {}
+    for symbol, pool in pool_balances_data.items():
+        for token in pool:
+            data[f"{symbol}:{token.address}"] = token.balance_base
+    redis_client.set("pool_balances", json.dumps(data))
+
+    # fetch_balance_for_pools()
+
+
+def get_data(state: State) -> tuple[dict[str, pd.DataFrame], pd.DataFrame]:
     """
     Load loan data and main chart data for the specified protocol.
     :param protocol_name: Protocol name.
@@ -181,9 +419,12 @@ def get_data(
     t_swap = time.time()
     swap_amm = SwapAmm()
     swap_amm.__init__()
-    asyncio.run(swap_amm.get_balance())
+    pool_cache = json.loads(
+        redis_client.get("pool_balances")
+    )
+   
+    asyncio.run(swap_amm.get_balance_from_cache(pool_cache))
     logging.info(f"swap in {time.time() - t_swap}s")
-
     for pair in PAIRS:
         collateral_token_underlying_symbol, debt_token_underlying_symbol = pair.split(
             "-"
@@ -220,11 +461,9 @@ def get_protocol_data_mappings(
 
     protocol_main_chart_data: dict[str, pd.DataFrame] = {}
     protocol_loans_data: dict[str, dict] = {}
-
+    main_chart_data, loans_data = get_data(state=state)  
     for protocol_name in protocols:
-        main_chart_data, loans_data = get_data(state=state, protocol_name=protocol_name)
         protocol_loans_data[protocol_name] = loans_data
-
         if current_pair == stable_coin_pair:
             protocol_main_chart_data[protocol_name] = create_stablecoin_bundle(
                 main_chart_data

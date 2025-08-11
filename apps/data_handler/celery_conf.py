@@ -77,6 +77,10 @@ app.conf.beat_schedule = {
         "task": "check_health_ratio_level_changes",
         "schedule": crontab(minute=f"*/{CHECK_DATA_CHANGES_PERIOD}"),
     },
+    f"fetch_pools_balance_{1}_mins": {
+        "task": "fetch_balance_for_pools",
+        "schedule": crontab(minute=f"*/{1}"),
+    },
 }
 
 from data_handler.background_tasks.data_handler.order_books_tasks import (
@@ -94,6 +98,7 @@ from data_handler.background_tasks.tasks import check_health_ratio_level_changes
 from data_handler.background_tasks.data_handler.event_tasks import process_zklend_events
 from data_handler.background_tasks.data_handler.event_tasks import process_nostra_events
 from data_handler.background_tasks.data_handler.event_tasks import process_vesu_events
+from data_handler.handlers.calculations import fetch_balance_for_pools
 
 
 # run_loan_states_computation_for_nostra_alpha,; run_loan_states_computation_for_nostra_mainnet,;

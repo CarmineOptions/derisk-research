@@ -2,8 +2,10 @@
 
 from dataclasses import dataclass
 from decimal import Decimal
+import json
 from typing import Dict, List, Optional
 
+from shared.redis_client import redis_client
 from shared.blockchain_call import balance_of, func_call, get_myswap_pool
 from shared.constants import POOL_MAPPING, TOKEN_SETTINGS
 from shared.helpers import add_leading_zeros
@@ -89,6 +91,8 @@ class Pool(Pair):
             token.balance_base = balance
             token.balance_converted = Decimal(balance) / token.decimal_factor
 
+        return self.tokens
+
     def update_converted_balance(self) -> None:
         """
         Recalculate and update the converted balance for each token based on its base balance.
@@ -103,12 +107,8 @@ class Pool(Pair):
         :param initial_price: The initial price at which to calculate the supply.
         :return: The calculated supply based on the initial price.
         """
-        constant = Decimal(
-            self.tokens[0].balance_converted * self.tokens[1].balance_converted
-        )
-        return (initial_price * constant).sqrt() * (
-            Decimal("1") - Decimal("0.95").sqrt()
-        )
+        constant = Decimal(self.tokens[0].balance_converted * self.tokens[1].balance_converted)
+        return (initial_price * constant).sqrt() * (Decimal("1") - Decimal("0.95").sqrt())
 
 
 class MySwapPool(Pool):
@@ -181,8 +181,26 @@ class SwapAmm(Pair):
         """
         Retrieve balances for each pool's tokens asynchronously.
         """
+        res = {}
         for pool in self.pools.values():
-            await pool.get_balance()
+            tokens = await pool.get_balance()
+            res[pool.id] = tokens
+
+        return res
+
+    async def get_balance_from_cache(self, data) -> None:
+        """
+        Retrieve balances for each pool's tokens asynchronously from redis cache.
+        """
+        data = json.loads(redis_client.get("pool_balances"))
+        if not data:
+            return
+
+        for symbol, pool in self.pools.items():
+            for token in pool.tokens:
+                balance = Decimal(data[f"{symbol}:{token.address}"])
+                token.balance_base = balance
+                token.balance_converted = balance / token.decimal_factor
 
     def add_pool(
         self,

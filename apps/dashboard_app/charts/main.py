@@ -57,8 +57,8 @@ class Dashboard:
     }
     PROTOCOL_NAMES = [
         "zkLend",
-        # "Nostra Alpha",
-        # "Nostra Mainnet",
+        "Nostra Alpha",
+        "Nostra Mainnet",
         # "Vesu"
     ]
 
@@ -454,6 +454,10 @@ class Dashboard:
         """
         Fetch and return the transaction history for a specific user.
         """
+        # TODO
+        if not wallet_id:
+            return None
+        
         user_data = get_user_history(wallet_id)
         if user_data is None or user_data.empty:
             st.error("No data found for this user.")
@@ -472,6 +476,12 @@ class Dashboard:
         """
         Display a leaderboard of the top 5 biggest collateral and debt per token.
         """
+        pd.set_option('display.max_columns', None)
+        logger.info(f"#LEAD H {self.collateral_stats.head(5)}")
+        logger.info(f"#LEAD I {self.collateral_stats.info()}")
+        logger.info(f"#LEAD X {self.debt_stats.head(5)}")
+        logger.info(f"#LEAD Y {self.debt_stats.info()}")
+        
         st.header("Leaderboard: Top 5 Collateral & Debt per Token")
 
         if self.collateral_stats.empty or self.debt_stats.empty:
@@ -495,6 +505,7 @@ class Dashboard:
         top_debt["type"] = "Debt"
 
         leaderboard_df = pd.concat([top_collateral, top_debt])
+        leaderboard_df.reset_index(inplace=True)
 
         def highlight_values(row):
             color = "green" if row["type"] == "Collateral" else "red"
@@ -569,8 +580,8 @@ class Dashboard:
         logger.info(f"#TIME load_comparison_lending_protocols_chart {time.time() - t}")
         t = time.time()
 
-        #TODO temp. Use real wallet
-        self.get_user_history("0x04d0390b777b424e43839cd1e744799f3de6c176c7e32c1812a41dbd9c19db6a")
+        # TODO temp. Use real wallet
+        # self.get_user_history("0x04d0390b777b424e43839cd1e744799f3de6c176c7e32c1812a41dbd9c19db6a")
         logger.info(f"#TIME get_user_history {time.time() - t}")
         t = time.time()
 

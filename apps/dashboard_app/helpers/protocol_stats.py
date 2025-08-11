@@ -5,6 +5,7 @@ This module handles the collection and computation of statistics related to the 
 import asyncio
 from collections import defaultdict
 from decimal import Decimal
+import math
 
 import numpy as np
 import pandas as pd
@@ -17,7 +18,7 @@ from dashboard_app.helpers.loans_table import (
     get_protocol,
     get_supply_function_call_parameters,
 )
-from dashboard_app.helpers.tools import get_underlying_address
+from dashboard_app.helpers.tools import get_prices, get_underlying_address
 from shared.helpers import get_addresses, add_leading_zeros
 
 
@@ -141,6 +142,13 @@ def get_collateral_stats(
     :return: DataFrame with collateral stats
     """
     data = []
+    underlying_addresses_to_decimals = {
+        x.address: int(math.log10(x.decimal_factor)) for x in TOKEN_SETTINGS.values()
+    }
+   
+
+    # TODO cache prices for all
+    prices = get_prices(token_decimals=underlying_addresses_to_decimals)
     for state in states:
         protocol = get_protocol(state=state)
         token_collaterals = defaultdict(float)
@@ -169,7 +177,7 @@ def get_collateral_stats(
                             float(loan_entity.collateral.values.get(token_address, 0.0))
                             for loan_entity in state.loan_entities.values()
                         )
-                        / float(TOKEN_SETTINGS[token].decimal_factor) #TODO rm! now it's Decimal in db
+                        / float(TOKEN_SETTINGS[token].decimal_factor)
                         * float(
                             state.interest_rate_models.collateral.get(
                                 token_address, 1.0
@@ -180,20 +188,22 @@ def get_collateral_stats(
                 except AttributeError:
                     # FIXME Remove when all tokens are added
                     token_collaterals[token] = Decimal(0.0)
-        data.append(
-            {
-                "Protocol": protocol,
-                "ETH collateral": token_collaterals["ETH"],
-                "wBTC collateral": token_collaterals["wBTC"],
-                "USDC collateral": token_collaterals["USDC"],
-                "DAI collateral": token_collaterals["DAI"],
-                "USDT collateral": token_collaterals["USDT"],
-                "wstETH collateral": token_collaterals["wstETH"],
-                "LORDS collateral": token_collaterals["LORDS"],
-                "STRK collateral": token_collaterals["STRK"],
-                "kSTRK collateral": token_collaterals["kSTRK"],
-            }
-        )
+            data.append(
+                {
+                    "Protocol": protocol,
+                    "token":token,
+                    "amount_usd":prices.get(TOKEN_SETTINGS[token].address, 0),#TODO ?
+                    "ETH collateral": token_collaterals["ETH"],
+                    "wBTC collateral": token_collaterals["wBTC"],
+                    "USDC collateral": token_collaterals["USDC"],
+                    "DAI collateral": token_collaterals["DAI"],
+                    "USDT collateral": token_collaterals["USDT"],
+                    "wstETH collateral": token_collaterals["wstETH"],
+                    "LORDS collateral": token_collaterals["LORDS"],
+                    "STRK collateral": token_collaterals["STRK"],
+                    "kSTRK collateral": token_collaterals["kSTRK"],
+                }
+            )
     return pd.DataFrame(data)
 
 
@@ -206,6 +216,11 @@ def get_debt_stats(
     :return: DataFrame with debt stats
     """
     data = []
+    underlying_addresses_to_decimals = {
+        x.address: int(math.log10(x.decimal_factor)) for x in TOKEN_SETTINGS.values()
+    }
+    # TODO cache price for all
+    prices = get_prices(token_decimals=underlying_addresses_to_decimals)
     for state in states:
         protocol = get_protocol(state=state)
         token_debts = defaultdict(float)
@@ -232,7 +247,7 @@ def get_debt_stats(
                             float(loan_entity.debt.get(token_address, 0.0))
                             for loan_entity in state.loan_entities.values()
                         )
-                        / float(TOKEN_SETTINGS[token].decimal_factor) #TODO rm! now it's Decimal in db
+                        / float(TOKEN_SETTINGS[token].decimal_factor) 
                         * float(state.interest_rate_models.debt.get(token_address, 1.0))
                     )
                     token_debts[token] = round(debt, 4)
@@ -240,20 +255,23 @@ def get_debt_stats(
                     # FIXME Remove when all tokens are added
                     token_debts[token] = Decimal(0.0)
 
-        data.append(
-            {
-                "Protocol": protocol,
-                "ETH debt": token_debts["ETH"],
-                "WBTC debt": token_debts["WBTC"],
-                "USDC debt": token_debts["USDC"],
-                "DAI debt": token_debts["DAI"],
-                "USDT debt": token_debts["USDT"],
-                "wstETH debt": token_debts["wstETH"],
-                "LORDS debt": token_debts["LORDS"],
-                "STRK debt": token_debts["STRK"],
-                "kSTRK debt": token_debts["kSTRK"],
-            }
-        )
+        
+            data.append(
+                {
+                    "Protocol": protocol,
+                    "token":token,
+                    "amount_usd":prices.get(TOKEN_SETTINGS[token].address, 0),#TODO ?
+                    "ETH debt": token_debts["ETH"],
+                    "WBTC debt": token_debts["WBTC"],
+                    "USDC debt": token_debts["USDC"],
+                    "DAI debt": token_debts["DAI"],
+                    "USDT debt": token_debts["USDT"],
+                    "wstETH debt": token_debts["wstETH"],
+                    "LORDS debt": token_debts["LORDS"],
+                    "STRK debt": token_debts["STRK"],
+                    "kSTRK debt": token_debts["kSTRK"],
+                }
+            )
     data = pd.DataFrame(data)
     return data
 
