@@ -73,6 +73,7 @@ services:
       - data_handler_network
 
   redis:
+    container_name: redis
     image: redis:latest
     restart: always
     ports:

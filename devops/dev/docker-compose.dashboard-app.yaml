@@ -16,7 +16,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-        - dashboard_app_network
+      - dashboard_app_network
     ports:
       - "5432:5432"
 
@@ -79,5 +79,25 @@ services:
       - dashboard_app_network
 
 
+
+# !!! This is only for testing purposes !!!
+# In production, the data_handler collects this data and fills Redis by calling Celery Beat,
+# while the dashboard_app only reads.
+# However, when you run the dev  with only the dashboard_app,
+# it will be called once on startup (with Streamlit).
+  redis:
+    container_name: redis
+    image: redis:latest
+    restart: always
+    ports:
+      - "127.0.0.1:6380:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - dashboard_app_network
+
+
+
 volumes:
   postgres_data:
+  redis_data:
