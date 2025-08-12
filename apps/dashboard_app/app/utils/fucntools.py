@@ -2,12 +2,12 @@ from decimal import Decimal
 
 from fastapi import Request
 
-from dashboard_app.app.crud.base import dashboard_db_connector
+from dashboard_app.app.crud.base import db_connector as dashboard_db_connector
 from shared.db.connector import db_connector
 from dashboard_app.app.models.watcher import NotificationData
 
 from shared.db.models import HealthRatioLevel
-from sqlalchemy.orm import select, desc
+from sqlalchemy import select, desc
 
 
 def get_client_ip(request: Request) -> str:
