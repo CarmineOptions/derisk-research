@@ -9,7 +9,7 @@ from decimal import Decimal
 
 from sqlalchemy import select
 from starknet_py.hash.selector import get_selector_from_name
-from data_handler.db.models.liquidable_debt import HealthRatioLevel
+from shared.db.models import HealthRatioLevel
 
 from data_handler.db.crud import DBConnector
 from data_handler.db.models import VesuPosition

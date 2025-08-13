@@ -200,10 +200,11 @@ def swap_amm(
     Returns:
         Configured SwapAmm instance for testing
     """
-    with patch("shared.constants.TOKEN_SETTINGS", mock_token_settings), patch(
-        "shared.constants.POOL_MAPPING", mock_pool_mapping
-    ), patch("shared.amms.Pool", MockPool), patch(
-        "shared.amms.MySwapPool", MockMySwapPool
+    with (
+        patch("shared.amms.TOKEN_SETTINGS", mock_token_settings),
+        patch("shared.amms.POOL_MAPPING", mock_pool_mapping),
+        patch("shared.amms.Pool", MockPool),
+        patch("shared.amms.MySwapPool", MockMySwapPool),
     ):
         return SwapAmm()
 
@@ -237,8 +238,9 @@ class TestSwapAmmPositive:
             swap_amm: SwapAmm instance
             mock_token_settings: Mock token settings
         """
-        with patch("shared.constants.TOKEN_SETTINGS", mock_token_settings), patch(
-            "shared.amms.Pool", MockPool
+        with (
+            patch("shared.constants.TOKEN_SETTINGS", mock_token_settings),
+            patch("shared.amms.Pool", MockPool),
         ):
             swap_amm.add_pool(
                 base_token="BTC",
@@ -265,8 +267,9 @@ class TestSwapAmmPositive:
             swap_amm: SwapAmm instance
             mock_token_settings: Mock token settings
         """
-        with patch("shared.constants.TOKEN_SETTINGS", mock_token_settings), patch(
-            "shared.amms.MySwapPool", MockMySwapPool
+        with (
+            patch("shared.constants.TOKEN_SETTINGS", mock_token_settings),
+            patch("shared.amms.MySwapPool", MockMySwapPool),
         ):
             swap_amm.add_pool(
                 base_token="DAI",
@@ -395,8 +398,9 @@ class TestSwapAmmNegative:
 
     def test_add_duplicate_pool(self, swap_amm, mock_token_settings):
         """Test adding a duplicate pool."""
-        with patch("shared.constants.TOKEN_SETTINGS", mock_token_settings), patch(
-            "shared.amms.Pool", MockPool
+        with (
+            patch("shared.constants.TOKEN_SETTINGS", mock_token_settings),
+            patch("shared.amms.Pool", MockPool),
         ):
             # Get the initial pool
             initial_pool = swap_amm.get_pool("ETH", "USDC")

@@ -1,7 +1,7 @@
 import asyncio
 
 from dashboard_app.app.telegram_app.telegram import bot
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, Request, status, BackgroundTasks
 from fastapi.responses import JSONResponse
 from loguru import logger
 from sqlalchemy.orm import Session
@@ -123,9 +123,11 @@ async def get_protocol_ids() -> JSONResponse:
 
 
 @router.post(
-    path="/send-notifications", description="Send notifications to all subscribers"
+    path="/send-notifications",
+    description="Send notifications to all subscribers",
+    status_code=status.HTTP_202_ACCEPTED,
 )
-async def send_notifications() -> None:
+async def send_notifications(background_tasks: BackgroundTasks):
     """
     Sends notifications to all activated subscribers when their health ratio level
     changes significantly.
@@ -137,7 +139,7 @@ async def send_notifications() -> None:
     subscribers = await get_all_activated_subscribers_from_db()
 
     for subscriber in subscribers:
-        health_ratio_level = get_health_ratio_level_from_endpoint(
+        health_ratio_level = await get_health_ratio_level_from_endpoint(
             protocol_id=subscriber.protocol_id.value, user_id=subscriber.wallet_id
         )
 
@@ -147,4 +149,5 @@ async def send_notifications() -> None:
         ):
             asyncio.run(notificator.send_notification(notification_id=subscriber.id))
 
-    asyncio.run(notificator(is_infinity=True))
+    background_tasks.add_task(notificator, is_infinity=True)
+    return {"message": "Notifications sending running in background"}

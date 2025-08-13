@@ -2,14 +2,10 @@ import os
 from dataclasses import dataclass
 
 from dotenv import load_dotenv
-from shared.protocol_ids import ProtocolIDs
 
 load_dotenv()
 
 DATA_HANDLER_ENDPOINT = os.environ.get("DATA_HANDLER_URL", "")
-HEALTH_RATIO_URL = (
-    f"{DATA_HANDLER_ENDPOINT}/health-ratio-per-user/{{protocol}}/?user_id={{user_id}}"
-)
 CURRENTLY_AVAILABLE_PROTOCOL_IDS: tuple[str, ...] = (
     "zkLend",
     "Nostra_alpha",
@@ -42,7 +38,6 @@ class CreateSubscriptionValues:
     create_subscription_description_message: str = (
         "Creates a new subscription to notifications"
     )
-
 
 
 HEALTH_RATIO_LEVEL_ALERT_VALUE: float = 0.1

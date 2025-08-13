@@ -1,13 +1,13 @@
-import time
 from decimal import Decimal
 
-import requests
 from fastapi import Request
 
-from dashboard_app.app.crud.base import db_connector
+from dashboard_app.app.crud.base import db_connector as dashboard_db_connector
+from shared.db.connector import db_connector
 from dashboard_app.app.models.watcher import NotificationData
 
-from dashboard_app.app.utils.values import HEALTH_RATIO_URL
+from shared.db.models import HealthRatioLevel
+from sqlalchemy import select, desc
 
 
 def get_client_ip(request: Request) -> str:
@@ -32,7 +32,9 @@ async def get_all_activated_subscribers_from_db() -> list[NotificationData]:
     :return: list[NotificationData]
     """
     return list(
-        await db_connector.get_all_activated_subscribers(model=NotificationData)
+        await dashboard_db_connector.get_all_activated_subscribers(
+            model=NotificationData
+        )
     )
 
 
@@ -48,25 +50,27 @@ def calculate_difference(
     return abs(a - b)
 
 
-def get_health_ratio_level_from_endpoint(user_id: str, protocol_id: str) -> Decimal:
+async def get_health_ratio_level_from_endpoint(
+    user_id: str, protocol_id: str
+) -> Decimal:
     """
     Returns health ratio level from endpoint URL
     :param user_id: str
     :param protocol_id: str
     :return: Decimal
     """
-    url = HEALTH_RATIO_URL.format(protocol=protocol_id, user_id=user_id)
-
-    try:
-        response = requests.get(url)
-        response.raise_for_status()
-
-        return Decimal(response.text)
-
-    except Exception:
-        time.sleep(10)
-
-        response = requests.get(url)
-        response.raise_for_status()
-
-        return Decimal(response.text)
+    query = (
+        select(HealthRatioLevel)
+        .filter(
+            HealthRatioLevel.protocol_id == protocol_id,
+            HealthRatioLevel.user_id == user_id,
+        )
+        .order_by(desc(HealthRatioLevel.timestamp))
+        .limit(1)
+    )
+    async with db_connector.session() as session:
+        res = await session.execute(query)
+    health_ratio = res.scalar_one_or_none()
+    if not health_ratio:
+        raise ValueError("Health ratio not found")
+    return Decimal(health_ratio)
