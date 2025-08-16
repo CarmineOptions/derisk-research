@@ -37,12 +37,12 @@ TOKEN_SETTINGS: dict[str, TokenSettings] = {
         address="0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8",
         coin_id="bridged-usd-coin-starkgate",
     ),
-    #FIXME Uncomment when DAI is added correct address
+    # FIXME Uncomment when DAI is added correct address
     "DAI": TokenSettings(
         symbol="DAI",
         decimal_factor=Decimal("1e18"),
         address="0x00da114221cb83fa859dbdb4c44beeaa0bb37c7537ad5ae66fe5e0efd20e6eb3",
-    coin_id='bridged-dai-starkgate',
+        coin_id="bridged-dai-starkgate",
     ),
     "USDT": TokenSettings(
         symbol="USDT",
@@ -53,7 +53,7 @@ TOKEN_SETTINGS: dict[str, TokenSettings] = {
     "wstETH": TokenSettings(
         symbol="wstETH",
         decimal_factor=Decimal("1e18"),
-        address="0x042b8f0484674ca266ac5d08e4ac6a3fe65bd3129795def2dca5c34ecc5f96d2",
+        address="0x0057912720381af14b0e5c87aa4718ed5e527eab60b3801ebf702ab09139e38b",
         coin_id="",
     ),
     "LORDS": TokenSettings(
@@ -87,7 +87,7 @@ POOL_MAPPING: dict[str, dict[str, Union[List, str]]] = {
             "0x000023c72abdf49dffc85ae3ede714f2168ad384cc67d08524732acea90df325",  # 10kswap
         ],
         # TODO "myswap_id": 1,
-          "myswap_id": None,
+        "myswap_id": None,
     },
     "DAI_ETH": {
         "base_token": "DAI",
@@ -97,8 +97,8 @@ POOL_MAPPING: dict[str, dict[str, Union[List, str]]] = {
             "0x0032ebb8e68553620b97b308684babf606d9556d5c0a652450c32e85f40d000d",  # sithswap
             "0x017e9e62c04b50800d7c59454754fe31a2193c9c3c6c92c093f2ab0faadf8c87",  # 10kswap
         ],
-        #TODO  "myswap_id": 2,
-          "myswap_id": None,
+        # TODO  "myswap_id": 2,
+        "myswap_id": None,
     },
     "ETH_USDT": {
         "base_token": "ETH",
@@ -109,7 +109,7 @@ POOL_MAPPING: dict[str, dict[str, Union[List, str]]] = {
             "0x05900cfa2b50d53b097cb305d54e249e31f24f881885aae5639b0cd6af4ed298",  # 10kswap
         ],
         # TODO "myswap_id": 4,
-          "myswap_id": None,
+        "myswap_id": None,
     },
     "wBTC_ETH": {
         "base_token": "wBTC",
@@ -147,7 +147,7 @@ POOL_MAPPING: dict[str, dict[str, Union[List, str]]] = {
             "0x02e767b996c8d4594c73317bb102c2018b9036aee8eed08ace5f45b3568b94e5",  # 10kswap
         ],
         # TODO "myswap_id": 6,
-          "myswap_id": None,
+        "myswap_id": None,
     },
     "DAI_USDT": {
         "base_token": "DAI",
@@ -167,7 +167,7 @@ POOL_MAPPING: dict[str, dict[str, Union[List, str]]] = {
             "0x041a708cf109737a50baa6cbeb9adf0bf8d97112dc6cc80c7a458cbad35328b0",  # 10kswap
         ],
         # TODO"myswap_id": 5,
-          "myswap_id": None,
+        "myswap_id": None,
     },
     "STRK_USDC": {
         "base_token": "STRK",
