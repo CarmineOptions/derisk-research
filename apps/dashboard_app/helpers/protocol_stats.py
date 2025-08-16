@@ -123,9 +123,12 @@ def get_supply_stats(
     df["Total supply (USD)"] = sum(
         df[column]
         * Decimal(
-            prices[
-                add_leading_zeros(TOKEN_SETTINGS[column.replace(" supply", "")].address)
-            ]
+            prices.get(
+                add_leading_zeros(
+                    TOKEN_SETTINGS[column.replace(" supply", "")].address
+                ),
+                0,
+            )
         )
         for column in df.columns
         if "supply" in column
