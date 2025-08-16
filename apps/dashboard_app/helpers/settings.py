@@ -51,7 +51,7 @@ TOKEN_SETTINGS: dict[str, TokenSettings] = {
     "wstETH": TokenSettings(
         symbol="wstETH",
         decimal_factor=1e18,
-        address="0x042b8f0484674ca266ac5d08e4ac6a3fe65bd3129795def2dca5c34ecc5f96d2",
+        address="0x0057912720381af14b0e5c87aa4718ed5e527eab60b3801ebf702ab09139e38b",
     ),
     "LORDS": TokenSettings(
         symbol="LORDS",
