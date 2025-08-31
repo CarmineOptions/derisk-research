@@ -2,6 +2,7 @@
 A module that fetches data of token prices, liquidity etc.
 """
 
+from collections.abc import Mapping
 import logging
 import math
 from typing import Iterator
@@ -58,7 +59,7 @@ def get_collateral_token_range(
     return list(float_range(start=readable_step, stop=stop_price, step=readable_step))
 
 
-def get_prices(token_decimals: dict[str, int]) -> dict[str, float]:
+def get_prices(token_decimals: Mapping[str, int]) -> dict[str, float]:
     """
     Get the prices of the tokens.
     :param token_decimals: Token decimals.

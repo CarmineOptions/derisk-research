@@ -301,7 +301,8 @@ def get_utilization_stats(
     :return: DataFrame with utilization stats
     """
 
-    general_stats.columns = general_stats.columns.str.lower()
+    if not general_stats.empty:
+        general_stats.columns = general_stats.columns.str.lower()
     supply_stats.columns = supply_stats.columns.str.lower()
     debt_stats.columns = debt_stats.columns.str.lower()
 

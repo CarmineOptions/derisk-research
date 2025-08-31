@@ -1,6 +1,7 @@
 __pycache__
 pyrightconfig.json
 .ipynb_checkpoints
+pyrightconfig.json
 .vscode
 .env
 .venv

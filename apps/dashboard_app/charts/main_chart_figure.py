@@ -158,7 +158,7 @@ def get_main_chart_figure(
             marker_color=color_map_liquidity["debt_token_supply"],
             opacity=0.5,
             yaxis="y2",
-            hovertemplate=("<b>Price:</b> %{x}<br>" "<b>Volume:</b> %{y}"),
+            hovertemplate=("""<b>Price:</b> %{x}<br>" "<b>Volume:</b> %{y}"""),
         )
     )
 
@@ -373,9 +373,11 @@ def get_user_history(user_id: str, df: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame: A DataFrame showing the history of deposits, collateral, and debt.
     """
     try:
-        user_df = df[df[CommonValues.user.value] == user_id][
-            [CommonValues.collateral_usd.value, CommonValues.debt_usd.value]
-        ].copy()
+        user_df = pd.DataFrame(
+            df[df[CommonValues.user.value] == user_id][
+                [CommonValues.collateral_usd.value, CommonValues.debt_usd.value]
+            ].copy()
+        )
         user_df.rename(
             columns={
                 CommonValues.collateral_usd.value: "Collateral",

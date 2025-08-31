@@ -122,7 +122,7 @@ async def get_token_name_from_tx(tx: dict) -> tuple:
     return None, None
 
 
-async def process_trade_open(event: dict) -> UserTransaction:
+async def process_trade_open(event: dict) -> UserTransaction | None:
     """
     Process a trade open event and return formatted data.
     event: dict
@@ -169,7 +169,7 @@ async def process_trade_open(event: dict) -> UserTransaction:
         return None
 
 
-async def process_trade_close(event: dict) -> UserTransaction:
+async def process_trade_close(event: dict) -> UserTransaction | None:
     """Process a trade close event and return formatted data.
 
     event: dict
@@ -215,16 +215,20 @@ async def process_trade_close(event: dict) -> UserTransaction:
         return None
 
 
-async def get_events_by_hash():
+async def get_events_by_hash() -> tuple[list[UserTransaction], list[UserTransaction]]:
     """Main function to get and process trade events."""
-    CONTRACT_ADDRESS = "0x47472e6755afc57ada9550b6a3ac93129cc4b5f98f51c73e0644d129fd208d9"  # adress of the contract that have all the events
-    from_block = 1284758  # change this to the block number you want to start from
+    import sys
+
+    CONTRACT_ADDRESS = "0x047472e6755afc57ada9550b6a3ac93129cc4b5f98f51c73e0644d129fd208d9"  # adress of the contract that have all the events
+    from_block = 1748472  # change this to the block number you want to start from
 
     to_block = await client.get_block_number()
-    events = await fetch_events(CONTRACT_ADDRESS, from_block, to_block)
-    trade_open = []
-    trade_close = []
+    sys.stderr.write(f"Fetching to block {to_block}\n")
+    events = await fetch_events(CONTRACT_ADDRESS, from_block, 1765005)
+    trade_open: list[UserTransaction] = []
+    trade_close: list[UserTransaction] = []
 
+    sys.stderr.write(f"\nTOTAL EVENTS: {len(events)}\n")
     for event in events:
         if event.keys[0] == (get_selector_from_name("TradeOpen")):
             result = await process_trade_open(event)
@@ -236,10 +240,11 @@ async def get_events_by_hash():
             if result:
                 trade_close.append(result)
 
+    sys.stderr.write(f"TRANSACTION EVENTS: open: {trade_open}\n close: {trade_close}\n")
     return trade_open, trade_close
 
 
-def filter_wallet_id(events: list, wallet_id: str) -> list:
+def filter_wallet_id[T: UserTransaction](events: list[T], wallet_id: str) -> list[T]:
     """Filter the events given a wallet id
     wallet_id: string
         The wallet address to filter the events, given as an integer
@@ -249,7 +254,9 @@ def filter_wallet_id(events: list, wallet_id: str) -> list:
     return [event for event in events if event.user_address == wallet_id]
 
 
-async def get_history_by_wallet_id(wallet_id: str) -> tuple:
+async def get_history_by_wallet_id(
+    wallet_id: str,
+) -> tuple[list[UserTransaction], list[UserTransaction]]:
     """Filter the events given a wallet id
 
     wallet_id: string

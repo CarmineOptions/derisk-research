@@ -22,11 +22,11 @@ class ChartsHeaders:
 
 
 class CommonValues(Enum):
-    amount_usd: str = "amount_usd"
-    token: str = "token"
-    debt_usd: str = "Debt (USD)"
-    collateral_usd: str = "Collateral (USD)"
-    user: str = "User"
-    protocol: str = "Protocol"
-    health_factor: str = "Health factor"
-    standardized_health_factor: str = "Standardized health factor"
+    amount_usd = "amount_usd"
+    token = "token"
+    debt_usd = "Debt (USD)"
+    collateral_usd = "Collateral (USD)"
+    user = "User"
+    protocol = "Protocol"
+    health_factor = "Health factor"
+    standardized_health_factor = "Standardized health factor"
