@@ -38,6 +38,7 @@ from dashboard_app.charts.main_chart_figure import (
     get_total_amount_by_field,
 )
 from dashboard_app.charts.utils import (
+    get_data,
     get_protocol_data_mappings,
     infer_protocol_name,
     process_liquidity,
@@ -137,9 +138,9 @@ class Dashboard:
             protocol_main_chart_data_mapping,
             protocol_loans_data_mapping,
         ) = self._get_protocol_data_mappings()
-        loans_data = (  # TODO: remove unused `loans_data` variable or use it
-            transform_loans_data(protocol_loans_data_mapping, self.PROTOCOL_NAMES)
-        )
+        # loans_data = (  # TODO: remove unused `loans_data` variable or use it
+        #     transform_loans_data(protocol_loans_data_mapping, self.PROTOCOL_NAMES)
+        # )
         main_chart_data = transform_main_chart_data(
             protocol_main_chart_data_mapping, self.current_pair, self.PROTOCOL_NAMES
         )
@@ -442,22 +443,41 @@ class Dashboard:
                     figure = self._plot_chart(token, "supply")
                     st.plotly_chart(figure, True)
 
-    async def get_user_history(self, wallet_id: str):
+    def get_user_history(self, wallet_id: str):
         """
         Fetch and return the transaction history for a specific user.
         """
-        filtered_trade_open, filtered_trade_close = await get_history_by_wallet_id(
-            wallet_id
+        # filtered_trade_open, filtered_trade_close = await get_history_by_wallet_id(
+        #     wallet_id
+        # )
+        # user_data = filtered_trade_open + filtered_trade_close
+        protocol_loans_data: dict[str, pd.DataFrame] = {}
+        assert self.state is not None
+        _, loans_data = get_data(state=self.state)
+        for protocol_name in self.PROTOCOL_NAMES:
+            protocol_loans_data[protocol_name] = loans_data
+        import sys
+
+        sys.stderr.write(
+            "PROTOCOL LOANS DATA: "
+            + list(protocol_loans_data.values())[1].to_string()[:300]
+            + "\n"
         )
-        user_data = filtered_trade_open + filtered_trade_close
-        # user_data = get_user_history(wallet_id)
-        # if user_data is None or user_data.empty:
-        #     st.error("No data found for this user.")
-        #     return None
-        #
-        # user_data.columns = [CommonValues.protocol.value, CommonValues.total_usd.value]
-        # user_data = user_data.sort_values(CommonValues.total_usd.value, ascending=False)
-        # user_data.reset_index(drop=True, inplace=True)
+        sys.stderr.write(
+            "\nLOANS DATA COLUMNS: "
+            + str(list(protocol_loans_data.values())[1].columns)
+        )
+        loans_data = transform_loans_data(protocol_loans_data, self.PROTOCOL_NAMES)
+
+        user_data = get_user_history(wallet_id, loans_data)
+        if user_data is None or user_data.empty:
+            st.error("No data found for this user.")
+            return None
+        sys.stderr.write("\nUSER DATA: " + user_data.to_string() + "\n")
+        sys.stderr.write("\nUSER DEBT: " + str(user_data["Debt"]))
+
+        user_data = user_data.sort_values("Debt", ascending=False)
+        user_data.reset_index(drop=True, inplace=True)
         st.dataframe(user_data)
         return user_data
 
@@ -503,7 +523,7 @@ class Dashboard:
             use_container_width=True,
         )
 
-    def _plot_chart(self, token: str, stats_type: str) -> plotly.express.data:
+    def _plot_chart(self, token: str, stats_type: str):
         """
         Returns a ploted figure.
         :return plotly.express.Data: Figure.
@@ -524,11 +544,16 @@ class Dashboard:
             color_discrete_sequence=self.FIGURE_COLORS_DATA_MAPPING[stats_type],
         )
 
-    def _get_protocol_data_mappings(self) -> tuple:
+    def _get_protocol_data_mappings(self):
         """
         Return a tuple of protocol_main_chart_data_mapping and protocol_loans_data_mapping.
         :return: tuple
         """
+        assert (
+            self.current_pair is not None
+            and self.stable_coin_pair is not None
+            and self.state is not None
+        )
         return get_protocol_data_mappings(
             current_pair=self.current_pair,
             stable_coin_pair=self.stable_coin_pair,
@@ -541,10 +566,8 @@ class Dashboard:
         This function executes/runs all chart loading methods.
         """
         # TODO: temp. Use real wallet
-        asyncio.run(
-            self.get_user_history(
-                "0x04d0390b777b424e43839cd1e744799f3de6c176c7e32c1812a41dbd9c19db6a"
-            )
+        self.get_user_history(
+            "0x07fe8866652549104dd88661d0d814e2ad3e3b7fd1da79cdcfc6855393134112"
         )
         # Load sidebar with protocol settings
         self.load_sidebar()

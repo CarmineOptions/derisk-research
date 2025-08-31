@@ -116,7 +116,7 @@ class EkuboLiquidity:
 
             if not response.ok:
                 logging.warning(
-                    f"API request failed (attempt {attempt + 1}/{max_retries}), retrying in {retry_delay} seconds..."
+                    f"API request failed with status {response.status_code} (attempt {attempt + 1}/{max_retries}), retrying in {retry_delay} seconds..."
                 )
                 time.sleep(retry_delay)
                 attempt += 1

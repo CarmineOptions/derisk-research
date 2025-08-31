@@ -445,7 +445,7 @@ def get_data(state: State) -> tuple[dict[str, pd.DataFrame], pd.DataFrame]:
 
 def get_protocol_data_mappings(
     current_pair: str, stable_coin_pair: str, protocols: list[str], state: State
-) -> tuple[dict[str, pd.DataFrame], dict[str, dict]]:
+) -> tuple[dict[str, pd.DataFrame], dict[str, pd.DataFrame]]:
     """
     Get protocol data mappings for main chart data and loans data.
 
@@ -459,7 +459,7 @@ def get_protocol_data_mappings(
     """
 
     protocol_main_chart_data: dict[str, pd.DataFrame] = {}
-    protocol_loans_data: dict[str, dict] = {}
+    protocol_loans_data: dict[str, pd.DataFrame] = {}
     main_chart_data, loans_data = get_data(state=state)
     for protocol_name in protocols:
         protocol_loans_data[protocol_name] = loans_data
@@ -474,7 +474,7 @@ def get_protocol_data_mappings(
 
 
 def transform_loans_data(
-    protocol_loans_data_mapping: dict[str, dict], protocols: list[str]
+    protocol_loans_data_mapping: dict[str, pd.DataFrame], protocols: list[str]
 ) -> pd.DataFrame:
     """
     Transform protocol loans data
