@@ -1,0 +1,178 @@
+version: '3.8'
+
+networks:
+  app_network:
+    driver: bridge
+
+services:
+  # Shared Redis service
+  redis:
+    image: redis:latest
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app_network
+
+  # Shared database service for notification app
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_HOST_AUTH_METHOD: md5
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - app_network
+
+  # Dashboard app Streamlit service
+  streamlit:
+    build:
+      context: ../../apps
+      dockerfile: legacy_app/Dockerfile
+    ports:
+      - "8501:8501"
+    env_file:
+      - ../../apps/legacy_app/.env
+    volumes:
+      - ../../apps/legacy_app/storage_credentials.json:/app/storage_credentials.json
+    networks:
+      - app_network
+
+  # Data handler backend service
+  data_handler_backend:
+    build:
+      context: ../../apps
+      dockerfile: data_handler/Dockerfile
+    restart: always
+    volumes:
+      - ../../apps/:/app
+    env_file:
+      - ../../apps/data_handler/.env
+    expose:
+      - "8000"
+    networks:
+      - app_network
+
+  # Data handler Celery worker
+  data_handler_celery:
+    build:
+      context: ../../apps
+      dockerfile: data_handler/Dockerfile
+    command: celery -A data_handler.celery_app.celery_conf worker --loglevel=INFO
+    environment:
+      - PYTHONPATH=/app
+    volumes:
+      - ../../apps/:/app
+    depends_on:
+      - redis
+    networks:
+      - app_network
+
+  # Data handler Celery beat
+  data_handler_celery_beat:
+    build:
+      context: ../../apps/data_handler/nginx
+      dockerfile: Dockerfile
+    command: celery -A celery_app.celery_conf beat --loglevel=INFO
+    environment:
+      - PYTHONPATH=/app
+    volumes:
+      - ../../apps:/app
+    depends_on:
+      - redis
+    networks:
+      - app_network
+
+  # Data handler Nginx service (on port 8080 to avoid conflict)
+  data_handler_nginx:
+    restart: unless-stopped
+    image: nginx
+    container_name: data_handler_nginx
+    build:
+      context: ../../apps/data_handler/nginx
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx:/etc/nginx/user_conf.d:ro
+      - ../../apps/data_handler/nginx:/app
+    depends_on:
+      - data_handler_backend
+    networks:
+      - app_network
+
+  # Notification app backend service
+  notification_backend:
+    build:
+      context: ../../apps
+      dockerfile: web_app/Dockerfile
+    restart: always
+    volumes:
+      - ../../apps/web_app:/app
+    env_file:
+      - ../../apps/web_app/.env
+    expose:
+      - "8001"  # Changed port to avoid conflict
+    depends_on:
+      - db
+    networks:
+      - app_network
+
+  # Notification app Celery worker
+  notification_celery:
+    build:
+      context: ../../apps
+      dockerfile: web_app/Dockerfile
+    command: celery -A derisk_alert.celery_conf worker --loglevel=INFO
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - db
+    networks:
+      - app_network
+
+  # Notification app Celery beat
+  notification_celery_beat:
+    build:
+      context: ../../apps
+      dockerfile: web_app/Dockerfile
+    command: celery -A derisk_alert.celery_conf beat --loglevel=INFO
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - db
+    networks:
+      - app_network
+
+  # Notification app Nginx service (on ports 8081 and 443 to avoid conflict)
+  notification_nginx:
+    restart: unless-stopped
+    image: nginx
+    container_name: notification_nginx
+    build:
+      context: ../../apps/web_app/nginx
+      dockerfile: Dockerfile
+    ports:
+      - "8081:80"
+      - "443:443"
+    volumes:
+      - ../../apps/web_app/nginx:/etc/nginx/user_conf.d:ro
+      - ../../apps/web_app/nginx:/app
+    depends_on:
+      - notification_backend
+    networks:
+      - app_network
+
+volumes:
+  db_data:
+  redis_data:

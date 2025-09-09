@@ -1,0 +1,168 @@
+version: '3.8'
+
+networks:
+  app_network:
+    driver: bridge
+
+services:
+  # Shared database service
+  db:
+    image: postgres:16
+    container_name: postgres_dev
+    env_file:
+      - ../../apps/dashboard_app/.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_network
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Shared Redis service
+  redis:
+    image: redis:latest
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app_network
+
+  # Dashboard app Streamlit service
+  streamlit:
+    build:
+      context: ../../apps
+      dockerfile: dashboard_app/Dockerfile
+    ports:
+      - "8501:8501"
+    env_file:
+      - ../../apps/dashboard_app/.env
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ../../apps/dashboard_app:/app/dashboard_app
+    networks:
+      - app_network
+
+  # Dashboard app backend service
+  dashboard_backend:
+    build: 
+      context: ../../apps
+      dockerfile: dashboard_app/app.Dockerfile
+    restart: always
+    volumes:
+      - ../../apps:/app
+    env_file:
+      - ../../apps/dashboard_app/.env
+    ports:
+      - "8001:8000"  # Changed port to avoid conflict
+    networks:
+      - app_network
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Data handler backend service
+  data_handler_backend:
+    build:
+      context: ../../apps
+      dockerfile: data_handler/Dockerfile
+    restart: always
+    volumes:
+      - ../../apps/:/app
+    env_file:
+      - ../../apps/data_handler/.env   
+    ports:
+      - "8002:8000"  # Changed port to avoid conflict
+    expose:
+      - "8000"
+    networks:
+      - app_network
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Notification app backend service
+  notification_backend:
+    build:
+      context: ../../apps
+      dockerfile: web_app/Dockerfile
+    restart: always
+    volumes:
+      - ../../apps/web_app:/app
+    env_file:
+      - ../../apps/web_app/.env.dev
+    ports:
+      - "8003:8000"  # Changed port to avoid conflict
+    expose:
+      - "8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - app_network
+
+  # Celery worker for data handler
+  celery:
+    build:
+      context: ../../apps
+      dockerfile: data_handler/Dockerfile.celery_worker
+    env_file:
+      - ../../apps/data_handler/.env  
+    volumes:
+      - ../../apps:/app
+    depends_on:
+      redis:
+        condition: service_started
+      db:
+        condition: service_healthy
+    networks:
+      - app_network
+
+  # Celery beat for data handler
+  celery_beat:
+    build:
+      context: ../../apps
+      dockerfile: data_handler/Dockerfile.celery_beat
+    env_file:
+      - ../../apps/data_handler/.env   
+    volumes:
+      - ../../apps:/app
+    depends_on:
+      redis:
+        condition: service_started
+      db:
+        condition: service_healthy
+    networks:
+      - app_network
+
+  # Telegram webhook simulator
+  telegram_webhook_simulator:
+    build:
+      context: ../../apps
+      dockerfile: dashboard_app/webhook_simulator.Dockerfile   
+    env_file:
+      - ../../apps/dashboard_app/.env   
+    depends_on:
+      dashboard_backend:
+        condition: service_healthy
+    volumes:
+      - ../../apps/dashboard_app:/app/dashboard_app
+    networks:
+      - app_network
+
+volumes:
+  postgres_data:
+  redis_data:
