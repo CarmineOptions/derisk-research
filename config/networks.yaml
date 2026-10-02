@@ -1,0 +1,9 @@
+networks:
+  nostra_mainnet:
+    rpc_url: "https://api.mainnet-beta.solana.com"
+    chain_id: "solana"
+    is_mainnet: true
+    protocol: "nostra"
+    contracts:
+      loan_state_address: "NostraMainnetLoanStateAddressHere" # Substituir pelo endereço real do contrato de estado de empréstimo da Nostra Mainnet
+      market_address: "NostraMainnetMarketAddressHere"
